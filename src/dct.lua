@@ -45,5 +45,6 @@ do
     local addpath = lfs.writedir() .. "Scripts\\?.lua;"
     package.path = package.path .. ";" .. addpath
     local x = require("dct.init")
-    x.init()
+    dctsettings = dctsettings or {}
+    x.init(dctsettings)
 end
