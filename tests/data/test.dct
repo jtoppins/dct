@@ -1,0 +1,19 @@
+metadata = {
+    ["movable"] = false,
+    ["goal"]    = {
+        ["red"] = {
+            ["type"]  = "primary|secondary|??",
+            ["state"]  = {
+                ["life"] = 100,
+            },
+        },
+    },
+    ["objtype"] = "ammodump",
+    ["region"]  = "some-region",
+    ["init"]    = "always|atleastone|random",
+    ["respawn"] = {
+        ["type"]  = "timed|land|death",
+        ["limit"] = 3,
+        ["time"]  = 30,
+    },
+}

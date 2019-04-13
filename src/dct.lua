@@ -36,7 +36,7 @@ do
     --]]
     local assertmsg = "DCT requires DCS mission scripting environment to be" ..
                 " modified, the file needing to be changed can be found at" ..
-                " $DCS_ROOT\Scripts\MissionScripting.lua. Comment out the" ..
+                " $DCS_ROOT\\Scripts\\MissionScripting.lua. Comment out the" ..
                 " removal of lfs and io and the setting of 'require' to nil."
     if not lfs or not io or not require then
         assert(false, assertmsg)
@@ -45,6 +45,6 @@ do
     local addpath = lfs.writedir() .. "Scripts\\?.lua;"
     package.path = package.path .. ";" .. addpath
     local x = require("dct.init")
-    dctsettings = dctsettings or {}
-    x.init(dctsettings)
+    local settings = dctsettings or {}
+    x.init(settings)
 end

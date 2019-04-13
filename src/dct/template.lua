@@ -40,10 +40,55 @@ types (taken from the NATO Joint Military Symbology list):
 require("os")
 
 do
-	local class    = require("dcs-mission-libs.class")
-	local utils    = require("dcs-mission-libs.utils")
-	local settings = require("dct.settings")
-	local mission  = require("dct.mission")
+	local debug = os.getenv("DCT_DEBUG")
+	local utils = {}
+	function utils.foreach(array, itr, fcn, ctx)
+		for k, v in itr(array) do
+			fcn(k, v, ctx)
+		end
+	end
+
+	function utils.debug(str)
+		if debug == nil then
+			return
+		end
+		print("DEBUG: "..str)
+	end
+
+	local class    = require("libs.class")
+	--local utils    = require("libs.utils")
+	--local settings = require("dct.settings")
+
+	local function lookupname(name, namelist)
+		namelist = namelist or {}
+		if namelist[name] ~= nil then
+			name = namelist[name]
+		end
+		return name
+	end
+	local function overrideGroupOptions(grp)
+		local opts = {
+			visible        = true,
+			uncontrollable = true,
+			uncontrolled   = true,
+			hidden         = true,
+			lateActivation = false,
+		}
+
+		for k, v in pairs(opts) do
+			if grp[k] ~= nil then grp[k] = v end
+		end
+		grp.groupId = nil
+	end
+	local function overrideUnitOptions(key, unit, ctx)
+		if unit.playerCanDriver ~= nil then
+			unit.playerCanDrive = false
+		end
+		unit.unitId = nil
+	end
+	local function overrideName(key, obj, ctx)
+		obj.name = lookupname(obj.name, ctx.names)
+	end
 
 	--[[
 	--  Template class
@@ -61,28 +106,41 @@ do
 	--  }
 	--]]
 	local Template = class()
-	function Template:__init(category, name)
-		dofile(settings.tmpldir() .. category .. name .. ".stm")
-		dofile(settings.tmpldir() .. category .. name .. ".dct")
+	function Template:__init(stmfile, dtcfile)
+		local rc  = false
+
+		rc = pcall(dofile, stmfile)
+		assert(rc, "failed to parse: " .. stmfile)
+		utils.debug("here0")
+		--rc = pcall(dofile, dctfile)
+		utils.debug("here1")
+		--assert(rc, "failed to parse: " .. dctfile)
+		utils.debug("here1-1")
+
+		assert(staticTemplate ~= nil)
+		--assert(metadata ~= nil)
 
 		local tpl = staticTemplate
-		tpl.dct = dct
+		--tpl.metadata = metadata
 		staticTemplate = nil
-		dct = nil
+		--metadata = nil
 
-		self.name = mission.lookupname(tpl.name,
-					       tpl.localization.DEFAULT)
+		utils.debug("here2")
+
+		self.name    = lookupname(tpl.name, tpl.localization.DEFAULT)
 		self.theatre = tpl.theatre
-		self.desc = tpl.desc
+		self.desc    = tpl.desc
+		self.tpldata = {}
 
 		for coa_key, coa_data in pairs(tpl.coalition) do
-			self:__processCoalition(coa_key, coa_data)
+			self:__processCoalition(coa_key, coa_data,
+						tpl.localization.DEFAULT)
 		end
-		for key, data in pairs(tpl.dct) do
-			self[key] = data
-		end
+		--for key, data in pairs(tpl.dct) do
+		--	self[key] = data
+		--end
 	end
-	function Template:__processCoalition(side, coa)
+	function Template:__processCoalition(side, coa, names)
 		if side ~= 'red' and side ~= 'blue' and
 		   type(coa) ~= 'table' then
 			return
@@ -93,17 +151,19 @@ do
 		end
 
 		for ctry_key, ctry_data in ipairs(coa.country) do
-			self:__processCountry(side, ctry_data)
+			self:__processCountry(side, ctry_data, names)
 		end
 	end
-	function Template:__processCountry(side, ctry)
+	function Template:__processCountry(side, ctry, names)
 		local categories = {"ship", "vehicle", "air"}
 		local ctx = {}
 		ctx.side      = side
 		ctx.category  = "none"
 		ctx.countryid = ctry.id
+		ctx.names     = names
+		--ctx.tpl       = self
 
-		for i, cat in iparis(categories) do
+		for i, cat in ipairs(categories) do
 			if ctry[cat] and type(ctry[cat]) == 'table' and
 			   ctry[cat].group then
 				ctx.category = cat
@@ -122,6 +182,8 @@ do
 					     ctx)
 		end
 	end
+	-- TODO: vv - this function could eventually be removed with a
+	-- generic like utils.foreach()
 	function Template:__processGroups(list, fcn, ctx)
 		for idx, data in ipairs(list) do
 			fcn(self, ctx, data)
@@ -132,14 +194,13 @@ do
 
 		self:__createTable(ctx)
 
-		tbl.data        = utils.copy(grp.units[1])
+		tbl.data        = grp.units[1]
 		tbl.data.dead   = grp.dead
 		tbl.data.name   = self.name .. " static " ..
-				  #self[ctx.side][ctx.category]
-
-		tbl.countryid = ctx.countryid
+				  #self.tpldata[ctx.side][ctx.category]
 		-- delete unneeded fields
 		tbl.data.unitId = nil
+		tbl.countryid = ctx.countryid
 
 		-- TODO: setup metadata like parsing group/unit names
 		-- to determine how a much of the group needs to be
@@ -157,29 +218,68 @@ do
 		-- 	unit's state is.
 		-- tbl.deadstate =
 
-		table.insert(self[ctx.side][ctx.category], tbl)
+		table.insert(self.tpldata[ctx.side][ctx.category], tbl)
 	end
 	function Template:__addOneGroup(ctx, grp)
-		
-	end
+		local tbl = {}
 
+		self:__createTable(ctx)
+
+		tbl.data = grp
+		overrideGroupOptions(tbl.data)
+		utils.foreach(tbl.data.units,
+			      ipairs,
+			      overrideUnitOptions,
+			      ctx)
+		utils.foreach(tbl.data.route.points,
+			      ipairs,
+			      overrideName,
+			      ctx)
+		-- TODO: setup metadata like parsing group/unit names
+		tbl.countryid = ctx.countryid
+		table.insert(self.tpldata[ctx.side][ctx.category], tbl)
+	end
 	function Template:__createTable(ctx)
-		if self[ctx.side] then
-			if self[ctx.side][ctx.category] == nil then
-				self[ctx.side][ctx.category] = {}
+		local data = self.tpldata
+		if data[ctx.side] then
+			if data[ctx.side][ctx.category] == nil then
+				data[ctx.side][ctx.category] = {}
 			end
 		else
-			self[ctx.side] = {}
-			self[ctx.side][ctx.category] = {}
+			data[ctx.side] = {}
+			data[ctx.side][ctx.category] = {}
 		end
 	end
 
 	function Template:spawn()
+		local ctx = {}
+
+		for coa_key, coa_data in pairs(self.tpldata) do
+			for cat_idx, cat_data in ipairs(coa_data) do
+				if cat_idx == 'static' then
+					utils.foreach(cat_data,
+						      self.__spawnStatic,
+						      ipairs,
+						      cat_idx)
+				else
+					utils.foreach(self.tpldata,
+						      self.__spawnGroup,
+						      ipairs,
+						      cat_idx)
+				end
+			end
+		end
 	end
-	function Template:spawnLocation(pos, rotation)
+	function Template:__spawnGroup(id, group, category)
+		utils.debug("spawnGroup")
+		coalition.addGroup(group.countryid, category, group.data)
 	end
-	function Template:__spawnGroups()
+	function Template:__spawnStatic(id, static, unused)
+		utils.debug("spawnStatic")
+		coalition.addStaticObject(static.countryid, static.data)
 	end
-	function Template:__spawnStatics()
-	end
+
+	return {
+		["Template"] = Template,
+	}
 end

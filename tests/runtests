@@ -1,0 +1,12 @@
+#!/bin/sh
+
+set -e
+
+for t in test-*.lua; do
+	result="PASS"
+	LUA_PATH=${LUA_PATH} lua ${t}
+	if test $? -ne 0; then
+		result="FAIL"
+	fi
+	echo "${result}: ${t}"
+done
