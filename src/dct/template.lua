@@ -44,6 +44,14 @@ do
 	local utils    = require("libs.utils")
 	--local settings = require("dct.settings")
 
+	local categorymap = {
+		["HELICOPTER"] = 'HELICOPTER',
+		["SHIP"]       = 'SHIP',
+		["VEHICLE"]    = 'GROUND_UNIT',
+		["PLANE"]      = 'AIRPLANE',
+		["STATIC"]     = 'STRUCTURE',
+	}
+
 	local function lookupname(name, namelist)
 		namelist = namelist or {}
 		if namelist[name] ~= nil then
@@ -81,7 +89,9 @@ do
 		assert(id)
 		assert(group)
 		assert(category)
-		coalition.addGroup(group.countryid, category, group.data)
+		coalition.addGroup(group.countryid,
+				   Unit.Category[categorymap[string.upper(category)]],
+				   group.data)
 	end
 	local function spawnStatic(id, static)
 		assert(id)
@@ -150,14 +160,14 @@ do
 		end
 	end
 	function Template:__processCountry(side, ctry, names)
-		local categories = {"ship", "vehicle", "air"}
 		local ctx = {}
 		ctx.side      = side
 		ctx.category  = "none"
 		ctx.countryid = ctry.id
 		ctx.names     = names
 
-		for i, cat in ipairs(categories) do
+		for cat, _ in pairs(categorymap) do
+			cat = string.lower(cat)
 			if ctry[cat] and type(ctry[cat]) == 'table' and
 			   ctry[cat].group then
 				ctx.category = cat
@@ -229,8 +239,18 @@ do
 			      ctx)
 		tbl.countryid = ctx.countryid
 		-- TODO: setup metadata like parsing group/unit names
-		-- TODO: now override group/unit names to be unique to the
-		-- 	 template
+
+
+		-- now override group/unit names to be unique to the
+		-- template
+		tbl.data.name = self.name .. " " .. ctx.category .. " " ..
+				#self.tpldata[ctx.side][ctx.category]
+		utils.foreach(tbl.data.units,
+			ipairs,
+			function(i, obj, base)
+				obj.name = base .. "-" .. i
+			end,
+			tbl.data.name)
 		table.insert(self.tpldata[ctx.side][ctx.category], tbl)
 	end
 	function Template:__createTable(ctx)

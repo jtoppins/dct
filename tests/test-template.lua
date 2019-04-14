@@ -1,17 +1,24 @@
 require("os")
-
-local template = require("dct.template")
+require("testlibs.test")
+require("testlibs.dcsstubs")
 local json = require("libs.json")
+local template = require("dct.template")
+
+local check = {}
+check.spawngroups  = 0
+check.spawnstatics = 0
 
 coalition = {}
 function coalition.addGroup(cntry, cat, data)
-	print("SPAWN: spawn group, type:" .. cat .. ", name: " .. data.name)
-	--print(json:encode_pretty(data))
+	test.debug("SPAWN: spawn group, type:" .. cat .. ", name: " .. data.name)
+	test.debug(json:encode_pretty(data))
+	check.spawngroups = check.spawngroups + 1
 end
 
 function coalition.addStaticObject(cntry, data)
-	print("SPAWN: spawn static, type:" .. type(data) .. ", name: " .. data.name)
-	--print(json:encode_pretty(data))
+	test.debug("SPAWN: spawn static, type:" .. type(data) .. ", name: " .. data.name)
+	test.debug(json:encode_pretty(data))
+	check.spawnstatics = check.spawnstatics + 1
 end
 
 local function main()
@@ -19,8 +26,9 @@ local function main()
 	local dctfile = "./data/test.dct"
 
 	local t = template.Template(stmfile, dctfile)
-	--print(json:encode_pretty(t))
 	t:spawn()
+	assert(check.spawngroups == 1, "group spawn broken")
+	assert(check.spawnstatics == 22, "static spawn broken")
 	return 0
 end
 
