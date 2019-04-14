@@ -1,3 +1,4 @@
+-- SPDX-License-Identifier: LGPL-3.0
 --[[
 Top level initialization and kickoff package
 
