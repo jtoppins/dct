@@ -51,25 +51,28 @@ do
 		end
 		return name
 	end
-	local function overrideGroupOptions(grp)
+	local function overrideGroupOptions(grp, ctx)
 		local opts = {
 			visible        = true,
 			uncontrollable = true,
 			uncontrolled   = true,
-			hidden         = true,
+			hidden         = false,
 			lateActivation = false,
 		}
 
 		for k, v in pairs(opts) do
 			if grp[k] ~= nil then grp[k] = v end
 		end
+		grp.name    = lookupname(grp.name, ctx.names)
 		grp.groupId = nil
+
 	end
 	local function overrideUnitOptions(key, unit, ctx)
 		if unit.playerCanDriver ~= nil then
 			unit.playerCanDrive = false
 		end
 		unit.unitId = nil
+		unit.name = lookupname(unit.name, ctx.names)
 	end
 	local function overrideName(key, obj, ctx)
 		obj.name = lookupname(obj.name, ctx.names)
@@ -215,7 +218,7 @@ do
 		self:__createTable(ctx)
 
 		tbl.data = grp
-		overrideGroupOptions(tbl.data)
+		overrideGroupOptions(tbl.data, ctx)
 		utils.foreach(tbl.data.units,
 			      ipairs,
 			      overrideUnitOptions,
