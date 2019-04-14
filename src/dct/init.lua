@@ -22,13 +22,11 @@ function init.init (dctsettings)
   --If no, generate a new one and save it out
   
   --Call some function that kicks off the campaign engine
-  env.info("About to test this testSpawn")
   init.testSpawn()
   return true
 end
 
 function init.testSpawn ()
-  env.info("Testing this testSpawn")
   local stmFile = lfs.writedir() .. "DctTemplates\\test.stm"
   local dctfile = lfs.writedir() .. "DctTemplates\\test.dct"
   
