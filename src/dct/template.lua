@@ -40,23 +40,8 @@ types (taken from the NATO Joint Military Symbology list):
 require("os")
 
 do
-	local debug = os.getenv("DCT_DEBUG")
-	local utils = {}
-	function utils.foreach(array, itr, fcn, ctx)
-		for k, v in itr(array) do
-			fcn(k, v, ctx)
-		end
-	end
-
-	function utils.debug(str)
-		if debug == nil then
-			return
-		end
-		print("DEBUG: "..str)
-	end
-
 	local class    = require("libs.class")
-	--local utils    = require("libs.utils")
+	local utils    = require("libs.utils")
 	--local settings = require("dct.settings")
 
 	local function lookupname(name, namelist)
@@ -168,7 +153,6 @@ do
 		ctx.category  = "none"
 		ctx.countryid = ctry.id
 		ctx.names     = names
-		--ctx.tpl       = self
 
 		for i, cat in ipairs(categories) do
 			if ctry[cat] and type(ctry[cat]) == 'table' and
@@ -189,8 +173,6 @@ do
 					     ctx)
 		end
 	end
-	-- TODO: vv - this function could eventually be removed with a
-	-- generic like utils.foreach()
 	function Template:__processGroups(list, fcn, ctx)
 		for idx, data in ipairs(list) do
 			fcn(self, ctx, data)
@@ -242,8 +224,10 @@ do
 			      ipairs,
 			      overrideName,
 			      ctx)
-		-- TODO: setup metadata like parsing group/unit names
 		tbl.countryid = ctx.countryid
+		-- TODO: setup metadata like parsing group/unit names
+		-- TODO: now override group/unit names to be unique to the
+		-- 	 template
 		table.insert(self.tpldata[ctx.side][ctx.category], tbl)
 	end
 	function Template:__createTable(ctx)
