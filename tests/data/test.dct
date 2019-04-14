@@ -10,7 +10,7 @@ metadata = {
     },
     ["objtype"] = "ammodump",
     ["region"]  = "some-region",
-    ["init"]    = "always|atleastone|random",
+    ["init"]    = "always|atleastone|random|onlyone",
     ["respawn"] = {
         ["type"]  = "timed|land|death",
         ["limit"] = 3,
