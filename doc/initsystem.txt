@@ -1,0 +1,96 @@
+Kinds of things that would normally be in a mission:
+* player/client groups
+* map defined bases belonging to a side
+* mission defined bases(FARPS) belonging to a side
+* player support units; tankers, AWACS/EWR, FAC
+* air defense (red & blue)
+* ground forces
+* strike targets
+* AI flights
+
+
+Things that must be in the mission file due to scripting limitations:
+* player slots
+* Anything that wants to be connected to the DCS resource
+  system; FARPS, warehouses
+* <not sure of what else??>
+
+
+This leads to various types of templates.
+Types of templates:
+
+* base
+	- base templates list defensive units to be spawned based on
+	  whom controls the base. Since base occupation state is
+	  something that will be tracked in the game state these
+	  templates will need to be read in every time.
+
+* facility
+	- facilities spawn a set of groups(air, land, and/or sea)
+	  belonging to a single side that generally do not move.
+	  These types of templates would generally represent
+	  strategic targets; factories, ports, ammo dumps, etc.
+	  These kinds of templates only need to be used once
+	  per game state reset as the individual states of the
+	  statics and/or units belonging to the template can be
+	  tracked and restored.
+	  Also there is the idea that facilities can be "fixed" or
+	  "movable", by this we mean a movable template is one that
+	  can be placed anywhere on the map and is not intended to
+	  only ever spawn in one specific place [Not implemented,
+	  may not need?]
+
+* support
+	- a support template is one that defines where and what kind of
+	  support unit will provide a service to a player; there are
+	  3 main sub-types; tanker, ewr/awacs, fac
+	  Support templates are special because they will likely need to
+	  be respawned.
+
+* mission specific
+	-
+
+* generic group
+	-
+
+* air defense
+	- a template that will spawn some kind of air defense group.
+	  The template is special because groups spawned of this type
+	  will be given control to a side's air defense AI.
+
+
+Some other special higher level template types (ideas mainly):
+
+* squadron
+	- a kind of template that defines a "squadron". Squadrons are
+	  assigned to a side's Airforce Commander (JFACC) to be utilized
+	  by the stretigic AI for mission taskings. AI squadrons would
+	  be limited in number and belong to a specific airbase.
+
+* battalion ORBAT
+	- a kind of template that defines a ground or helo AI battalion
+	  ORBAT. These would be assigned to the ground commander AI.
+
+
+The point of listing these different types of templates is because
+this naturally leads into a directory structure for the templates.
+
+For example bases probable need to look something like this:
+
+<template-root>
+  + bases
+     + <base-name>
+        <tmpl-name>.{stm,dct}
+
+An example facility directory structure would be:
+
+<template-root>
+  + facilities
+     + fixed
+        <tmpl-name>.{stm,dct}
+     + movable
+        <tmpl-name>.{stm,dct}
+
+The benefit of having templates in a directory structure is we only need
+to re-read a subset of them if needed. And only need to keep certain sets
+in memory after they have spawned their groups.
