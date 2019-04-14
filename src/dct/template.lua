@@ -89,6 +89,18 @@ do
 	local function overrideName(key, obj, ctx)
 		obj.name = lookupname(obj.name, ctx.names)
 	end
+	local function spawnGroup(id, group, category)
+		assert(id)
+		assert(group)
+		assert(category)
+		coalition.addGroup(group.countryid, category, group.data)
+	end
+	local function spawnStatic(id, static)
+		assert(id)
+		assert(static)
+		coalition.addStaticObject(static.countryid, static.data)
+	end
+
 
 	--[[
 	--  Template class
@@ -106,26 +118,21 @@ do
 	--  }
 	--]]
 	local Template = class()
-	function Template:__init(stmfile, dtcfile)
+	function Template:__init(stmfile, dctfile)
 		local rc  = false
 
 		rc = pcall(dofile, stmfile)
 		assert(rc, "failed to parse: " .. stmfile)
-		utils.debug("here0")
-		--rc = pcall(dofile, dctfile)
-		utils.debug("here1")
-		--assert(rc, "failed to parse: " .. dctfile)
-		utils.debug("here1-1")
+		rc = pcall(dofile, dctfile)
+		assert(rc, "failed to parse: " .. dctfile)
 
 		assert(staticTemplate ~= nil)
-		--assert(metadata ~= nil)
+		assert(metadata ~= nil)
 
 		local tpl = staticTemplate
-		--tpl.metadata = metadata
+		tpl.metadata = metadata
 		staticTemplate = nil
-		--metadata = nil
-
-		utils.debug("here2")
+		metadata = nil
 
 		self.name    = lookupname(tpl.name, tpl.localization.DEFAULT)
 		self.theatre = tpl.theatre
@@ -136,9 +143,9 @@ do
 			self:__processCoalition(coa_key, coa_data,
 						tpl.localization.DEFAULT)
 		end
-		--for key, data in pairs(tpl.dct) do
-		--	self[key] = data
-		--end
+		for key, data in pairs(tpl.metadata) do
+			self[key] = data
+		end
 	end
 	function Template:__processCoalition(side, coa, names)
 		if side ~= 'red' and side ~= 'blue' and
@@ -252,31 +259,21 @@ do
 	end
 
 	function Template:spawn()
-		local ctx = {}
-
 		for coa_key, coa_data in pairs(self.tpldata) do
-			for cat_idx, cat_data in ipairs(coa_data) do
+			for cat_idx, cat_data in pairs(coa_data) do
 				if cat_idx == 'static' then
 					utils.foreach(cat_data,
-						      self.__spawnStatic,
 						      ipairs,
-						      cat_idx)
+						      spawnStatic,
+						      nil)
 				else
-					utils.foreach(self.tpldata,
-						      self.__spawnGroup,
+					utils.foreach(cat_data,
 						      ipairs,
+						      spawnGroup,
 						      cat_idx)
 				end
 			end
 		end
-	end
-	function Template:__spawnGroup(id, group, category)
-		utils.debug("spawnGroup")
-		coalition.addGroup(group.countryid, category, group.data)
-	end
-	function Template:__spawnStatic(id, static, unused)
-		utils.debug("spawnStatic")
-		coalition.addStaticObject(static.countryid, static.data)
 	end
 
 	return {
