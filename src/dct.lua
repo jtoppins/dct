@@ -1,20 +1,12 @@
 -- SPDX-License-Identifier: LGPL-3.0
-do
-    --[[
-    -- test and verify the server's environment supports the calls
-    -- required by DCT framework
-    --]]
-    local assertmsg = "DCT requires DCS mission scripting environment to be" ..
-                " modified, the file needing to be changed can be found at" ..
-                " $DCS_ROOT\\Scripts\\MissionScripting.lua. Comment out the" ..
-                " removal of lfs and io and the setting of 'require' to nil."
-    if not lfs or not io or not require then
-        assert(false, assertmsg)
-    end
 
-    local addpath = lfs.writedir() .. "Scripts\\?.lua;"
-    package.path = package.path .. ";" .. addpath
-    local x = require("dct.init")
-    local settings = dctsettings or {}
-    x.init(settings)
-end
+local _G   = _G
+local _ENV = nil
+local dct = {
+    _VERSION = "0.1",
+    _DESCRIPTION = "DCT: DCS Dynamic Campaign Tools",
+    _COPYRIGHT = "Copyright (c) 2019 Jonathan Toppins"
+}
+
+_G.dct = dct
+return dct
