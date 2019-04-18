@@ -8,5 +8,8 @@ local dct = {
     _COPYRIGHT = "Copyright (c) 2019 Jonathan Toppins"
 }
 
+dct.init     = require("dct.init")
+dct.template = require("dct.template")
+
 _G.dct = dct
 return dct
