@@ -87,9 +87,9 @@ do
 		local rc  = false
 
 		rc = pcall(dofile, stmfile)
-		assert(rc, "failed to parse: " .. stmfile)
+		assert(rc, "failed to parse: stmfile, of type "..type(stmfile))
 		rc = pcall(dofile, dctfile)
-		assert(rc, "failed to parse: " .. dctfile)
+		assert(rc, "failed to parse: dctfile, of type "..type(dctfile))
 
 		assert(staticTemplate ~= nil)
 		assert(metadata ~= nil)
