@@ -55,7 +55,7 @@ end
 
 function init.testSpawn ()
 	local stmFile = lfs.writedir() .. "DctTemplates\\test.stm"
-	local dctfile = lfs.writedir() .. "DctTemplates\\test.dct"
+	local dctFile = lfs.writedir() .. "DctTemplates\\test.dct"
 
 	local t = template.Template(stmFile, dctFile)
 	t:spawn()
