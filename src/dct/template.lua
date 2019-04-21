@@ -171,7 +171,7 @@ function Template:__addOneStatic(ctx, grp)
 
 	tbl.data        = grp.units[1]
 	tbl.data.dead   = grp.dead
-	tbl.data.name   = self.name .. " static " ..
+	tbl.data.name   = self.name .. " " .. ctx.side .. " static " ..
 			  #self.tpldata[ctx.side][ctx.category]
 	-- delete unneeded fields
 	tbl.data.unitId = nil
@@ -216,8 +216,8 @@ function Template:__addOneGroup(ctx, grp)
 
 	-- now override group/unit names to be unique to the
 	-- template
-	tbl.data.name = self.name .. " " .. ctx.category .. " " ..
-			#self.tpldata[ctx.side][ctx.category]
+	tbl.data.name = self.name .. " " .. ctx.side .. " " ..
+			ctx.category .. " " .. #self.tpldata[ctx.side][ctx.category]
 	utils.foreach(tbl.data.units,
 		ipairs,
 		function(i, obj, base)
