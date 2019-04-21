@@ -9,6 +9,11 @@ require("os")
 local class    = require("libs.class")
 local utils    = require("libs.utils")
 
+local side = {
+	["RED"]  = "red",
+	["BLUE"] = "blue",
+}
+
 local categorymap = {
 	["HELICOPTER"] = 'HELICOPTER',
 	["SHIP"]       = 'SHIP',
@@ -69,6 +74,22 @@ local function spawnStatic(id, static)
 	coalition.addStaticObject(static.countryid, static.data)
 end
 
+local function spawn(coa_data)
+	for cat_idx, cat_data in pairs(coa_data) do
+		if cat_idx == 'static' then
+			utils.foreach(cat_data,
+				      ipairs,
+				      spawnStatic,
+				      nil)
+		else
+			utils.foreach(cat_data,
+				      ipairs,
+				      spawnGroup,
+				      cat_idx)
+		end
+	end
+end
+
 
 --[[
 --  Template class
@@ -114,6 +135,9 @@ function Template:__init(stmfile, dctfile)
 	for key, data in pairs(tpl.metadata) do
 		self[key] = data
 	end
+
+	-- TODO: validate template data against metadata and set
+	-- approperate default spawn function
 end
 
 function Template:__processCoalition(side, coa, names)
@@ -240,25 +264,25 @@ function Template:__createTable(ctx)
 end
 
 -- PUBLIC INTERFACE
+--
+-- TODO: create additional spawn methods
+-- member option: uniquenames - if true will override the
+--		per-group and unit names making sure they are unique
+--		within the mission
+
+function Template:spawnSide(side)
+	spawn(self.tpldata[side])
+end
 
 function Template:spawn()
 	for coa_key, coa_data in pairs(self.tpldata) do
-		for cat_idx, cat_data in pairs(coa_data) do
-			if cat_idx == 'static' then
-				utils.foreach(cat_data,
-					      ipairs,
-					      spawnStatic,
-					      nil)
-			else
-				utils.foreach(cat_data,
-					      ipairs,
-					      spawnGroup,
-					      cat_idx)
-			end
-		end
+		spawn(coa_data)
 	end
 end
 
 return {
 	["Template"] = Template,
+	["enum"]     = {
+		["side"] = side,
+	},
 }

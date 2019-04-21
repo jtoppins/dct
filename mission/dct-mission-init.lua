@@ -11,8 +11,13 @@ if not lfs or not io or not require then
 	assert(false, assertmsg)
 end
 
-local addpath = lfs.writedir() .. "Scripts\\?.lua;"
-package.path = package.path .. ";" .. addpath
+-- Provide some default settings if the mission maker doesn't want
+-- to add any
+local s = dctsettings or {}
+if s.luapath == nil then
+	s.luapath = lfs.writedir() .. "Scripts\\?.lua;"
+end
+
+package.path = package.path .. ";" .. s.luapath
 require("dct")
-local settings = dctsettings or {}
-dct.init(settings)
+dct.init(s)
