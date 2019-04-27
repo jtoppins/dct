@@ -1,3 +1,51 @@
+=== Program flow
+
+init -> game loop <-+
+          |         |
+          +---------+
+
+=== Init
+
+
+gamestate
+	* list of all spawned 'groups'
+
+
+Template
+	* data:
+		- list of 'groups' to spawn
+	* methods:
+		- spawn all groups
+		- spawn one side only
+		- spawn groups with unique names
+
+	- spawn returns
+		- lists of group names
+
+Objective
+	Represents an objective within the game world.
+	- has a template that represents the objective
+	- knows if the template has been spawned yet
+	- maintains state on if the objective has been
+		completed
+
+Region
+	- list of objectives
+	- state tracking if a region is complete
+	- connection graph to other regions
+
+
+Missing:
+* mission level configuration file that,
+	- describes how certian classes of templates will be spawned,
+		if no mission specific map exists use the default DCT map
+
+Thoughts on randomly spawning air defense units:
+	- if we randomly spawn IADS units based on probability we cannot
+	  guarentee a predictable amount of coverage
+
+Spawn objects based on region
+
 Kinds of things that would normally be in a mission:
 * player/client groups
 * map defined bases belonging to a side
