@@ -36,7 +36,7 @@ end
 local Theater = class()
 function Theater:__init(theaterpath)
 	self.path      = theaterpath
-	self.pathstate = lfs.writedir() .. env.mission.theater ..
+	self.pathstate = lfs.writedir() .. env.mission.theatre ..
 		env.getValueDictByKey(env.mission.sortie) .. ".state"
 	self.state     = state.GameState(self, self.pathstate)
 

@@ -6,7 +6,7 @@ end
 
 env = {}
 env.mission = {}
-env.mission.theater = "Test Theater"
+env.mission.theatre = "Test Theater"
 env.mission.sortie  = "test mission"
 function env.getValueDictByKey(s)
 	return s
