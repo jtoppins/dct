@@ -1,0 +1,9 @@
+region = {
+	["name"]   = "Test region",
+	["limits"] = {
+		["ammodump"] = {
+			["min"] = 1,
+			["max"] = 2,
+		},
+	},
+}

@@ -8,8 +8,12 @@ local dct = {
     _COPYRIGHT = "Copyright (c) 2019 Jonathan Toppins"
 }
 
-dct.init     = require("dct.init")
-dct.template = require("dct.template")
+dct.init      = require("dct.init")
+dct.template  = require("dct.template")
+dct.region    = require("dct.region")
+dct.theater   = require("dct.theater")
+dct.objective = require("dct.objective")
+dct.state     = require("dct.state")
 
 _G.dct = dct
 return dct

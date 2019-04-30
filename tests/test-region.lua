@@ -5,10 +5,9 @@ local json = require("libs.json")
 local region = require("dct.region")
 
 local function main()
-	local regiondir = "./data/region1"
+	local regiondir = "./data/mission/region1"
 
 	local r = region.Region(regiondir)
-	print(json:encode_pretty(r))
 	return 0
 end
 

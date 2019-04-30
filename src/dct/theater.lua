@@ -1,15 +1,23 @@
 --[[
 -- SPDX-License-Identifier: LGPL-3.0
 --
--- Provides functions for defining a region.
+-- Provides functions for defining a theater.
 --]]
 
 require("io")
 require("lfs")
-local class    = require("libs.class")
-local utils    = require("libs.utils")
-local region   = require("dct.region")
+local class  = require("libs.class")
+local region = require("dct.region")
+local state  = require("dct.state")
 
+local function createGoalStates(goals)
+	local states = {}
+
+	-- TODO: translate goal definitions written in the lua files to any
+	-- needed internal state.
+
+	return states
+end
 
 --[[
 --  Theater class
@@ -27,19 +35,28 @@ local region   = require("dct.region")
 --]]
 local Theater = class()
 function Theater:__init(theaterpath)
-	self.path = theaterpath
+	self.path      = theaterpath
+	self.pathstate = lfs.writedir() .. env.mission.theater ..
+		env.getValueDictByKey(env.mission.sortie) .. ".state"
+	self.state     = state.GameState(self, self.pathstate)
+
 	self:__loadGoals()
 	self:__loadRegions()
 
-	-- TODO: [maybe] if a theater state exists load this previous state
+	if self.state:shouldGenerate() then
+		-- generate a new theater
+		for name, r in pairs(self.regions) do
+			self.state:addObjectives(name, r:generate())
+		end
+	end
+
+	self.state:spawnActive()
 end
 
--- a description of the world state that signafies a particular side wins
+-- a description of the world state that signifies a particular side wins
 function Theater:__loadGoals()
 	local goalpath = self.path .. "/theater.goals"
-	local rc = false
-
-	rc = pcall(dofile, goalpath)
+	local rc = pcall(dofile, goalpath)
 	assert(rc, "failed to parse: theater goal file, '" ..
 			goalpath .. "' path likely doesn't exist")
 	assert(theatergoals ~= nil, "no theatergoals structure defined")
@@ -56,7 +73,7 @@ function Theater:__loadRegions()
 			local fpath = self.path .. "/" .. filename
 			local fattr = lfs.attributes(fpath)
 			if fattr.mode == "directory" then
-				local r = Region(fpath)
+				local r = region.Region(fpath)
 				assert(self.regions[r.name] == nil, "duplicate regions " ..
 						"defined for theater: " .. self.path)
 				self.regions[r.name] = r
@@ -65,9 +82,35 @@ function Theater:__loadRegions()
 	end
 end
 
--- generate a new theater
-function Theater:generate()
-	-- TODO: [maybe] foreach region determine which facilities will spawn
-
-	-- 
+function Theater:onEvent(event)
+	-- TODO: write this
+	--	probably best to support a registration system where other objects
+	--	can register a function for a specific event; which receives two
+	--	arguments: context, event
 end
+
+function Theater:exec(time)
+	local rescheduletime = nil
+
+	-- TODO: write this
+
+	return rescheduletime
+end
+
+return {
+	["Theater"] = Theater,
+}
+
+--[[
+world state
+	* <side>
+		- pilot losses
+		- objective type stats
+		- bool primary_objectives_left()
+
+
+	Theater has a state
+		a state consists of:
+			* objectives
+			* ??
+--]]

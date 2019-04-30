@@ -6,9 +6,10 @@
 
 require("io")
 require("lfs")
-local class    = require("libs.class")
-local utils    = require("libs.utils")
-local template = require("dct.template")
+local class     = require("libs.class")
+local utils     = require("libs.utils")
+local template  = require("dct.template")
+local objective = require("dct.objective")
 
 local function addTemplate(tbl, lvl1, lvl2, val)
 	if tbl[lvl1] then
@@ -96,11 +97,11 @@ function Region:__init(regionpath)
 		["path"] = regionpath,
 	}
 
-	self:__readRegionDef(regionpath.."/region.def")
+	self:__loadMetadata(regionpath.."/region.def")
 	utils.foreach(tpldirs, pairs, checkExists, ctx)
 end
 
-function Region:__readRegionDef(regiondefpath)
+function Region:__loadMetadata(regiondefpath)
 	local rc = false
 	local msg = "none"
 
@@ -113,10 +114,66 @@ function Region:__readRegionDef(regiondefpath)
 	region = nil
 
 	rc, msg = validateRegionStruct(r)
-	assert(rc, msg .. ", " .. regiondefpath)
+	assert(rc, msg .. "; " .. regiondefpath)
 	for key, data in pairs(r) do
 		self[key] = data
 	end
+end
+
+function Region:generate()
+	local objs = {}
+
+	-- TODO: generate base objectives
+
+	if self.facility then
+		local json = require("libs.json")
+		-- print("region.generate() self.facility start")
+		-- print(json:encode_pretty(self.facility))
+		-- print("region.generate() self.facility end")
+
+		-- build random lookup table to be used to randomly select
+		-- templates
+		--
+		-- tplnames = {
+		--     <type> = {
+		--         [#] = "<name>"
+		--     },
+		-- }
+		local tplnames = {}
+		for name, tpl in pairs(self.facility) do
+			if tplnames[tpl.objtype] == nil then
+				tplnames[tpl.objtype] = {}
+			end
+			table.insert(tplnames[tpl.objtype], name)
+		end
+		-- print("region.generate() tplnames start")
+		-- print(json:encode_pretty(tplnames))
+		-- print("region.generate() tplnames end")
+
+		-- print("region.generate() limits start")
+		-- print(json:encode_pretty(self.limits))
+		-- print("region.generate() limits end")
+
+		-- generate facility objectives
+		for objtype, limits in pairs(self.limits) do
+			limits.limit = math.random(limits.min, limits.max)
+			limits.current = 0
+
+			while tplnames[objtype] ~= nil and #tplnames[objtype] >= 1 do
+				local idx = math.random(1, #tplnames[objtype])
+				local tpl = self.facility[tplnames[objtype][idx]]
+				local obj = objective.Objective(tpl)
+				table.insert(objs, obj)
+				table.remove(tplnames[objtype], idx)
+				limits.current = 1 + limits.current
+				if limits.current == limits.limit then
+					break
+				end
+			end
+		end
+	end
+
+	return objs
 end
 
 return {

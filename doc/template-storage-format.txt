@@ -1,0 +1,22 @@
+== Mission Template Directory Format
+
+DCT relies on content that can be built directly in the mission editor, these
+individuals need little to no programming stills to provide content to a DCT
+enabled mission.
+
+The directory hierarchy is:
+
+    + <Mission Template Directory>
+      - theater.goals
+      + <Region Directory 1>
+        - region.def
+        + [bases]
+        + [facilities]
+        + [missions]
+      + <Region Directory N>
+        - region.def
+        + [bases]
+        + [facilities]
+        + [missions]
+
+
