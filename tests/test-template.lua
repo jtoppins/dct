@@ -28,7 +28,7 @@ local function main()
 	local t = template.Template(stmfile, dctfile)
 	t:spawn()
 	assert(check.spawngroups == 1, "group spawn broken")
-	assert(check.spawnstatics == 22, "static spawn broken")
+	assert(check.spawnstatics == 11, "static spawn broken")
 	return 0
 end
 

@@ -167,18 +167,16 @@ function Template:__processCountry(side, ctry, names)
 		if ctry[cat] and type(ctry[cat]) == 'table' and
 		   ctry[cat].group then
 			ctx.category = cat
-			self:__processGroups(ctry[cat].group,
-					     self.__addOneGroup,
-					     ctx)
+			if cat == "static" then
+				self:__processGroups(ctry.static.group,
+						self.__addOneStatic,
+						ctx)
+			else
+				self:__processGroups(ctry[cat].group,
+						self.__addOneGroup,
+						ctx)
+			end
 		end
-	end
-
-	if ctry.static and type(ctry.static) == 'table' and
-	   ctry.static.group then
-		ctx.category = "static"
-		self:__processGroups(ctry.static.group,
-				     self.__addOneStatic,
-				     ctx)
 	end
 end
 
