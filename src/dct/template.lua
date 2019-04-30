@@ -30,6 +30,50 @@ local function lookupname(name, namelist)
 	return name
 end
 
+local function checkclass(val)
+	local allowed = {
+		"cap",
+		"cas",
+		"strike",
+	}
+
+	for k, v in ipairs(allowed) do
+		if v == val then
+			return true
+		end
+	end
+	return false
+end
+
+local function checktype(val)
+	local allowed = {
+		"airbase",
+		"ammodump",
+		"armor",
+		"bunker",
+		"c2",
+		"checkpoint",
+		"depot",
+		"ewr",
+		"factory",
+		"farp",
+		"fueldump",
+		"missile",
+		"oca",
+		"port",
+		"sam",
+		"sea",
+		"supply",
+		"warehouse",
+	}
+
+	for k, v in ipairs(allowed) do
+		if v == val then
+			return true
+		end
+	end
+end
+
 local function overrideGroupOptions(grp, ctx)
 	local opts = {
 		visible        = true,
@@ -108,20 +152,14 @@ end
 --]]
 local Template = class()
 function Template:__init(stmfile, dctfile)
-	local rc  = false
+	self.path = stmfile
 
-	rc = pcall(dofile, stmfile)
+	local rc = pcall(dofile, stmfile)
 	assert(rc, "failed to parse: stmfile, of type "..type(stmfile))
-	rc = pcall(dofile, dctfile)
-	assert(rc, "failed to parse: dctfile, of type "..type(dctfile))
-
 	assert(staticTemplate ~= nil)
-	assert(metadata ~= nil)
 
 	local tpl = staticTemplate
-	tpl.metadata = metadata
 	staticTemplate = nil
-	metadata = nil
 
 	self.name    = lookupname(tpl.name, tpl.localization.DEFAULT)
 	self.theatre = tpl.theatre
@@ -132,12 +170,39 @@ function Template:__init(stmfile, dctfile)
 		self:__processCoalition(coa_key, coa_data,
 					tpl.localization.DEFAULT)
 	end
-	for key, data in pairs(tpl.metadata) do
-		self[key] = data
-	end
 
-	-- TODO: validate template data against metadata and set
-	-- approperate default spawn function
+	self:__loadMetadata(dctfile)
+end
+
+function Template:__loadMetadata(dctfile)
+	local requiredkeys = {
+		["class"] = {
+			-- mission class; cap, cas, strike, etc
+			["type"]  = "string",
+			["check"] = checkclass,
+		},
+		["objtype"]  = {
+			-- kind of objective; ammodump, factory, etc
+			["type"]  = "string",
+			["check"] = checktype,
+		},
+	}
+
+	local rc = pcall(dofile, dctfile)
+	assert(rc, "failed to parse: dctfile, of type "..type(dctfile))
+	assert(metadata ~= nil)
+
+	-- validate metadata
+	for key, data in pairs(requiredkeys) do
+		if metadata[key] == nil or
+		   type(metadata[key]) ~= data["type"] or
+		   not data["check"](metadata[key]) then
+			assert(false, "invalid or missing option '"..key..
+			       "' in dct file; "..dctfile)
+		end
+		self[key] = metadata[key]
+	end
+	metadata = nil
 end
 
 function Template:__processCoalition(side, coa, names)
