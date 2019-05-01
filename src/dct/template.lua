@@ -65,6 +65,7 @@ local function checktype(val)
 		"sea",
 		"supply",
 		"warehouse",
+		"keepout",
 	}
 
 	for k, v in ipairs(allowed) do
@@ -176,11 +177,11 @@ end
 
 function Template:__loadMetadata(dctfile)
 	local requiredkeys = {
-		["class"] = {
+		--["class"] = {
 			-- mission class; cap, cas, strike, etc
-			["type"]  = "string",
-			["check"] = checkclass,
-		},
+		--	["type"]  = "string",
+		--	["check"] = checkclass,
+		--},
 		["objtype"]  = {
 			-- kind of objective; ammodump, factory, etc
 			["type"]  = "string",
