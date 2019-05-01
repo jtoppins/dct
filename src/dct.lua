@@ -16,5 +16,7 @@ dct.Region    = require("dct.region")
 dct.Theater   = require("dct.theater")
 dct.Objective = require("dct.objective")
 dct.GameState = require("dct.gamestate")
+dct.Profiler  = require("dct.profiling")
+dct.DebugStats= require("dct.debugstats")
 
 return dct

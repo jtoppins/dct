@@ -1,5 +1,10 @@
-require("lfs")
+--[[
+-- SPDX-License-Identifier: LGPL-3.0
+--
+-- Provides DCS stubs for the mission scripting environment.
+--]]
 
+require("lfs")
 function lfs.writedir()
 	return "./data"
 end
@@ -7,8 +12,9 @@ end
 function lfs.tempdir()
 	return "./data"
 end
+require("socket")
 
-env = {}
+local env = {}
 env.mission = {}
 env.mission.theatre = "Test Theater"
 env.mission.sortie  = "test mission"
@@ -19,8 +25,15 @@ end
 function env.warning(msg, showbox)
 	print(msg)
 end
+function env.info(msg, showbox)
+	print(msg)
+end
+function env.error(msg, showbox)
+	print(msg)
+end
+_G.env = env
 
-Unit = {}
+local Unit = {}
 Unit.Category = {
 	["AIRPLANE"]    = 0,
 	["HELICOPTER"]  = 1,
@@ -28,3 +41,10 @@ Unit.Category = {
 	["SHIP"]        = 3,
 	["STRUCTURE"]   = 4,
 }
+_G.Unit = Unit
+
+local timer = {}
+function timer.getTime()
+	return socket.gettime()
+end
+_G.timer = timer

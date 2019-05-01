@@ -2,7 +2,7 @@ require("os")
 require("testlibs.dcsstubs")
 local test = require("testlibs.test")
 local json = require("libs.json")
-local Theater = require("dct.theater")
+require("dct")
 
 local check = {}
 check.spawngroups  = 0
@@ -23,7 +23,7 @@ end
 
 local function main()
 	local theaterPath = "./data/mission"
-	local t = Theater(theaterPath)
+	local t = dct.Theater(theaterPath)
 	assert(check.spawngroups == 1, "group spawn broken")
 	assert(check.spawnstatics == 11, "static spawn broken")
 	return 0

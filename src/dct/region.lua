@@ -5,10 +5,12 @@
 --]]
 
 require("lfs")
-local class     = require("libs.class")
-local utils     = require("libs.utils")
-local Template  = require("dct.template")
-local Objective = require("dct.objective")
+local class      = require("libs.class")
+local utils      = require("libs.utils")
+local Template   = require("dct.template")
+local Objective  = require("dct.objective")
+local Logger     = require("dct.logger")
+local DebugStats = require("dct.debugstats")
 
 local function addTemplate(tbl, lvl1, lvl2, val)
 	if tbl[lvl1] then
@@ -26,7 +28,7 @@ end
 
 local function getTemplates(tpltype, dirname, ctx)
 	local tplpath = ctx.path .. "/" .. dirname
-	env.warning("===> Region: tplpath = "..tplpath)
+	ctx.cls.logger:debug("=> tplpath: "..tplpath)
 
 	for filename in lfs.dir(tplpath) do
 		if filename ~= "." and filename ~= ".." then
@@ -44,7 +46,7 @@ local function getTemplates(tpltype, dirname, ctx)
 					assert(addTemplate(ctx.cls, tpltype, t.name, t),
 						"duplicate template '".. t.name .. "' defined; " ..
 						fpath)
-					ctx.cls.dbgstats.numtemplates = ctx.cls.dbgstats.numtemplates + 1
+					ctx.cls.dbgstats:incstat(ctx.cls.name.."-templates", 1)
 				end
 			end
 		end
@@ -55,7 +57,7 @@ local function checkExists(tpltype, dirname, ctx)
 	local path = ctx.path .. "/" .. dirname
 	local attr = lfs.attributes(path)
 	if attr == nil or attr.mode ~= "directory" then
-		env.warning("===> Region.checkExists: path doesn't exist; "..path)
+		ctx.cls.logger:debug("=> checkExists: path doesn't exist; "..path)
 		return
 	end
 	getTemplates(tpltype, dirname, ctx)
@@ -96,12 +98,14 @@ function Region:__init(regionpath)
 		["cls"]  = self,
 		["path"] = regionpath,
 	}
-	self.dbgstats = {}
-	self.dbgstats.numtemplates = 0
 
+	self.logger   = Logger.getByName("region")
+	self.logger:debug("=> regionpath: "..regionpath)
 	self:__loadMetadata(regionpath.."/region.def")
+	self.dbgstats = DebugStats.getDebugStats()
+	self.dbgstats:registerStat(self.name.."-templates", 0,
+		self.name.."-template(s) loaded")
 	utils.foreach(tpldirs, pairs, checkExists, ctx)
-	env.warning("==> Region: loaded "..self.dbgstats.numtemplates.." templates")
 end
 
 function Region:__loadMetadata(regiondefpath)

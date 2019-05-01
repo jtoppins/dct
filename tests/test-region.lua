@@ -1,6 +1,7 @@
 require("os")
 require("testlibs.test")
 require("testlibs.dcsstubs")
+require("dct")
 local Region = require("dct.region")
 
 local function main()

@@ -1,5 +1,6 @@
 require("os")
 require("testlibs.dcsstubs")
+require("dct")
 local test = require("testlibs.test")
 local json = require("libs.json")
 local Template = require("dct.template")

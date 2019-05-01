@@ -5,10 +5,16 @@
 --]]
 
 require("io")
-local class  = require("libs.class")
+local class      = require("libs.class")
+local Logger     = require("dct.logger")
+local DebugStats = require("dct.debugstats")
 
 local GameState = class()
 function GameState:__init(theater, statepath)
+	self.logger   = Logger.getByName("gamestate")
+	self.dbgstats = DebugStats.getDebugStats()
+	self.dbgstats:registerStat("obj", 0, "objective(s) loaded")
+	self.dbgstats:registerStat("spawn", 0, "objectives spawned")
 	self.path     = statepath
 	self.theater  = theater
 	self.dirty    = false
@@ -70,17 +76,17 @@ function GameState:addObjectives(regionname, objectivelist)
 	-- all objective names are unique
 	for k, v in pairs(objectivelist) do
 		self.objectives[v.name] = v
+		self.dbgstats:incstat("obj", 1)
 	end
 end
 
 function GameState:spawnActive()
-	local numobjs = 0
     -- TODO: for now we are just going to spawn everything
 	for name, obj in pairs(self.objectives) do
 		obj:spawn()
-		numobjs = numobjs + 1
+		self.logger:debug("Spawning: '"..name.."'")
+		self.dbgstats:incstat("spawn", 1)
 	end
-	env.warning("==> GameState: attempted to spawn "..numobjs.." objectives")
 end
 
 return GameState
