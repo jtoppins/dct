@@ -90,7 +90,7 @@ local function overrideGroupOptions(grp, ctx)
 
 end
 
-local function overrideUnitOptions(key, unit, ctx)
+local function overrideUnitOptions(ctx, key, unit)
 	if unit.playerCanDriver ~= nil then
 		unit.playerCanDrive = false
 	end
@@ -98,11 +98,11 @@ local function overrideUnitOptions(key, unit, ctx)
 	unit.name = lookupname(unit.name, ctx.names)
 end
 
-local function overrideName(key, obj, ctx)
+local function overrideName(ctx, key, obj)
 	obj.name = lookupname(obj.name, ctx.names)
 end
 
-local function spawnGroup(id, group, category)
+local function spawnGroup(category, id, group)
 	assert(id)
 	assert(group)
 	assert(category)
@@ -111,7 +111,7 @@ local function spawnGroup(id, group, category)
 			   group.data)
 end
 
-local function spawnStatic(id, static)
+local function spawnStatic(unused, id, static)
 	assert(id)
 	assert(static)
 	coalition.addStaticObject(static.countryid, static.data)
@@ -120,15 +120,15 @@ end
 local function spawn(coa_data)
 	for cat_idx, cat_data in pairs(coa_data) do
 		if cat_idx == 'static' then
-			utils.foreach(cat_data,
-				      ipairs,
-				      spawnStatic,
-				      nil)
+			utils.foreach(cat_idx,
+				ipairs,
+				spawnStatic,
+				cat_data)
 		else
-			utils.foreach(cat_data,
-				      ipairs,
-				      spawnGroup,
-				      cat_idx)
+			utils.foreach(cat_idx,
+				ipairs,
+				spawnGroup,
+				cat_data)
 		end
 	end
 end
@@ -220,37 +220,35 @@ function Template:__processCoalition(side, coa, names)
 end
 
 function Template:__processCountry(side, ctry, names)
+	local funcmap = {
+		["HELICOPTER"] = self.__addOneGroup,
+		["SHIP"]       = self.__addOneGroup,
+		["VEHICLE"]    = self.__addOneGroup,
+		["PLANE"]      = self.__addOneGroup,
+		["STATIC"]     = self.__addOneStatic,
+	}
+
 	local ctx = {}
 	ctx.side      = side
 	ctx.category  = "none"
 	ctx.countryid = ctry.id
 	ctx.names     = names
 
-	for cat, _ in pairs(categorymap) do
+	for cat, data in pairs(categorymap) do
 		cat = string.lower(cat)
 		if ctry[cat] and type(ctry[cat]) == 'table' and
 		   ctry[cat].group then
 			ctx.category = cat
-			if cat == "static" then
-				self:__processGroups(ctry.static.group,
-						self.__addOneStatic,
-						ctx)
-			else
-				self:__processGroups(ctry[cat].group,
-						self.__addOneGroup,
-						ctx)
-			end
+			utils.foreach(self,
+					ipairs,
+					funcmap[string.upper(cat)],
+					ctry[cat].group,
+					ctx)
 		end
 	end
 end
 
-function Template:__processGroups(list, fcn, ctx)
-	for _, data in ipairs(list) do
-		fcn(self, ctx, data)
-	end
-end
-
-function Template:__addOneStatic(ctx, grp)
+function Template:__addOneStatic(idx, grp, ctx)
 	local tbl = {}
 
 	self:__createTable(ctx)
@@ -282,21 +280,21 @@ function Template:__addOneStatic(ctx, grp)
 	table.insert(self.tpldata[ctx.side][ctx.category], tbl)
 end
 
-function Template:__addOneGroup(ctx, grp)
+function Template:__addOneGroup(idx, grp, ctx)
 	local tbl = {}
 
 	self:__createTable(ctx)
 
 	tbl.data = grp
 	overrideGroupOptions(tbl.data, ctx)
-	utils.foreach(tbl.data.units,
+	utils.foreach(ctx,
 		      ipairs,
 		      overrideUnitOptions,
-		      ctx)
-	utils.foreach(tbl.data.route.points,
+			  tbl.data.units)
+	utils.foreach(ctx,
 		      ipairs,
 		      overrideName,
-		      ctx)
+			  tbl.data.route.points)
 	tbl.countryid = ctx.countryid
 	-- TODO: setup metadata like parsing group/unit names
 
@@ -304,12 +302,12 @@ function Template:__addOneGroup(ctx, grp)
 	-- template
 	tbl.data.name = self.name .. " " .. ctx.side .. " " ..
 			ctx.category .. " " .. #self.tpldata[ctx.side][ctx.category]
-	utils.foreach(tbl.data.units,
+	utils.foreach(tbl.data.name,
 		ipairs,
-		function(i, obj, base)
+		function(base, i, obj)
 			obj.name = base .. "-" .. i
 		end,
-		tbl.data.name)
+		tbl.data.units)
 	table.insert(self.tpldata[ctx.side][ctx.category], tbl)
 end
 

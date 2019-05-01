@@ -26,41 +26,38 @@ local function addTemplate(tbl, lvl1, lvl2, val)
 	return true
 end
 
-local function getTemplates(tpltype, dirname, ctx)
-	local tplpath = ctx.path .. "/" .. dirname
-	ctx.cls.logger:debug("=> tplpath: "..tplpath)
+local function getTemplates(cls, tpltype, dirname, basepath)
+	local tplpath = basepath .. "/" .. dirname
+	cls.logger:debug("=> tplpath: "..tplpath)
 
 	for filename in lfs.dir(tplpath) do
 		if filename ~= "." and filename ~= ".." then
 			local fpath = tplpath .. "/" .. filename
 			local fattr = lfs.attributes(fpath)
 			if fattr.mode == "directory" then
-				local newctx = {}
-				newctx.cls  = ctx.cls
-				newctx.path = tplpath
-				getTemplates(tpltype, filename, newctx)
+				getTemplates(cls, tpltype, filename, tplpath)
 			else
 				if string.find(fpath, ".stm") ~= nil then
 					local dctString = string.gsub(fpath, ".stm", ".dct")
 					local t = Template(fpath, dctString)
-					assert(addTemplate(ctx.cls, tpltype, t.name, t),
+					assert(addTemplate(cls, tpltype, t.name, t),
 						"duplicate template '".. t.name .. "' defined; " ..
 						fpath)
-					ctx.cls.dbgstats:incstat(ctx.cls.name.."-templates", 1)
+					cls.dbgstats:incstat(cls.name.."-templates", 1)
 				end
 			end
 		end
 	end
 end
 
-local function checkExists(tpltype, dirname, ctx)
-	local path = ctx.path .. "/" .. dirname
+local function checkExists(cls, tpltype, dirname)
+	local path = cls.path .. "/" .. dirname
 	local attr = lfs.attributes(path)
 	if attr == nil or attr.mode ~= "directory" then
-		ctx.cls.logger:debug("=> checkExists: path doesn't exist; "..path)
+		cls.logger:debug("=> checkExists: path doesn't exist; "..path)
 		return
 	end
-	getTemplates(tpltype, dirname, ctx)
+	getTemplates(cls, tpltype, dirname, cls.path)
 end
 
 local function validateRegionStruct(r)
@@ -88,15 +85,12 @@ end
 --]]
 local Region = class()
 function Region:__init(regionpath)
+	self.path = regionpath
+
 	local tpldirs = {
 		["base"]     = "bases",
 		["facility"] = "facilities",
 		["mission"]  = "missions",
-	}
-
-	local ctx = {
-		["cls"]  = self,
-		["path"] = regionpath,
 	}
 
 	self.logger   = Logger.getByName("region")
@@ -105,7 +99,7 @@ function Region:__init(regionpath)
 	self.dbgstats = DebugStats.getDebugStats()
 	self.dbgstats:registerStat(self.name.."-templates", 0,
 		self.name.."-template(s) loaded")
-	utils.foreach(tpldirs, pairs, checkExists, ctx)
+	utils.foreach(self, pairs, checkExists, tpldirs)
 end
 
 function Region:__loadMetadata(regiondefpath)
