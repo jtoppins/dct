@@ -35,6 +35,8 @@ end
 --]]
 local Theater = class()
 function Theater:__init(theaterpath)
+	self.dbgstats = {}
+	self.dbgstats.numregions = 0
 	self.path      = theaterpath
 	self.pathstate = lfs.writedir() .. env.mission.theatre ..
 		env.getValueDictByKey(env.mission.sortie) .. ".state"
@@ -51,6 +53,7 @@ function Theater:__init(theaterpath)
 	end
 
 	self.state:spawnActive()
+	env.warning("==> Theater: loaded "..self.dbgstats.numregions.." Regions")
 end
 
 -- a description of the world state that signifies a particular side wins
@@ -77,6 +80,7 @@ function Theater:__loadRegions()
 				assert(self.regions[r.name] == nil, "duplicate regions " ..
 						"defined for theater: " .. self.path)
 				self.regions[r.name] = r
+				self.dbgstats.numregions = self.dbgstats.numregions + 1
 			end
 		end
 	end

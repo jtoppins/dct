@@ -27,6 +27,7 @@ end
 
 local function getTemplates(tpltype, dirname, ctx)
 	local tplpath = ctx.path .. "/" .. dirname
+	env.warning("===> Region: tplpath = "..tplpath)
 
 	for filename in lfs.dir(tplpath) do
 		if filename ~= "." and filename ~= ".." then
@@ -44,6 +45,7 @@ local function getTemplates(tpltype, dirname, ctx)
 					assert(addTemplate(ctx.cls, tpltype, t.name, t),
 						"duplicate template '".. t.name .. "' defined; " ..
 						fpath)
+					ctx.cls.dbgstats.numtemplates = ctx.cls.dbgstats.numtemplates + 1
 				end
 			end
 		end
@@ -96,9 +98,12 @@ function Region:__init(regionpath)
 		["cls"]  = self,
 		["path"] = regionpath,
 	}
+	self.dbgstats = {}
+	self.dbgstats.numtemplates = 0
 
 	self:__loadMetadata(regionpath.."/region.def")
 	utils.foreach(tpldirs, pairs, checkExists, ctx)
+	env.warning("==> Region: loaded "..self.dbgstats.numtemplates.." templates")
 end
 
 function Region:__loadMetadata(regiondefpath)

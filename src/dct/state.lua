@@ -74,10 +74,13 @@ function GameState:addObjectives(regionname, objectivelist)
 end
 
 function GameState:spawnActive()
+	local numobjs = 0
     -- TODO: for now we are just going to spawn everything
 	for name, obj in pairs(self.objectives) do
 		obj:spawn()
+		numobjs = numobjs + 1
 	end
+	env.warning("==> GameState: attempted to spawn "..numobjs.." objectives")
 end
 
 return {
