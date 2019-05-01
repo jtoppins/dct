@@ -12,6 +12,11 @@ function env.getValueDictByKey(s)
 	return s
 end
 
+-- luacheck: no unused args
+function env.warning(msg, showbox)
+	print(msg)
+end
+
 Unit = {}
 Unit.Category = {
 	["AIRPLANE"]    = 0,
