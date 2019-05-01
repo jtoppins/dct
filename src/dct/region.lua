@@ -53,13 +53,12 @@ local function getTemplates(tpltype, dirname, ctx)
 end
 
 local function checkExists(tpltype, dirname, ctx)
-	local p = io.open(ctx.path .. "/" .. dirname)
-	if p == nil then
+	local path = ctx.path .. "/" .. dirname
+	local attr = lfs.attributes(path)
+	if attr == nil or attr.mode ~= "directory" then
+		env.warning("===> Region.checkExists: path doesn't exist; "..path)
 		return
-	else
-		io.close(p)
 	end
-
 	getTemplates(tpltype, dirname, ctx)
 end
 
