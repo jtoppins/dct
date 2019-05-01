@@ -12,7 +12,8 @@ start/run function starts the DCT engine
 local theater = require("dct.theater")
 
 local function init(dctsettings)
-	local theaterPath = lfs.writedir() .. "DctTemplates\\PhaseOne\\"
+	local theaterPath = dctsettings.templatedir or
+						lfs.writedir() .. "DctTemplates\\PhaseOne"
 
 	local t = theater.Theater(theaterPath)
 	world.addEventHandler(t)
