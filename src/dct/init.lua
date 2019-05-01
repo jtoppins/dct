@@ -1,21 +1,14 @@
 --[[
-Top level initialization and kickoff package
-
-----
-init function initializes game state
-
-----
-start/run function starts the DCT engine
-
+-- SPDX-License-Identifier: LGPL-3.0
+--
+-- Starts the DCT framework
 --]]
 
-local theater = require("dct.theater")
+local Theater  = require("dct.theater")
+local settings = require("dct.settings")
 
 local function init(dctsettings)
-	local theaterPath = dctsettings.templatedir or
-						lfs.writedir() .. "DctTemplates\\PhaseOne"
-
-	local t = theater.Theater(theaterPath)
+	local t = Theater(settings(dctsettings))
 	world.addEventHandler(t)
 	timer.scheduleFunction(t.exec, t, timer.getTime() + 20)
 end

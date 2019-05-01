@@ -11,10 +11,10 @@ local dct = {
 _G.dct = dct
 dct.settings  = require("dct.settings")(dctsettings)
 dct.init      = require("dct.init")
-dct.template  = require("dct.template")
-dct.region    = require("dct.region")
-dct.theater   = require("dct.theater")
-dct.objective = require("dct.objective")
-dct.state     = require("dct.state")
+dct.Template  = require("dct.template")
+dct.Region    = require("dct.region")
+dct.Theater   = require("dct.theater")
+dct.Objective = require("dct.objective")
+dct.GameState = require("dct.gamestate")
 
 return dct

@@ -83,6 +83,4 @@ function GameState:spawnActive()
 	env.warning("==> GameState: attempted to spawn "..numobjs.." objectives")
 end
 
-return {
-	["GameState"] = GameState,
-}
+return GameState

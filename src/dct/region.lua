@@ -1,15 +1,14 @@
 --[[
 -- SPDX-License-Identifier: LGPL-3.0
 --
--- Provides functions for defining a region.
+-- Defines the Region class.
 --]]
 
-require("io")
 require("lfs")
 local class     = require("libs.class")
 local utils     = require("libs.utils")
-local template  = require("dct.template")
-local objective = require("dct.objective")
+local Template  = require("dct.template")
+local Objective = require("dct.objective")
 
 local function addTemplate(tbl, lvl1, lvl2, val)
 	if tbl[lvl1] then
@@ -41,7 +40,7 @@ local function getTemplates(tpltype, dirname, ctx)
 			else
 				if string.find(fpath, ".stm") ~= nil then
 					local dctString = string.gsub(fpath, ".stm", ".dct")
-					local t = template.Template(fpath, dctString)
+					local t = Template(fpath, dctString)
 					assert(addTemplate(ctx.cls, tpltype, t.name, t),
 						"duplicate template '".. t.name .. "' defined; " ..
 						fpath)
@@ -167,7 +166,7 @@ function Region:generate()
 					#tplnames[objtype] >= 1 do
 				local idx = math.random(1, #tplnames[objtype])
 				local tpl = self.facility[tplnames[objtype][idx]]
-				local obj = objective.Objective(tpl)
+				local obj = Objective(tpl)
 				table.insert(objs, obj)
 				table.remove(tplnames[objtype], idx)
 				limits.current = 1 + limits.current
@@ -181,6 +180,4 @@ function Region:generate()
 	return objs
 end
 
-return {
-	["Region"]      = Region,
-}
+return Region

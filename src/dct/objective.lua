@@ -34,6 +34,4 @@ function Objective:spawn()
 	end
 end
 
-return {
-	["Objective"] = Objective,
-}
+return Objective

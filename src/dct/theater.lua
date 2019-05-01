@@ -1,14 +1,13 @@
 --[[
 -- SPDX-License-Identifier: LGPL-3.0
 --
--- Provides functions for defining a theater.
+-- Defines the Theater class.
 --]]
 
-require("io")
 require("lfs")
-local class  = require("libs.class")
-local region = require("dct.region")
-local state  = require("dct.state")
+local class     = require("libs.class")
+local Region    = require("dct.region")
+local GameState = require("dct.gamestate")
 
 local function createGoalStates(goals)
 	local states = {}
@@ -40,7 +39,7 @@ function Theater:__init(theaterpath)
 	self.path      = theaterpath
 	self.pathstate = lfs.writedir() .. env.mission.theatre ..
 		env.getValueDictByKey(env.mission.sortie) .. ".state"
-	self.state     = state.GameState(self, self.pathstate)
+	self.state     = GameState(self, self.pathstate)
 
 	self:__loadGoals()
 	self:__loadRegions()
@@ -77,7 +76,7 @@ function Theater:__loadRegions()
 			local fpath = self.path .. "/" .. filename
 			local fattr = lfs.attributes(fpath)
 			if fattr.mode == "directory" then
-				local r = region.Region(fpath)
+				local r = Region(fpath)
 				assert(self.regions[r.name] == nil, "duplicate regions " ..
 						"defined for theater: " .. self.path)
 				self.regions[r.name] = r
@@ -102,9 +101,7 @@ function Theater:exec(time)
 	return rescheduletime
 end
 
-return {
-	["Theater"] = Theater,
-}
+return Theater
 
 --[[
 world state

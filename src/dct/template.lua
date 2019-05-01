@@ -344,9 +344,6 @@ function Template:spawn()
 	end
 end
 
-return {
-	["Template"] = Template,
-	["enum"]     = {
-		["side"] = side,
-	},
-}
+Template.side = side
+
+return Template

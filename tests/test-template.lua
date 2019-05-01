@@ -1,8 +1,8 @@
 require("os")
-require("testlibs.test")
 require("testlibs.dcsstubs")
+local test = require("testlibs.test")
 local json = require("libs.json")
-local template = require("dct.template")
+local Template = require("dct.template")
 
 local check = {}
 check.spawngroups  = 0
@@ -24,7 +24,7 @@ end
 local function main()
 	check.spawngroups  = 0
 	check.spawnstatics = 0
-	local t = template.Template("./data/test.stm", "./data/test.dct")
+	local t = Template("./data/test.stm", "./data/test.dct")
 	t:spawn()
 	assert(check.spawngroups == 1, "group spawn broken")
 	assert(check.spawnstatics == 11, "static spawn broken")
@@ -32,8 +32,8 @@ local function main()
 
 	check.spawngroups  = 0
 	check.spawnstatics = 0
-	t = template.Template("./data/test-all-types.stm",
-						  "./data/test-all-types.dct")
+	t = Template("./data/test-all-types.stm",
+				"./data/test-all-types.dct")
 	t:spawn()
 	assert(check.spawngroups == 6, "group spawn broken")
 	assert(check.spawnstatics == 3, "static spawn broken")
