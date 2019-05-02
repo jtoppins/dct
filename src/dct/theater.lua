@@ -72,7 +72,8 @@ function Theater:__loadRegions()
 	self.regions = {}
 
 	for filename in lfs.dir(self.path) do
-		if filename ~= "." and filename ~= ".." then
+		if filename ~= "." and filename ~= ".." and
+			filename ~= ".git" then
 			local fpath = self.path .. "/" .. filename
 			local fattr = lfs.attributes(fpath)
 			if fattr.mode == "directory" then
