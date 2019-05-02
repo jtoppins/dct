@@ -163,7 +163,8 @@ function Region:generate()
 			limits.limit = math.random(limits.min, limits.max)
 			limits.current = 0
 
-			while tplnames[objtype] ~= nil and #tplnames[objtype] >= 1 do
+			while limits.limit > 0 and tplnames[objtype] ~= nil and
+					#tplnames[objtype] >= 1 do
 				local idx = math.random(1, #tplnames[objtype])
 				local tpl = self.facility[tplnames[objtype][idx]]
 				local obj = objective.Objective(tpl)
