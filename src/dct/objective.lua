@@ -7,9 +7,11 @@
 local class = require("libs.class")
 
 local Objective = class()
-function Objective:__init(template, gamestate)
+function Objective:__init(template)
 	self.__spawned = false
 	self.__tpl     = template
+	-- TODO: this name doesn't guarantee uniqueness, eventually a
+	-- template function will be needed to generate a unique name
 	self.name      = template.name
 end
 

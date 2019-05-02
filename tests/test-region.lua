@@ -1,12 +1,9 @@
-require("os")
-require("testlibs.test")
-require("testlibs.dcsstubs")
+require("testlibs")
 require("dct")
-local Region = require("dct.region")
 
 local function main()
 	local regiondir = "./data/mission/region1"
-	local r = Region(regiondir)
+	dct.Region(regiondir)
 	return 0
 end
 

@@ -109,18 +109,15 @@ function Region:__init(regionpath)
 end
 
 function Region:__loadMetadata(regiondefpath)
-	local rc = false
-	local msg = "none"
-
-	rc = pcall(dofile, regiondefpath)
-	assert(rc, "failed to parse: region file, '" ..
+	local c = pcall(dofile, regiondefpath)
+	assert(c, "failed to parse: region file, '" ..
 			regiondefpath .. "' path likely doesn't exist")
 	assert(region ~= nil, "no region structure defined")
 
 	local r = region
 	region = nil
 
-	rc, msg = validateRegionStruct(r)
+	local rc, msg = validateRegionStruct(r)
 	assert(rc, msg .. "; " .. regiondefpath)
 	for key, data in pairs(r) do
 		self[key] = data
@@ -133,12 +130,7 @@ function Region:generate()
 	-- TODO: generate base objectives
 
 	if self.facility then
-		local json = require("libs.json")
-		-- print("region.generate() self.facility start")
-		-- print(json:encode_pretty(self.facility))
-		-- print("region.generate() self.facility end")
-
-		-- build random lookup table to be used to randomly select
+		-- build lookup table to be used to randomly select
 		-- templates
 		--
 		-- tplnames = {
@@ -153,13 +145,6 @@ function Region:generate()
 			end
 			table.insert(tplnames[tpl.objtype], name)
 		end
-		-- print("region.generate() tplnames start")
-		-- print(json:encode_pretty(tplnames))
-		-- print("region.generate() tplnames end")
-
-		-- print("region.generate() limits start")
-		-- print(json:encode_pretty(self.limits))
-		-- print("region.generate() limits end")
 
 		-- generate facility objectives
 		for objtype, limits in pairs(self.limits) do

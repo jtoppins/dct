@@ -4,12 +4,10 @@
 -- Provides functions for handling templates.
 --]]
 
-require("os")
-
 local class    = require("libs.class")
 local utils    = require("libs.utils")
 
-local side = {
+local coa_side = {
 	["RED"]  = "red",
 	["BLUE"] = "blue",
 }
@@ -37,7 +35,7 @@ local function checkclass(val)
 		"strike",
 	}
 
-	for k, v in ipairs(allowed) do
+	for _, v in ipairs(allowed) do
 		if v == val then
 			return true
 		end
@@ -68,7 +66,7 @@ local function checktype(val)
 		"keepout",
 	}
 
-	for k, v in ipairs(allowed) do
+	for _, v in ipairs(allowed) do
 		if v == val then
 			return true
 		end
@@ -216,7 +214,7 @@ function Template:__processCoalition(side, coa, names)
 		return
 	end
 
-	for ctry_key, ctry_data in ipairs(coa.country) do
+	for _, ctry_data in ipairs(coa.country) do
 		self:__processCountry(side, ctry_data, names)
 	end
 end
@@ -247,7 +245,7 @@ function Template:__processCountry(side, ctry, names)
 end
 
 function Template:__processGroups(list, fcn, ctx)
-	for idx, data in ipairs(list) do
+	for _, data in ipairs(list) do
 		fcn(self, ctx, data)
 	end
 end
@@ -339,11 +337,11 @@ function Template:spawnSide(side)
 end
 
 function Template:spawn()
-	for coa_key, coa_data in pairs(self.tpldata) do
+	for _, coa_data in pairs(self.tpldata) do
 		spawn(coa_data)
 	end
 end
 
-Template.side = side
+Template.side = coa_side
 
 return Template

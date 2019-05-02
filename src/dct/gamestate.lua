@@ -66,15 +66,10 @@ function GameState:shouldGenerate()
 end
 
 function GameState:addObjectives(regionname, objectivelist)
-	local json = require("libs.json")
-	-- print("state.addObjectives() start")
-	-- print("objectivelist: "..#objectivelist)
-	-- print(json:encode_pretty(objectivelist))
-	-- print("state.addObjectives() end")
-
 	-- TODO: for now do a simple storage of the objectives, it is assumed
 	-- all objective names are unique
-	for k, v in pairs(objectivelist) do
+
+	for _, v in pairs(objectivelist) do
 		self.objectives[v.name] = v
 		self.dbgstats:incstat("obj", 1)
 	end
