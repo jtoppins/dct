@@ -1,7 +1,11 @@
 require("lfs")
 
 function lfs.writedir()
-	return "./"
+	return "./data"
+end
+
+function lfs.tempdir()
+	return "./data"
 end
 
 env = {}
