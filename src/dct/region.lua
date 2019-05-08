@@ -12,6 +12,7 @@ local Objective  = require("dct.objective")
 local Logger     = require("dct.logger")
 local DebugStats = require("dct.debugstats")
 
+-- return false if the entry already exists
 local function addTemplate(tbl, lvl1, lvl2, val)
 	if tbl[lvl1] then
 			if tbl[lvl1][lvl2] ~= nil then
@@ -25,48 +26,6 @@ local function addTemplate(tbl, lvl1, lvl2, val)
 
 	return true
 end
-
-local function getTemplates(cls, tpltype, dirname, basepath)
-	local tplpath = basepath .. "/" .. dirname
-	cls.logger:debug("=> tplpath: "..tplpath)
-
-	for filename in lfs.dir(tplpath) do
-		if filename ~= "." and filename ~= ".." then
-			local fpath = tplpath .. "/" .. filename
-			local fattr = lfs.attributes(fpath)
-			if fattr.mode == "directory" then
-				getTemplates(cls, tpltype, filename, tplpath)
-			else
-				if string.find(fpath, ".stm") ~= nil then
-					local dctString = string.gsub(fpath, ".stm", ".dct")
-					local t = Template(fpath, dctString)
-					assert(addTemplate(cls, tpltype, t.name, t),
-						"duplicate template '".. t.name .. "' defined; " ..
-						fpath)
-					cls.dbgstats:incstat(cls.name.."-templates", 1)
-				end
-			end
-		end
-	end
-end
-
-local function checkExists(cls, tpltype, dirname)
-	local path = cls.path .. "/" .. dirname
-	local attr = lfs.attributes(path)
-	if attr == nil or attr.mode ~= "directory" then
-		cls.logger:debug("=> checkExists: path doesn't exist; "..path)
-		return
-	end
-	getTemplates(cls, tpltype, dirname, cls.path)
-end
-
-local function validateRegionStruct(r)
-	if r["name"] == nil then
-		return false, "region is missing a name"
-	end
-	return true, "no error"
-end
-
 
 --[[
 --  Region class
@@ -99,7 +58,13 @@ function Region:__init(regionpath)
 	self.dbgstats = DebugStats.getDebugStats()
 	self.dbgstats:registerStat(self.name.."-templates", 0,
 		self.name.."-template(s) loaded")
-	utils.foreach(self, pairs, checkExists, tpldirs)
+	utils.foreach(self, pairs, self.__checkExists, tpldirs)
+	print("region: "..self.name)
+	--[[
+	for k,v in pairs(self) do
+		print("  k: "..k.."; v: "..type(v))
+	end
+	--]]
 end
 
 function Region:__loadMetadata(regiondefpath)
@@ -110,11 +75,47 @@ function Region:__loadMetadata(regiondefpath)
 
 	local r = region
 	region = nil
+	self:__checkRegion(r)
+end
 
-	local rc, msg = validateRegionStruct(r)
-	assert(rc, msg .. "; " .. regiondefpath)
-	for key, data in pairs(r) do
-		self[key] = data
+function Region:__checkRegion(r)
+	if r["name"] == nil then
+		assert(false, "region is missing a name")
+	end
+	utils.mergetables(self, r)
+end
+
+function Region:__checkExists(tpltype, dirname)
+	local path = self.path .. "/" .. dirname
+	local attr = lfs.attributes(path)
+	if attr == nil or attr.mode ~= "directory" then
+		self.logger:debug("=> checkExists: path doesn't exist; "..path)
+		return
+	end
+	self:__getTemplates(tpltype, dirname, self.path)
+end
+
+function Region:__getTemplates(tpltype, dirname, basepath)
+	local tplpath = basepath .. "/" .. dirname
+	self.logger:debug("=> tplpath: "..tplpath)
+
+	for filename in lfs.dir(tplpath) do
+		if filename ~= "." and filename ~= ".." then
+			local fpath = tplpath .. "/" .. filename
+			local fattr = lfs.attributes(fpath)
+			if fattr.mode == "directory" then
+				self:__getTemplates(tpltype, filename, tplpath)
+			else
+				if string.find(fpath, ".stm") ~= nil then
+					local dctString = string.gsub(fpath, ".stm", ".dct")
+					local t = Template(fpath, dctString)
+					assert(addTemplate(self, tpltype, t.name, t),
+						"duplicate template '".. t.name .. "' defined; " ..
+						fpath)
+					self.dbgstats:incstat(self.name.."-templates", 1)
+				end
+			end
+		end
 	end
 end
 
@@ -141,7 +142,7 @@ function Region:generate()
 		end
 
 		-- generate facility objectives
-		for objtype, limits in pairs(self.limits) do
+		for objtype, limits in pairs(self.limits or {}) do
 			limits.limit = math.random(limits.min, limits.max)
 			limits.current = 0
 
