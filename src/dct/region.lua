@@ -12,46 +12,48 @@ local Objective  = require("dct.objective")
 local Logger     = require("dct.logger")
 local DebugStats = require("dct.debugstats")
 
--- return false if the entry already exists
-local function addTemplate(tbl, lvl1, lvl2, val)
-	if tbl[lvl1] then
-			if tbl[lvl1][lvl2] ~= nil then
-				return false
-			end
-			tbl[lvl1][lvl2] = val
-	else
-		tbl[lvl1] = {}
-		tbl[lvl1][lvl2] = val
-	end
-
-	return true
-end
+local tplkind = {
+	["TEMPLATE"]  = 1,
+	["EXCLUSION"] = 2,
+}
 
 --[[
 --  Region class
 --    base class that reads in a region definition.
 --
 --  Storage of region:
---		base     = {
---			<tplname> = Template(),
+--		__templates   = {
+--			["<tpl-name>"] = Template(),
 --		},
---		facility = {
---			<tplname> = Template(),
+--		__tpltypes    = {
+--			<ttype> = {
+--				[#] = {
+--					kind = tpl | exclusion,
+--					name = "<tpl-name>" | "<ex-name>",
+--				},
+--			},
 --		},
---		mission  = {
---			<tplname> = Template(),
+--		__exclusions  = {
+--			["<ex-name>"] = {
+--				ttype = <ttype>,
+--				names = {
+--					[#] = ["<tpl-name>"],
+--				},
+--			},
 --		}
 --]]
 local Region = class()
 function Region:__init(regionpath)
-	self.path = regionpath
-
 	local tpldirs = {
 		["base"]     = "bases",
 		["facility"] = "facilities",
 		["mission"]  = "missions",
 	}
 
+	self.path = regionpath
+	self.__templates  = {}
+	self.__tpltypes   = {}
+	self.__exclusions = {}
 	self.logger   = Logger.getByName("region")
 	self.logger:debug("=> regionpath: "..regionpath)
 	self:__loadMetadata(regionpath.."/region.def")
@@ -59,12 +61,6 @@ function Region:__init(regionpath)
 	self.dbgstats:registerStat(self.name.."-templates", 0,
 		self.name.."-template(s) loaded")
 	utils.foreach(self, pairs, self.__checkExists, tpldirs)
-	print("region: "..self.name)
-	--[[
-	for k,v in pairs(self) do
-		print("  k: "..k.."; v: "..type(v))
-	end
-	--]]
 end
 
 function Region:__loadMetadata(regiondefpath)
@@ -108,10 +104,7 @@ function Region:__getTemplates(tpltype, dirname, basepath)
 			else
 				if string.find(fpath, ".stm") ~= nil then
 					local dctString = string.gsub(fpath, ".stm", ".dct")
-					local t = Template(fpath, dctString)
-					assert(addTemplate(self, tpltype, t.name, t),
-						"duplicate template '".. t.name .. "' defined; " ..
-						fpath)
+					self:__addTemplate(Template(fpath, dctString))
 					self.dbgstats:incstat(self.name.."-templates", 1)
 				end
 			end
@@ -119,45 +112,82 @@ function Region:__getTemplates(tpltype, dirname, basepath)
 	end
 end
 
+function Region:__addTemplate(tpl)
+	assert(self.__templates[tpl.name] == nil,
+			"duplicate template '"..tpl.name.."' defined; "..tpl.path)
+	self.__templates[tpl.name] = tpl
+	if tpl.exclusion ~= nil then
+		if self.__exclusions[tpl.exclusion] == nil then
+			self:__createExclusion(tpl)
+			self:__registerType(tplkind.EXCLUSION, tpl.objtype, tpl.exclusion)
+		end
+		self:__registerExclusion(tpl)
+	else
+		self:__registerType(tplkind.TEMPLATE, tpl.objtype, tpl.name)
+	end
+end
+
+function Region:__createExclusion(tpl)
+	self.__exclusions[tpl.exclusion] = {
+		["ttype"] = tpl.objtype,
+		["names"] = {},
+	}
+end
+
+function Region:__registerExclusion(tpl)
+	assert(tpl.objtype == self.__exclusions[tpl.exclusion].ttype,
+	       "exclusions across objective types not allowed, '"..
+		   tpl.name.."'")
+	table.insert(self.__exclusions[tpl.exclusion].names,
+	             tpl.name)
+end
+
+function Region:__registerType(kind, ttype, name)
+	local entry = {
+		["kind"] = kind,
+		["name"] = name,
+	}
+
+	if self.__tpltypes[ttype] == nil then
+		self.__tpltypes[ttype] = {}
+	end
+	table.insert(self.__tpltypes[ttype], entry)
+end
+
 function Region:generate()
 	local objs = {}
+	local tpltypes = utils.deepcopy(self.__tpltypes)
 
-	-- TODO: generate base objectives
+	for objtype, names in pairs(tpltypes) do
+		local limits = {
+			["min"]     = #names,
+			["max"]     = #names,
+			["limit"]   = #names,
+			["current"] = 0,
+		}
 
-	if self.facility then
-		-- build lookup table to be used to randomly select
-		-- templates
-		--
-		-- tplnames = {
-		--     <type> = {
-		--         [#] = "<name>"
-		--     },
-		-- }
-		local tplnames = {}
-		for name, tpl in pairs(self.facility) do
-			if tplnames[tpl.objtype] == nil then
-				tplnames[tpl.objtype] = {}
-			end
-			table.insert(tplnames[tpl.objtype], name)
+		if self.limits and self.limits[objtype] then
+			limits.min   = self.limits[objtype].min
+			limits.max   = self.limits[objtype].max
+			limits.limit = math.random(limits.min, limits.max)
 		end
 
-		-- generate facility objectives
-		for objtype, limits in pairs(self.limits or {}) do
-			limits.limit = math.random(limits.min, limits.max)
-			limits.current = 0
+		while #names >= 1 and limits.current < limits.limit do
+			-- this could be optimized a little in that if we have no
+			-- specific limits and want all the templates spawned
+			-- we could skip getting the random number, not really worth it
 
-			while limits.limit > 0 and tplnames[objtype] ~= nil and
-					#tplnames[objtype] >= 1 do
-				local idx = math.random(1, #tplnames[objtype])
-				local tpl = self.facility[tplnames[objtype][idx]]
-				local obj = Objective(tpl)
-				table.insert(objs, obj)
-				table.remove(tplnames[objtype], idx)
-				limits.current = 1 + limits.current
-				if limits.current == limits.limit then
-					break
-				end
+			local idx  = math.random(1, #names)
+			local name = names[idx].name
+			if names[idx].kind == tplkind.EXCLUSION then
+				local i = math.random(1, #self.__exclusions[name].names)
+				name = self.__exclusions[name]["names"][i]
 			end
+			local tpl = self.__templates[name]
+			local obj = Objective(tpl)
+			table.insert(objs, obj)
+			table.remove(names, idx)
+			limits.current = 1 + limits.current
 		end
 	end
 

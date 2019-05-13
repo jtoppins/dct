@@ -199,8 +199,8 @@ function Template:__loadMetadata(dctfile)
 			assert(false, "invalid or missing option '"..key..
 			       "' in dct file; "..dctfile)
 		end
-		self[key] = metadata[key]
 	end
+	utils.mergetables(self, metadata)
 	metadata = nil
 end
 
