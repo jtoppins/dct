@@ -5,10 +5,9 @@
 --]]
 
 local Theater  = require("dct.theater")
-local settings = require("dct.settings")
 
-local function init(dctsettings)
-	local t = Theater(settings(dctsettings))
+local function init()
+	local t = Theater()
 	world.addEventHandler(t)
 	timer.scheduleFunction(t.exec, t, timer.getTime() + 20)
 end

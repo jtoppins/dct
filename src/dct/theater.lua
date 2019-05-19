@@ -36,13 +36,13 @@ end
 --		},
 --]]
 local Theater = class()
-function Theater:__init(theaterpath)
+function Theater:__init()
 	local prof = Profiler.getProfiler()
 	prof:profileStart("Theater:init()")
 	self.logger    = Logger.getByName("theater")
 	self.dbgstats  = DebugStats.getDebugStats()
 	self.dbgstats:registerStat("regions", 0, "region(s) loaded")
-	self.path      = theaterpath
+	self.path      = _G.dct.settings.theaterpath
 	self.pathstate = lfs.writedir() .. env.mission.theatre ..
 		env.getValueDictByKey(env.mission.sortie) .. ".state"
 	self.state     = GameState(self, self.pathstate)

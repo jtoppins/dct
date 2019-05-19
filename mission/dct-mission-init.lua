@@ -20,11 +20,11 @@ end
 -- 'dctsettings' can be defined in the mission to override any of the
 -- possible dct settings. Including 'luapath' which can override
 -- the package path location.
-local s = dctsettings or {}
-if s.luapath == nil then
-	s.luapath = lfs.writedir() .. "Scripts\\?.lua;"
+dctsettings = dctsettings or {}
+if dctsettings.luapath == nil then
+	dctsettings.luapath = lfs.writedir() .. "Scripts\\?.lua;"
 end
 
-package.path = package.path .. ";" .. s.luapath
+package.path = package.path .. ";" .. dctsettings.luapath
 require("dct")
-dct.init(s)
+dct.init()

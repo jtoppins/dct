@@ -9,19 +9,19 @@ dctsettings = {
 		["debugstats"] = "debug",
 		["gamestate"]  = "debug",
 	},
+	["theaterpath"] = os.getenv("DCT_MISSION_PATH"),
 }
 require("dct")
 
 local function main()
 	-- setup an initial seed, lets use the same one for now '12345'
 	math.randomseed(12345)
-	local theaterPath = os.getenv("DCT_MISSION_PATH")
-	if theaterPath == nil then
+	if os.getenv("DCT_MISSION_PATH") == nil then
 		-- skip test
 		return 0
 	end
 
-	dct.Theater(theaterPath)
+	dct.Theater()
 	print("Groups spawned:  "..check.spawngroups)
 	print("Statics spawned: "..check.spawngroups)
 	dct.DebugStats.getDebugStats():log()

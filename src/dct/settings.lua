@@ -6,6 +6,7 @@
 
 require("lfs")
 local utils = require("libs.utils")
+local config = nil
 
 -- We have 3 levels of config,
 -- 	* mission defined configs
@@ -14,11 +15,15 @@ local utils = require("libs.utils")
 -- simple algorithm; assign the defaults, then apply the server, then
 -- any mission level configs
 local function settings(mcfg)
+	if config ~= nil then
+		return config
+	end
+
 	local path = lfs.writedir() .. utils.sep .. "Config" ..
 		utils.sep .. "dct.cfg"
 	local attr = lfs.attributes(path)
 
-	local config = {}
+	config = {}
 	-- config.luapath = lfs.writedir() .. "Scripts\\?.lua"
 	--[[
 	-- Note: Can't provide a server level package path as to require
