@@ -28,41 +28,33 @@ local function lookupname(name, namelist)
 	return name
 end
 
-local function checkclass(val)
-	local allowed = {
-		"cap",
-		"cas",
-		"strike",
-	}
-
-	for _, v in ipairs(allowed) do
-		if v == val then
-			return true
-		end
-	end
-	return false
-end
-
 local function checktype(val)
 	local allowed = {
-		"airbase",
+		-- strategic types
 		"ammodump",
-		"armor",
 		"bunker",
 		"c2",
 		"checkpoint",
 		"depot",
 		"ewr",
 		"factory",
-		"farp",
 		"fueldump",
 		"missile",
 		"oca",
 		"port",
 		"sam",
-		"sea",
-		"supply",
 		"warehouse",
+
+		-- bases
+		"airbase",
+		"farp",
+
+		-- tactical
+		"armor",
+		"supply",
+		"sea",
+
+		-- control zones
 		"keepout",
 	}
 
@@ -175,11 +167,6 @@ end
 
 function Template:__loadMetadata(dctfile)
 	local requiredkeys = {
-		--["class"] = {
-			-- mission class; cap, cas, strike, etc
-		--	["type"]  = "string",
-		--	["check"] = checkclass,
-		--},
 		["objtype"]  = {
 			-- kind of objective; ammodump, factory, etc
 			["type"]  = "string",
