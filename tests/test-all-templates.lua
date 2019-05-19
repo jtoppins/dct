@@ -1,3 +1,5 @@
+#!/usr/bin/lua
+
 require("math")
 require("testlibs")
 local json = require("libs.json")

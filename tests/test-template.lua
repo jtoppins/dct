@@ -1,3 +1,5 @@
+#!/usr/bin/lua
+
 require("testlibs")
 require("dct")
 local json = require("libs.json")

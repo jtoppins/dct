@@ -1,3 +1,5 @@
+#!/usr/bin/lua
+
 --[[
 -- SPDX-License-Identifier: LGPL-3.0
 --]]

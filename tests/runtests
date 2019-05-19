@@ -1,12 +1,28 @@
 #!/bin/sh
 
 set -e
+cwd=$(pwd)
+base=$(dirname $0)
 
+LUA_PATH="${cwd}/${base}/../src/?.lua"
+#echo "lua-path: ${LUA_PATH}"
+
+# if LUA_LIB_PATH is defined append LUA_PATH
+if test -n "${LUA_LIB_PATH}"; then
+	#echo "adding lua-lib path: ${LUA_LIB_PATH}"
+	LUA_PATH="${LUA_PATH};${LUA_LIB_PATH}"
+fi
+LUA_PATH="${LUA_PATH};;"
+export LUA_PATH
+
+cd "${base}"
 for t in test-*.lua; do
 	result="PASS"
-	LUA_PATH=${LUA_PATH} lua ${t}
+	./${t}
 	if test $? -ne 0; then
 		result="FAIL"
 	fi
 	echo "${result}: ${t}"
 done
+cd ${cwd}
+exit 0
