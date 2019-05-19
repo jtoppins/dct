@@ -34,5 +34,5 @@ files["tests/test-0001-data.lua"] = {
 	globals = {"staticTemplate", "metadata",}
 }
 files["tests/*"] = {
-	globals = {"test", "coalition", "dctsettings",},
+	globals = {"test", "dctsettings", "check", },
 }

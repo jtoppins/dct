@@ -6,3 +6,7 @@ function test.debug(str)
 		print("DEBUG: " .. str)
 	end
 end
+
+check = {}
+check.spawngroups  = 0
+check.spawnstatics = 0

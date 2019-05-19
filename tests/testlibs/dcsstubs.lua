@@ -47,4 +47,23 @@ local timer = {}
 function timer.getTime()
 	return socket.gettime()
 end
+function timer.scheduleFunction(fnc, data, nexttime)
+end
 _G.timer = timer
+
+local coalition = {}
+function coalition.addGroup(_, cat, data)
+	test.debug("SPAWN: spawn group, type:" .. cat .. ", name: " .. data.name)
+	check.spawngroups = check.spawngroups + 1
+end
+
+function coalition.addStaticObject(_, data)
+	test.debug("SPAWN: spawn static, type:" .. type(data) .. ", name: " .. data.name)
+	check.spawnstatics = check.spawnstatics + 1
+end
+_G.coalition = coalition
+
+local world = {}
+function world.addEventHandler(handler)
+end
+_G.world = world
