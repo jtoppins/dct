@@ -7,7 +7,6 @@ dctsettings = {
 	["debug"]   = false,
 	["logger"]  = {
 		["debugstats"] = "debug",
-		["gamestate"]  = "debug",
 	},
 	["theaterpath"] = os.getenv("DCT_MISSION_PATH"),
 }
