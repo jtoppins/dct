@@ -16,6 +16,8 @@ local function main()
 		["theaterpath"] = lfs.tempdir() .. utils.sep .. "theater",
 		["debug"]       = false,
 		["profile"]     = false,
+		["statepath"]   = lfs.writedir()..env.mission.theatre..
+			env.getValueDictByKey(env.mission.sortie)..".state",
 		["servercfg"]   = true,
 		["missioncfg"]  = true,
 	}

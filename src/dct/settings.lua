@@ -34,6 +34,8 @@ local function settings(mcfg)
 	config.theaterpath = lfs.tempdir() .. utils.sep .. "theater"
 	config.debug       = false
 	config.profile     = false
+	config.statepath   = lfs.writedir()..env.mission.theatre..
+		env.getValueDictByKey(env.mission.sortie)..".state"
 
 	if attr ~= nil then
 		local rc = pcall(dofile, path)

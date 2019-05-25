@@ -7,19 +7,9 @@
 require("lfs")
 local class      = require("libs.class")
 local Region     = require("dct.region")
-local GameState  = require("dct.gamestate")
 local Logger     = require("dct.logger")
 local DebugStats = require("dct.debugstats")
 local Profiler   = require("dct.profiling")
-
-local function createGoalStates(goals)
-	local states = {}
-
-	-- TODO: translate goal definitions written in the lua files to any
-	-- needed internal state.
-
-	return states
-end
 
 --[[
 --  Theater class
@@ -42,22 +32,16 @@ function Theater:__init()
 	self.logger    = Logger.getByName("theater")
 	self.dbgstats  = DebugStats.getDebugStats()
 	self.dbgstats:registerStat("regions", 0, "region(s) loaded")
+	self.dbgstats:registerStat("obj", 0, "objective(s) loaded")
+	self.dbgstats:registerStat("spawn", 0, "objectives spawned")
 	self.path      = _G.dct.settings.theaterpath
-	self.pathstate = lfs.writedir() .. env.mission.theatre ..
-		env.getValueDictByKey(env.mission.sortie) .. ".state"
-	self.state     = GameState(self, self.pathstate)
+	self.statepath = _G.dct.settings.statepath
+	self.dirty     = false
 
 	self:__loadGoals()
 	self:__loadRegions()
-
-	if self.state:shouldGenerate() then
-		-- generate a new theater
-		for name, r in pairs(self.regions) do
-			self.state:addObjectives(name, r:generate())
-		end
-	end
-
-	self.state:spawnActive()
+	self:__loadOrGenerate()
+	self:spawnActive()
 	prof:profileStop("Theater:init()")
 end
 
@@ -69,7 +53,9 @@ function Theater:__loadGoals()
 			goalpath .. "' path likely doesn't exist")
 	assert(theatergoals ~= nil, "no theatergoals structure defined")
 
-	self.goals = createGoalStates(theatergoals)
+	self.goals = {}
+	-- TODO: translate goal definitions written in the lua files to any
+	-- needed internal state.
 	theatergoals = nil
 end
 
@@ -89,6 +75,63 @@ function Theater:__loadRegions()
 				self.dbgstats:incstat("regions", 1)
 			end
 		end
+	end
+end
+
+function Theater:__loadOrGenerate()
+	self.objectives = {}
+	local statefile = io.open(self.statepath)
+
+	if statefile then
+		local jsonstate = statefile:read("*all")
+		statefile:close()
+		statefile = nil
+		self:__initFromState(json:decode(jsonstate))
+	else
+		self:generate()
+		self:__dirtySet()
+	end
+end
+
+function Theater:__initFromState(jsontbl)
+	return
+end
+
+function Theater:__dirtySet()
+    self.dirty = true
+end
+
+function Theater:dirtyClear()
+    self.dirty = false
+end
+
+function Theater:export()
+	-- TODO: export a copy of the game state in a
+	-- flat table representation
+	self:dirtyClear()
+end
+
+-- generate a new theater
+function Theater:generate()
+	-- generate static objectives
+	for name, r in pairs(self.regions) do
+		r:generate(self)
+	end
+end
+
+function Theater:addObjective(side, obj)
+	-- TODO: for now do a simple storage of the objectives, it is assumed
+	-- all objective names are unique
+	self.objectives[obj.name] = obj
+	self.dbgstats:incstat("obj", 1)
+end
+
+function Theater:spawnActive()
+    -- TODO: for now we are just going to spawn everything
+	for name, obj in pairs(self.objectives) do
+		obj:spawn()
+		self.logger:debug("Spawning: '"..name.."'")
+		self.dbgstats:incstat("spawn", 1)
 	end
 end
 

@@ -154,8 +154,7 @@ function Region:__registerType(kind, ttype, name)
 	table.insert(self.__tpltypes[ttype], entry)
 end
 
-function Region:generate()
-	local objs = {}
+function Region:generate(theater)
 	local tpltypes = utils.deepcopy(self.__tpltypes)
 
 	for objtype, names in pairs(tpltypes) do
@@ -184,14 +183,11 @@ function Region:generate()
 				name = self.__exclusions[name]["names"][i]
 			end
 			local tpl = self.__templates[name]
-			local obj = Objective(tpl)
-			table.insert(objs, obj)
+			theater:addObjective(Template.side.RED, Objective(tpl))
 			table.remove(names, idx)
 			limits.current = 1 + limits.current
 		end
 	end
-
-	return objs
 end
 
 return Region
