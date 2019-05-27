@@ -5,6 +5,7 @@
 --]]
 
 local class = require("libs.class")
+local json = require("libs.json")
 
 local Objective = class()
 function Objective:__init(template)
@@ -35,5 +36,10 @@ function Objective:spawn()
 		self.__spawned = true
 	end
 end
+
+function Objective:encode()
+  return json:encode({ ["templateName"] = self.name, ["regionName"] = self.__rgn, ["spawned"] = self.__spawned, })
+end
+
 
 return Objective
