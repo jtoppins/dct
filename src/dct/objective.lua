@@ -8,9 +8,10 @@ local class = require("libs.class")
 local json = require("libs.json")
 
 local Objective = class()
-function Objective:__init(template)
+function Objective:__init(template, region)
 	self.__spawned = false
 	self.__tpl     = template
+	self.__rgn     = region
 	-- TODO: this name doesn't guarantee uniqueness, eventually a
 	-- template function will be needed to generate a unique name
 	self.name      = template.name
