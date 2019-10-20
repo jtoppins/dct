@@ -23,7 +23,6 @@ local function settings(missioncfg)
 
 	local path = lfs.writedir()..utils.sep.."Config"..utils.sep.."dct.cfg"
 	local attr = lfs.attributes(path)
-	assert(attr ~= nil, "file does not exist: "..path)
 
 	config = {
 	-- ["luapath"] = lfs.writedir() .. "Scripts\\?.lua"
