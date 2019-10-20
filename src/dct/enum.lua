@@ -26,6 +26,11 @@ local assetType = {
 	["JTAC"]        = 12,
 	["LOGISTICS"]   = 13,
 	["SEA"]         = 14,
+
+	-- extended type set
+	["BUNKER"]      = 15,
+	["CHECKPOINT"]  = 16,
+	["FACTORY"]     = 17,
 }
 
 local missionType = {
@@ -48,18 +53,23 @@ local assetClass = {
 		[assetType.PORT]        = true,
 		[assetType.SAM]         = true,
 		[assetType.FACILITY]    = true,
-		[assetType.BASEDEFENSE] = true,
+		[assetType.BUNKER]      = true,
+		[assetType.CHECKPOINT]  = true,
+		[assetType.FACTORY]     = true,
 	},
 }
 
 local missionTypeMap = {
 	[missionType.STRIKE] = {
-		[assetType.AMMODUMP] = true,
-		[assetType.FUELDUMP] = true,
-		[assetType.C2]       = true,
-		[assetType.MISSILE]  = true,
-		[assetType.PORT]     = true,
-		[assetType.FACILITY] = true,
+		[assetType.AMMODUMP]   = true,
+		[assetType.FUELDUMP]   = true,
+		[assetType.C2]         = true,
+		[assetType.MISSILE]    = true,
+		[assetType.PORT]       = true,
+		[assetType.FACILITY]   = true,
+		[assetType.BUNKER]     = true,
+		[assetType.CHECKPOINT] = true,
+		[assetType.FACTORY]    = true,
 	},
 	[missionType.SEAD] = {
 		[assetType.EWR]      = true,
