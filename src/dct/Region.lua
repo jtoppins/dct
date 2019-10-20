@@ -11,6 +11,7 @@ local Template   = require("dct.Template")
 local Asset      = require("dct.Asset")
 local Logger     = require("dct.Logger").getByName("Region")
 local DebugStats = require("dct.DebugStats").getDebugStats()
+local dctenums   = require("dct.enum")
 
 local tplkind = {
 	["TEMPLATE"]  = 1,
@@ -101,6 +102,20 @@ function Region:__loadMetadata(regiondefpath)
 			       "' in region file; "..regiondefpath)
 		end
 	end
+
+	-- process limits; convert the human readable asset type names into
+	-- their numerical equivalents.
+	local limits = {}
+	for key, data in pairs(region.limits or {}) do
+		local typenum = dctenums.assetType[string.upper(key)]
+		if typenum == nil then
+			Logger:warn("invalid asset type '"..key..
+				"' found in limits definition in file: "..regiondefpath)
+		else
+			limits[typenum] = data
+		end
+	end
+	region.limits = limits
 
 	utils.mergetables(self, region)
 	region = nil
