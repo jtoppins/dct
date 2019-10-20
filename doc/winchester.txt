@@ -1,0 +1,13 @@
+@FlightControl#6524 as it relates to the "winchester" discussion the answer is
+mission specific as to what defines a plane is out of ordnance and needs to
+RTB. Also, keep in mind winchester is a plane specific state but the flight
+lead (again depending on mission parameters) will determine if the flight is
+to RTB or continue until all members of the flight reach winchester. A
+possible solution is provide an interface that accepts one table which is a
+key value mapping of what weapon types must be expended before the
+"winchester" goal is met, once the goal is met it triggers the flight to RTB.
+Since this is a goal state for the entire flight there would be a special key
+which would allow the author to specify if the entire flight should continue
+the attack or RTB upon some number of the flight reaching the state. The issue
+will be how to represent the ordnance types, I think DCS could provide some
+insight here; https://wiki.hoggitworld.com/view/DCS_enum_weapon_flag

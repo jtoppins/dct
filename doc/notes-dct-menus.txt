@@ -1,0 +1,238 @@
+== World Representation
+
+=== Strategic Properties (per Region)
+
+* attrition rate           - number of assets lost per period of time, the time period
+			     will be defined as the restart period or if we manage it
+			     a defined time period if the server never restarts
+* logistics                - utility, ability to maintain supply lines
+* command and control      - utility, ability to command
+* early warning detection  - utility, to detect air/ground threats
+* air defense              - utility, ability to defend a region's airspace
+* ground defense           - utility, ability to defend a region's ground
+* sea defense              - utility, ability to defend a region's costal/port zones
+
+=== Tactical Properties (Flight / Platoon leader)
+
+* target                   - handle, points to the assigned target
+* target dead              - bool, true if target is dead
+* target detected          - bool, true if target detected
+* target in-range          - bool, true if target is in engagement range
+* fuel                     - num, value representing percentage of fuel remaining
+* hasammo                  - bool, true if ammo available
+* atlocation               - bool, at assigned waypoint
+
+==== Tactical Utility
+
+* refuel desire -
+* rearm desire  -
+* threat level  -
+
+=== Objective State & Death
+
+How without saying every unit/group within an objective is required to be taken out
+do we determine the 'death state' of an Objective?
+
+An Objective is just a list of targets (aka Template) and each Template documents
+what is "Primary" and what is "Secondary". It also documents if the target must be
+"damaged" or "destroyed" and the "damaged" threshold could be defined in the .dct
+file.
+
+==== Statics
+
+Statics can be individually called out as a primary or secondary target and
+what damage threshold is required.
+
+==== Groups
+
+Groups are more complicated either individual units within the group can be
+specified as primary/secondary and at what dmanage level. Or the entire
+group can simply be specified as a primary/secondary group and individual
+units within that group will be ignored as far as their specific state.
+
+==== Hierarchal State
+
+This grouping plays naturally to a grouping. We have a 'DeathState' for the
+overall objective. Then each static and group also has an associate 'DeathState'
+which feeds into the overall Objective 'DeathState'. This means that all
+sub-DeathStates must be true before the overall objective can be considered dead.
+
+==== Pesudo Code
+
+obj = Objective()
+obj:spawn()
+
+within spawn
+	* register unit names and associate with this Objective
+	* setup a State object that represents the current 'state'
+	  of the objective
+
+obj:spawn {
+	local state = self.tmpl:spawn()
+	self.currstate = state
+}
+
+==== State Object
+
+State() {
+	isDead()
+	addPrimary(name, healthgoal)
+	
+
+
+
+
+unit life states:
+  * UNDAMAGED
+  * DAMAGED
+  * DESTROYED
+
+name = state {
+ type = "unit health"
+ required = primary | secondary
+ current = val
+ desired = tgt
+}
+
+
+Unit state types:
+* health
+* fuel
+
+
+
+
+
+== Objective Life-cycle
+
+=== 1. Generation
+
+Objectives come in two flavors,
+1) via statically defined templates that more or less define 'strategic' targets
+   within a theater
+2) when certian critera have been met throughout the course of a playthrough, f.e.
+   when a human player gets shotdown and the pilot survives (ejects) a pilot
+   objective could get generated, ultimatly results in a possible CSAR mission
+
+
+== Mission Life-cycle
+
+=== 1. Mission Request
+
+==== Requirements
+
+Only allow a user to queue one request at a time.
+
+How should a mission be assigned?
+ * Missions are assigned to groups
+ * mission termination is one of
+	* ABORT:
+	    explicitly aborted
+	    objective returns to available pool
+	* COMPLETE:
+	    mission requirements completed, objective moved to
+	    completed pool
+
+==== Request Generation
+
+Mission request can be generated in two ways,
+1) via a player generated request through the menu UI
+2) by some mission critera generating a request for AI players
+
+==== Player Generated Requests
+
+To keep from stalling the game pipeline the UI should generate a
+'Mission Request Command' basically a delayed requests so it can be
+properly sequenced.
+
+The request should do:
+  - validate no outstanding request is pending and no mission already
+    assigned
+  - mark group as having a pending mission request
+  - create 'MissionRequestCommand'
+  - if needed register callback with command (callback to be executed
+    at the end after the command is executed) 
+  - queue up command to request a mission
+  - notify player mission request was received
+
+==== Human Player Menu UI
+
+Player Menu:
+
+F10: Other
+   F1: C:Theater SITREP
+		-- shows the current situation for the side the player is currently on
+   F2: M:Request Mission
+       * FX: <available mission type>
+		-- generates a mission request
+          possible types are: cap, escort, sead/dead, strike, cas, transport, csar
+            - list mission types only approperate for the a/c requesting
+   F3: M:Assigned Mission
+       [
+        F1: None
+		-- prints a message to user saying no mission is assigned
+       ] or [
+        F1: Briefing
+		-- prints the mission breifing
+        F2: Get Status
+		-- prints the current status of mission
+        F3: Abort Mission
+		-- aborts the assigned mission
+        F4: Join Mission
+		-- other plyers in the group can join the mission
+        F5: Assigned Pilots
+		-- lists pilots assigned to mission
+        FX: <mission specific commands>
+       ]
+   F4: M:ATC
+       * FX: M:<ATC service list>
+            F1: Request Takeoff
+            F2: Request Marshal
+            F3: Request ATIS
+            FX: <??>
+
+=== 2. Mission Generation and Assignment
+
+  - periodic function notices the Human player request queue has a pending
+    request
+  - a request is pulled off and executed
+  - the MissionRequestCommand is executed
+    * priority sort available objectives of the specified type
+    * pull highest priority objective and create Mission(objective)
+    * remove objective from the available list
+    * run HumanGroup:assignMission(mission)
+      - verifies group still has no mission assigned and a request pending
+      - assign mission to group
+      - [?setup tracking tables and register event handlers?] - what do we
+        need to setup? All tracking should have been registered when the
+        objective was spawned and the Mission class needs to register an
+        observer with the objective-completed notification.
+      - UI: update group "assigned mission" menu to
+        * update menu to contain the generic items
+        * apply any mission specific menu items
+      - UI: notify player mission has been assigned
+      - clear outstanding request flag
+
+=== 3. Mission Execution
+
+Monitor hit and death events to determine when the objective is completed.
+The Objective class needs to register individual unit and group names with
+the Theater so when hit and death events are triggered it is easy to
+know which objective needs to be updated.
+
+On death of each unit remove the associated unit name from the global lookup
+table.
+
+=== 4. Mission Retirement
+
+Upon objective completion or abort do:
+  * queue Objective complete command
+    - remove all remaining group and unit names from lookup tables
+    - 
+
+
+Mission.getBriefing(self)
+Mission.getStatus(self)
+Mission.abort(self)
+Mission.join(self, requestor)
+Mission.getAssigned(self)

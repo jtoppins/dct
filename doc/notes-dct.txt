@@ -1,0 +1,148 @@
+template = {
+	name, type
+}
+
+kind = strategic | tactical
+	base | facility | mission
+
+each of these 'kinds' have a set of types associated with them;
+if these kind's have type sets that are disjoint then 'kind' no
+longer has any meaning and can be removed.
+
+the types for strategics are:
+	- ammodump
+	- bunker
+	- c2
+	- checkpoint
+	- depot
+	- ewr
+	- factory
+	- fueldump
+	- missile
+	- port
+	- sam
+	- warehouse
+
+	special types of strategics that can be captured:
+	- airbase
+	- farp
+
+note: technically all of these could eventually be 'capturable', would just need to
+respawn the template using a different country
+
+
+types for tactical are:
+	- armor column
+	- supply convoy
+	- sea supply convoy
+
+other special types for 'game control' purposes:
+	- keepout
+
+
+
+== Strategic Value
+
+each region can specify the relative value of strategic types within
+the region definition. This value can be assigned to objectives to
+allow for ordering.
+
+[maybe] Also to control the overall flow from region to region a dynamic
+priority can be for the overall region, with the base value assigned
+in the region definition.
+
+
+implies:
+	- ability to set base 'priority' of an Objective class
+	- ability to get the actual 'priority' of an Objective class
+
+
+
+== Spawning:
+
+Templates can overlap, to prevent spawning templates on top of eachother a template
+dct file may specify an 'exclusion' the template belongs to. Only a single template
+within an exclusion may be spawned as any one time. Exclusions are unique to a region
+and different template types my not belong to the same exclusion.
+
+	=== On loading region templates
+
+region.__templates = {
+	["<tpl-name>"] = Template(),
+}
+
+region.__tpltypes = {
+	<ttype> = {
+		[#] = {
+			kind = tpl | exclusion,
+			name  = "<tpl-name>" | "<ex-name>",
+		},
+	},
+}
+
+region.__exclusions = {
+	["<ex-name>"] = {
+		ttype = <ttype>,
+		names = {
+			[#] = ["<tpl-name>"],
+		},
+	},
+}
+
+
+	- add template to templates list
+	- if template.exclusion ~= nil
+		- if region.__exclusions[template.exclusion] == nil
+			- create new exclusion entry
+			- register exclusion in tpltypes
+		- register template.name to exclusion list
+	- else
+		- register template in tpltypes
+
+
+	=== On generating objectives
+
+objs = {
+	["stats"] = {}
+	["objs"]  = {}
+}
+
+	- deep-copy tpltypes table
+	- loop over each type
+		- setup limits
+			- if limits for the given type are specified only spawn
+			  the number specified
+		- while templates left and limit not reached
+			- randomly select template
+			- if ttype is exclusion 
+				- get exclusion entry using name
+				- randomly select value to get template name
+			- remove index from copied tpltypes table
+			- get Template class
+			- create Objective object
+			- override Objective priority if specified for objective type
+
+
+== TODOs
+
+- spawn bases
+- [COMPLETE] spawn templates based on exclusion zones
+- generate a saved state
+- read and restore the saved state
+- create a state description language and a way to query the world to determine
+  the state and if it matches the desired state
+	- needed for theater class and overall side states
+	- needed for templates so Objective classes can determine when to
+	  objective is "completed"
+- write a Mission class
+	- associates an Objective with a unit attempting to complete the mission
+	- missions are per coalition
+- write a commander AI
+	- has an air commander
+	- has a ground commander
+- Squadron class
+	- services air mission requests
+
+[maybe]
+- Request() class
+	- used to generate a mission
