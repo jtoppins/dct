@@ -9,6 +9,9 @@ read_globals = {
 	-- DCS specific globals
 	"env",
 	"Unit",
+	"Object",
+	"StaticObject",
+	"Group",
 	"coalition",
 	"world",
 	"timer",
@@ -18,13 +21,12 @@ read_globals = {
 	"dct",
 }
 
-files["src/dct/region.lua"] = { globals = {"region",} }
+files["src/dct/Region.lua"] = { globals = {"region",} }
 files["src/dct/settings.lua"] = { globals = {"dctserverconfig",} }
-files["src/dct/template.lua"] = {
+files["src/dct/Template.lua"] = {
 	globals = {"staticTemplate", "metadata",},
-	ignore  = {"key",},
 }
-files["src/dct/theater.lua"] = { globals = {"theatergoals",} }
+files["src/dct/Theater.lua"] = { globals = {"theatergoals",} }
 files["tests/testlibs/dcsstubs.lua"] = {
 	globals = {"lfs"},
 	read_globals = {"socket",},
