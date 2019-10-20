@@ -5,7 +5,7 @@
 --]]
 
 local class  = require("libs.class")
-local Logger = require("dct.logger")
+local Logger = require("dct.Logger").getByName("DebugStats")
 
 local stats = nil
 local DebugStats = class()
@@ -18,7 +18,6 @@ function DebugStats.getDebugStats()
 end
 
 function DebugStats:__init()
-	self.logger = Logger.getByName("debugstats")
 	self.stats  = {}
 end
 
@@ -32,9 +31,9 @@ function DebugStats:incstat(name, val)
 end
 
 function DebugStats:log()
-	self.logger:info("== info stats ==")
+	Logger:info("== info stats ==")
 	for _, stat in pairs(self.stats) do
-		self.logger:info("=> "..stat.title..": "..stat.value)
+		Logger:info("=> "..stat.title..": "..stat.value)
 	end
 end
 

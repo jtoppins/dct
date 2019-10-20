@@ -1,5 +1,6 @@
 region = {
 	["name"]   = "Test region",
+	["priority"] = 10,
 	["limits"] = {
 		["ammodump"] = {
 			["min"] = 1,

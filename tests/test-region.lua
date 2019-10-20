@@ -1,10 +1,12 @@
 #!/usr/bin/lua
 
-require("testlibs")
+require("dcttestlibs")
 require("dct")
+local utils = require("libs.utils")
 
 local function main()
-	local regiondir = "./data/mission/region1"
+	local regiondir = lfs.tempdir()..utils.sep.."theater"..
+		utils.sep.."region1"
 	dct.Region(regiondir)
 	return 0
 end

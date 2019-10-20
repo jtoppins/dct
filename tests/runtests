@@ -1,19 +1,22 @@
 #!/bin/sh
 
-set -e
+#set -e
 cwd=$(pwd)
 base=$(dirname $0)
+srcroot="${cwd}/${base}/.."
+fail=0
 
-LUA_PATH="${cwd}/${base}/../src/?.lua"
-#echo "lua-path: ${LUA_PATH}"
-
-# if LUA_LIB_PATH is defined append LUA_PATH
-if test -n "${LUA_LIB_PATH}"; then
-	#echo "adding lua-lib path: ${LUA_LIB_PATH}"
-	LUA_PATH="${LUA_PATH};${LUA_LIB_PATH}"
-fi
+DCT_DATA_ROOT=${DCT_DATA_ROOT:-${srcroot}/data}
+DCT_TEMPLATE_PATH=${DCT_TEMPLATE_PATH:-${srcroot}/../dcs-mission-oeo-templates}
+LUA_LIB_PATH=${LUA_LIB_PATH:-${srcroot}/../lua-libs/src/?.lua}
+LUA_PATH="${srcroot}/src/?.lua;${LUA_LIB_PATH}"
 LUA_PATH="${LUA_PATH};;"
 export LUA_PATH
+export DCT_DATA_ROOT
+export DCT_TEMPLATE_PATH
+#echo "lua-path: ${LUA_PATH}"
+#echo "DCT data root: ${DCT_DATA_ROOT}"
+#echo "DCT template path: ${DCT_TEMPLATE_PATH}"
 
 cd "${base}"
 for t in test-*.lua; do
@@ -21,8 +24,21 @@ for t in test-*.lua; do
 	./${t}
 	if test $? -ne 0; then
 		result="FAIL"
+		fail=1
 	fi
 	echo "${result}: ${t}"
 done
-cd ${cwd}
-exit 0
+cd "${cwd}"
+exit ${fail}
+
+
+# TODO instead of going the route of converting each test to a lua table
+# and having a single runner instead have each test accept commands;
+# Goals for tests
+#  * able to be run individually
+#      this can be done by passing the call of the test to a function
+#        that prints a 1-liner if the test fails
+#
+# test improvements
+# * convert this to a lua file
+# * still allow each "test suite" to be in a file

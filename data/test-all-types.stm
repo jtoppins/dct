@@ -1,3 +1,11 @@
+--[[
+helo:    1 groups
+ship:    1 groups
+plane:   1 groups
+vehicle: 3 groups
+static:  3 groups
+--]]
+
 staticTemplate = 
 {
     ["coalition"] = 

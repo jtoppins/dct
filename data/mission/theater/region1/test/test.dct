@@ -1,5 +1,4 @@
 metadata = {
-    ["class"] = "strike",
     ["objtype"]  = "ammodump",
     ["respawn"] = {
         ["type"]  = "timed|land|death",

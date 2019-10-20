@@ -4,7 +4,7 @@
 -- Starts the DCT framework
 --]]
 
-local Theater  = require("dct.theater")
+local Theater = require("dct.Theater")
 
 local function init()
 	local t = Theater()

@@ -1,10 +1,8 @@
 #!/usr/bin/lua
 
 require("os")
-require("testlibs")
+require("dcttestlibs")
 local utils = require("libs.utils")
-dctsettings = {}
-dctsettings.theaterpath = lfs.writedir()..utils.sep.."mission"
 require("dct")
 
 local function main()

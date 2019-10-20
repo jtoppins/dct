@@ -1,0 +1,5 @@
+	-- TODO: load squadrons
+	--	* ok for tankers and other supports to respawn in-air
+	--	* after a period of time respawn the support
+	--	* tie to specific airfields so when airfield is taken the squadron
+	--	  stops spawning

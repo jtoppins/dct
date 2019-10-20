@@ -8,47 +8,48 @@ require("lfs")
 local utils = require("libs.utils")
 local config = nil
 
+--[[
 -- We have 3 levels of config,
 -- 	* mission defined configs
 -- 	* server defined config file
 -- 	* default config values
 -- simple algorithm; assign the defaults, then apply the server, then
 -- any mission level configs
-local function settings(mcfg)
+--]]
+local function settings(missioncfg)
 	if config ~= nil then
 		return config
 	end
 
-	local path = lfs.writedir() .. utils.sep .. "Config" ..
-		utils.sep .. "dct.cfg"
+	local path = lfs.writedir()..utils.sep.."Config"..utils.sep.."dct.cfg"
 	local attr = lfs.attributes(path)
+	assert(attr ~= nil, "file does not exist: "..path)
 
-	config = {}
-	-- config.luapath = lfs.writedir() .. "Scripts\\?.lua"
+	config = {
+	-- ["luapath"] = lfs.writedir() .. "Scripts\\?.lua"
 	--[[
 	-- Note: Can't provide a server level package path as to require
 	-- dct would require the package path to already be set. Nor can
 	-- we provide a useful default because the package.path needs to
 	-- be set before we get here.
 	--]]
-	config.theaterpath = lfs.tempdir() .. utils.sep .. "theater"
-	config.debug       = false
-	config.profile     = false
-	config.statepath   = lfs.writedir()..env.mission.theatre..
-		env.getValueDictByKey(env.mission.sortie)..".state"
+		["theaterpath"] = lfs.tempdir() .. utils.sep .. "theater",
+		["debug"]       = false,
+		["profile"]     = false,
+		["statepath"]   = lfs.writedir()..utils.sep..env.mission.theatre..
+			"_"..env.getValueDictByKey(env.mission.sortie)..".state",
+		["spawndead"] = false,
+	}
 
 	if attr ~= nil then
 		local rc = pcall(dofile, path)
-		assert(rc, "failed to parse: server config file, '" ..
-		       path .. "' path likely doesn't exist")
-		assert(dctserverconfig ~= nil,
-			"no dctserverconfig structure defined")
+		assert(rc, "failed to parse: "..path)
+		assert(dctserverconfig ~= nil, "no dctserverconfig structure defined")
 		utils.mergetables(config, dctserverconfig)
 		dctserverconfig = nil
 	end
 
-	utils.mergetables(config, mcfg)
-
+	utils.mergetables(config, missioncfg)
 	return config
 end
 

@@ -1,9 +1,11 @@
 metadata = {
-    ["class"] = "strike",
     ["objtype"]  = "ammodump",
+
+--[[
     ["respawn"] = {
         ["type"]  = "timed|land|death",
         ["limit"] = 3,
         ["time"]  = 30,
     },
+--]]
 }

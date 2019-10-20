@@ -1,21 +1,21 @@
 #!/usr/bin/lua
 
 require("math")
-require("testlibs")
+require("dcttestlibs")
 dctsettings = {
 	["profile"] = true,
 	["debug"]   = false,
 	["logger"]  = {
-		["debugstats"] = "debug",
+		["DebugStats"] = "debug",
 	},
-	["theaterpath"] = os.getenv("DCT_MISSION_PATH"),
+	["theaterpath"] = os.getenv("DCT_TEMPLATE_PATH"),
 }
 require("dct")
 
 local function main()
 	-- setup an initial seed, lets use the same one for now '12345'
 	math.randomseed(12345)
-	if os.getenv("DCT_MISSION_PATH") == nil then
+	if os.getenv("DCT_TEMPLATE_PATH") == nil then
 		-- skip test
 		return 0
 	end

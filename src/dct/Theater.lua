@@ -5,11 +5,14 @@
 --]]
 
 require("lfs")
-local class      = require("libs.class")
-local Region     = require("dct.region")
-local Logger     = require("dct.logger")
-local DebugStats = require("dct.debugstats")
-local Profiler   = require("dct.profiling")
+local class       = require("libs.class")
+local utils       = require("libs.utils")
+local json        = require("libs.json")
+local Region      = require("dct.Region")
+local AssetManager= require("dct.AssetManager")
+local Logger      = require("dct.Logger").getByName("Theater")
+local DebugStats  = require("dct.DebugStats").getDebugStats()
+local Profiler    = require("dct.Profiler").getProfiler()
 
 --[[
 --  Theater class
@@ -27,27 +30,23 @@ local Profiler   = require("dct.profiling")
 --]]
 local Theater = class()
 function Theater:__init()
-	local prof = Profiler.getProfiler()
-	prof:profileStart("Theater:init()")
-	self.logger    = Logger.getByName("theater")
-	self.dbgstats  = DebugStats.getDebugStats()
-	self.dbgstats:registerStat("regions", 0, "region(s) loaded")
-	self.dbgstats:registerStat("obj", 0, "objective(s) loaded")
-	self.dbgstats:registerStat("spawn", 0, "objectives spawned")
+	Profiler:profileStart("Theater:init()")
+	DebugStats:registerStat("regions", 0, "region(s) loaded")
 	self.path      = _G.dct.settings.theaterpath
 	self.statepath = _G.dct.settings.statepath
 	self.dirty     = false
+	self.regions   = {}
+	self.assetmgr  = AssetManager(self)
 
 	self:__loadGoals()
 	self:__loadRegions()
 	self:__loadOrGenerate()
-	self:spawnActive()
-	prof:profileStop("Theater:init()")
+	Profiler:profileStop("Theater:init()")
 end
 
 -- a description of the world state that signifies a particular side wins
 function Theater:__loadGoals()
-	local goalpath = self.path .. "/theater.goals"
+	local goalpath = self.path..utils.sep.."theater.goals"
 	local rc = pcall(dofile, goalpath)
 	assert(rc, "failed to parse: theater goal file, '" ..
 			goalpath .. "' path likely doesn't exist")
@@ -56,23 +55,23 @@ function Theater:__loadGoals()
 	self.goals = {}
 	-- TODO: translate goal definitions written in the lua files to any
 	-- needed internal state.
+	-- Theater goals are goals written in a success format, meaning the
+	-- first side to complete all their goals wins
 	theatergoals = nil
 end
 
 function Theater:__loadRegions()
-	self.regions = {}
-
 	for filename in lfs.dir(self.path) do
 		if filename ~= "." and filename ~= ".." and
 			filename ~= ".git" then
-			local fpath = self.path .. "/" .. filename
+			local fpath = self.path..utils.sep..filename
 			local fattr = lfs.attributes(fpath)
 			if fattr.mode == "directory" then
 				local r = Region(fpath)
 				assert(self.regions[r.name] == nil, "duplicate regions " ..
 						"defined for theater: " .. self.path)
 				self.regions[r.name] = r
-				self.dbgstats:incstat("regions", 1)
+				DebugStats:incstat("regions", 1)
 			end
 		end
 	end
@@ -82,11 +81,11 @@ function Theater:__loadOrGenerate()
 	self.objectives = {}
 	local statefile = io.open(self.statepath)
 
-	if statefile then
-		local jsonstate = statefile:read("*all")
+	if statefile ~= nil then
+		local statetbl = json:decode(statefile:read("*all"))
 		statefile:close()
 		statefile = nil
-		self:__initFromState(json:decode(jsonstate))
+		self:__initFromState(statetbl)
 	else
 		self:generate()
 		self:__dirtySet()
@@ -94,6 +93,7 @@ function Theater:__loadOrGenerate()
 end
 
 function Theater:__initFromState(jsontbl)
+	-- TODO: use saved state recreate objects
 	return
 end
 
@@ -111,35 +111,10 @@ function Theater:export()
 	self:dirtyClear()
 end
 
--- generate a new theater
 function Theater:generate()
-	-- generate static objectives
-	for name, r in pairs(self.regions) do
-		r:generate(self)
+	for _, r in pairs(self.regions) do
+		r:generate(self.assetmgr)
 	end
-end
-
-function Theater:addObjective(side, obj)
-	-- TODO: for now do a simple storage of the objectives, it is assumed
-	-- all objective names are unique
-	self.objectives[obj.name] = obj
-	self.dbgstats:incstat("obj", 1)
-end
-
-function Theater:spawnActive()
-    -- TODO: for now we are just going to spawn everything
-	for name, obj in pairs(self.objectives) do
-		obj:spawn()
-		self.logger:debug("Spawning: '"..name.."'")
-		self.dbgstats:incstat("spawn", 1)
-	end
-end
-
-function Theater:onEvent(event)
-	-- TODO: write this
-	--	probably best to support a registration system where other objects
-	--	can register a function for a specific event; which receives two
-	--	arguments: context, event
 end
 
 function Theater:exec(time)
@@ -150,18 +125,8 @@ function Theater:exec(time)
 	return rescheduletime
 end
 
+function Theater:onEvent(event)
+	self.assetmgr:onDCSEvent(event)
+end
+
 return Theater
-
---[[
-world state
-	* <side>
-		- pilot losses
-		- objective type stats
-		- bool primary_objectives_left()
-
-
-	Theater has a state
-		a state consists of:
-			* objectives
-			* ??
---]]
