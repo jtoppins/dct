@@ -198,6 +198,40 @@ function Region:__registerType(kind, ttype, name)
 	table.insert(self.__tpltypes[ttype], entry)
 end
 
+function Region:_generate(assetmgr, objtype, names)
+	local limits = {
+		["min"]     = #names,
+		["max"]     = #names,
+		["limit"]   = #names,
+		["current"] = 0,
+	}
+
+	if self.limits and self.limits[objtype] then
+		limits.min   = self.limits[objtype].min
+		limits.max   = self.limits[objtype].max
+		limits.limit = math.random(limits.min, limits.max)
+	end
+
+	while #names >= 1 and limits.current < limits.limit do
+		-- this could be optimized a little in that if we have no
+		-- specific limits and want all the templates spawned
+		-- we could skip getting the random number, not really worth it
+
+		local idx  = math.random(1, #names)
+		local name = names[idx].name
+		if names[idx].kind == tplkind.EXCLUSION then
+			local i = math.random(1, #self.__exclusions[name].names)
+			name = self.__exclusions[name]["names"][i]
+		end
+		local tpl = self.__templates[name]
+		local asset = Asset(tpl, self)
+		assetmgr:addAsset(asset)
+		asset:spawn()
+		table.remove(names, idx)
+		limits.current = 1 + limits.current
+	end
+end
+
 -- generates all "strategic" assets for a region from
 -- a spawn format (limits). We then immediatly register
 -- that asset with the asset manager (provided) and spawn
@@ -206,37 +240,10 @@ end
 function Region:generate(assetmgr)
 	local tpltypes = utils.deepcopy(self.__tpltypes)
 
-	for objtype, names in pairs(tpltypes) do
-		local limits = {
-			["min"]     = #names,
-			["max"]     = #names,
-			["limit"]   = #names,
-			["current"] = 0,
-		}
-
-		if self.limits and self.limits[objtype] then
-			limits.min   = self.limits[objtype].min
-			limits.max   = self.limits[objtype].max
-			limits.limit = math.random(limits.min, limits.max)
-		end
-
-		while #names >= 1 and limits.current < limits.limit do
-			-- this could be optimized a little in that if we have no
-			-- specific limits and want all the templates spawned
-			-- we could skip getting the random number, not really worth it
-
-			local idx  = math.random(1, #names)
-			local name = names[idx].name
-			if names[idx].kind == tplkind.EXCLUSION then
-				local i = math.random(1, #self.__exclusions[name].names)
-				name = self.__exclusions[name]["names"][i]
-			end
-			local tpl = self.__templates[name]
-			local asset = Asset(tpl, self)
-			assetmgr:addAsset(asset)
-			asset:spawn()
-			table.remove(names, idx)
-			limits.current = 1 + limits.current
+	for objtype, _ in pairs(dctenums.assetClass["STRATEGIC"]) do
+		local names = tpltypes[objtype]
+		if names ~= nil then
+			self:_generate(assetmgr, objtype, names)
 		end
 	end
 end
