@@ -4,7 +4,7 @@
 -- Provides functions to define and manage goals.
 --]]
 
-local class = require("libs.class")
+local class  = require("libs.class")
 local enums  = require("dct.goals.enum")
 
 local BaseGoal = class()
@@ -49,12 +49,13 @@ function BaseGoal:onSpawn()
 	end
 end
 
+-- cannot be called until after the object is spawned
 function BaseGoal:getGroupName()
 	return self.groupname
 end
 
 function BaseGoal:checkComplete()
-	assert(false, "isComplete() is a virtual function and must be overridden")
+	assert(false, "checkComplete() is a virtual function and must be overridden")
 end
 
 return BaseGoal
