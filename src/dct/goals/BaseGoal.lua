@@ -12,6 +12,7 @@ function BaseGoal:__init(data)
 	self.priority   = data.priority or enums.priority.PRIMARY
 	self.objtype    = data.objtype
 	self.name       = data.name
+	self.groupname  = self.name
 	self._complete = false
 end
 
@@ -28,12 +29,18 @@ function BaseGoal:getName()
 	return self.name
 end
 
+--[[
 -- There are some things that need to be done once the object being tracked
 -- by this goal has been spawned. This provides a generic interface for
 -- handling this work.
+--
+-- We need to know the group name associated with a unit name because that
+-- is how the Asset's template is organized. The easiest way to find that
+-- association is to just let the engine tell us once the unit has been spawned.
+-- We don't need the group information until the unit is spawned anyway.
+--]]
 function BaseGoal:onSpawn()
-	self.groupname = self.name
-	if self.objtype == enums.objtype.GROUP then
+	if self.objtype == enums.objtype.UNIT then
 		self.groupname = Unit.getByName(self.name):getGroup():getName()
 	end
 
