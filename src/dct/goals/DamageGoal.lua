@@ -13,6 +13,8 @@ local DamageGoal = class(BaseGoal)
 function DamageGoal:__init(data)
 	assert(type(data.value) == 'number',
 		"value error: data.value must be a number")
+	assert(data.value >= 0 and data.value <= 100,
+		"value error: data.value must be between 0 and 100")
 	BaseGoal.__init(self, data)
 	self._tgtdamage = data.value
 end
