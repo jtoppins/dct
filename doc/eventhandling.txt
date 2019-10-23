@@ -1,0 +1,4 @@
+For event handling use an Observer model where objects that need to get DCS
+events will register with the theater class.  This will allow for a central
+location where DCS events are handled in DCT and provides the opportunity for
+adding debugging/statistic information at a later date.
