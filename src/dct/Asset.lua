@@ -210,6 +210,7 @@ function Asset:onDCSEvent(event)
 		local unitname = obj:getName()
 		if obj:getCategory() == Object.Category.UNIT then
 			local grpname = obj:getGroup():getName()
+			local grp = self._assets[grpname]
 			for _, unit in pairs(grp.units) do
 				if unit.name == unitname then
 					unit.dct_dead = true
