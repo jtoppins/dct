@@ -20,7 +20,7 @@ local function main()
 		return 0
 	end
 
-	dct.Theater()
+	dct.Theater.getInstance()
 	print("Groups spawned:  "..check.spawngroups)
 	print("Statics spawned: "..check.spawngroups)
 	dct.DebugStats.getDebugStats():log()

@@ -10,6 +10,7 @@ local utils       = require("libs.utils")
 local containers  = require("libs.containers")
 local json        = require("libs.json")
 local enum        = require("dct.enum")
+local Observable  = require("dct.Observable")
 local Region      = require("dct.Region")
 local AssetManager= require("dct.AssetManager")
 local Commander   = require("dct.ai.Commander")
@@ -34,8 +35,9 @@ local UI_CMD_DELAY    = 2
 --			<regionname> = Region(),
 --		},
 --]]
-local Theater = class()
+local Theater = class(Observable)
 function Theater:__init()
+	Observable.__init(self)
 	Profiler:profileStart("Theater:init()")
 	DebugStats:registerStat("regions", 0, "region(s) loaded")
 	self.path      = _G.dct.settings.theaterpath
@@ -202,8 +204,14 @@ function Theater:exec(time)
 	return rescheduletime
 end
 
-function Theater:onEvent(event)
-	self.assetmgr:onDCSEvent(event)
+local theater = nil
+local t = {}
+
+function t.getInstance()
+	if theater == nil then
+		theater = Theater()
+	end
+	return theater
 end
 
-return Theater
+return t

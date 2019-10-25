@@ -7,7 +7,7 @@
 local Theater = require("dct.Theater")
 
 local function init()
-	local t = Theater()
+	local t = Theater.getInstance()
 	world.addEventHandler(t)
 	timer.scheduleFunction(t.exec, t, timer.getTime() + 20)
 end

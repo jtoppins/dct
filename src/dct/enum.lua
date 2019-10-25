@@ -99,11 +99,23 @@ local missionTypeMap = {
 	},
 }
 
+local uiRequestType = {
+	["THEATERSTATUS"]   = 1,
+	["MISSIONREQUEST"]  = 2,
+	["MISSIONBRIEF"]    = 3,
+	["MISSIONSTATUS"]   = 4,
+	["MISSIONABORT"]    = 5,
+	["MISSIONROLEX"]    = 6,
+	["MISSIONCHECKIN"]  = 7,
+	["MISSIONCHECKOUT"] = 8,
+}
+
 local enum = {
 	["assetType"] = assetType,
 	["assetClass"] = assetClass,
 	["missionType"] = missionType,
 	["missionTypeMap"] = missionTypeMap,
+	["uiRequestType"] = uiRequestType,
 }
 
 return enum

@@ -19,4 +19,6 @@ dct.Asset     = require("dct.Asset")
 dct.Profiler  = require("dct.Profiler")
 dct.DebugStats= require("dct.DebugStats")
 
+require("dct.ui.groupmenu")()
+
 return dct

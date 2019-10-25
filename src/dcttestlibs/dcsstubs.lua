@@ -410,6 +410,35 @@ function Group:getUnit(num)
 end
 _G.Group = Group
 
+local missionCommands = {}
+function missionCommands.addCommand(name, path, func, args)
+end
+
+function missionCommands.addSubMenu(name, path)
+end
+
+function missionCommands.removeItem(path)
+end
+
+function missionCommands.addCommandForCoalition(side, name, path, func, args)
+end
+
+function missionCommands.addSubMenuForCoalition(side, name, path)
+end
+
+function missionCommands.removeItemForCoalition(side, path)
+end
+
+function missionCommands.addCommandForGroup(id, name, path, func, args)
+end
+
+function missionCommands.addSubMenuForGroup(id, name, path)
+end
+
+function missionCommands.removeItemForGroup(id, path)
+end
+_G.missionCommands = missionCommands
+
 local coord = {}
 function coord.LOtoLL(pos)
 	return 88.123, -63.456, pos.y
