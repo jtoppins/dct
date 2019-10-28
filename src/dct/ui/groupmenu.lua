@@ -8,6 +8,14 @@
 -- Assumptions:
 -- It is assumed each player group consists of a single player
 -- aircraft due to issues with the game.
+--
+-- Notes:
+-- * Once a menu is added to a group it does not need to be added
+--   again, which is why we need to track which group ids have had
+--   a menu added. The reason why this cannot be done up front on
+--   mission start is because the the group does not exist until at
+--   least one player occupies a slot. We must add the menu upon
+--   object creation.
 --]]
 
 Theater = require("dct.Theater")
@@ -16,6 +24,7 @@ Logger  = require("dct.Logger").getByName("UIMenu")
 local addmenu = missionCommands.addSubMenuForGroup
 local addcmd  = missionCommands.addCommandForGroup
 
+local groups = {}
 
 local function sendRequest(data)
 	Theater.getInstance():playerRequest(data)
@@ -23,6 +32,11 @@ end
 
 local function createMenu(grp)
 	local gid = grp:getID()
+
+	if groups[gid] then
+		Logger:debug("group("..gid..") already had menu added")
+		return
+	end
 
 	Logger:debug("adding menu for group: "..tostring(gid))
 
@@ -76,6 +90,8 @@ local function createMenu(grp)
 		 ["id"] = gid,
 		 ["type"] = dctenum.uiRequestType.MISSIONCHECKOUT,
 		})
+
+	groups[gid] = true
 end
 
 local function uiDCSEventHandler(ctx, event)
