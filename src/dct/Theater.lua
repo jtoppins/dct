@@ -9,13 +9,15 @@ local class       = require("libs.class")
 local utils       = require("libs.utils")
 local containers  = require("libs.containers")
 local json        = require("libs.json")
+local enum        = require("dct.enum")
 local Region      = require("dct.Region")
 local AssetManager= require("dct.AssetManager")
 local Logger      = require("dct.Logger").getByName("Theater")
 local DebugStats  = require("dct.DebugStats").getDebugStats()
 local Profiler    = require("dct.Profiler").getProfiler()
 
-local RESCHEDULE_FREQ = 2 -- seconds
+local RESCHEDULE_FREQ = 0.5 -- seconds
+local UI_CMD_DELAY    = 2
 
 --[[
 --  Theater class
@@ -41,16 +43,20 @@ function Theater:__init()
 	self.regions   = {}
 	self.cmdq      = containers.PriorityQueue()
 	self.ctime     = timer.getTime()
+	self.ltime     = 0
 	self.assetmgr  = AssetManager(self)
 
-	self:__loadGoals()
-	self:__loadRegions()
-	self:__loadOrGenerate()
+	self:_loadGoals()
+	self:_loadRegions()
+	self:_loadOrGenerate()
 	Profiler:profileStop("Theater:init()")
 end
 
 -- a description of the world state that signifies a particular side wins
-function Theater:__loadGoals()
+-- TODO: create a common function that will read in a lua file like below
+-- verify it was read correctly, contains the token expected, returns the
+-- token on the stack and clears the global token space
+function Theater:_loadGoals()
 	local goalpath = self.path..utils.sep.."theater.goals"
 	local rc = pcall(dofile, goalpath)
 	assert(rc, "failed to parse: theater goal file, '" ..
@@ -65,7 +71,7 @@ function Theater:__loadGoals()
 	theatergoals = nil
 end
 
-function Theater:__loadRegions()
+function Theater:_loadRegions()
 	for filename in lfs.dir(self.path) do
 		if filename ~= "." and filename ~= ".." and
 			filename ~= ".git" then
@@ -82,27 +88,26 @@ function Theater:__loadRegions()
 	end
 end
 
-function Theater:__loadOrGenerate()
+function Theater:_loadOrGenerate()
 	self.objectives = {}
 	local statefile = io.open(self.statepath)
 
 	if statefile ~= nil then
 		local statetbl = json:decode(statefile:read("*all"))
 		statefile:close()
-		statefile = nil
-		self:__initFromState(statetbl)
+		self:_initFromState(statetbl)
 	else
 		self:generate()
-		self:__dirtySet()
+		self:_dirtySet()
 	end
 end
 
-function Theater:__initFromState(jsontbl)
+function Theater:_initFromState(jsontbl)
 	-- TODO: use saved state recreate objects
 	return
 end
 
-function Theater:__dirtySet()
+function Theater:_dirtySet()
     self.dirty = true
 end
 
@@ -122,23 +127,68 @@ function Theater:generate()
 	end
 end
 
+function Theater:getAssetMgr()
+	return self.assetmgr
+end
+
+function Theater:playerRequest(data)
+	-- TODO: not written yet
+	trigger.action.outTextForGroup(data.id, "WIP data receved: "..
+		json:encode_pretty(data), 30, true)
+end
+
+function Theater:getATORestrictions(side, unittype)
+	-- TODO: read in the ato restriction file
+	return enum.missionType
+end
+
+--[[
 -- do not worry about command priority right now
-function Theater:queueCommand(time, cmd)
-	self.cmdq:push(self.ctime + time, cmd)
+-- command queue discussion,
+--  * central Q
+--  * priority ordered in both priority and time
+--     priority = time * 128 + P
+--     time = (priority - P) / 128
+--
+--    This allows things of higher priority to be executed first
+--    but things that need to be executed at around the same time
+--    to also occur.
+--
+-- delay - amount of delay in seconds before the command is run
+-- cmd   - the command to be run
+--]]
+function Theater:queueCommand(delay, cmd)
+	Logger:debug("queueCommand(); delay:"..delay..";"..debug.traceback())
+	self.cmdq:push(self.ctime + delay, cmd)
+	Logger:debug("queueCommand(); cmdq size: "..self.cmdq:size())
 end
 
 function Theater:exec(time)
 	-- TODO: insert profiling hooks to count the moving average of
 	-- 10 samples for how long it takes to execute a command
+	self.ltime = self.ctime
 	self.ctime = time
 	local rescheduletime = time + RESCHEDULE_FREQ
 
+	Logger:debug("exec() - start: "..tostring(time))
 	if self.cmdq:empty() then
+		Logger:debug("exec() - no pending cmds")
 		return rescheduletime
 	end
 
+	local _, prio = self.cmdq:peek()
+	if time < prio then
+		Logger:debug("exec() - not time to execute; time: "..time..
+			"; exec: "..prio)
+		return rescheduletime
+	end
+
+	Logger:debug("exec() - execute command")
 	local cmd = self.cmdq:pop()
-	cmd:execute(time)
+	local requeue = cmd:execute(time)
+	if requeue ~= nil and type(requeue) == "number" then
+		self:queueCommand(requeue, cmd)
+	end
 	return rescheduletime
 end
 
