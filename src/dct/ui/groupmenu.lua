@@ -21,6 +21,7 @@
 Theater = require("dct.Theater")
 dctenum = require("dct.enum")
 Logger  = require("dct.Logger").getByName("UIMenu")
+utils   = require("libs.utils")
 local addmenu = missionCommands.addSubMenuForGroup
 local addcmd  = missionCommands.addCommandForGroup
 
@@ -38,13 +39,21 @@ local function createMenu(grp)
 		return
 	end
 
+	local name = grp:getName()
+	local side = grp:getCoalition()
+	local rqstpktheader = {
+		["id"] = gid,
+		["name"] = name,
+		["side"] = side,
+	}
+
 	Logger:debug("adding menu for group: "..tostring(gid))
 
 	addcmd(gid, "Theater Update", nil, sendRequest,
-		{
-		 ["id"] = gid,
-		 ["type"] = dctenum.uiRequestType.THEATERSTATUS,
-		})
+		utils.mergetables({
+			["type"] = dctenum.uiRequestType.THEATERSTATUS,
+		}, rqstpktheader))
+
 	local msnmenu = addmenu(gid, "Mission", nil)
 	local rqstmenu = addmenu(gid, "Request", msnmenu)
 	-- TODO: I am knowingly not sorting the keys so the order in which
@@ -52,44 +61,37 @@ local function createMenu(grp)
 	-- be a problem as lua doesn't provide a default solution.
 	for k, v in pairs(dctenum.missionType) do
 		addcmd(gid, k, rqstmenu, sendRequest,
-			{
-			 ["id"] = gid,
-			 ["type"] = dctenum.uiRequestType.MISSIONREQUEST,
-			 ["value"] = v,
-			})
+			utils.mergetables({
+				["type"] = dctenum.uiRequestType.MISSIONREQUEST,
+				["value"] = v,
+			}, rqstpktheader))
 	end
 
 	addcmd(gid, "Briefing", msnmenu, sendRequest,
-		{
-		 ["id"] = gid,
-		 ["type"] = dctenum.uiRequestType.MISSIONBRIEF,
-		})
+		utils.mergetables({
+			["type"] = dctenum.uiRequestType.MISSIONBRIEF,
+		}, rqstpktheader))
 	addcmd(gid, "Status", msnmenu, sendRequest,
-		{
-		 ["id"] = gid,
-		 ["type"] = dctenum.uiRequestType.MISSIONSTATUS,
-		})
+		utils.mergetables({
+			["type"] = dctenum.uiRequestType.MISSIONSTATUS,
+		}, rqstpktheader))
 	addcmd(gid, "Abort", msnmenu, sendRequest,
-		{
-		 ["id"] = gid,
-		 ["type"] = dctenum.uiRequestType.MISSIONABORT,
-		})
+		utils.mergetables({
+			["type"] = dctenum.uiRequestType.MISSIONABORT,
+		}, rqstpktheader))
 	addcmd(gid, "Rolex +30", msnmenu, sendRequest,
-		{
-		 ["id"] = gid,
-		 ["type"] = dctenum.uiRequestType.MISSIONROLEX,
-		 ["value"] = 30,
-		})
+		utils.mergetables({
+			["type"] = dctenum.uiRequestType.MISSIONROLEX,
+			["value"] = 30,
+		}, rqstpktheader))
 	addcmd(gid, "Check-In", msnmenu, sendRequest,
-		{
-		 ["id"] = gid,
-		 ["type"] = dctenum.uiRequestType.MISSIONCHECKIN,
-		})
+		utils.mergetables({
+			["type"] = dctenum.uiRequestType.MISSIONCHECKIN,
+		}, rqstpktheader))
 	addcmd(gid, "Check-Out", msnmenu, sendRequest,
-		{
-		 ["id"] = gid,
-		 ["type"] = dctenum.uiRequestType.MISSIONCHECKOUT,
-		})
+		utils.mergetables({
+			["type"] = dctenum.uiRequestType.MISSIONCHECKOUT,
+		}, rqstpktheader))
 
 	groups[gid] = true
 end
