@@ -198,8 +198,7 @@ function AssetManager:queueCheckAsset()
 	if self._checkqueued then
 		return
 	end
-	self._theater:queueCommand(timer.getTime() + ASSET_CHECK_DELAY,
-	                           AssetCheckCmd(self))
+	self._theater:queueCommand(ASSET_CHECK_DELAY, AssetCheckCmd(self))
 	self._checkqueued = true
 end
 

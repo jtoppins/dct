@@ -7,12 +7,15 @@
 require("lfs")
 local class       = require("libs.class")
 local utils       = require("libs.utils")
+local containers  = require("libs.containers")
 local json        = require("libs.json")
 local Region      = require("dct.Region")
 local AssetManager= require("dct.AssetManager")
 local Logger      = require("dct.Logger").getByName("Theater")
 local DebugStats  = require("dct.DebugStats").getDebugStats()
 local Profiler    = require("dct.Profiler").getProfiler()
+
+local RESCHEDULE_FREQ = 2 -- seconds
 
 --[[
 --  Theater class
@@ -36,6 +39,8 @@ function Theater:__init()
 	self.statepath = _G.dct.settings.statepath
 	self.dirty     = false
 	self.regions   = {}
+	self.cmdq      = containers.PriorityQueue()
+	self.ctime     = timer.getTime()
 	self.assetmgr  = AssetManager(self)
 
 	self:__loadGoals()
@@ -117,11 +122,23 @@ function Theater:generate()
 	end
 end
 
+-- do not worry about command priority right now
+function Theater:queueCommand(time, cmd)
+	self.cmdq:push(self.ctime + time, cmd)
+end
+
 function Theater:exec(time)
-	local rescheduletime = nil
+	-- TODO: insert profiling hooks to count the moving average of
+	-- 10 samples for how long it takes to execute a command
+	self.ctime = time
+	local rescheduletime = time + RESCHEDULE_FREQ
 
-	-- TODO: write this
+	if self.cmdq:empty() then
+		return rescheduletime
+	end
 
+	local cmd = self.cmdq:pop()
+	cmd:execute(time)
 	return rescheduletime
 end
 
