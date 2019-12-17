@@ -7,6 +7,7 @@
 local class  = require("libs.class")
 
 local settings = _G.dct.settings
+local fmtstr   = "DCT|%s: %s"
 local loggers = {}
 local Logger = class()
 
@@ -36,28 +37,28 @@ function Logger:setLevel(lvl)
 end
 
 function Logger:error(msg)
-	env.error(self.name..": "..msg, false)
+	env.error(string.format(fmtstr, self.name, msg), false)
 end
 
 function Logger:warn(msg)
 	if self.__lvl < Logger.level["warn"] then
 		return
 	end
-	env.warning(self.name..": "..msg, false)
+	env.warning(string.format(fmtstr, self.name, msg), false)
 end
 
 function Logger:info(msg)
 	if self.__lvl < Logger.level["info"] then
 		return
 	end
-	env.info(self.name..": "..msg, false)
+	env.info(string.format(fmtstr, self.name, msg), false)
 end
 
 function Logger:debug(msg)
 	if self.__lvl < Logger.level["debug"] then
 		return
 	end
-	env.info("DEBUG-"..self.name..": "..msg, false)
+	env.info(string.format("DEBUG-"..fmtstr, self.name, msg), false)
 end
 
 function Logger.getByName(name)
