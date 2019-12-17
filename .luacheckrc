@@ -15,6 +15,9 @@ read_globals = {
 	"coalition",
 	"world",
 	"timer",
+	"trigger",
+	"missionCommands",
+	"coord",
 
 	-- DCT specific
 	"dctsettings",
