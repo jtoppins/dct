@@ -31,6 +31,7 @@ local assetType = {
 	["BUNKER"]      = 15,
 	["CHECKPOINT"]  = 16,
 	["FACTORY"]     = 17,
+	["AIRSPACE"]    = 18,
 }
 
 local missionType = {
@@ -57,6 +58,13 @@ local assetClass = {
 		[assetType.CHECKPOINT]  = true,
 		[assetType.FACTORY]     = true,
 	},
+	--[[
+	-- Means ground tactical units
+	["TACTICAL"] = {
+	},
+	["AIRBORNE"] = {
+	},
+	--]]
 }
 
 local missionTypeMap = {
@@ -85,6 +93,9 @@ local missionTypeMap = {
 	},
 	[missionType.CAS] = {
 		[assetType.JTAC] = true,
+	},
+	[missionType.CAP] = {
+		[assetType.AIRSPACE] = true,
 	},
 }
 
