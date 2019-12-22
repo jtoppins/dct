@@ -36,7 +36,9 @@ end
 --
 -- We need to know the group name associated with a unit name because that
 -- is how the Asset's template is organized. The easiest way to find that
--- association is to just let the engine tell us once the unit has been spawned.
+-- association is to just let the engine tell us once the unit has been
+-- spawned.
+--
 -- We don't need the group information until the unit is spawned anyway.
 --]]
 function BaseGoal:onSpawn()
@@ -55,7 +57,8 @@ function BaseGoal:getGroupName()
 end
 
 function BaseGoal:checkComplete()
-	assert(false, "checkComplete() is a virtual function and must be overridden")
+	assert(false, "checkComplete() is a virtual function and must be" ..
+		" overridden")
 end
 
 return BaseGoal
