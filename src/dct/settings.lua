@@ -5,7 +5,8 @@
 --]]
 
 require("lfs")
-local utils = require("libs.utils")
+local utils    = require("libs.utils")
+local dctutils = require("dct.utils")
 local config = nil
 
 --[[
@@ -38,6 +39,14 @@ local function settings(missioncfg)
 		["statepath"]   = lfs.writedir()..utils.sep..env.mission.theatre..
 			"_"..env.getValueDictByKey(env.mission.sortie)..".state",
 		["spawndead"] = false,
+		["acgridfmt"] = {
+			["Ka-50"]         = dctutils.posfmt.DDM,
+			["M-2000C"]       = dctutils.posfmt.DDM,
+			["A-10C"]         = dctutils.posfmt.MGRS,
+			["AJS37"]         = dctutils.posfmt.DMS,
+			["F-14B"]         = dctutils.posfmt.DDM,
+			["FA-18C_hornet"] = dctutils.posfmt.DDM,
+		},
 	}
 
 	if attr ~= nil then
