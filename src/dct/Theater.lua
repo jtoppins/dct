@@ -10,6 +10,7 @@ local utils       = require("libs.utils")
 local containers  = require("libs.containers")
 local json        = require("libs.json")
 local enum        = require("dct.enum")
+local uicmds      = require("dct.ui.cmds")
 local uimenu      = require("dct.ui.groupmenu")
 local Observable  = require("dct.Observable")
 local Region      = require("dct.Region")
@@ -146,9 +147,10 @@ function Theater:getCommander(side)
 end
 
 function Theater:playerRequest(data)
-	-- TODO: not written yet
-	trigger.action.outTextForGroup(data.id, "WIP data receved: "..
-		json:encode_pretty(data), 30, true)
+	Logger:debug("playerRequest(); Received player request: "..
+		json:encode_pretty(data))
+	local cmd = uicmds[data.type](self, data)
+	self:queueCommand(UI_CMD_DELAY, cmd)
 end
 
 function Theater:getATORestrictions(side, unittype)
