@@ -12,6 +12,7 @@ local Asset      = require("dct.Asset")
 local Logger     = require("dct.Logger").getByName("Region")
 local DebugStats = require("dct.DebugStats").getDebugStats()
 local dctenums   = require("dct.enum")
+local AssetStats = require("dct.AssetStats")
 
 local tplkind = {
 	["TEMPLATE"]  = 1,
@@ -29,10 +30,10 @@ local tplkind = {
 --
 --    Storage
 --    -------
---		__templates   = {
+--		_templates   = {
 --			["<tpl-name>"] = Template(),
 --		},
---		__tpltypes    = {
+--		_tpltypes    = {
 --			<ttype> = {
 --				[#] = {
 --					kind = tpl | exclusion,
@@ -40,7 +41,7 @@ local tplkind = {
 --				},
 --			},
 --		},
---		__exclusions  = {
+--		_exclusions  = {
 --			["<ex-name>"] = {
 --				ttype = <ttype>,
 --				names = {
@@ -64,17 +65,17 @@ local tplkind = {
 local Region = class()
 function Region:__init(regionpath)
 	self.path = regionpath
-	self.__templates  = {}
-	self.__tpltypes   = {}
-	self.__exclusions = {}
+	self._templates  = {}
+	self._tpltypes   = {}
+	self._exclusions = {}
 	Logger:debug("=> regionpath: "..regionpath)
-	self:__loadMetadata(regionpath..utils.sep.."region.def")
+	self:_loadMetadata(regionpath..utils.sep.."region.def")
 	DebugStats:registerStat(self.name.."-templates", 0,
 		self.name.."-template(s) loaded")
-	self:__loadTemplates()
+	self:_loadTemplates()
 end
 
-function Region:__loadMetadata(regiondefpath)
+function Region:_loadMetadata(regiondefpath)
 	Logger:debug("=> regiondefpath: "..regiondefpath)
 	-- TODO: this construct on validating table keys is repeated
 	-- a few times in the codebase, look at centeralizing this
@@ -122,19 +123,19 @@ function Region:__loadMetadata(regiondefpath)
 end
 
 
-function Region:__loadTemplates()
+function Region:_loadTemplates()
 	for filename in lfs.dir(self.path) do
 		if filename ~= "." and filename ~= ".." then
 			local fpath = self.path.."/"..filename
 			local fattr = lfs.attributes(fpath)
 			if fattr.mode == "directory" then
-				self:__getTemplates(filename, self.path)
+				self:_getTemplates(filename, self.path)
 			end
 		end
 	end
 end
 
-function Region:__getTemplates(dirname, basepath)
+function Region:_getTemplates(dirname, basepath)
 	local tplpath = basepath .. "/" .. dirname
 	Logger:debug("=> tplpath: "..tplpath)
 
@@ -143,12 +144,12 @@ function Region:__getTemplates(dirname, basepath)
 			local fpath = tplpath .. "/" .. filename
 			local fattr = lfs.attributes(fpath)
 			if fattr.mode == "directory" then
-				self:__getTemplates(filename, tplpath)
+				self:_getTemplates(filename, tplpath)
 			else
 				if string.find(fpath, ".stm") ~= nil then
 					Logger:debug("=> process template: "..fpath)
 					local dctString = string.gsub(fpath, ".stm", ".dct")
-					self:__addTemplate(Template(self.name, fpath, dctString))
+					self:_addTemplate(Template(self.name, fpath, dctString))
 					DebugStats:incstat(self.name.."-templates", 1)
 				end
 			end
@@ -156,48 +157,50 @@ function Region:__getTemplates(dirname, basepath)
 	end
 end
 
-function Region:__addTemplate(tpl)
-	assert(self.__templates[tpl.name] == nil,
+function Region:_addTemplate(tpl)
+	assert(self._templates[tpl.name] == nil,
 			"duplicate template '"..tpl.name.."' defined; "..tpl.path)
-	self.__templates[tpl.name] = tpl
+	self._templates[tpl.name] = tpl
 	if tpl.exclusion ~= nil then
-		if self.__exclusions[tpl.exclusion] == nil then
-			self:__createExclusion(tpl)
-			self:__registerType(tplkind.EXCLUSION, tpl.objtype, tpl.exclusion)
+		if self._exclusions[tpl.exclusion] == nil then
+			self:_createExclusion(tpl)
+			self:_registerType(tplkind.EXCLUSION, tpl.objtype, tpl.exclusion)
 		end
-		self:__registerExclusion(tpl)
+		self:_registerExclusion(tpl)
 	else
-		self:__registerType(tplkind.TEMPLATE, tpl.objtype, tpl.name)
+		self:_registerType(tplkind.TEMPLATE, tpl.objtype, tpl.name)
 	end
 end
 
-function Region:__createExclusion(tpl)
-	self.__exclusions[tpl.exclusion] = {
+function Region:_createExclusion(tpl)
+	self._exclusions[tpl.exclusion] = {
 		["ttype"] = tpl.objtype,
 		["names"] = {},
 	}
 end
 
-function Region:__registerExclusion(tpl)
-	assert(tpl.objtype == self.__exclusions[tpl.exclusion].ttype,
+function Region:_registerExclusion(tpl)
+	assert(tpl.objtype == self._exclusions[tpl.exclusion].ttype,
 	       "exclusions across objective types not allowed, '"..
 	       tpl.name.."'")
-	table.insert(self.__exclusions[tpl.exclusion].names,
+	table.insert(self._exclusions[tpl.exclusion].names,
 	             tpl.name)
 end
 
-function Region:__registerType(kind, ttype, name)
+function Region:_registerType(kind, ttype, name)
 	local entry = {
 		["kind"] = kind,
 		["name"] = name,
 	}
 
-	if self.__tpltypes[ttype] == nil then
-		self.__tpltypes[ttype] = {}
+	if self._tpltypes[ttype] == nil then
+		self._tpltypes[ttype] = {}
 	end
-	table.insert(self.__tpltypes[ttype], entry)
+	table.insert(self._tpltypes[ttype], entry)
 end
 
+-- TODO: Note this function does not check that for a given asset
+--   type the names/templates associated belong to a single coalition
 function Region:_generate(assetmgr, objtype, names)
 	local limits = {
 		["min"]     = #names,
@@ -220,13 +223,15 @@ function Region:_generate(assetmgr, objtype, names)
 		local idx  = math.random(1, #names)
 		local name = names[idx].name
 		if names[idx].kind == tplkind.EXCLUSION then
-			local i = math.random(1, #self.__exclusions[name].names)
-			name = self.__exclusions[name]["names"][i]
+			local i = math.random(1, #self._exclusions[name].names)
+			name = self._exclusions[name]["names"][i]
 		end
-		local tpl = self.__templates[name]
+		local tpl = self._templates[name]
 		local asset = Asset(tpl, self)
-		assetmgr:addAsset(asset)
+		assetmgr:add(asset)
 		asset:spawn()
+		local stats = assetmgr:getStats(asset.owner)
+		stats:increment(asset.type, AssetStats.stat.NOMINAL)
 		table.remove(names, idx)
 		limits.current = 1 + limits.current
 	end
@@ -238,7 +243,7 @@ end
 -- the asset into the game world. Region generation should
 -- be limited to mission startup.
 function Region:generate(assetmgr)
-	local tpltypes = utils.deepcopy(self.__tpltypes)
+	local tpltypes = utils.deepcopy(self._tpltypes)
 
 	for objtype, _ in pairs(dctenums.assetClass["STRATEGIC"]) do
 		local names = tpltypes[objtype]
