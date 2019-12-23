@@ -39,6 +39,7 @@ function Asset:__init(template, region)
 	self._dirty      = false
 	self._spawned    = false
 	self._dead       = false
+	self._targeted   = false
 	self._deathgoals = {}
 	self._assets     = {}
 
@@ -140,6 +141,16 @@ function Asset:_setupmaps()
 			self._assets[grp.data.name] = grp.data
 		end
 	end
+end
+
+function Asset:isTargeted()
+	return self._targeted
+end
+
+function Asset:setTargeted(val)
+	assert(type(val) == "boolean",
+		"value error: argument must be of type bool")
+	self._targeted = val
 end
 
 function Asset:isSpawned()
