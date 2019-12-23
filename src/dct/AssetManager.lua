@@ -4,33 +4,35 @@
 -- Provides functions to define and manage goals.
 --]]
 
-local class   = require("libs.class")
-local utils   = require("libs.utils")
-local enum    = require("dct.enum")
-local Logger  = require("dct.Logger").getByName("AssetManager")
-local Command = require("dct.Command")
+-- TODO: Idea, a "TRANSPORT" asset could represent a helo transport
+--   mission such as delivering special forces to a location where
+--   they then act as a JTAC.
+--
+-- TODO: in AssetManager define an "AirSpace" asset class that can be
+--   assigned to commanders, this type of asset can be used to define
+--   CAP sorties, DCA patrols, and OCA sweeps.
+--
+-- TODO[MAYBE]: make asset manager observable so commanders can
+--   get notification of events or changes
+--
+-- TODO: issues
+--  * what stats do the asset manager need to track?
+--    - alive assets per side per asset type, for strategic targets
+--      track the original number spawned - an original number of zero
+--      means it is not used
 
---[[
--- Discussion:
---  * do we check all assets marked to be checked or do we just
---    queue up individual commands for each asset to be checked?
---		If we hide the need for the check to be run inside the
---		Asset class we can just check all Asset objects w/o the
---		need to keep track in the AssetManager which assets need
---		checking. [choose this for now]
---  * what do we do with dead assets?
---    1. asset needs to be moved to the dead list
---    2. if asset is not to be preserved (a static to be shown as dead)
---       should we not just delete it?
---    3. if assets can just be deleted how do we know what should and
---       should not be removed from the 'saved state'? This would
---       imply that we just marshal all assets all the time.
---    For now if the asset is not of the 'strategic' type once it is
---    dead we will delete it. This means we need to delete the asset from
---      * assetset
---      * sideassets
---      * remove the asset entry from the marshal cache
---]]
+local class      = require("libs.class")
+local enum       = require("dct.enum")
+local Logger     = require("dct.Logger").getByName("AssetManager")
+local Command    = require("dct.Command")
+local AssetStats = require("dct.AssetStats")
+Logger:setLevel(Logger.level.debug)
+
+local enemymap = {
+	[coalition.side.NEUTRAL] = false,
+	[coalition.side.BLUE]    = coalition.side.RED,
+	[coalition.side.RED]     = coalition.side.BLUE,
+}
 
 local AssetCheckCmd = class(Command)
 
@@ -40,19 +42,12 @@ end
 
 function AssetCheckCmd:execute(time)
 	self._assetmgr:checkAssets(time)
+	return nil
 end
 
-local ASSET_CHECK_DELAY = 30
+local ASSET_CHECK_DELAY = 30  -- seconds
 
 local AssetManager = class()
-
--- TODO: need to figure out the full life-cycle of an Asset and how it
--- would flow through this manager and what the interaction with other
--- systems looks like. Also, think about 'intel' and how that would fit
--- in, this might mean that the 'targetqueues' below are instead contained
--- in the per side AI commander. This would make sense because then the
--- asset manager could just be responsible for maintaining global knowledge
--- about all assets.
 
 function AssetManager:__init(theater)
 	-- back reference to theater class
@@ -69,20 +64,20 @@ function AssetManager:__init(theater)
 	-- The per side lists to maintain "short-cuts" to assets that
 	-- belong to a given side and are alive or dead.
 	-- These lists are simply asset names as keys with values of
-	-- 'true'. To get the actual asset object we need to lookup the
-	-- name in a master asset list.
+	-- asset type. To get the actual asset object we need to lookup
+	-- the name in a master asset list.
 	self._sideassets = {
 		[coalition.side.NEUTRAL] = {
-			["alive"] = {},
-			["dead"]  = {},
+			["assets"] = {},
+			["stats"]  = AssetStats(),
 		},
 		[coalition.side.RED]     = {
-			["alive"] = {},
-			["dead"]  = {},
+			["assets"] = {},
+			["stats"]  = AssetStats(),
 		},
 		[coalition.side.BLUE]    = {
-			["alive"] = {},
-			["dead"]  = {},
+			["assets"] = {},
+			["stats"]  = AssetStats(),
 		},
 	}
 
@@ -91,50 +86,96 @@ function AssetManager:__init(theater)
 	-- of their DCS objects with 'something', this will be the something.
 	self._object2asset = {}
 
---[[
-	-- local cache of all assets in a marshallable form
-	self._marshaledassets = {}
-
-	-- not sure if this complexity is needed
-	self._dirtyassets = {}
---]]
+	self._theater:registerHandler(self.onDCSEvent, self)
+	self:queueCheckAsset()
 end
 
-function AssetManager:addAsset(asset)
+function AssetManager:remove(asset)
 	assert(asset ~= nil, "value error, asset object must be provided")
 
-	--  * add asset to master list
-	assert(self._assetset[asset.name] == nil, "asset name ('"..asset.name..
-		"') already exists")
-	self._assetset[asset.name] = asset
+	local isstrat = enum.assetClass.STRATEGIC[asset["type"]] or false
 
-	--  * add asset to approperate side lists
-	if asset:isDead() then
-		self._sideassets[asset.owner].dead[asset.name] = true
-	else
-		self._sideassets[asset.owner].alive[asset.name] = true
-		--  * read Asset's object names and setup object to asset mapping
-		--     to be used in handling DCS events and other uses
-		for _, objname in pairs(asset:getObjectNames()) do
-			self._object2asset[objname] = asset.name
-		end
+	-- remove asset from master asset list if the asset is not a
+	--  strategic target. This supports the feature where dead
+	--  strategic assets can be spawned in as dead.
+	if not isstrat then
+		self._assetset[asset:getName()] = nil
 	end
 
-	--  * add asset to approperate commander's target list (later to be
-	--     replaced by each side's detction capabilities)
-	--     How do we add assets to a commander's target list? Since this
-	--     manager has no knowledge of AI commanders.
-	--  TODO: I don't need this just provide a function to return all asset
-	--    names per side and a query interface to get the actual asset.
+	-- remove asset name from per-side asset list
+	self._sideassets[asset.owner].assets[asset:getName()] = nil
+	self._sideassets[asset.owner].stats:decrement(asset.type,
+		AssetStats.stat.ALIVE)
 
-	--  * register the AssetManager as an observer with the Asset
-	--	  events are; SPAWN, DEAD (entire Asset is dead),
-	--	  DIRTY (something about the Asset has changed)
-	-- [Do not need this at this time]
-	-- asset:addObserver(self)
+	-- remove asset object names from name list
+	for _, objname in pairs(asset:getObjectNames()) do
+		self._object2asset[objname] = nil
+	end
+end
 
-	--	* [do we need this?] notify observers that a new asset was added
-	-- self:notify()
+function AssetManager:add(asset)
+	assert(asset ~= nil, "value error, asset object must be provided")
+
+	-- add asset to master list
+	assert(self._assetset[asset:getName()] == nil, "asset name ('"..
+		asset:getName().."') already exists")
+	self._assetset[asset:getName()] = asset
+
+	-- add asset to approperate side lists
+	if not asset:isDead() then
+		self._sideassets[asset.owner].assets[asset:getName()] = asset.type
+		self._sideassets[asset.owner].stats:increment(asset.type,
+			AssetStats.stat.ALIVE)
+
+		-- read Asset's object names and setup object to asset mapping
+		-- to be used in handling DCS events and other uses
+		for _, objname in pairs(asset:getObjectNames()) do
+			self._object2asset[objname] = asset:getName()
+		end
+	end
+end
+
+function AssetManager:getAsset(name)
+	return self._assetset[name]
+end
+
+function AssetManager:getStats(side)
+	return self._sideassets[side].stats
+end
+
+-- returns the names of the assets conforming to the asset type filter list,
+-- the caller must use AssetManager:get() to obtain the actual asset object.
+-- assettypelist - a list of asset types wanted to be included
+-- requestingside - the coalition requesting the target list, thus
+--     we need to return their enemy asset list
+-- Return: return a table that lists the asset names that fit the
+--    filter list requested
+function AssetManager:getTargets(requestingside, assettypelist)
+	local enemy = enemymap[requestingside]
+	local tgtlist = {}
+	local filterlist
+
+	-- some sides may not have enemies, return an empty target list
+	-- in this case
+	if enemy == false then
+		return {}
+	end
+
+	if type(assettypelist) == "table" then
+		filterlist = assettypelist
+	elseif type(assettypelist) == "number" then
+		filterlist = {}
+		filterlist[assettypelist] = true
+	else
+		assert(false, "value error: assettypelist must be a number or table")
+	end
+
+	for tgtname, tgttype in pairs(self._sideassets[enemy].assets) do
+		if filterlist[tgttype] ~= nil then
+			tgtlist[tgtname] = tgttype
+		end
+	end
+	return tgtlist
 end
 
 --[[
@@ -175,37 +216,20 @@ function AssetManager:checkAssets(time)
 	end
 
 	local perftime_s = timer.getTime()
-	self._lastchecked = timer.getTime()
+	self._lastchecked = time
+	local cnt = 0
 
 	for _, asset in pairs(self._assetset) do
+		cnt = cnt + 1
 		asset:checkDead(force)
 		if asset:isDead() then
-			-- TODO: this should probably be a remove asset call
-			local isstrat = enum.assetClass.STRATEGIC[asset["type"]] or false
-			if isstrat then
-				self._sideassets[asset.owner].alive[asset.name] = nil
-				self._sideassets[asset.owner].dead[asset.name]  = true
-			else
-				self._sideassets[asset.owner].alive[asset.name] = nil
-				self._sideassets[asset.owner].dead[asset.name]  = nil
-				self._assetset[asset.name] = nil
-				-- self._marshaledassets[asset.name] = nil
-			end
-			for _, objname in pairs(asset:getObjectNames()) do
-				self._object2asset[objname] = nil
-			end
+			self:remove(asset)
 		end
 	end
 	self._checkqueued = false
 	Logger:debug("checkAssets() - runtime: "..timer.getTime()-perftime_s..
-		" seconds, forced: "..force..", assets checked: ?? not written")
+		" seconds, forced: "..force..", assets checked: "..cnt)
 end
-
---[[
-function AssetManager:markDirtyAsset(asset)
-	self._dirtyassets[asset.name] = true
-end
---]]
 
 function AssetManager:onDCSEvent(event)
 	local relevents = {
@@ -243,16 +267,10 @@ function AssetManager:onDCSEvent(event)
 
 	asset:onDCSEvent(event)
 	self:queueCheckAsset()
---[[
-	if asset:isDirty() then
-		self:markDirtyAsset(asset)
-	end
---]]
 end
 
 function AssetManager:marshal(ignoredirty)
 	-- TODO: marshal assets into a table and return to the caller
-	
 end
 
 function AssetManager:unmarshal(data)
@@ -260,7 +278,3 @@ function AssetManager:unmarshal(data)
 end
 
 return AssetManager
-
--- TODO: Idea, a "TRANSPORT" asset could represent a helo transport mission
--- such as delivering special forces to a location where they then act as
--- a JTAC.
