@@ -12,6 +12,7 @@ local json        = require("libs.json")
 local enum        = require("dct.enum")
 local Region      = require("dct.Region")
 local AssetManager= require("dct.AssetManager")
+local Commander   = require("dct.ai.Commander")
 local Logger      = require("dct.Logger").getByName("Theater")
 local DebugStats  = require("dct.DebugStats").getDebugStats()
 local Profiler    = require("dct.Profiler").getProfiler()
@@ -45,6 +46,11 @@ function Theater:__init()
 	self.ctime     = timer.getTime()
 	self.ltime     = 0
 	self.assetmgr  = AssetManager(self)
+	self.cmdrs     = {}
+
+	for _, val in pairs(coalition.side) do
+		self.cmdrs[val] = Commander(val, self)
+	end
 
 	self:_loadGoals()
 	self:_loadRegions()
@@ -129,6 +135,10 @@ end
 
 function Theater:getAssetMgr()
 	return self.assetmgr
+end
+
+function Theater:getCommander(side)
+	return self.cmdrs[side]
 end
 
 function Theater:playerRequest(data)
