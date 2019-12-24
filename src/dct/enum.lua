@@ -34,6 +34,31 @@ local assetType = {
 	["AIRSPACE"]    = 18,
 }
 
+--[[
+-- We use a min-heap so priority is in reverse numerical order,
+-- a higher number is lower priority
+--]]
+local assetTypePriority = {
+	[assetType.AIRSPACE]    = 10,
+	[assetType.JTAC]        = 10,
+	[assetType.EWR]         = 20,
+	[assetType.SAM]         = 20,
+	[assetType.C2]          = 30,
+	[assetType.AMMODUMP]    = 40,
+	[assetType.FUELDUMP]    = 40,
+	[assetType.MISSILE]     = 50,
+	[assetType.SEA]         = 50,
+	[assetType.BASEDEFENSE] = 60,
+	[assetType.OCA]         = 70,
+	[assetType.PORT]        = 70,
+	[assetType.LOGISTICS]   = 70,
+	[assetType.FACILITY]    = 100,
+	[assetType.BUNKER]      = 100,
+	[assetType.CHECKPOINT]  = 100,
+	[assetType.FACTORY]     = 100,
+	[assetType.KEEPOUT]     = 10000,
+}
+
 local missionType = {
 	["CAS"]      = 1,
 	["CAP"]      = 2,
@@ -112,6 +137,7 @@ local uiRequestType = {
 
 local enum = {
 	["assetType"] = assetType,
+	["assetTypePriority"] = assetTypePriority,
 	["assetClass"] = assetClass,
 	["missionType"] = missionType,
 	["missionTypeMap"] = missionTypeMap,

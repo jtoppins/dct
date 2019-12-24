@@ -19,6 +19,7 @@ local Commander   = require("dct.ai.Commander")
 local Logger      = require("dct.Logger").getByName("Theater")
 local DebugStats  = require("dct.DebugStats").getDebugStats()
 local Profiler    = require("dct.Profiler").getProfiler()
+local settings    = _G.dct.settings
 
 local RESCHEDULE_FREQ = 0.5 -- seconds
 local UI_CMD_DELAY    = 2
@@ -154,8 +155,12 @@ function Theater:playerRequest(data)
 end
 
 function Theater:getATORestrictions(side, unittype)
-	-- TODO: read in the ato restriction file
-	return enum.missionType
+	local unitATO = settings.atorestrictions[side][unittype]
+
+	if unitATO == nil then
+		unitATO = enum.missionType
+	end
+	return unitATO
 end
 
 --[[

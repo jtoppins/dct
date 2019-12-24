@@ -5,6 +5,7 @@
 --]]
 
 require("lfs")
+require("math")
 local class      = require("libs.class")
 local utils      = require("libs.utils")
 local Template   = require("dct.Template")

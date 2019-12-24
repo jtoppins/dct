@@ -5,10 +5,10 @@
 --]]
 
 require("lfs")
-local class    = require("libs.class")
-local utils    = require("libs.utils")
-local dctenums = require("dct.enum")
-local Goal     = require("dct.Goal")
+local class = require("libs.class")
+local utils = require("libs.utils")
+local enum  = require("dct.enum")
+local Goal  = require("dct.Goal")
 
 local categorymap = {
 	["HELICOPTER"] = 'HELICOPTER',
@@ -19,7 +19,7 @@ local categorymap = {
 }
 
 local function checktype(val)
-	local allowed = dctenums.assetType
+	local allowed = enum.assetType
 	if allowed[string.upper(val)] then
 		return true
 	end
@@ -27,7 +27,7 @@ local function checktype(val)
 end
 
 local function settype(tbl, key)
-	local allowed = dctenums.assetType
+	local allowed = enum.assetType
 	tbl[key] = allowed[string.upper(tbl[key])]
 end
 
@@ -221,7 +221,7 @@ function Template:__loadMetadata(dctfile)
 		},
 		["priority"] = {
 			["type"]    = "number",
-			["default"] = 1,
+			["default"] = enum.assetTypePriority[self.objtype],
 		},
 		["rank"] = {
 			["type"]    = "number",
@@ -231,8 +231,8 @@ function Template:__loadMetadata(dctfile)
 
 	for key, data in pairs(optionalkeys) do
 		if self[key] == nil or
-		   type(self[key]) ~= data["type"] then
-		   self[key] = data["default"]
+		   type(self[key]) ~= data.type then
+			self[key] = data.default
 		end
 	end
 end

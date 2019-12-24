@@ -2,13 +2,17 @@
 
 require("os")
 require("dcttestlibs")
-local utils = require("libs.utils")
 require("dct")
 
 local function main()
-	dct.Theater.getInstance()
+	local theater = dct.Theater.getInstance()
 	assert(check.spawngroups == 1, "group spawn broken")
 	assert(check.spawnstatics == 11, "static spawn broken")
+
+	local restriction =
+		theater:getATORestrictions(coalition.side.BLUE, "A-10C")
+	restriction =
+		theater:getATORestrictions(coalition.side.BLUE, "F-15C")
 	return 0
 end
 

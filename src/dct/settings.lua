@@ -5,9 +5,11 @@
 --]]
 
 require("lfs")
-local utils    = require("libs.utils")
-local dctutils = require("dct.utils")
-local config = nil
+local utils      = require("libs.utils")
+local dctutils   = require("dct.utils")
+local enum       = require("dct.enum")
+local codenamedb = require("dct.data.codenamedb")
+local config     = nil
 
 --[[
 -- We have 3 levels of config,
@@ -46,6 +48,41 @@ local function settings(missioncfg)
 			["AJS37"]         = dctutils.posfmt.DMS,
 			["F-14B"]         = dctutils.posfmt.DDM,
 			["FA-18C_hornet"] = dctutils.posfmt.DDM,
+		},
+		["codenamedb"] = codenamedb,
+		["atorestrictions"] = {
+			[coalition.side.RED]  = {},
+			[coalition.side.BLUE] = {
+				["A-10C"] = {
+					["CAS"] = enum.missionType.CAS,
+					["BAI"] = enum.missionType.BAI,
+				},
+				["A-10A"] = {
+					["CAS"] = enum.missionType.CAS,
+					["BAI"] = enum.missionType.BAI,
+				},
+				["F-15C"] = {
+					["CAP"] = enum.missionType.CAP,
+				},
+				["F-5E-3"] = {
+					["STRIKE"] = enum.missionType.STRIKE,
+					["BAI"]    = enum.missionType.BAI,
+				},
+				["M-2000C"] = {
+					["STRIKE"] = enum.missionType.STRIKE,
+					["BAI"]    = enum.missionType.BAI,
+					["OCA"]    = enum.missionType.OCA,
+				},
+				["AV8BNA"] = {
+					["STRIKE"] = enum.missionType.STRIKE,
+					["BAI"]    = enum.missionType.BAI,
+					["OCA"]    = enum.missionType.OCA,
+				},
+				["AJS37"] = {
+					["STRIKE"] = enum.missionType.STRIKE,
+					["OCA"]    = enum.missionType.OCA,
+				},
+			},
 		},
 	}
 

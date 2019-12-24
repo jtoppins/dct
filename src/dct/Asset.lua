@@ -6,6 +6,7 @@
 -- that can be destroyed by the opposing side.
 --]]
 
+require("math")
 local class    = require("libs.class")
 local utils    = require("libs.utils")
 local Template = require("dct.Template")
@@ -26,10 +27,18 @@ local function defaultgoal(static)
 	return goal
 end
 
--- TODO: create a codename generator, also move to a
--- common utilities library
-local function generateCodename()
-	return "write-codename-generator"
+local function generateCodename(objtype)
+	local codenamedb = settings.codenamedb
+	local typetbl = codenamedb[objtype]
+
+	if typetbl == nil then
+		typetbl = codenamedb.default
+	end
+
+	local idx = math.random(1, #typetbl)
+	local codename = typetbl[idx]
+
+	return codename
 end
 
 local Asset = class()
@@ -50,7 +59,7 @@ function Asset:__init(template, region)
 		self["type"]    = template.objtype
 		self.name       = region.name.."_"..self.owner.."_"..template.name
 		self.regionname = region.name
-		self.codename   = generateCodename()
+		self.codename   = generateCodename(self.type)
 		self.priority   = region.priority * 65536 + template.priority
 		self:_setupmaps()
 		self._initcomplete = true
