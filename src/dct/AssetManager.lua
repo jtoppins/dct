@@ -12,21 +12,13 @@
 --   assigned to commanders, this type of asset can be used to define
 --   CAP sorties, DCA patrols, and OCA sweeps.
 --
--- TODO[MAYBE]: make asset manager observable so commanders can
---   get notification of events or changes
---
--- TODO: issues
---  * what stats do the asset manager need to track?
---    - alive assets per side per asset type, for strategic targets
---      track the original number spawned - an original number of zero
---      means it is not used
 
-local class      = require("libs.class")
-local enum       = require("dct.enum")
-local Logger     = require("dct.Logger").getByName("AssetManager")
-local Command    = require("dct.Command")
-local AssetStats = require("dct.AssetStats")
-Logger:setLevel(Logger.level.debug)
+local class    = require("libs.class")
+local enum     = require("dct.enum")
+local dctutils = require("dct.utils")
+local Logger   = require("dct.Logger").getByName("AssetManager")
+local Command  = require("dct.Command")
+local Stats    = require("dct.Stats")
 
 local enemymap = {
 	[coalition.side.NEUTRAL] = false,
@@ -46,6 +38,29 @@ function AssetCheckCmd:execute(time)
 end
 
 local ASSET_CHECK_DELAY = 30  -- seconds
+
+local substats = {
+	["ALIVE"]   = 1,
+	["NOMINAL"] = 2,
+}
+
+local statids = nil
+
+local function genstatids()
+	if statids ~= nil then
+		return statids
+	end
+
+	local tbl = {}
+
+	for k,v in pairs(enum.assetType) do
+		for k2,v2 in pairs(substats) do
+			table.insert(tbl, { v.."."..v2, 0, k.."."..k2 })
+		end
+	end
+	statids = tbl
+	return tbl
+end
 
 local AssetManager = class()
 
@@ -69,15 +84,15 @@ function AssetManager:__init(theater)
 	self._sideassets = {
 		[coalition.side.NEUTRAL] = {
 			["assets"] = {},
-			["stats"]  = AssetStats(),
+			["stats"]  = Stats(genstatids()),
 		},
 		[coalition.side.RED]     = {
 			["assets"] = {},
-			["stats"]  = AssetStats(),
+			["stats"]  = Stats(genstatids()),
 		},
 		[coalition.side.BLUE]    = {
 			["assets"] = {},
-			["stats"]  = AssetStats(),
+			["stats"]  = Stats(genstatids()),
 		},
 	}
 
@@ -104,8 +119,7 @@ function AssetManager:remove(asset)
 
 	-- remove asset name from per-side asset list
 	self._sideassets[asset.owner].assets[asset:getName()] = nil
-	self._sideassets[asset.owner].stats:decrement(asset.type,
-		AssetStats.stat.ALIVE)
+	self._sideassets[asset.owner].stats:dec(asset.type.."."..substats.ALIVE)
 
 	-- remove asset object names from name list
 	for _, objname in pairs(asset:getObjectNames()) do
@@ -124,8 +138,8 @@ function AssetManager:add(asset)
 	-- add asset to approperate side lists
 	if not asset:isDead() then
 		self._sideassets[asset.owner].assets[asset:getName()] = asset.type
-		self._sideassets[asset.owner].stats:increment(asset.type,
-			AssetStats.stat.ALIVE)
+		self._sideassets[asset.owner].stats:inc(asset.type.."."..
+			substats.ALIVE)
 
 		-- read Asset's object names and setup object to asset mapping
 		-- to be used in handling DCS events and other uses

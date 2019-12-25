@@ -13,7 +13,7 @@ local Asset      = require("dct.Asset")
 local Logger     = require("dct.Logger").getByName("Region")
 local DebugStats = require("dct.DebugStats").getDebugStats()
 local dctenums   = require("dct.enum")
-local AssetStats = require("dct.AssetStats")
+local Stats      = require("dct.Stats")
 
 local tplkind = {
 	["TEMPLATE"]  = 1,
@@ -231,8 +231,9 @@ function Region:_generate(assetmgr, objtype, names)
 		local asset = Asset(tpl, self)
 		assetmgr:add(asset)
 		asset:spawn()
-		local stats = assetmgr:getStats(asset.owner)
-		stats:increment(asset.type, AssetStats.stat.NOMINAL)
+		-- TODO: magic value need to expose the ALIVE and NOMINAL
+		-- values
+		assetmgr:getStats(asset.owner):inc(asset.type..".2")
 		table.remove(names, idx)
 		limits.current = 1 + limits.current
 	end

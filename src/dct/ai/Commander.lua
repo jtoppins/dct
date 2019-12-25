@@ -10,6 +10,7 @@ local containers = require("libs.containers")
 local enum       = require("dct.enum")
 local dctutils   = require("dct.utils")
 local Mission    = require("dct.Mission")
+local Stats      = require("dct.Stats")
 
 local function heapsort_tgtlist(assetmgr, owner, filterlist)
 	local tgtlist = assetmgr:getTargets(owner, filterlist)
@@ -32,11 +33,11 @@ end
 local Commander = class()
 
 function Commander:__init(coalition, theater)
-	self.owner          = coalition
-	self.theater        = theater
-	--self.missionstats   = MissionStats()
-	self.missions       = {}
-	self.assigned       = {}
+	self.owner        = coalition
+	self.theater      = theater
+	self.missionstats = Stats()
+	self.missions     = {}
+	self.assigned     = {}
 end
 
 --[[
