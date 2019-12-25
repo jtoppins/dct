@@ -23,12 +23,10 @@ local Logger  = require("dct.Logger").getByName("UIMenu")
 local addmenu = missionCommands.addSubMenuForGroup
 local addcmd  = missionCommands.addCommandForGroup
 
-local groups = {}
-
 local function createMenu(theater, grp)
 	local gid = grp:getID()
 
-	if groups[gid] then
+	if theater.playergps[gid] ~= nil then
 		Logger:debug("createMenu - group("..gid..") already had menu added")
 		return
 	end
@@ -119,7 +117,7 @@ local function createMenu(theater, grp)
 			["type"]   = enum.uiRequestType.MISSIONCHECKOUT,
 		})
 
-	groups[gid] = true
+	theater.playergps[gid] = false
 end
 
 local function uiDCSEventHandler(theater, event)

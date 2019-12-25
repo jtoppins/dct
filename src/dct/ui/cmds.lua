@@ -31,6 +31,7 @@ end
 function UICmd:execute(time)
 	if not self:isAlive() then
 		Logger:debug("UICmd thinks player is dead "..debug.traceback())
+		self.theater.playergps[self.grpid] = false
 		return nil
 	end
 
@@ -39,6 +40,7 @@ function UICmd:execute(time)
 	assert(msg ~= nil and type(msg) == "string", "msg must be a string")
 	trigger.action.outTextForGroup(self.grpid, msg, self.displaytime,
 		self.displayclear)
+	self.theater.playergps[self.grpid] = false
 	return nil
 end
 
