@@ -45,7 +45,6 @@ function Theater:__init()
 	DebugStats:registerStat("regions", 0, "region(s) loaded")
 	self.path      = _G.dct.settings.theaterpath
 	self.statepath = _G.dct.settings.statepath
-	self.dirty     = false
 	self.regions   = {}
 	self.cmdq      = containers.PriorityQueue()
 	self.ctime     = timer.getTime()
@@ -110,7 +109,6 @@ function Theater:_loadOrGenerate()
 		self:_initFromState(statetbl)
 	else
 		self:generate()
-		self:_dirtySet()
 	end
 end
 
@@ -119,18 +117,9 @@ function Theater:_initFromState(jsontbl)
 	return
 end
 
-function Theater:_dirtySet()
-    self.dirty = true
-end
-
-function Theater:dirtyClear()
-    self.dirty = false
-end
-
 function Theater:export()
 	-- TODO: export a copy of the game state in a
 	-- flat table representation
-	self:dirtyClear()
 end
 
 function Theater:generate()

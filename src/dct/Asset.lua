@@ -44,8 +44,6 @@ end
 local Asset = class()
 function Asset:__init(template, region)
 	self._initcomplete = false
-	-- dirty bit used to determine if its internal state has changed
-	self._dirty      = false
 	self._spawned    = false
 	self._dead       = false
 	self._targeted   = false
@@ -67,8 +65,10 @@ function Asset:__init(template, region)
 	end
 end
 
+--[[
 -- ignore all but primary targets when it comes to determining
 -- if an Asset is "dead"
+--]]
 function Asset:_addDeathGoal(name, goalspec)
 	assert(name ~= nil and type(name) == "string", "name must be provided")
 	assert(goalspec ~= nil, "goalspec must be provided")
@@ -82,9 +82,9 @@ end
 
 --[[
 -- This function needs to do three things:
---   mark the object(unit/static/group) in the template dead, dct_dead == true
+--   mark the object(unit/static/group) in the template dead,
+--      dct_dead == true
 --   remove deathgoal entry
---   set dirty bit
 --   upon no more deathgoals set dead
 --]]
 function Asset:_removeDeathGoal(name, goal)
@@ -100,13 +100,11 @@ function Asset:_removeDeathGoal(name, goal)
 	local grpdata = self._assets[goal:getGroupName()]
 	if grpdata.name == name then
 		grpdata.dct_dead = true
-		self:_setDirty()
 	else
 		assert(grpdata.units ~= nil, "no units found, this is a problem")
 		for _, unit in ipairs(grpdata.units) do
 			if unit.name == name then
 				unit.dct_dead = true
-				self:_setDirty()
 				break
 			end
 		end
@@ -166,23 +164,11 @@ function Asset:isSpawned()
 	return self._spawned
 end
 
-function Asset:_setDirty()
-	self._dirty = true
-end
-
-function Asset:isDirty()
-	return self._dirty
-end
-
 function Asset:getName()
 	return self.name
 end
 
 function Asset:getPriority()
-	-- TODO: the basic priority is:
-	--      region.prio * 2^16 + template.prio
-	-- but we may later want to deprioritize certian types of objectives
-	-- so this can be provided here as a way to get a dynamic priority
 	return self.priority
 end
 
@@ -194,11 +180,6 @@ function Asset:isDead()
 	return self._dead
 end
 
--- TODO: use a bit to denote checking needs to take place
--- change the function to accept an optional force option
--- to force a check, this will require a change to the
--- Asset dcs event handler to change the bit when an
--- asset is hit.
 function Asset:checkDead()
 	assert(self:isSpawned() == true, "Asset:checkDead(), must be spawned")
 
@@ -240,7 +221,6 @@ function Asset:onDCSEvent(event)
 		else
 			self._assets[unitname].dct_dead = true
 		end
-		self:_setDirty()
 	end
 end
 
@@ -294,30 +274,6 @@ function Asset:spawn()
 	self:_spawn()
 end
 
---[[
--- Filtering for marshaling:
---   for-all-units-and-groups:  // basically visit every object
---     if has dct_dead     // this check must be first
---         delete object or set dead state if static
---         // the object was killed in the game no need to keep
---         // to determine if the object is a static, check the category to
---         //   be == 'static'
---     if has dct_deathgoal and dct_deathgoal.completed == true
---	       remove dct_deathgoal entry
---	       // Why? if we mark completed == true we can just have the
---	       // goal factory check completed and return nil the next time
---	       // the objective is loaded. Oh wait if
---	       // dct_deathgoal.complete == true, that means this
---	       // group/static/unit is considered dead, so the object needs
---	       // to be removed, or if is a static set dead.
---	       // This is too complicated, why can't for any object that is
---	       // considered "dead" we just tag the object by adding
---	       // 'dct_dead' == true? Then if the object has a dct_deathgoal
---	       // tag and is static (defined by the deathgoal objtype)
---	       // then we can consider it for keeping and set the dead state
---	       // in the template definition.
---]]
--- TODO: this function is confusing and needs to be re-written
 local function filterDeadObjects(tbl, grp)
 	-- remove groups that are dead
 	if grp.data.dct_dead == true then
@@ -354,7 +310,6 @@ local function filterDeadObjects(tbl, grp)
 	table.insert(tbl, gcpy)
 end
 
--- TODO: this needs to be reviewed
 local function filterTemplateData(tpldata)
 	local cpytbl = {}
 
@@ -373,26 +328,22 @@ local function filterTemplateData(tpldata)
 	return cpytbl
 end
 
-function Asset:marshal(ignoredirty)
+function Asset:marshal()
 	assert(self._initcomplete == true, "init not complete")
-	ignoredirty = ignoredirty or false
-	if not ignoredirty and self:isDirty() then
+	local tbl = {}
+
+	tbl._tpldata       = filterTemplateData(self._tpldata)
+	if next(tbl._tpldata) == nil then
 		return nil
 	end
-	self._dirty = false
-
-	-- TODO: if `filterTemplateData()` produces an empty table we should return a
-	-- nil as there is no asset really available.
-	local tbl = {}
 	tbl._dead          = self._dead
 	tbl._spawned       = self._spawned
 	tbl._hasDeathGoals = self._hasDeathGoals
-	tbl._tpldata       = filterTemplateData(self._tpldata)
 	tbl.name           = self.name
 	tbl.regionname     = self.regionname
 	tbl.codename       = self.codename
 	tbl.owner          = self.owner
-	tbl["type"]        = self["type"]
+	tbl.type           = self.type
 	tbl.priority       = self.priority
 	return tbl
 end
@@ -404,7 +355,6 @@ function Asset:unmarshal(data)
 	if self:isSpawned() then
 		self:_spawn()
 	end
-	self:_setDirty()
 	self._initcomplete = true
 end
 

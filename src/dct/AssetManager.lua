@@ -157,13 +157,16 @@ function AssetManager:getStats(side)
 	return self._sideassets[side].stats
 end
 
--- returns the names of the assets conforming to the asset type filter list,
--- the caller must use AssetManager:get() to obtain the actual asset object.
+--[[
+-- getTargets - returns the names of the assets conforming to the asset
+--   type filter list, the caller must use AssetManager:get() to obtain
+--   the actual asset object.
 -- assettypelist - a list of asset types wanted to be included
 -- requestingside - the coalition requesting the target list, thus
 --     we need to return their enemy asset list
 -- Return: return a table that lists the asset names that fit the
 --    filter list requested
+--]]
 function AssetManager:getTargets(requestingside, assettypelist)
 	local enemy = enemymap[requestingside]
 	local tgtlist = {}
