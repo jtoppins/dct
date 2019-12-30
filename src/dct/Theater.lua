@@ -142,7 +142,8 @@ function Theater:playerRequest(data)
 		json:encode_pretty(data))
 
 	if self.playergps[data.id] == true then
-		trigger.action.outTextForGroup(grp:getID(),
+		Logger:debug("playerRequest(); request pending")
+		trigger.action.outTextForGroup(data.id,
 			"F10 request already pending, please wait.", 20, true)
 		return
 	end
@@ -197,8 +198,8 @@ function Theater:exec(time)
 
 	local _, prio = self.cmdq:peek()
 	if time < prio then
-		Logger:debug("exec() - not time to execute; time: "..time..
-			"; exec: "..prio)
+		Logger:debug("exec() - not time to execute; time: "..
+			tostring(time).."; exec: "..tostring(prio))
 		return rescheduletime
 	end
 

@@ -15,7 +15,6 @@
 
 local class    = require("libs.class")
 local enum     = require("dct.enum")
-local dctutils = require("dct.utils")
 local Logger   = require("dct.Logger").getByName("AssetManager")
 local Command  = require("dct.Command")
 local Stats    = require("dct.Stats")
@@ -213,6 +212,7 @@ end
 --]]
 function AssetManager:queueCheckAsset()
 	if self._checkqueued then
+		Logger:debug("queueCheckAsset() - already queued, ignoring")
 		return
 	end
 	self._theater:queueCommand(ASSET_CHECK_DELAY, AssetCheckCmd(self))
@@ -243,8 +243,10 @@ function AssetManager:checkAssets(time)
 		end
 	end
 	self._checkqueued = false
-	Logger:debug("checkAssets() - runtime: "..timer.getTime()-perftime_s..
-		" seconds, forced: "..force..", assets checked: "..cnt)
+	Logger:debug("checkAssets() - runtime: "..
+		tostring(timer.getTime()-perftime_s)..
+		" seconds, forced: "..tostring(force)..
+		", assets checked: "..tostring(cnt))
 end
 
 function AssetManager:onDCSEvent(event)
