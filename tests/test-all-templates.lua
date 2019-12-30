@@ -20,10 +20,15 @@ local function main()
 		return 0
 	end
 
-	dct.Theater.getInstance()
-	print("Groups spawned:  "..check.spawngroups)
-	print("Statics spawned: "..check.spawngroups)
-	dct.DebugStats.getDebugStats():log()
+	local t = dct.Theater.getInstance()
+	--print("Groups spawned:  "..dctcheck.spawngroups)
+	--print("Statics spawned: "..dctcheck.spawnstatics)
+	assert(dctcheck.spawngroups == 83, "group spawn broken; expected: 83"..
+		string.format(", got: %d", dctcheck.spawngroups))
+	assert(dctcheck.spawnstatics == 745, "static spawn broken; expected: 745"..
+		string.format(", got: %d", dctcheck.spawnstatics))
+	--dct.DebugStats.getDebugStats():log()
+	--print(t.assetmgr:getStats(coalition.side.RED):tostring("%s: %d\n"))
 	return 0
 end
 

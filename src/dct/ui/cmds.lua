@@ -11,6 +11,9 @@ local human    = require("dct.ui.human")
 local Command  = require("dct.Command")
 local Logger   = require("dct.Logger").getByName("uiCmds")
 
+-- precision of the coordinates given for a target area
+local AO_LOC_PRECISION = 2
+
 local UICmd = class(Command)
 function UICmd:__init(theater, data)
 	assert(theater ~= nil, "value error: theater required")
@@ -61,10 +64,10 @@ function TheaterUpdateCmd:_execute(time, cmdr)
 		string.format("\n== Current Active Air Missions ==\n")
 	if next(update.missions) ~= nil then
 		for k,v in pairs(update.missions) do
-			msg = msg .. string.format("  %s:  %d\n", k, v)
+			msg = msg .. string.format("  %6s:  %2d\n", k, v)
 		end
 	else
-		msg = msg .. "No Active Missions\n"
+		msg = msg .. "  No Active Missions\n"
 	end
 	msg = msg .. string.format("\nRecommended Mission Type: %s\n",
 		dctutils.getkey(enum.missionType,
@@ -133,9 +136,10 @@ function MissionBriefCmd:_mission(time, cmdr, msn)
 
 	msg = string.format("ID: %s\n", msn:getID()) ..
 		string.format("%s: %s (%s)\n", human.locationhdr(msn.type),
-			human.grid2actype(self.actype, tgtinfo.location),
+			human.grid2actype(self.actype, tgtinfo.location,
+				AO_LOC_PRECISION),
 			tgtinfo.callsign) ..
-		"Description:\n" .. msn:getDescription()
+		"Briefing:\n" .. msn:getDescription(self.actype, AO_LOC_PRECISION)
 
 	return msg
 end

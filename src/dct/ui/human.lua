@@ -40,7 +40,8 @@ function human.threat(value)
 	return "high"
 end
 
-
+-- TODO: this function is the exact same as utils.getkey(t,v)
+-- remove this and utilize getkey() instead
 function human.missiontype(mtype)
 	for name, val in pairs(enum.missionType) do
 		if val == mtype then
@@ -52,20 +53,21 @@ end
 
 
 function human.locationhdr(msntype)
-	local hdr = "Target"
+	local hdr = "Target AO"
 	if msntype == enum.missionType.CAS or
 		msntype == enum.missionType.CAP then
-		hdr = "Station"
+		hdr = "Station AO"
 	end
 	return hdr
 end
 
-function human.grid2actype(actype, location)
+function human.grid2actype(actype, location, precision)
 	local fmt = settings.acgridfmt[actype]
+	precision = precision or 3
 	if fmt == nil then
 		fmt = dctutils.posfmt.DMS
 	end
-	return dctutils.fmtposition(location, 3, fmt)
+	return dctutils.fmtposition(location, precision, fmt)
 end
 
 return human

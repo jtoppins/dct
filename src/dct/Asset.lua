@@ -9,6 +9,7 @@
 require("math")
 local class    = require("libs.class")
 local utils    = require("libs.utils")
+local dctutils = require("dct.utils")
 local Template = require("dct.Template")
 local Goal     = require("dct.Goal")
 local Logger   = require("dct.Logger").getByName("Asset")
@@ -47,14 +48,17 @@ function Asset:__init(template, region)
 	self._spawned    = false
 	self._dead       = false
 	self._targeted   = false
+	self._maxdeathgoals = 0
+	self._curdeathgoals = 0
 	self._deathgoals = {}
 	self._assets     = {}
 
 	if template ~= nil and region ~= nil then
 		self._hasDeathGoals = template.hasDeathGoals
 		self._tpldata   = template:copyData()
+		self._briefing  = template.desc
 		self.owner      = template.coalition
-		self["type"]    = template.objtype
+		self.type       = template.objtype
 		self.name       = region.name.."_"..self.owner.."_"..template.name
 		self.regionname = region.name
 		self.codename   = generateCodename(self.type)
@@ -78,6 +82,8 @@ function Asset:_addDeathGoal(name, goalspec)
 	end
 
 	self._deathgoals[name] = Goal.factory(name, goalspec)
+	self._curdeathgoals = self._curdeathgoals + 1
+	self._maxdeathgoals = math.max(self._curdeathgoals, self._maxdeathgoals)
 end
 
 --[[
@@ -111,6 +117,7 @@ function Asset:_removeDeathGoal(name, goal)
 	end
 
 	self._deathgoals[name] = nil
+	self._curdeathgoals = self._curdeathgoals - 1
 	if next(self._deathgoals) == nil then
 		self:_setDead()
 	end
@@ -148,6 +155,44 @@ function Asset:_setupmaps()
 			self._assets[grp.data.name] = grp.data
 		end
 	end
+end
+
+-- TODO: if this is a movable asset we should not calculate
+-- the centroid, not sure what location we should return -
+-- the starting position or something else? We shouldn't return
+-- the current position I do not think.
+function Asset:getLocation()
+	if self.centroid == nil then
+		local points = {}
+		for k,v in pairs(self._assets) do
+			points[k] = {
+				["x"] = v.x, ["y"] = 0, ["z"] = v.y,
+			}
+		end
+
+		self.centroid = dctutils.centroid(points)
+	end
+	return self.centroid
+end
+
+function Asset:getCallsign()
+	return self.codename
+end
+
+function Asset:getIntelLevel()
+	return 4
+	-- TODO: base this on a value related to the asset type
+end
+
+--[[
+-- getStatus - percentage remaining of the asset from 0 - 100
+--]]
+function Asset:getStatus()
+	return math.floor((1 - (self._curdeathgoals / self._maxdeathgoals)) * 100)
+end
+
+function Asset:getBriefing()
+	return self._briefing
 end
 
 function Asset:isTargeted()

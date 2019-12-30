@@ -27,6 +27,15 @@ local function heapsort_tgtlist(assetmgr, owner, filterlist)
 	return pq
 end
 
+local function genstatids()
+	local tbl = {}
+
+	for k,v in pairs(enum.missionType) do
+		table.insert(tbl, {v, 0, k})
+	end
+	return tbl
+end
+
 --[[
 -- For now the commander is only concerned with flight missions
 --]]
@@ -35,12 +44,13 @@ local Commander = class()
 function Commander:__init(coalition, theater)
 	self.owner        = coalition
 	self.theater      = theater
-	self.missionstats = Stats()
+	self.missionstats = Stats(genstatids())
 	self.missions     = {}
 	self.assigned     = {}
 end
 
 --[[
+-- TODO: complete this, the enemy information is missing
 -- What does a commander need to track for theater status?
 --   * the UI currently defines these items that need to be "tracked":
 --     - Sea - representation of the opponent's sea control
@@ -52,14 +62,18 @@ end
 function Commander:getTheaterUpdate()
 	--local enemystats = self.theater:getTargetStats(self.owner)
 	local theaterUpdate = {}
+
 	theaterUpdate.enemy = {}
 	theaterUpdate.enemy.sea = 50
 	theaterUpdate.enemy.air = 50
 	theaterUpdate.enemy.elint = 50
 	theaterUpdate.enemy.sam = 50
-	theaterUpdate.missions = {
-		["CAP"] = 2,
-	}
+	theaterUpdate.missions = self.missionstats:getStats()
+	for k,v in pairs(theaterUpdate.missions) do
+		if v == 0 then
+			theaterUpdate.missions[k] = nil
+		end
+	end
 	return theaterUpdate
 end
 
@@ -127,7 +141,7 @@ function Commander:getMission(id)
 end
 
 --[[
--- return the mission id assigned to the given asset name (grpname)
+-- return the mission assigned to the given asset name (grpname)
 --]]
 function Commander:getAssigned(grpname)
 	local id = self.assigned[grpname]
@@ -148,13 +162,13 @@ function Commander:removeMission(id)
 	local mission = self.missions[id]
 	self.missions[id] = nil
 	self.assigned[mission.assigned] = nil
-	-- TODO: decrement the active mission count for mission type
+	self.missionstats:dec(mission.type)
 end
 
 function Commander:addMission(mission)
 	self.missions[mission:getID()]  = mission
 	self.assigned[mission.assigned] = mission:getID()
-	-- TODO: increment the active mission count for mission type
+	self.missionstats:inc(mission.type)
 end
 
 return Commander

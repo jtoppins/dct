@@ -19,6 +19,11 @@ end
 require("socket")
 local class = require("libs.class")
 
+local dctcheck = {}
+dctcheck.spawngroups  = 0
+dctcheck.spawnstatics = 0
+_G.dctcheck = dctcheck
+
 -- DCS Singletons
 --
 local env = {}
@@ -55,13 +60,11 @@ coalition.side.RED     = 1
 coalition.side.BLUE    = 2
 
 function coalition.addGroup(_, cat, data)
-	test.debug("SPAWN: spawn group, type:" .. cat .. ", name: " .. data.name)
-	check.spawngroups = check.spawngroups + 1
+	dctcheck.spawngroups = dctcheck.spawngroups + 1
 end
 
 function coalition.addStaticObject(_, data)
-	test.debug("SPAWN: spawn static, type:" .. type(data) .. ", name: " .. data.name)
-	check.spawnstatics = check.spawnstatics + 1
+	dctcheck.spawnstatics = dctcheck.spawnstatics + 1
 end
 
 local coaltbl = {

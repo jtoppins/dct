@@ -6,61 +6,74 @@
 -- completing the Objective.
 --]]
 
--- TODO: a mission consists of
---  * 'success' critera for each side, so which ever side's success
---    critera is met first is the one that 'wins' that mission.
---
---    This means each AI (and humans) are competiting at multiple locations
---    at the same time. This leads into the question of how to prioritize
---    responses, such as CAP flights. Probably concentration is a good
---    start. An example, the Blue AI has two strike missions occuring 35nm
---    apart from eachother (determined by the 2d euclidian distance between
---    the centroid of each mission's target location) so the Blue AI would
---    then need to schedule a CAP location over/near/in-the-path-of those
---    strike missions from which the enemy would likely come from.
---
---    At the same time Red AI would schedule an intercept, assuming it
---    did not have CAP already in the area.
---
---    Going back to Blue AI, if Blue deteted Red CAP in the area Blue AI
---    should not release those strike missions until a CAP mission was
---    assigned and started. If it were a human assigned mission there
---    could be an option to override the release and go without CAP.
---    This I think would engourage teamwork without forcing it.
-
--- TODO: issues
---  * how does a mission access the global asset manager?
---	  - give a reference
---  * what stats does a mission need to track?
---    - timeout
---    - world state of mission
---  * does a mission need to "listen" to events from a target
---    or assigned assets?
---    - probably not, just makes things complicated instead
---      periodically check missions in a commander
-
-local class = require("libs.class")
+require("math")
+local class    = require("libs.class")
+local enum     = require("dct.enum")
+local dctutils = require("dct.utils")
+local uihuman  = require("dct.ui.human")
 
 local MISSION_LIMIT = 60*60*3  -- 3 hours in seconds
+local MISSION_ID = math.random(1,99)
 
-local function gen_mission_id()
-	return "A1234"
+local function genMissionID(cmdr, msntype)
+	local msnid = dctutils.getkey(enum.missionType, msntype)
+	local id
+
+	while true do
+		MISSION_ID = (MISSION_ID + 1) % 10000
+		id = msnid..string.format("%04d", MISSION_ID)
+		if cmdr:getMission(id) == nil then
+			break
+		end
+	end
+	return id
+end
+
+local function interp(s, tab)
+	return (s:gsub('(%b%%)', function(w) return tab[w:sub(2,-2)] or w end))
+end
+
+local function genLocationMethod()
+	local txt = {
+		"NATO Reconaissasnce elements have located",
+		"A recon flight earlier today discovered",
+		"We have reason to believe there is",
+		"Aerial photography shows that there is",
+		"Satellite Imaging of Iran has found",
+		"Ground units operating in Iran have informed us of",
+	}
+	local idx = math.random(1,#txt)
+	return txt[idx]
 end
 
 local Mission = class()
 function Mission:__init(cmdr, missiontype, grpname, tgtname)
 	-- reference to owning commander
 	self.cmdr      = cmdr
-	self.id        = gen_mission_id()
+	self.id        = genMissionID(cmdr, missiontype)
 	self.type      = missiontype
 	self.target    = tgtname
 	self.assigned  = grpname
 	self.timestart = timer.getTime()
 	self.timeend   = self.timestart + MISSION_LIMIT
-	self.breifing  = ""
+	self.onstation = false
 
-	--local tgt = self.cmdr:getAsset(self.target)
-	-- TODO: setup remaining mission parameters
+	-- compose the briefing at mission creation to represent
+	-- known intel the pilots were given before departing
+	self.briefing  = self:_composeBriefing()
+
+	-- TODO: setup remaining mission parameters;
+	--   * mission world state
+end
+
+function Mission:_composeBriefing()
+	local tgt = self.cmdr:getAsset(self.target)
+	local briefing = tgt:getBriefing()
+	local interptbl = {
+		["LOCATIONMETHOD"] = genLocationMethod(),
+		["TOT"] = "wip-12:45:00",
+	}
+	return interp(briefing, interptbl)
 end
 
 function Mission:getID()
@@ -87,26 +100,34 @@ function Mission:abort()
 end
 
 function Mission:update()
-	-- update the state of the mission
+	-- TODO: update the state of the mission
 end
 
 function Mission:isComplete()
+	-- TODO
 end
 
--- provides target info information
--- Data supplied:
---   * target location - centroid of the asset
---   * target callsign
---   * target description - not the mission description, a short two word
---       description of the individual target like;
---       factory, ammo bunker, etc.
---   * target status - a numercal value from 0 to 100 representing
---       percentage completion
+--[[
+-- getTargetInfo - provide target info information
+--
+-- The target information supplied:
+--   * location - centroid of the asset
+--   * callsign - a short name the target area can be referenced by
+--   * description - short two/three word description of the asset
+--       like; factory, ammo bunker, etc.
+--   * status - numercal value from 0 to 100 representing percentage
+--       completion
+--   * intellvl - numercal value representing the amount of 'intel'
+--       gathered on the asset, dictates targeting coordinates
+--       precision too
+--]]
 function Mission:getTargetInfo()
+	local asset = self.cmdr:getAsset(self.target)
 	local tgtinfo = {}
-	tgtinfo.location = { ["x"] = 100, ["z"] = 100 }
-	tgtinfo.callsign = "test-callsign"
-	tgtinfo.status = 50
+	tgtinfo.location = asset:getLocation()
+	tgtinfo.callsign = asset:getCallsign()
+	tgtinfo.status   = asset:getStatus()
+	tgtinfo.intellvl = asset:getIntelLevel()
 	return tgtinfo
 end
 
@@ -120,13 +141,20 @@ function Mission:addTime(time)
 end
 
 function Mission:checkin(time)
+	-- TODO: write this
 end
 
 function Mission:checkout(time)
+	-- TODO: write this
 end
 
-function Mission:getDescription()
-	return "TODO description"
+function Mission:getDescription(actype, locprecision)
+	local tgt = self.cmdr:getAsset(self.target)
+	local interptbl = {
+		["LOCATION"] = uihuman.grid2actype(actype, tgt:getLocation(),
+			locprecision)
+	}
+	return interp(self.briefing, interptbl)
 end
 
 return Mission

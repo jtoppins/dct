@@ -20,7 +20,9 @@ local testcmds = {
 			["type"]   = enum.uiRequestType.MISSIONREQUEST,
 			["value"]  = enum.missionType.STRIKE,
 		},
-		["expected"] = "Mission A1234 assigned, see briefing for details",
+		["assert"]     = true,
+		["expected"]   = "Mission STRIKE0085 assigned, see briefing for"..
+			" details",
 	},
 	[2] = {
 		["data"] = {
@@ -33,7 +35,7 @@ local testcmds = {
 		["assert"]     = true,
 		["expected"]   = "== Theater Threat Status ==\n  Sea:    medium\n"..
 			"  Air:    parity\n  ELINT:  medium\n  SAM:    medium\n\n"..
-			"== Current Active Air Missions ==\n  CAP:  2\n\n"..
+			"== Current Active Air Missions ==\n  STRIKE:   1\n\n"..
 			"Recommended Mission Type: STRIKE\n",
 	},
 	[3] = {
@@ -45,8 +47,17 @@ local testcmds = {
 			["type"]   = enum.uiRequestType.MISSIONBRIEF,
 		},
 		["assert"]     = true,
-		["expected"]   = "ID: A1234\nTarget: 88°07.38'N 063°27.36'W"..
-			" (test-callsign)\nDescription:\nTODO description",
+		["expected"]   = "ID: STRIKE0085\nTarget AO: 88°07.2'N 063°27.6'W"..
+			" (SEOUL)\nBriefing:\nGround units operating in Iran have"..
+			" informed us of an Iranian Ammo Dump 88°07.2'N 063°27.6'W."..
+			" Find and destroy the bunkers and the ordnance within.\n    \n"..
+			"    Primary Objectives: Destroy the large, armoured bunker."..
+			" It is heavily fortified, so accuracy is key.\n    \n"..
+			"    Secondary Objectives: Destroy the two smaller, white"..
+			" hangars.\n    \n"..
+			"    Recommended Pilots: 2\n    \n"..
+			"    Recommended Ordnance: Heavy ordnance required for bunker"..
+			" targets, e.g. Mk-84s or PGM Variants.",
 	},
 	[4] = {
 		["data"] = {
@@ -101,7 +112,7 @@ local testcmds = {
 			["type"]   = enum.uiRequestType.MISSIONABORT,
 		},
 		["assert"]     = true,
-		["expected"]   = "Mission A1234 aborted",
+		["expected"]   = "Mission STRIKE0085 aborted",
 	},
 }
 
@@ -126,8 +137,8 @@ local function main()
 
 	for _, v in pairs(enum.missionType) do
 		data.value = v
-		for _, side in pairs(coalition.side) do
-			data.side = side
+		for _, s in pairs(coalition.side) do
+			data.side = s
 			local cmd = uicmds[data.type](theater, data)
 			cmd:execute(500)
 		end

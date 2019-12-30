@@ -46,31 +46,24 @@ local testthreat = {
 local testlochdr = {
 	[1] = {
 		["value"] = enum.missionType.STRIKE,
-		["expected"] = "Target",
+		["expected"] = "Target AO",
 	},
 	[2] = {
 		["value"] = enum.missionType.CAP,
-		["expected"] = "Station",
-	},
-}
-
-local testgrids = {
-	[1] = {
-		["value"] = "F-15",
-		["expected"] = "",
+		["expected"] = "Station AO",
 	},
 }
 
 local function main()
-	for k, v in ipairs(testairthreat) do
+	for _, v in ipairs(testairthreat) do
 		assert(human.airthreat(v.value) == v.expected,
 			"human.airthreat() unexpected value")
 	end
-	for k, v in ipairs(testthreat) do
+	for _, v in ipairs(testthreat) do
 		assert(human.threat(v.value) == v.expected,
 			"human.threat() unexpected value")
 	end
-	for k, v in ipairs(testlochdr) do
+	for _, v in ipairs(testlochdr) do
 		assert(human.locationhdr(v.value) == v.expected,
 			"human.locationhdr() unexpected value")
 	end
