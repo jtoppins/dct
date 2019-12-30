@@ -142,7 +142,7 @@ local function uiDCSEventHandler(theater, event)
 	-- handlers. So we should queue a command to send this message to
 	-- the group. For now it should be ok.
 	local cmdr = theater:getCommander(grp:getCoalition())
-	local msn  = cmdr:getMission(grp:getName())
+	local msn  = cmdr:getAssigned(grp:getName())
 
 	if msn then
 		trigger.action.outTextForGroup(grp:getID(),
