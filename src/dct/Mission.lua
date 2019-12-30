@@ -1,70 +1,160 @@
 --[[
 -- SPDX-License-Identifier: LGPL-3.0
 --
--- Represents a Mission within the game and this associates and
+-- Represents a Mission within the game and this associates an
 -- Objective to as assigned group of units responsible for
 -- completing the Objective.
 --]]
 
--- TODO: a mission consists of
---  * a target asset
---  * an owner - which AI commander initiated the mission and whom's assets
---    will be assigned to complete the mission
---  * a list of assigned assets to accomplish this mission
---  * 'success' critera for each side, so which ever side's success
---    critera is met first is the one that 'wins' that mission.
---
---    This means each AI (and humans) are competiting at multiple locations
---    at the same time. This leads into the question of how to prioritize
---    responses, such as CAP flights. Probably concentration is a good
---    start. An example, the Blue AI has two strike missions occuring 35nm
---    apart from eachother (determined by the 2d euclidian distance between
---    the centroid of each mission's target location) so the Blue AI would
---    then need to schedule a CAP location over/near/in-the-path-of those
---    strike missions from which the enemy would likely come from.
---
---    At the same time Red AI would schedule an intercept, assuming it
---    did not have CAP already in the area.
---
---    Going back to Blue AI, if Blue deteted Red CAP in the area Blue AI
---    should not release those strike missions until a CAP mission was
---    assigned and started. If it were a human assigned mission there
---    could be an option to override the release and go without CAP.
---    This I think would engourage teamwork without forcing it.
+require("math")
+local class    = require("libs.class")
+local enum     = require("dct.enum")
+local dctutils = require("dct.utils")
+local uihuman  = require("dct.ui.human")
 
-local class = require("libs.class")
-local Observable = require("observable")
+local MISSION_LIMIT = 60*60*3  -- 3 hours in seconds
+local MISSION_ID = math.random(1,99)
 
-local Mission = class(Observable)
-function Mission:__init(groupName, objective)
-	Observable.__init(self)
+local function genMissionID(cmdr, msntype)
+	local msnid = dctutils.getkey(enum.missionType, msntype)
+	local id
+
+	while true do
+		MISSION_ID = (MISSION_ID + 1) % 10000
+		id = msnid..string.format("%04d", MISSION_ID)
+		if cmdr:getMission(id) == nil then
+			break
+		end
+	end
+	return id
+end
+
+local function interp(s, tab)
+	return (s:gsub('(%b%%)', function(w) return tab[w:sub(2,-2)] or w end))
+end
+
+local function genLocationMethod()
+	local txt = {
+		"NATO Reconaissasnce elements have located",
+		"A recon flight earlier today discovered",
+		"We have reason to believe there is",
+		"Aerial photography shows that there is",
+		"Satellite Imaging of Iran has found",
+		"Ground units operating in Iran have informed us of",
+	}
+	local idx = math.random(1,#txt)
+	return txt[idx]
+end
+
+local Mission = class()
+function Mission:__init(cmdr, missiontype, grpname, tgtname)
+	-- reference to owning commander
+	self.cmdr      = cmdr
+	self.id        = genMissionID(cmdr, missiontype)
+	self.type      = missiontype
+	self.target    = tgtname
+	self.assigned  = grpname
+	self.timestart = timer.getTime()
+	self.timeend   = self.timestart + MISSION_LIMIT
+	self.onstation = false
+
+	-- compose the briefing at mission creation to represent
+	-- known intel the pilots were given before departing
+	self.briefing  = self:_composeBriefing()
+
+	-- TODO: setup remaining mission parameters;
+	--   * mission world state
+end
+
+function Mission:_composeBriefing()
+	local tgt = self.cmdr:getAsset(self.target)
+	local briefing = tgt:getBriefing()
+	local interptbl = {
+		["LOCATIONMETHOD"] = genLocationMethod(),
+		["TOT"] = "wip-12:45:00",
+	}
+	return interp(briefing, interptbl)
 end
 
 function Mission:getID()
-end
-
-function Mission:abort()
-end
-
-function Mission:join(groupName)
-end
-
-function Mission:update()
-	-- update the state of the mission
-end
-
-function Mission:isComplete()
+	return self.id
 end
 
 --[[
--- API used by Missions assigned to humans
+-- Abort - aborts a mission putting the targeted asset back into
+--   the pool.
+--
+-- Things that need to be managed;
+--  * removing the mission from the owning commander's mission
+--    list(s)
+--  * releasing the targeted asset by resetting the asset's targeted
+--    bit
 --]]
-
-function Mission:reportBriefing()
+function Mission:abort()
+	self.cmdr:removeMission(self.id)
+	local tgt = self.cmdr:getAsset(self.target)
+	if tgt then
+		tgt:setTargeted(false)
+	end
+	return self.id
 end
 
-function Mission:reportStatus()
+function Mission:update()
+	-- TODO: update the state of the mission
 end
 
-function Mission:reportAssigned()
+function Mission:isComplete()
+	-- TODO
 end
+
+--[[
+-- getTargetInfo - provide target info information
+--
+-- The target information supplied:
+--   * location - centroid of the asset
+--   * callsign - a short name the target area can be referenced by
+--   * description - short two/three word description of the asset
+--       like; factory, ammo bunker, etc.
+--   * status - numercal value from 0 to 100 representing percentage
+--       completion
+--   * intellvl - numercal value representing the amount of 'intel'
+--       gathered on the asset, dictates targeting coordinates
+--       precision too
+--]]
+function Mission:getTargetInfo()
+	local asset = self.cmdr:getAsset(self.target)
+	local tgtinfo = {}
+	tgtinfo.location = asset:getLocation()
+	tgtinfo.callsign = asset:getCallsign()
+	tgtinfo.status   = asset:getStatus()
+	tgtinfo.intellvl = asset:getIntelLevel()
+	return tgtinfo
+end
+
+function Mission:getTimeout()
+	return self.timeend
+end
+
+function Mission:addTime(time)
+	self.timeend = self.timeend + time
+	return time
+end
+
+function Mission:checkin(time)
+	-- TODO: write this
+end
+
+function Mission:checkout(time)
+	-- TODO: write this
+end
+
+function Mission:getDescription(actype, locprecision)
+	local tgt = self.cmdr:getAsset(self.target)
+	local interptbl = {
+		["LOCATION"] = uihuman.grid2actype(actype, tgt:getLocation(),
+			locprecision)
+	}
+	return interp(self.briefing, interptbl)
+end
+
+return Mission

@@ -19,7 +19,13 @@ export DCT_TEMPLATE_PATH
 #echo "DCT template path: ${DCT_TEMPLATE_PATH}"
 
 cd "${base}"
-for t in test-*.lua; do
+if test $# -gt 0; then
+	tests="$@"
+else
+	tests=$(ls test-*.lua)
+fi
+
+for t in $tests; do
 	result="PASS"
 	./${t}
 	if test $? -ne 0; then

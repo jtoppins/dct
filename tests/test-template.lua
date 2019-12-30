@@ -74,7 +74,7 @@ end
 local function main()
 	local rname = "testregion"
 
-	for idx, data in pairs(sampletpls) do
+	for _, data in pairs(sampletpls) do
 		--print("tplname: "..data.name)
 		local t = dct.Template(rname,
 			lfs.writedir()..utils.sep..data.name..".stm",

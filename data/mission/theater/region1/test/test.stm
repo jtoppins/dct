@@ -1432,5 +1432,13 @@ staticTemplate =
         }, -- end of ["DEFAULT"]
     }, -- end of ["localization"]
     ["theatre"] = "PersianGulf",
-    ["desc"] = "",
+    ["desc"] = "%LOCATIONMETHOD% an Iranian Ammo Dump %LOCATION%. Find and destroy the bunkers and the ordnance within.\
+    \
+    Primary Objectives: Destroy the large, armoured bunker. It is heavily fortified, so accuracy is key.\
+    \
+    Secondary Objectives: Destroy the two smaller, white hangars.\
+    \
+    Recommended Pilots: 2\
+    \
+    Recommended Ordnance: Heavy ordnance required for bunker targets, e.g. Mk-84s or PGM Variants.",
 } -- end of staticTemplate

@@ -19,6 +19,11 @@ end
 require("socket")
 local class = require("libs.class")
 
+local dctcheck = {}
+dctcheck.spawngroups  = 0
+dctcheck.spawnstatics = 0
+_G.dctcheck = dctcheck
+
 -- DCS Singletons
 --
 local env = {}
@@ -55,13 +60,11 @@ coalition.side.RED     = 1
 coalition.side.BLUE    = 2
 
 function coalition.addGroup(_, cat, data)
-	test.debug("SPAWN: spawn group, type:" .. cat .. ", name: " .. data.name)
-	check.spawngroups = check.spawngroups + 1
+	dctcheck.spawngroups = dctcheck.spawngroups + 1
 end
 
 function coalition.addStaticObject(_, data)
-	test.debug("SPAWN: spawn static, type:" .. type(data) .. ", name: " .. data.name)
-	check.spawnstatics = check.spawnstatics + 1
+	dctcheck.spawnstatics = dctcheck.spawnstatics + 1
 end
 
 local coaltbl = {
@@ -229,6 +232,33 @@ end
 _G.coalition = coalition
 
 local world = {}
+world.event = {
+	["S_EVENT_INVALID"]           = 0,
+	["S_EVENT_SHOT"]              = 1,
+	["S_EVENT_HIT"]               = 2,
+	["S_EVENT_TAKEOFF"]           = 3,
+	["S_EVENT_LAND"]              = 4,
+	["S_EVENT_CRASH"]             = 5,
+	["S_EVENT_EJECTION"]          = 6,
+	["S_EVENT_REFUELING"]         = 7,
+	["S_EVENT_DEAD"]              = 8,
+	["S_EVENT_PILOT_DEAD"]        = 9,
+	["S_EVENT_BASE_CAPTURED"]     = 10,
+	["S_EVENT_MISSION_START"]     = 11,
+	["S_EVENT_MISSION_END"]       = 12,
+	["S_EVENT_TOOK_CONTROL"]      = 13,
+	["S_EVENT_REFUELING_STOP"]    = 14,
+	["S_EVENT_BIRTH"]             = 15,
+	["S_EVENT_HUMAN_FAILURE"]     = 16,
+	["S_EVENT_ENGINE_STARTUP"]    = 17,
+	["S_EVENT_ENGINE_SHUTDOWN"]   = 18,
+	["S_EVENT_PLAYER_ENTER_UNIT"] = 19,
+	["S_EVENT_PLAYER_LEAVE_UNIT"] = 20,
+	["S_EVENT_PLAYER_COMMENT"]    = 21,
+	["S_EVENT_SHOOTING_START"]    = 22,
+	["S_EVENT_SHOOTING_END"]      = 23,
+	["S_EVENT_MAX"]               = 24,
+}
 function world.addEventHandler(handler)
 end
 _G.world = world
@@ -236,6 +266,9 @@ _G.world = world
 -- DCS Classes
 --
 local Object = class()
+function Object:__init(name)
+	self.name = name
+end
 Object.Category = {
 	["UNIT"]    = 1,
 	["WEAPON"]  = 2,
@@ -256,6 +289,7 @@ function Object:getCategory()
 end
 
 function Object:getTypeName()
+	return "F-15C"
 end
 
 function Object:getDesc()
@@ -265,6 +299,7 @@ function Object:hasAttribute(attribute)
 end
 
 function Object:getName()
+	return self.name
 end
 
 function Object:getPoint()
@@ -278,21 +313,31 @@ end
 
 function Object:inAir()
 end
+
+function Object:getID()
+	return 12
+end
 _G.Object = Object
 
 
 local Coalition = class(Object)
+function Coalition:__init(name)
+	Object.__init(self, name)
+end
 function Coalition:getCoalition()
 	return coalition.side.RED
 end
 
 function Coalition:getCountry()
-	return 0
+	return 8
 end
 _G.Coalition = Coalition
 
 
 local Unit = class(Coalition)
+function Unit:__init(name)
+	Coalition.__init(self, name)
+end
 Unit.Category = {
 	["AIRPLANE"]    = 0,
 	["HELICOPTER"]  = 1,
@@ -306,7 +351,7 @@ Unit.RefuelingSystem = {
 }
 
 function Unit.getByName(name)
-	return Unit
+	return Unit(name)
 end
 
 function Unit:getLife()
@@ -318,7 +363,11 @@ function Unit:getLife0()
 end
 
 function Unit:getGroup()
-	return Group
+	return Group("testgrp")
+end
+
+function Unit:getPlayerName()
+	return self.name
 end
 _G.Unit = Unit
 
@@ -343,6 +392,10 @@ end
 _G.StaticObject = StaticObject
 
 local Group = class(Coalition)
+function Group:__init(name)
+	Coalition.__init(self, name)
+end
+
 function Group.getByName(name)
 	return Group
 end
@@ -354,4 +407,73 @@ end
 function Group:getSize()
 	return 2
 end
+
+function Group:getUnit(num)
+	return Unit("testunit")
+end
 _G.Group = Group
+
+local missionCommands = {}
+function missionCommands.addCommand(name, path, func, args)
+end
+
+function missionCommands.addSubMenu(name, path)
+end
+
+function missionCommands.removeItem(path)
+end
+
+function missionCommands.addCommandForCoalition(side, name, path, func, args)
+end
+
+function missionCommands.addSubMenuForCoalition(side, name, path)
+end
+
+function missionCommands.removeItemForCoalition(side, path)
+end
+
+function missionCommands.addCommandForGroup(id, name, path, func, args)
+end
+
+function missionCommands.addSubMenuForGroup(id, name, path)
+end
+
+function missionCommands.removeItemForGroup(id, path)
+end
+_G.missionCommands = missionCommands
+
+local coord = {}
+function coord.LOtoLL(pos)
+	return 88.123, -63.456, pos.y
+end
+
+function coord.LLtoMGRS(lat, long)
+	return {
+		["UTMZone"] = "DD",
+		["MGRSDigraph"] = "GJ",
+		["Easting"] = 01234,
+		["Northing"] = 56789,
+	}
+end
+_G.coord = coord
+
+local trigger = {}
+trigger.action = {}
+
+local msgbuffer  = ""
+local enabletest = false
+function trigger.action.setmsgbuffer(msg)
+	msgbuffer = msg
+end
+
+function trigger.action.setassert(val)
+	enabletest = val
+end
+
+function trigger.action.outTextForGroup(gid, msg, disptime, clear)
+	if enabletest == true then
+		assert(msg == msgbuffer, "generated output not as expected;\ngot '"..
+			msg.."';\n expected '"..msgbuffer.."'")
+	end
+end
+_G.trigger = trigger

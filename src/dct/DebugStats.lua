@@ -22,7 +22,7 @@ function DebugStats:__init()
 end
 
 function DebugStats:registerStat(name, val, title)
-	assert(self.stats[name] == nil, "attempt to re-register stat")
+	assert(self.stats[name] == nil, "attempt to re-register stat: "..name)
 	self.stats[name] = { ["value"] = val, ["title"] = title, }
 end
 

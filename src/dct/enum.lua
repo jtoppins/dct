@@ -31,6 +31,32 @@ local assetType = {
 	["BUNKER"]      = 15,
 	["CHECKPOINT"]  = 16,
 	["FACTORY"]     = 17,
+	["AIRSPACE"]    = 18,
+}
+
+--[[
+-- We use a min-heap so priority is in reverse numerical order,
+-- a higher number is lower priority
+--]]
+local assetTypePriority = {
+	[assetType.AIRSPACE]    = 10,
+	[assetType.JTAC]        = 10,
+	[assetType.EWR]         = 20,
+	[assetType.SAM]         = 20,
+	[assetType.C2]          = 30,
+	[assetType.AMMODUMP]    = 40,
+	[assetType.FUELDUMP]    = 40,
+	[assetType.MISSILE]     = 50,
+	[assetType.SEA]         = 50,
+	[assetType.BASEDEFENSE] = 60,
+	[assetType.OCA]         = 70,
+	[assetType.PORT]        = 70,
+	[assetType.LOGISTICS]   = 70,
+	[assetType.FACILITY]    = 100,
+	[assetType.BUNKER]      = 100,
+	[assetType.CHECKPOINT]  = 100,
+	[assetType.FACTORY]     = 100,
+	[assetType.KEEPOUT]     = 10000,
 }
 
 local missionType = {
@@ -57,6 +83,13 @@ local assetClass = {
 		[assetType.CHECKPOINT]  = true,
 		[assetType.FACTORY]     = true,
 	},
+	--[[
+	-- Means ground tactical units
+	["TACTICAL"] = {
+	},
+	["AIRBORNE"] = {
+	},
+	--]]
 }
 
 local missionTypeMap = {
@@ -86,13 +119,29 @@ local missionTypeMap = {
 	[missionType.CAS] = {
 		[assetType.JTAC] = true,
 	},
+	[missionType.CAP] = {
+		[assetType.AIRSPACE] = true,
+	},
+}
+
+local uiRequestType = {
+	["THEATERSTATUS"]   = 1,
+	["MISSIONREQUEST"]  = 2,
+	["MISSIONBRIEF"]    = 3,
+	["MISSIONSTATUS"]   = 4,
+	["MISSIONABORT"]    = 5,
+	["MISSIONROLEX"]    = 6,
+	["MISSIONCHECKIN"]  = 7,
+	["MISSIONCHECKOUT"] = 8,
 }
 
 local enum = {
 	["assetType"] = assetType,
+	["assetTypePriority"] = assetTypePriority,
 	["assetClass"] = assetClass,
 	["missionType"] = missionType,
 	["missionTypeMap"] = missionTypeMap,
+	["uiRequestType"] = uiRequestType,
 }
 
 return enum
