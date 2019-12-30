@@ -54,7 +54,7 @@ function Theater:__init()
 	self.playergps = {}
 
 	for _, val in pairs(coalition.side) do
-		self.cmdrs[val] = Commander(val, self)
+		self.cmdrs[val] = Commander(self, val)
 	end
 
 	self:_loadGoals()

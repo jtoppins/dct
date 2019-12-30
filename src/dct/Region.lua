@@ -13,7 +13,6 @@ local Asset      = require("dct.Asset")
 local Logger     = require("dct.Logger").getByName("Region")
 local DebugStats = require("dct.DebugStats").getDebugStats()
 local dctenums   = require("dct.enum")
-local Stats      = require("dct.Stats")
 
 local tplkind = {
 	["TEMPLATE"]  = 1,

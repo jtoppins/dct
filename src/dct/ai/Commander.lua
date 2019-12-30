@@ -41,7 +41,7 @@ end
 --]]
 local Commander = class()
 
-function Commander:__init(coalition, theater)
+function Commander:__init(theater, coalition)
 	self.owner        = coalition
 	self.theater      = theater
 	self.missionstats = Stats(genstatids())
