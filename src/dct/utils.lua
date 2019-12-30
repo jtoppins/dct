@@ -32,23 +32,22 @@ function utils.assettype2mission(assettype)
 end
 
 function utils.centroid(points)
-	local i = 1
+	local i = 0
 	local centroid = {
 		["x"] = 0, ["y"] = 0, ["z"] = 0,
 	}
-	while points[i] do
-		if points[i].x then
-			centroid.x = centroid.x + points[i].x
+	for _,v in pairs(points) do
+		if v.x then
+			centroid.x = centroid.x + v.x
 		end
-		if points[i].y then
-			centroid.y = centroid.y + points[i].y
+		if v.y then
+			centroid.y = centroid.y + v.y
 		end
-		if points[i].z then
-			centroid.z = centroid.z + points[i].z
+		if v.z then
+			centroid.z = centroid.z + v.z
 		end
 		i = i + 1
 	end
-	i = i - 1
 	centroid.x = centroid.x / i
 	centroid.y = centroid.y / i
 	centroid.z = centroid.z / i
