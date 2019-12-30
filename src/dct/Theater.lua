@@ -142,7 +142,7 @@ function Theater:playerRequest(data)
 		json:encode_pretty(data))
 
 	if self.playergps[data.id] == true then
-		Logger:debug("playerRequest(); request pending")
+		Logger:debug("playerRequest(); request pending, ignoring")
 		trigger.action.outTextForGroup(data.id,
 			"F10 request already pending, please wait.", 20, true)
 		return
@@ -178,28 +178,23 @@ end
 -- cmd   - the command to be run
 --]]
 function Theater:queueCommand(delay, cmd)
-	Logger:debug("queueCommand(); delay:"..delay..";"..debug.traceback())
 	self.cmdq:push(self.ctime + delay, cmd)
 	Logger:debug("queueCommand(); cmdq size: "..self.cmdq:size())
 end
 
-function Theater:exec(time)
+function Theater:_exec(time)
 	-- TODO: insert profiling hooks to count the moving average of
 	-- 10 samples for how long it takes to execute a command
 	self.ltime = self.ctime
 	self.ctime = time
 	local rescheduletime = time + RESCHEDULE_FREQ
 
-	Logger:debug("exec() - start: "..tostring(time))
 	if self.cmdq:empty() then
-		Logger:debug("exec() - no pending cmds")
 		return rescheduletime
 	end
 
 	local _, prio = self.cmdq:peek()
 	if time < prio then
-		Logger:debug("exec() - not time to execute; time: "..
-			tostring(time).."; exec: "..tostring(prio))
 		return rescheduletime
 	end
 
@@ -210,6 +205,20 @@ function Theater:exec(time)
 		self:queueCommand(requeue, cmd)
 	end
 	return rescheduletime
+end
+
+function Theater:exec(time)
+	local retval
+	local errhandler = function(err)
+		Logger:error("protected call - "..tostring(err).."\n"..
+			debug.traceback())
+	end
+	local pcallfunc = function()
+		retval = self:_exec(time)
+	end
+
+	xpcall(pcallfunc, errhandler)
+	return retval
 end
 
 local theater = nil
