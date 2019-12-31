@@ -28,7 +28,11 @@ function Stats:get(id)
 end
 
 function Stats:set(id, val)
-	self.stats[id].value = val
+	if self.stats[id] == nil then
+		self:register(id, val, "generated"..tostring(id))
+	else
+		self.stats[id].value = val
+	end
 end
 
 function Stats:add(id, val)
@@ -68,6 +72,14 @@ function Stats:getStats(idfilter)
 		end
 	end
 	return tbl
+end
+
+function Stats:marshal()
+	return self.stats
+end
+
+function Stats:unmarshal(tbl)
+	self.stats = tbl
 end
 
 return Stats

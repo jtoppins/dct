@@ -387,6 +387,7 @@ function Asset:marshal()
 	tbl._dead          = self._dead
 	tbl._spawned       = self._spawned
 	tbl._hasDeathGoals = self._hasDeathGoals
+	tbl._briefing      = self._briefing
 	tbl.name           = self.name
 	tbl.regionname     = self.regionname
 	tbl.codename       = self.codename

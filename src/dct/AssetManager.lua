@@ -18,6 +18,7 @@ local enum     = require("dct.enum")
 local Logger   = require("dct.Logger").getByName("AssetManager")
 local Command  = require("dct.Command")
 local Stats    = require("dct.Stats")
+local Asset    = require("dct.Asset")
 
 local enemymap = {
 	[coalition.side.NEUTRAL] = false,
@@ -246,6 +247,7 @@ function AssetManager:checkAssets(time)
 	Logger:debug(string.format("checkAssets() - runtime: %4.2f ms, "..
 		"forced: %s, assets checked: %d",
 		(timer.getTime()-perftime_s)*1000, tostring(force), cnt))
+	return nil
 end
 
 function AssetManager:onDCSEvent(event)
@@ -286,12 +288,40 @@ function AssetManager:onDCSEvent(event)
 	self:queueCheckAsset()
 end
 
-function AssetManager:marshal(ignoredirty)
-	-- TODO: marshal assets into a table and return to the caller
+function AssetManager:marshal()
+	local tbl = {
+		["assets"] = {},
+		["stats"]  = {},
+	}
+
+	for name, asset in pairs(self._assetset) do
+		if enum.assetClass.STRATEGIC[asset.type] ~= nil then
+			tbl.assets[name] = asset:marshal()
+		end
+	end
+	for _,v in pairs(coalition.side) do
+		tbl.stats[v] = self._sideassets[v].stats:marshal()
+	end
+	return tbl
 end
 
 function AssetManager:unmarshal(data)
-	-- TODO: read in and create all assets that were saved off
+	local statszero = {}
+	for _,v in pairs(enum.assetType) do
+		statszero[v..".1"] = 0
+	end
+	for side, stat in pairs(data.stats) do
+		side = tonumber(side)
+		self._sideassets[side].stats:unmarshal(stat)
+		for k,v in pairs(statszero) do
+			self._sideassets[side].stats:set(k, v)
+		end
+	end
+	for _, assettbl in pairs(data.assets) do
+		local asset = Asset()
+		asset:unmarshal(assettbl)
+		self:add(asset)
+	end
 end
 
 return AssetManager
