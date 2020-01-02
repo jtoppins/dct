@@ -11,6 +11,7 @@ local class    = require("libs.class")
 local enum     = require("dct.enum")
 local dctutils = require("dct.utils")
 local uihuman  = require("dct.ui.human")
+local uicmds   = require("dct.ui.cmds")
 
 local MISSION_LIMIT = 60*60*3  -- 3 hours in seconds
 local MISSION_ID = math.random(1,99)
@@ -48,6 +49,7 @@ end
 
 local Mission = class()
 function Mission:__init(cmdr, missiontype, grpname, tgtname)
+	self._complete = false
 	-- reference to owning commander
 	self.cmdr      = cmdr
 	self.id        = genMissionID(cmdr, missiontype)
@@ -67,7 +69,7 @@ function Mission:__init(cmdr, missiontype, grpname, tgtname)
 	self.briefing  = self:_composeBriefing()
 
 	-- TODO: setup remaining mission parameters;
-	--   * mission world state
+	--   * mission world states
 end
 
 function Mission:_composeBriefing()
@@ -103,12 +105,42 @@ function Mission:abort()
 	return self.id
 end
 
-function Mission:update()
-	-- TODO: update the state of the mission
+-- for now just track if the mission has not timmed out and
+-- if it has queue an abort command with abort reason
+function Mission:update(time)
+	if self:isComplete() then
+		return
+	end
+
+	local reason
+	local tgt = self.cmdr:getAsset(self.target)
+	if tgt == nil or tgt:isDead() then
+		reason = "mission complete"
+	elseif time > self.timeend then
+		reason = "mission timeout"
+	end
+
+	if reason ~= nil then
+		self._complete = true
+		local dcsgrp = Group.getByName(self.assigned)
+		local request = {
+			["type"]   = enum.uiRequestType.MISSIONABORT,
+			["id"]     = dcsgrp:getID(),
+			["name"]   = self.assigned,
+			["side"]   = dcsgrp:getCoalition(),
+			["actype"] = dcsgrp:getUnit(1):getTypeName(),
+			["value"]  = reason,
+		}
+		-- We have to use theater:queueCommand() to bypass the
+		-- limiting of players sending too many commands
+		self.cmdr.theater:queueCommand(10,
+			uicmds[request.type](self.cmdr.theater, request))
+	end
+	return
 end
 
 function Mission:isComplete()
-	-- TODO
+	return self._complete
 end
 
 --[[

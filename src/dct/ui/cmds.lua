@@ -173,10 +173,12 @@ local MissionAbortCmd = class(MissionCmd)
 function MissionAbortCmd:__init(theater, data)
 	MissionCmd.__init(self, theater, data)
 	self.erequest = false
+	self.reason   = data.value
 end
 
 function MissionAbortCmd:_mission(time, cmdr, msn)
-	return string.format("Mission %s aborted", msn:abort(time))
+	return string.format("Mission %s aborted, %s",
+		msn:abort(time), self.reason)
 end
 
 

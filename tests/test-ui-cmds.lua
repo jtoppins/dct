@@ -110,9 +110,10 @@ local testcmds = {
 			["side"]   = side,
 			["actype"] = unitType,
 			["type"]   = enum.uiRequestType.MISSIONABORT,
+			["value"]  = "player requested",
 		},
 		["assert"]     = true,
-		["expected"]   = "Mission STRIKE0085 aborted",
+		["expected"]   = "Mission STRIKE0085 aborted, player requested",
 	},
 }
 

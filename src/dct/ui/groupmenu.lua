@@ -90,6 +90,7 @@ local function createMenu(theater, grp)
 			["side"]   = side,
 			["actype"] = unitType,
 			["type"]   = enum.uiRequestType.MISSIONABORT,
+			["value"]  = "player requested"
 		})
 	addcmd(gid, "Rolex +30", msnmenu, theater.playerRequest, theater,
 		{
