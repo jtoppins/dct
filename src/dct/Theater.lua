@@ -24,6 +24,7 @@ local Logger      = require("dct.Logger").getByName("Theater")
 local Profiler    = require("dct.Profiler").getProfiler()
 local settings    = _G.dct.settings
 
+
 --[[
 --  Theater class
 --    base class that reads in all region and template information
@@ -43,9 +44,10 @@ function Theater:__init()
 	Observable.__init(self)
 	Profiler:profileStart("Theater:init()")
 	self.savestatefreq = 7*60 -- seconds
-	self.cmdmindelay   = 8/settings.schedfreq
+	self.cmdmindelay   = 2
 	self.uicmddelay    = self.cmdmindelay
-	self:setCmdFreq(settings.schedfreq)
+	self:setTimings(settings.schedfreq, settings.tgtfps,
+		settings.percentTimeAllowed)
 	self.complete  = false
 	self.statef    = false
 	self.regions   = {}
@@ -103,8 +105,13 @@ function Theater:_loadRegions()
 	end
 end
 
-function Theater:setCmdFreq(freq)
-	self.cmdqfreq    = 1/freq
+function Theater:setTimings(cmdfreq, tgtfps, percent)
+	self._cmdqfreq    = cmdfreq
+	self._targetfps   = tgtfps
+	self._tallowed    = percent
+	self.cmdqdelay    = 1/self._cmdqfreq
+	self.quanta       = self._tallowed * ((1 / self._targetfps) *
+		self.cmdqdelay)
 end
 
 local function isStateValid(state)
@@ -255,26 +262,34 @@ function Theater:queueCommand(delay, cmd)
 end
 
 function Theater:_exec(time)
-	-- TODO: insert profiling hooks to count the moving average of
-	-- 10 samples for how long it takes to execute a command
 	self.ltime = self.ctime
 	self.ctime = time
 
-	if self.cmdq:empty() then
-		return
-	end
+	local tstart = os.clock()
+	local tdiff = 0
+	local cmdctr = 0
+	while not self.cmdq:empty() do
+		local _, prio = self.cmdq:peek()
+		if time < prio then
+			break
+		end
 
-	local _, prio = self.cmdq:peek()
-	if time < prio then
-		return
-	end
+		local cmd = self.cmdq:pop()
+		local requeue = cmd:execute(time)
+		if requeue ~= nil and type(requeue) == "number" then
+			self:queueCommand(requeue, cmd)
+		end
+		cmdctr = cmdctr + 1
 
-	Logger:debug("exec() - execute command")
-	local cmd = self.cmdq:pop()
-	local requeue = cmd:execute(time)
-	if requeue ~= nil and type(requeue) == "number" then
-		self:queueCommand(requeue, cmd)
+		tdiff = os.clock() - tstart
+		if tdiff >= self.quanta then
+			Logger:debug("exec() - quanta reached, quanta: "..
+				tostring(self.quanta))
+			break
+		end
 	end
+	Logger:debug(string.format("exec() - time taken: %4.2fms;"..
+		" cmds executed: %d", tdiff*1000, cmdctr))
 end
 
 function Theater:exec(time)
@@ -287,7 +302,7 @@ function Theater:exec(time)
 	end
 
 	xpcall(pcallfunc, errhandler)
-	return time + self.cmdqfreq
+	return time + self.cmdqdelay
 end
 
 return Theater
