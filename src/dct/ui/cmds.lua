@@ -128,6 +128,7 @@ end
 local MissionBriefCmd = class(MissionCmd)
 function MissionBriefCmd:__init(theater, data)
 	MissionCmd.__init(self, theater, data)
+	self.displaytime = 120
 end
 
 function MissionBriefCmd:_mission(time, cmdr, msn)
