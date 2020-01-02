@@ -92,6 +92,8 @@ local function settings(missioncfg)
 			},
 		},
 		["schedfreq"] = 2, -- hertz
+		["tgtfps"] = 75,
+		["percentTimeAllowed"] = .3,
 	}
 
 	if attr ~= nil then

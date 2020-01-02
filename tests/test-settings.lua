@@ -31,6 +31,8 @@ local function main()
 			["FA-18C_hornet"] = dctutils.posfmt.DDM,
 		},
 		["schedfreq"] = 2,
+		["percentTimeAllowed"] = .3,
+		["tgtfps"] = 75,
 	}
 
 	for k, v in pairs(cfgvalidation) do
