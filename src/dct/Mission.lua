@@ -56,7 +56,11 @@ function Mission:__init(cmdr, missiontype, grpname, tgtname)
 	self.assigned  = grpname
 	self.timestart = timer.getTime()
 	self.timeend   = self.timestart + MISSION_LIMIT
-	self.onstation = false
+	self.station   = {
+		["onstation"] = false,
+		["total"]     = 0,
+		["start"]     = 0,
+	}
 
 	-- compose the briefing at mission creation to represent
 	-- known intel the pilots were given before departing
@@ -141,11 +145,20 @@ function Mission:addTime(time)
 end
 
 function Mission:checkin(time)
-	-- TODO: write this
+	if self.station.onstation == true then
+		return
+	end
+	self.station.onstation = true
+	self.station.start = time
 end
 
 function Mission:checkout(time)
-	-- TODO: write this
+	if self.station.onstation == false then
+		return
+	end
+	self.station.onstation = false
+	self.station.total = self.station.total + (time - self.station.start)
+	return self.station.total
 end
 
 function Mission:getDescription(actype, locprecision)

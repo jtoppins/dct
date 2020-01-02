@@ -101,7 +101,7 @@ local testcmds = {
 			["type"]   = enum.uiRequestType.MISSIONCHECKOUT,
 		},
 		["assert"]     = true,
-		["expected"]   = "off-station received",
+		["expected"]   = "off-station received, vul time: 0",
 	},
 	[8] = {
 		["data"] = {

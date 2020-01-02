@@ -209,8 +209,8 @@ function MissionCheckoutCmd:__init(theater, data)
 end
 
 function MissionCheckoutCmd:_mission(time, cmdr, msn)
-	msn:checkout(time)
-	return string.format("off-station received")
+	return string.format("off-station received, vul time: %d",
+		msn:checkout(time))
 end
 
 local cmds = {
