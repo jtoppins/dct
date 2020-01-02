@@ -156,7 +156,7 @@ local function uiDCSEventHandler(theater, event)
 end
 
 local function init(theater)
-	assert(theater ~= nil, "theater must be a non-nil value")
+	assert(theater ~= nil, "value error: theater must be a non-nil value")
 	Logger:debug("init UI Menu event handler")
 	theater:registerHandler(uiDCSEventHandler, theater)
 end
