@@ -4,6 +4,7 @@
 -- UI Commands
 --]]
 
+require("os")
 local class    = require("libs.class")
 local enum     = require("dct.enum")
 local dctutils = require("dct.utils")
@@ -162,7 +163,9 @@ function MissionStatusCmd:_mission(time, cmdr, msn)
 	minsleft = minsleft / 60
 
 	msg = string.format("ID: %s\n", msn:getID()) ..
-		string.format("Timeout: %d (in %d mins)\n", timeout, minsleft) ..
+		string.format("Timeout: %s (in %d mins)\n",
+			os.date("%Y-%m-%d %H:%M:%Sz", dctutils.time(timeout)),
+			minsleft) ..
 		string.format("BDA: %d%% complete\n", tgtinfo.status)
 
 	return msg

@@ -68,7 +68,9 @@ local testcmds = {
 			["actype"] = unitType,
 			["type"]   = enum.uiRequestType.MISSIONSTATUS,
 		},
-		["assert"]     = false,
+		["assert"]     = true,
+		["expected"]   = "ID: STRIKE0085\nTimeout: "..
+			"2001-06-22 21:03:54z (in 297 mins)\nBDA: 0% complete\n",
 	},
 	[5] = {
 		["data"] = {
