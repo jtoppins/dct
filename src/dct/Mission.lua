@@ -6,6 +6,7 @@
 -- completing the Objective.
 --]]
 
+require("os")
 require("math")
 local class    = require("libs.class")
 local enum     = require("dct.enum")
@@ -56,7 +57,7 @@ function Mission:__init(cmdr, missiontype, grpname, tgtname)
 	self.type      = missiontype
 	self.target    = tgtname
 	self.assigned  = grpname
-	self.timestart = timer.getTime()
+	self.timestart = timer.getAbsTime()
 	self.timeend   = self.timestart + MISSION_LIMIT
 	self.station   = {
 		["onstation"] = false,
@@ -77,7 +78,8 @@ function Mission:_composeBriefing()
 	local briefing = tgt:getBriefing()
 	local interptbl = {
 		["LOCATIONMETHOD"] = genLocationMethod(),
-		["TOT"] = "wip-12:45:00",
+		["TOT"] = os.date("%Y-%m-%d %H:%M:%Sz",
+			dctutils.time(self:getTimeout()*.6)),
 	}
 	return interp(briefing, interptbl)
 end
@@ -116,7 +118,7 @@ function Mission:update(time)
 	local tgt = self.cmdr:getAsset(self.target)
 	if tgt == nil or tgt:isDead() then
 		reason = "mission complete"
-	elseif time > self.timeend then
+	elseif timer.getAbsTime() > self.timeend then
 		reason = "mission timeout"
 	end
 

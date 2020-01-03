@@ -1433,6 +1433,7 @@ staticTemplate =
     }, -- end of ["localization"]
     ["theatre"] = "PersianGulf",
     ["desc"] = "%LOCATIONMETHOD% an Iranian Ammo Dump %LOCATION%. Find and destroy the bunkers and the ordnance within.\
+    Tot: %TOT%\
     \
     Primary Objectives: Destroy the large, armoured bunker. It is heavily fortified, so accuracy is key.\
     \

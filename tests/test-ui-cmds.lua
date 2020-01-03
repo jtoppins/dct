@@ -50,7 +50,8 @@ local testcmds = {
 		["expected"]   = "ID: STRIKE0085\nTarget AO: 88°07.2'N 063°27.6'W"..
 			" (SEOUL)\nBriefing:\nGround units operating in Iran have"..
 			" informed us of an Iranian Ammo Dump 88°07.2'N 063°27.6'W."..
-			" Find and destroy the bunkers and the ordnance within.\n    \n"..
+			" Find and destroy the bunkers and the ordnance within.\n"..
+			"    Tot: 2001-06-22 19:02:20z\n    \n"..
 			"    Primary Objectives: Destroy the large, armoured bunker."..
 			" It is heavily fortified, so accuracy is key.\n    \n"..
 			"    Secondary Objectives: Destroy the two smaller, white"..

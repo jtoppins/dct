@@ -4,6 +4,7 @@
 -- common utility functions
 --]]
 
+require("os")
 require("math")
 local enum  = require("dct.enum")
 local utils = {}
@@ -29,6 +30,19 @@ function utils.assettype2mission(assettype)
 		end
 	end
 	return nil
+end
+
+function utils.time(dcsabstime)
+	local time = os.time({
+		["year"]  = env.mission.date.Year,
+		["month"] = env.mission.date.Month,
+		["day"]   = env.mission.date.Day,
+		["hour"]  = 0,
+		["min"]   = 0,
+		["sec"]   = 0,
+		["isdst"] = false,
+	})
+	return time + timer.getTime0() + dcsabstime
 end
 
 function utils.centroid(points)

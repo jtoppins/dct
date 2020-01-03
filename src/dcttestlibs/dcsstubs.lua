@@ -30,6 +30,11 @@ local env = {}
 env.mission = {}
 env.mission.theatre = "Test Theater"
 env.mission.sortie  = "test mission"
+env.mission.date = {
+	["Year"]  = 2001,
+	["Month"] = 6,
+	["Day"]   = 22,
+}
 function env.getValueDictByKey(s)
 	return s
 end
@@ -48,6 +53,12 @@ _G.env = env
 local timer = {}
 function timer.getTime()
 	return socket.gettime()
+end
+function timer.getAbsTime()
+	return (2*3600)+234
+end
+function timer.getTime0()
+	return 15*3600
 end
 function timer.scheduleFunction(fnc, data, nexttime)
 end
