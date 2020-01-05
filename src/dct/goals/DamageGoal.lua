@@ -26,7 +26,7 @@ function DamageGoal:_afterspawn()
 	elseif self.objtype == enums.objtype.STATIC then
 		self._maxlife = StaticObject.getByName(self.name):getLife()
 	elseif self.objtype == enums.objtype.GROUP then
-		self._maxlife = Group.getByName(self.name):getInitialSize()
+		self._maxlife = Group.getByName(self.groupname):getInitialSize()
 	else
 		Logger:error("DamageGoal:_afterspawn() - invalid objtype")
 	end
@@ -51,7 +51,7 @@ function DamageGoal:checkComplete()
 			health = obj:getLife()
 		end
 	elseif self.objtype == enums.objtype.GROUP then
-		local obj = Group.getByName(self.name)
+		local obj = Group.getByName(self.groupname)
 		if obj ~= nil then
 			health = obj:getSize()
 		end
