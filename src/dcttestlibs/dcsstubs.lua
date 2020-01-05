@@ -51,13 +51,13 @@ function env.getValueDictByKey(s)
 	return s
 end
 
-function env.warning(msg, showbox)
+function env.warning(msg, _)
 	print("WARN: "..msg)
 end
-function env.info(msg, showbox)
+function env.info(msg, _)
 	print("INFO: "..msg)
 end
-function env.error(msg, showbox)
+function env.error(msg, _)
 	print("ERROR: "..msg)
 end
 _G.env = env
@@ -72,7 +72,7 @@ end
 function timer.getTime0()
 	return 15*3600
 end
-function timer.scheduleFunction(fnc, data, nexttime)
+function timer.scheduleFunction(_, _, _)
 end
 _G.timer = timer
 
@@ -293,7 +293,7 @@ world.event = {
 	["S_EVENT_SHOOTING_END"]      = 23,
 	["S_EVENT_MAX"]               = 24,
 }
-function world.addEventHandler(handler)
+function world.addEventHandler(_)
 end
 _G.world = world
 
@@ -578,31 +578,31 @@ end
 _G.Group = Group
 
 local missionCommands = {}
-function missionCommands.addCommand(name, path, func, args)
+function missionCommands.addCommand(_, _, _, _)
 end
 
-function missionCommands.addSubMenu(name, path)
+function missionCommands.addSubMenu(_, _)
 end
 
-function missionCommands.removeItem(path)
+function missionCommands.removeItem(_)
 end
 
-function missionCommands.addCommandForCoalition(side, name, path, func, args)
+function missionCommands.addCommandForCoalition(_, _, _, _, _)
 end
 
-function missionCommands.addSubMenuForCoalition(side, name, path)
+function missionCommands.addSubMenuForCoalition(_, _, _)
 end
 
-function missionCommands.removeItemForCoalition(side, path)
+function missionCommands.removeItemForCoalition(_, _)
 end
 
-function missionCommands.addCommandForGroup(id, name, path, func, args)
+function missionCommands.addCommandForGroup(_, _, _, _, _)
 end
 
-function missionCommands.addSubMenuForGroup(id, name, path)
+function missionCommands.addSubMenuForGroup(_, _, _)
 end
 
-function missionCommands.removeItemForGroup(id, path)
+function missionCommands.removeItemForGroup(_, _)
 end
 _G.missionCommands = missionCommands
 
@@ -611,7 +611,7 @@ function coord.LOtoLL(pos)
 	return 88.123, -63.456, pos.y
 end
 
-function coord.LLtoMGRS(lat, long)
+function coord.LLtoMGRS(_, _)
 	return {
 		["UTMZone"] = "DD",
 		["MGRSDigraph"] = "GJ",
@@ -634,7 +634,7 @@ function trigger.action.setassert(val)
 	enabletest = val
 end
 
-function trigger.action.outTextForGroup(gid, msg, disptime, clear)
+function trigger.action.outTextForGroup(_, msg, _, _)
 	if enabletest == true then
 		assert(msg == msgbuffer, "generated output not as expected;\ngot '"..
 			msg.."';\n expected '"..msgbuffer.."'")

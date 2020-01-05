@@ -125,10 +125,6 @@ local function uiDCSEventHandler(theater, event)
 	end
 
 	createMenu(theater, grp)
-	-- TODO: eventually the code below should be converted to a command
-	-- as all communication to the player(s) should not be done in event
-	-- handlers. So we should queue a command to send this message to
-	-- the group. For now it should be ok.
 	local cmdr = theater:getCommander(grp:getCoalition())
 	local msn  = cmdr:getAssigned(grp:getName())
 
