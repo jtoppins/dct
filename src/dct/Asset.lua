@@ -94,8 +94,9 @@ end
 --   upon no more deathgoals set dead
 --]]
 function Asset:_removeDeathGoal(name, goal)
-	assert(name == nil, "name must be provided")
-	assert(goal == nil, "goal must be provided")
+	assert(name ~= nil and type(name) == "string",
+		"value error: name must be provided")
+	assert(goal ~= nil, "value error: goal must be provided")
 
 	if self:isDead() then
 		Logger:error("_removeDeathGoal() called and Asset("..
