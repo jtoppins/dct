@@ -26,6 +26,18 @@ _G.dctcheck = dctcheck
 
 -- DCS Singletons
 --
+
+local objectcat = {
+	["UNIT"]    = 1,
+	["WEAPON"]  = 2,
+	["STATIC"]  = 3,
+	["BASE"]    = 4,
+	["SCENERY"] = 5,
+	["CARGO"]   = 6,
+	-- not actuall part of DCS
+	["GROUP"] = 7,
+}
+
 local env = {}
 env.mission = {}
 env.mission.theatre = "Test Theater"
@@ -70,12 +82,23 @@ coalition.side.NEUTRAL = 0
 coalition.side.RED     = 1
 coalition.side.BLUE    = 2
 
-function coalition.addGroup(_, cat, data)
+function coalition.addGroup(cntryid, groupcat, groupdata)
 	dctcheck.spawngroups = dctcheck.spawngroups + 1
+	groupdata.country = cntryid
+	groupdata.groupCategory = groupcat
+	groupdata.exists = true
+	local grp = Group(#groupdata.units, groupdata)
+	for _, unitdata in pairs(groupdata.units) do
+		unitdata.exists = true
+		Unit(unitdata, grp)
+	end
 end
 
-function coalition.addStaticObject(_, data)
+function coalition.addStaticObject(cntryid, groupdata)
 	dctcheck.spawnstatics = dctcheck.spawnstatics + 1
+	groupdata.country = cntryid
+	groupdata.exists = true
+	StaticObject(groupdata)
 end
 
 local coaltbl = {
@@ -276,37 +299,105 @@ _G.world = world
 
 -- DCS Classes
 --
-local Object = class()
-function Object:__init(name)
-	self.name = name
-end
-Object.Category = {
-	["UNIT"]    = 1,
-	["WEAPON"]  = 2,
-	["STATIC"]  = 3,
-	["BASE"]    = 4,
-	["SCENERY"] = 5,
-	["CARGO"]   = 6,
+
+local objdefaults = {
+	["name"] = "obj1",
+	["exists"] = false,
+	["category"] = objectcat.UNIT,
+	["desc"] = {
+		["massEmpty"] = 34000,
+		["riverCrossing"] = true,
+		["maxSlopeAngle"] = 0.27000001072884,
+		["RCS"] = 5,
+		["box"] = {
+			["min"] = {
+				["y"] = 0.039917565882206,
+				["x"] = -4.5607042312622,
+				["z"] = -1.7571629285812,
+			},
+			["max"] = {
+				["y"] = 3.610570192337,
+				["x"] = 4.5179929733276,
+				["z"] = 1.7558742761612,
+			},
+		},
+		["speedMax"] = 18.055599212646,
+		["life"] = 3,
+		["attributes"] = {
+			["SAM TR"] = true,
+			["Vehicles"] = true,
+			["SAM elements"] = true,
+			["NonArmoredUnits"] = true,
+			["SAM SR"] = true,
+			["Air Defence"] = true,
+			["Ground vehicles"] = true,
+			["RADAR_BAND1_FOR_ARM"] = true,
+		},
+		["category"] = 2,
+		["speedMaxOffRoad"] = 18.055599212646,
+		["Kmax"] = 0.050000000745058,
+		["typeName"] = "Tor 9A331",
+		["displayName"] = "SAM SA-15 Tor 9A331",
+	},
+	["position"] = {
+		["p"] = {["x"] = 1, ["y"] = 1, ["z"] = 1},
+		["x"] = {["x"] = 1, ["y"] = 1, ["z"] = 1},
+		["y"] = {["x"] = 1, ["y"] = 1, ["z"] = 1},
+		["z"] = {["x"] = 1, ["y"] = 1, ["z"] = 1},
+	},
+	["vel"] = {["x"] = 1, ["y"] = 0, ["z"] = 1},
+	["inair"] = false,
+	["id"] = 123,
 }
 
+local objects = {}
+for _,v in pairs(objectcat) do
+	objects[v] = {}
+end
+
+local Object = class()
+
+function Object.printObjects()
+	for k,v in pairs(objects) do
+		for name, obj in pairs(v) do
+			print("objects["..k.."]["..name.."] = "..tostring(obj))
+		end
+	end
+end
+
+function Object:__init(objdata)
+	local data = objdata or {}
+	for k,v in pairs(objdefaults) do
+		self[k] = data[k]
+		if self[k] == nil then
+			self[k] = utils.deepcopy(v)
+		end
+	end
+	objects[self.category][self.name] = self
+end
+Object.Category = objectcat
 function Object:isExist()
-	return true
+	return self.exists
 end
 
 function Object:destroy()
+	objects[self.category][self.name] = nil
 end
 
 function Object:getCategory()
+	return self.category
 end
 
 function Object:getTypeName()
-	return "F-15C"
+	return self.desc.typeName
 end
 
 function Object:getDesc()
+	return self.desc
 end
 
 function Object:hasAttribute(attribute)
+	return self.desc.attribute[attribute]
 end
 
 function Object:getName()
@@ -314,40 +405,59 @@ function Object:getName()
 end
 
 function Object:getPoint()
+	return self.position.p
 end
 
 function Object:getPosition()
+	return self.position
 end
 
 function Object:getVelocity()
+	return self.vel
 end
 
 function Object:inAir()
+	return self.inair
 end
 
 function Object:getID()
-	return 12
+	return self.id
 end
 _G.Object = Object
 
-
 local Coalition = class(Object)
-function Coalition:__init(name)
-	Object.__init(self, name)
+function Coalition:__init(objdata)
+	Object.__init(self, objdata)
+	self.coalition = objdata.coalition
+	if self.coalition == nil then
+		self.coalition = coalition.side.RED
+	end
+
+	self.country = objdata.country
+	if self.country == nil then
+		self.country = 18
+	end
 end
 function Coalition:getCoalition()
-	return coalition.side.RED
+	return self.coalition
 end
 
 function Coalition:getCountry()
-	return 8
+	return self.country
 end
 _G.Coalition = Coalition
 
 
 local Unit = class(Coalition)
-function Unit:__init(name)
-	Coalition.__init(self, name)
+function Unit:__init(objdata, group, pname)
+	objdata.category = Object.Category.UNIT
+	Coalition.__init(self, objdata)
+	self.clife = self.desc.life
+	self.group = group
+	if group ~= nil then
+		group:_addUnit(self)
+	end
+	self.pname = pname
 end
 Unit.Category = {
 	["AIRPLANE"]    = 0,
@@ -362,27 +472,33 @@ Unit.RefuelingSystem = {
 }
 
 function Unit.getByName(name)
-	return Unit(name)
+	return objects[Object.Category.UNIT][name]
 end
 
 function Unit:getLife()
-	return 2
+	return self.clife
 end
 
 function Unit:getLife0()
-	return 3
+	return self.desc.life
 end
 
 function Unit:getGroup()
-	return Group("testgrp")
+	return self.group
 end
 
 function Unit:getPlayerName()
-	return self.name
+	return self.pname
 end
 _G.Unit = Unit
 
 local StaticObject = class(Coalition)
+function StaticObject:__init(objdata)
+	objdata.category = Object.Category.STATIC
+	Coalition.__init(self, objdata)
+	self.clife = self.desc.life
+end
+
 StaticObject.Category = {
 	["VOID"]    = 0,
 	["UNIT"]    = 1,
@@ -394,33 +510,70 @@ StaticObject.Category = {
 }
 
 function StaticObject.getByName(name)
-	return StaticObject
+	return objects[Object.Category.STATIC][name]
 end
 
 function StaticObject:getLife()
-	return 3
+	return self.clife
 end
 _G.StaticObject = StaticObject
 
 local Group = class(Coalition)
-function Group:__init(name)
-	Coalition.__init(self, name)
+function Group:__init(unitcnt, objdata)
+	objdata.category = Object.Category.GROUP
+	Coalition.__init(self, objdata)
+	self.units = {}
+	self.unitcnt = unitcnt
+	self.groupCategory = objdata.groupCategory
+	if self.groupCategory == nil then
+		self.groupCategory = Unit.Category.AIRPLANE
+	end
+	self.desc = nil
+	self.getTypeName = nil
+	self.getDesc = nil
+	self.hasAttribute = nil
+	self.position = nil
+	self.getPoint = nil
+	self.getPosition = nil
+	self.vel = nil
+	self.getVelocity = nil
+	self.inair = nil
+	self.inAir = nil
 end
 
 function Group.getByName(name)
-	return Group
+	return objects[Object.Category.GROUP][name]
+end
+
+function Group:destroy()
+	for _, unit in pairs(self.units) do
+		unit:destroy()
+	end
+	Object.destory(self)
+end
+
+function Group:getCategory()
+	return self.groupCategory
 end
 
 function Group:getInitialSize()
-	return 4
+	return self.unitcnt
 end
 
 function Group:getSize()
-	return 2
+	return #self.units
 end
 
 function Group:getUnit(num)
-	return Unit("testunit")
+	return self.units[num]
+end
+
+function Group:getUnits()
+	return self.units
+end
+
+function Group:_addUnit(obj)
+	table.insert(self.units, obj)
 end
 _G.Group = Group
 

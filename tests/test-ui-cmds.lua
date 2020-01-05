@@ -1,22 +1,31 @@
 #!/usr/bin/lua
 
 require("dcttestlibs")
+
 require("dct")
 local enum   = require("dct.enum")
 local uicmds = require("dct.ui.cmds")
 
-local gid  = 26971
-local name = "Uzi 11"
-local side = coalition.side.BLUE
-local unitType = "FA-18C_hornet"
+-- create a player group
+local grp = Group(4, {
+	["id"] = 12,
+	["name"] = "Uzi 11",
+	["coalition"] = coalition.side.BLUE,
+	["exists"] = true,
+})
+
+local unit1 = Unit({
+	["name"] = "pilot1",
+	["exists"] = true,
+	["desc"] = {
+		["typeName"] = "FA-18C_hornet",
+	},
+}, grp, "bobplayer")
 
 local testcmds = {
 	[1] = {
 		["data"] = {
-			["id"]     = gid,
-			["name"]   = name,
-			["side"]   = side,
-			["actype"] = unitType,
+			["name"]   = grp:getName(),
 			["type"]   = enum.uiRequestType.MISSIONREQUEST,
 			["value"]  = enum.missionType.STRIKE,
 		},
@@ -26,10 +35,7 @@ local testcmds = {
 	},
 	[2] = {
 		["data"] = {
-			["id"]     = gid,
-			["name"]   = name,
-			["side"]   = side,
-			["actype"] = unitType,
+			["name"]   = grp:getName(),
 			["type"]   = enum.uiRequestType.THEATERSTATUS,
 		},
 		["assert"]     = true,
@@ -40,10 +46,7 @@ local testcmds = {
 	},
 	[3] = {
 		["data"] = {
-			["id"]     = gid,
-			["name"]   = name,
-			["side"]   = side,
-			["actype"] = unitType,
+			["name"]   = grp:getName(),
 			["type"]   = enum.uiRequestType.MISSIONBRIEF,
 		},
 		["assert"]     = true,
@@ -62,10 +65,7 @@ local testcmds = {
 	},
 	[4] = {
 		["data"] = {
-			["id"]     = gid,
-			["name"]   = name,
-			["side"]   = side,
-			["actype"] = unitType,
+			["name"]   = grp:getName(),
 			["type"]   = enum.uiRequestType.MISSIONSTATUS,
 		},
 		["assert"]     = true,
@@ -74,10 +74,7 @@ local testcmds = {
 	},
 	[5] = {
 		["data"] = {
-			["id"]     = gid,
-			["name"]   = name,
-			["side"]   = side,
-			["actype"] = unitType,
+			["name"]   = grp:getName(),
 			["type"]   = enum.uiRequestType.MISSIONROLEX,
 			["value"]  = 120,
 		},
@@ -86,10 +83,7 @@ local testcmds = {
 	},
 	[6] = {
 		["data"] = {
-			["id"]     = gid,
-			["name"]   = name,
-			["side"]   = side,
-			["actype"] = unitType,
+			["name"]   = grp:getName(),
 			["type"]   = enum.uiRequestType.MISSIONCHECKIN,
 		},
 		["assert"]     = true,
@@ -97,10 +91,7 @@ local testcmds = {
 	},
 	[7] = {
 		["data"] = {
-			["id"]     = gid,
-			["name"]   = name,
-			["side"]   = side,
-			["actype"] = unitType,
+			["name"]   = grp:getName(),
 			["type"]   = enum.uiRequestType.MISSIONCHECKOUT,
 		},
 		["assert"]     = true,
@@ -108,10 +99,7 @@ local testcmds = {
 	},
 	[8] = {
 		["data"] = {
-			["id"]     = gid,
-			["name"]   = name,
-			["side"]   = side,
-			["actype"] = unitType,
+			["name"]   = grp:getName(),
 			["type"]   = enum.uiRequestType.MISSIONABORT,
 			["value"]  = "player requested",
 		},
@@ -122,6 +110,12 @@ local testcmds = {
 
 local function main()
 	local theater = dct.Theater.getInstance()
+	-- We need to send a birth event to populate the Theater.playergps table
+	theater:onEvent({
+		["id"]        = world.event.S_EVENT_BIRTH,
+		["initiator"] = unit1,
+	})
+
 	for _, v in ipairs(testcmds) do
 		trigger.action.setassert(v.assert)
 		trigger.action.setmsgbuffer(v.expected)
@@ -131,10 +125,7 @@ local function main()
 	trigger.action.setassert(false)
 
 	local data = {
-		["id"]     = gid,
-		["name"]   = name,
-		["side"]   = side,
-		["actype"] = unitType,
+		["name"]   = grp:getName(),
 		["type"]   = enum.uiRequestType.MISSIONREQUEST,
 		["value"]  = enum.missionType.STRIKE,
 	}

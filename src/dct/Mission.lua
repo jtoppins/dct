@@ -118,19 +118,15 @@ function Mission:update(time)
 	local tgt = self.cmdr:getAsset(self.target)
 	if tgt == nil or tgt:isDead() then
 		reason = "mission complete"
+		self._complete = true
 	elseif timer.getAbsTime() > self.timeend then
 		reason = "mission timeout"
 	end
 
 	if reason ~= nil then
-		self._complete = true
-		local dcsgrp = Group.getByName(self.assigned)
 		local request = {
 			["type"]   = enum.uiRequestType.MISSIONABORT,
-			["id"]     = dcsgrp:getID(),
 			["name"]   = self.assigned,
-			["side"]   = dcsgrp:getCoalition(),
-			["actype"] = dcsgrp:getUnit(1):getTypeName(),
 			["value"]  = reason,
 		}
 		-- We have to use theater:queueCommand() to bypass the

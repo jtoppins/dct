@@ -19,13 +19,15 @@ local UICmd = class(Command)
 function UICmd:__init(theater, data)
 	assert(theater ~= nil, "value error: theater required")
 	assert(data ~= nil, "value error: data required")
+	local grpdata = theater.playergps[data.name]
+
 	self.theater      = theater
-	self.grpid        = data.id
+	self.grpid        = grpdata.id
 	self.grpname      = data.name
-	self.side         = data.side
+	self.side         = grpdata.side
 	self.displaytime  = 30
 	self.displayclear = true
-	self.actype       = data.actype
+	self.actype       = grpdata.unittype
 end
 
 function UICmd:isAlive()
@@ -35,7 +37,7 @@ end
 function UICmd:execute(time)
 	if not self:isAlive() then
 		Logger:debug("UICmd thinks player is dead "..debug.traceback())
-		self.theater.playergps[self.grpid] = false
+		self.theater.playergps[self.grpname].cmdpending = false
 		return nil
 	end
 
@@ -44,7 +46,7 @@ function UICmd:execute(time)
 	assert(msg ~= nil and type(msg) == "string", "msg must be a string")
 	trigger.action.outTextForGroup(self.grpid, msg, self.displaytime,
 		self.displayclear)
-	self.theater.playergps[self.grpid] = false
+	self.theater.playergps[self.grpname].cmdpending = false
 	return nil
 end
 

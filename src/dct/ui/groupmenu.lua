@@ -23,30 +23,38 @@ local Logger  = require("dct.Logger").getByName("UIMenu")
 local addmenu = missionCommands.addSubMenuForGroup
 local addcmd  = missionCommands.addCommandForGroup
 
-local function createMenu(theater, grp)
-	local gid = grp:getID()
+local function buildPlayerGroupEntry(grp)
+	local tbl = {}
+	tbl.id         = grp:getID()
+	tbl.name       = grp:getName()
+	tbl.side       = grp:getCoalition()
+	tbl.unittype   = "invalid-type"
+	tbl.cmdpending = false
 
-	if theater.playergps[gid] ~= nil then
-		Logger:debug("createMenu - group("..gid..") already had menu added")
+	local unit = grp:getUnit(1)
+	if unit ~= nil then
+		tbl.unittype = unit:getTypeName()
+	end
+	return tbl
+end
+
+local function createMenu(theater, grp)
+	local gid  = grp:getID()
+	local name = grp:getName()
+
+	if theater.playergps[name] ~= nil then
+		Logger:debug("createMenu - group("..name..") already had menu added")
 		return
 	end
 
-	local name     = grp:getName()
-	local side     = grp:getCoalition()
-	local unit     = grp:getUnit(1)
-	local unitType = "invalid-type"
-	if unit ~= nil then
-		unitType = unit:getTypeName()
-	end
+	Logger:debug("createMenu - adding menu for group: "..tostring(name))
 
-	Logger:debug("createMenu - adding menu for group: "..tostring(gid))
+	local grpentry = buildPlayerGroupEntry(grp)
+	theater.playergps[name] = grpentry
 
 	addcmd(gid, "Theater Update", nil, theater.playerRequest, theater,
 		{
-			["id"]     = gid,
 			["name"]   = name,
-			["side"]   = side,
-			["actype"] = unitType,
 			["type"]   = enum.uiRequestType.THEATERSTATUS,
 		})
 
@@ -55,13 +63,11 @@ local function createMenu(theater, grp)
 	-- TODO: I am knowingly not sorting the keys so the order in which
 	-- commands are applied could be random, do this later if it seems to
 	-- be a problem as lua doesn't provide a default solution.
-	for k, v in pairs(theater:getATORestrictions(side, unitType)) do
+	for k, v in pairs(theater:getATORestrictions(grpentry.side,
+		grpentry.unittype)) do
 		addcmd(gid, k, rqstmenu, theater.playerRequest, theater,
 			{
-				["id"]     = gid,
 				["name"]   = name,
-				["side"]   = side,
-				["actype"] = unitType,
 				["type"]   = enum.uiRequestType.MISSIONREQUEST,
 				["value"]  = v,
 			})
@@ -69,56 +75,36 @@ local function createMenu(theater, grp)
 
 	addcmd(gid, "Briefing", msnmenu, theater.playerRequest, theater,
 		{
-			["id"]     = gid,
 			["name"]   = name,
-			["side"]   = side,
-			["actype"] = unitType,
 			["type"]   = enum.uiRequestType.MISSIONBRIEF,
 		})
 	addcmd(gid, "Status", msnmenu, theater.playerRequest, theater,
 		{
-			["id"]     = gid,
 			["name"]   = name,
-			["side"]   = side,
-			["actype"] = unitType,
 			["type"]   = enum.uiRequestType.MISSIONSTATUS,
 		})
 	addcmd(gid, "Abort", msnmenu, theater.playerRequest, theater,
 		{
-			["id"]     = gid,
 			["name"]   = name,
-			["side"]   = side,
-			["actype"] = unitType,
 			["type"]   = enum.uiRequestType.MISSIONABORT,
 			["value"]  = "player requested"
 		})
 	addcmd(gid, "Rolex +30", msnmenu, theater.playerRequest, theater,
 		{
-			["id"]     = gid,
 			["name"]   = name,
-			["side"]   = side,
-			["actype"] = unitType,
 			["type"]   = enum.uiRequestType.MISSIONROLEX,
 			["value"]  = 30*60,  -- seconds
 		})
 	addcmd(gid, "Check-In", msnmenu, theater.playerRequest, theater,
 		{
-			["id"]     = gid,
 			["name"]   = name,
-			["side"]   = side,
-			["actype"] = unitType,
 			["type"]   = enum.uiRequestType.MISSIONCHECKIN,
 		})
 	addcmd(gid, "Check-Out", msnmenu, theater.playerRequest, theater,
 		{
-			["id"]     = gid,
 			["name"]   = name,
-			["side"]   = side,
-			["actype"] = unitType,
 			["type"]   = enum.uiRequestType.MISSIONCHECKOUT,
 		})
-
-	theater.playergps[gid] = false
 end
 
 local function uiDCSEventHandler(theater, event)
