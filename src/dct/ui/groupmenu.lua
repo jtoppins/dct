@@ -133,7 +133,8 @@ local function uiDCSEventHandler(theater, event)
 	local pname = event.initiator:getPlayerName()
 	local grp = event.initiator:getGroup()
 	if not grp or not pname or pname == "" then
-		Logger:debug("uiDCSEventHandler - bad player name or group")
+		Logger:debug("uiDCSEventHandler - bad player name ("..
+			tostring(pname)..") or group ("..tostring(grp)..")")
 		return
 	end
 

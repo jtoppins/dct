@@ -65,7 +65,8 @@ function Asset:__init(template, region)
 		self.priority   = region.priority * 65536 + template.priority
 		self:_setupmaps()
 		self._initcomplete = true
-		assert(next(self._deathgoals) ~= nil, "deathgoals nil")
+		assert(next(self._deathgoals) ~= nil,
+			"runtime error: Asset must have a deathgoal")
 	end
 end
 
@@ -74,8 +75,9 @@ end
 -- if an Asset is "dead"
 --]]
 function Asset:_addDeathGoal(name, goalspec)
-	assert(name ~= nil and type(name) == "string", "name must be provided")
-	assert(goalspec ~= nil, "goalspec must be provided")
+	assert(name ~= nil and type(name) == "string",
+		"value error: name must be provided")
+	assert(goalspec ~= nil, "value error: goalspec must be provided")
 
 	if goalspec.priority ~= Goal.priority.PRIMARY then
 		return
@@ -227,7 +229,7 @@ function Asset:isDead()
 end
 
 function Asset:checkDead()
-	assert(self:isSpawned() == true, "Asset:checkDead(), must be spawned")
+	assert(self:isSpawned() == true, "runtime error: asset must be spawned")
 
 	for name, goal in pairs(self._deathgoals) do
 		if goal:checkComplete() then
@@ -375,7 +377,7 @@ local function filterTemplateData(tpldata)
 end
 
 function Asset:marshal()
-	assert(self._initcomplete == true, "init not complete")
+	assert(self._initcomplete == true, "runtime error: init not complete")
 	local tbl = {}
 
 	tbl._tpldata       = filterTemplateData(self._tpldata)
@@ -395,7 +397,8 @@ function Asset:marshal()
 end
 
 function Asset:unmarshal(data)
-	assert(self._initcomplete == false, "init completed already")
+	assert(self._initcomplete == false,
+		"runtime error: init completed already")
 	utils.mergetables(self, data)
 	self:_setupmaps()
 	if self:isSpawned() then
