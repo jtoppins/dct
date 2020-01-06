@@ -23,6 +23,11 @@ function DamageGoal:_afterspawn()
 	self._maxlife = 1
 	if self.objtype == enums.objtype.UNIT then
 		self._maxlife = Unit.getByName(self.name):getLife0()
+		if self._maxlife == 0 then
+			self._maxlife = Unit.getByName(self.name):getLife()
+			Logger:warn("DamageGoal:_afterspawn() - maxlife reported"..
+				" as 0 using life: "..self._maxlife)
+		end
 	elseif self.objtype == enums.objtype.STATIC then
 		self._maxlife = StaticObject.getByName(self.name):getLife()
 	elseif self.objtype == enums.objtype.GROUP then
@@ -61,7 +66,8 @@ function DamageGoal:checkComplete()
 	end
 
 	Logger:debug(string.format("DamageGoal:checkComplete() - "..
-		"health: %3.2f; maxlife: %d", health, self._maxlife))
+		"name: '%s'; health: %3.2f; maxlife: %d",
+		self.name, health, self._maxlife))
 
 	local damagetaken = (1 - (health/self._maxlife)) * 100
 	if damagetaken > self._tgtdamage then
