@@ -243,10 +243,9 @@ function AssetManager:checkAssets(time)
 		end
 	end
 	self._checkqueued = false
-	Logger:debug("checkAssets() - runtime: "..
-		tostring(timer.getTime()-perftime_s)..
-		" seconds, forced: "..tostring(force)..
-		", assets checked: "..tostring(cnt))
+	Logger:debug(string.format("checkAssets() - runtime: %4.2f ms, "..
+		"forced: %s, assets checked: %d",
+		(timer.getTime()-perftime_s)*1000, tostring(force), cnt))
 end
 
 function AssetManager:onDCSEvent(event)
