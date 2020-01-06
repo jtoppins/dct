@@ -5,7 +5,7 @@ require("dcttestlibs")
 require("dct")
 
 local function main()
-	local theater = dct.Theater.getInstance()
+	local theater = dct.Theater()
 	assert(dctcheck.spawngroups == 1, "group spawn broken")
 	assert(dctcheck.spawnstatics == 11, "static spawn broken")
 

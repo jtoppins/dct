@@ -36,7 +36,7 @@ local testcmds = {
 }
 
 local function main()
-	local theater = dct.Theater.getInstance()
+	local theater = dct.Theater()
 	for _, data in ipairs(testcmds) do
 		trigger.action.setmsgbuffer(data.expect)
 		trigger.action.setassert(data.assert)

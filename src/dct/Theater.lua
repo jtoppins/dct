@@ -221,14 +221,4 @@ function Theater:exec(time)
 	return retval
 end
 
-local theater = nil
-local t = {}
-
-function t.getInstance()
-	if theater == nil then
-		theater = Theater()
-	end
-	return theater
-end
-
-return t
+return Theater
