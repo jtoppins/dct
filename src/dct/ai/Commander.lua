@@ -11,6 +11,7 @@ local enum       = require("dct.enum")
 local dctutils   = require("dct.utils")
 local Mission    = require("dct.Mission")
 local Stats      = require("dct.Stats")
+local Command    = require("dct.Command")
 
 local function heapsort_tgtlist(assetmgr, owner, filterlist)
 	local tgtlist = assetmgr:getTargets(owner, filterlist)
@@ -36,6 +37,16 @@ local function genstatids()
 	return tbl
 end
 
+local CmdrUpdate = class(Command)
+function CmdrUpdate:__init(cmdr)
+	assert(cmdr ~= nil, "value error: cmdr required")
+	self.cmdr = cmdr
+end
+
+function CmdrUpdate:execute(time)
+	return self.cmdr:update(time)
+end
+
 --[[
 -- For now the commander is only concerned with flight missions
 --]]
@@ -47,6 +58,16 @@ function Commander:__init(theater, coalition)
 	self.missionstats = Stats(genstatids())
 	self.missions     = {}
 	self.assigned     = {}
+	self.aifreq       = 300 -- seconds
+
+	self.theater:queueCommand(self.aifreq, CmdrUpdate(self))
+end
+
+function Commander:update(time)
+	for _, mission in pairs(self.missions) do
+		mission:update(time)
+	end
+	return time + self.aifreq
 end
 
 --[[

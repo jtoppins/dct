@@ -4,6 +4,7 @@
 -- UI Commands
 --]]
 
+require("os")
 local class    = require("libs.class")
 local enum     = require("dct.enum")
 local dctutils = require("dct.utils")
@@ -18,13 +19,15 @@ local UICmd = class(Command)
 function UICmd:__init(theater, data)
 	assert(theater ~= nil, "value error: theater required")
 	assert(data ~= nil, "value error: data required")
+	local grpdata = theater.playergps[data.name]
+
 	self.theater      = theater
-	self.grpid        = data.id
+	self.grpid        = grpdata.id
 	self.grpname      = data.name
-	self.side         = data.side
+	self.side         = grpdata.side
 	self.displaytime  = 30
 	self.displayclear = true
-	self.actype       = data.actype
+	self.actype       = grpdata.unittype
 end
 
 function UICmd:isAlive()
@@ -34,7 +37,7 @@ end
 function UICmd:execute(time)
 	if not self:isAlive() then
 		Logger:debug("UICmd thinks player is dead "..debug.traceback())
-		self.theater.playergps[self.grpid] = false
+		self.theater.playergps[self.grpname].cmdpending = false
 		return nil
 	end
 
@@ -43,7 +46,7 @@ function UICmd:execute(time)
 	assert(msg ~= nil and type(msg) == "string", "msg must be a string")
 	trigger.action.outTextForGroup(self.grpid, msg, self.displaytime,
 		self.displayclear)
-	self.theater.playergps[self.grpid] = false
+	self.theater.playergps[self.grpname].cmdpending = false
 	return nil
 end
 
@@ -162,7 +165,9 @@ function MissionStatusCmd:_mission(time, cmdr, msn)
 	minsleft = minsleft / 60
 
 	msg = string.format("ID: %s\n", msn:getID()) ..
-		string.format("Timeout: %d (in %d mins)\n", timeout, minsleft) ..
+		string.format("Timeout: %s (in %d mins)\n",
+			os.date("%Y-%m-%d %H:%M:%Sz", dctutils.time(timeout)),
+			minsleft) ..
 		string.format("BDA: %d%% complete\n", tgtinfo.status)
 
 	return msg
@@ -173,10 +178,12 @@ local MissionAbortCmd = class(MissionCmd)
 function MissionAbortCmd:__init(theater, data)
 	MissionCmd.__init(self, theater, data)
 	self.erequest = false
+	self.reason   = data.value
 end
 
 function MissionAbortCmd:_mission(time, cmdr, msn)
-	return string.format("Mission %s aborted", msn:abort(time))
+	return string.format("Mission %s aborted, %s",
+		msn:abort(time), self.reason)
 end
 
 
@@ -209,8 +216,8 @@ function MissionCheckoutCmd:__init(theater, data)
 end
 
 function MissionCheckoutCmd:_mission(time, cmdr, msn)
-	msn:checkout(time)
-	return string.format("off-station received")
+	return string.format("off-station received, vul time: %d",
+		msn:checkout(time))
 end
 
 local cmds = {

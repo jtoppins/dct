@@ -6,11 +6,13 @@
 -- completing the Objective.
 --]]
 
+require("os")
 require("math")
 local class    = require("libs.class")
 local enum     = require("dct.enum")
 local dctutils = require("dct.utils")
 local uihuman  = require("dct.ui.human")
+local uicmds   = require("dct.ui.cmds")
 
 local MISSION_LIMIT = 60*60*3  -- 3 hours in seconds
 local MISSION_ID = math.random(1,99)
@@ -48,22 +50,27 @@ end
 
 local Mission = class()
 function Mission:__init(cmdr, missiontype, grpname, tgtname)
+	self._complete = false
 	-- reference to owning commander
 	self.cmdr      = cmdr
 	self.id        = genMissionID(cmdr, missiontype)
 	self.type      = missiontype
 	self.target    = tgtname
 	self.assigned  = grpname
-	self.timestart = timer.getTime()
+	self.timestart = timer.getAbsTime()
 	self.timeend   = self.timestart + MISSION_LIMIT
-	self.onstation = false
+	self.station   = {
+		["onstation"] = false,
+		["total"]     = 0,
+		["start"]     = 0,
+	}
 
 	-- compose the briefing at mission creation to represent
 	-- known intel the pilots were given before departing
 	self.briefing  = self:_composeBriefing()
 
 	-- TODO: setup remaining mission parameters;
-	--   * mission world state
+	--   * mission world states
 end
 
 function Mission:_composeBriefing()
@@ -71,7 +78,8 @@ function Mission:_composeBriefing()
 	local briefing = tgt:getBriefing()
 	local interptbl = {
 		["LOCATIONMETHOD"] = genLocationMethod(),
-		["TOT"] = "wip-12:45:00",
+		["TOT"] = os.date("%Y-%m-%d %H:%M:%Sz",
+			dctutils.time(self:getTimeout()*.6)),
 	}
 	return interp(briefing, interptbl)
 end
@@ -99,12 +107,38 @@ function Mission:abort()
 	return self.id
 end
 
-function Mission:update()
-	-- TODO: update the state of the mission
+-- for now just track if the mission has not timmed out and
+-- if it has queue an abort command with abort reason
+function Mission:update(time)
+	if self:isComplete() then
+		return
+	end
+
+	local reason
+	local tgt = self.cmdr:getAsset(self.target)
+	if tgt == nil or tgt:isDead() then
+		reason = "mission complete"
+		self._complete = true
+	elseif timer.getAbsTime() > self.timeend then
+		reason = "mission timeout"
+	end
+
+	if reason ~= nil then
+		local request = {
+			["type"]   = enum.uiRequestType.MISSIONABORT,
+			["name"]   = self.assigned,
+			["value"]  = reason,
+		}
+		-- We have to use theater:queueCommand() to bypass the
+		-- limiting of players sending too many commands
+		self.cmdr.theater:queueCommand(10,
+			uicmds[request.type](self.cmdr.theater, request))
+	end
+	return
 end
 
 function Mission:isComplete()
-	-- TODO
+	return self._complete
 end
 
 --[[
@@ -141,11 +175,20 @@ function Mission:addTime(time)
 end
 
 function Mission:checkin(time)
-	-- TODO: write this
+	if self.station.onstation == true then
+		return
+	end
+	self.station.onstation = true
+	self.station.start = time
 end
 
 function Mission:checkout(time)
-	-- TODO: write this
+	if self.station.onstation == false then
+		return
+	end
+	self.station.onstation = false
+	self.station.total = self.station.total + (time - self.station.start)
+	return self.station.total
 end
 
 function Mission:getDescription(actype, locprecision)

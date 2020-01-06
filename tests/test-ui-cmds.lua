@@ -1,22 +1,31 @@
 #!/usr/bin/lua
 
 require("dcttestlibs")
+
 require("dct")
 local enum   = require("dct.enum")
 local uicmds = require("dct.ui.cmds")
 
-local gid  = 26971
-local name = "Uzi 11"
-local side = coalition.side.BLUE
-local unitType = "FA-18C_hornet"
+-- create a player group
+local grp = Group(4, {
+	["id"] = 12,
+	["name"] = "Uzi 11",
+	["coalition"] = coalition.side.BLUE,
+	["exists"] = true,
+})
+
+local unit1 = Unit({
+	["name"] = "pilot1",
+	["exists"] = true,
+	["desc"] = {
+		["typeName"] = "FA-18C_hornet",
+	},
+}, grp, "bobplayer")
 
 local testcmds = {
 	[1] = {
 		["data"] = {
-			["id"]     = gid,
-			["name"]   = name,
-			["side"]   = side,
-			["actype"] = unitType,
+			["name"]   = grp:getName(),
 			["type"]   = enum.uiRequestType.MISSIONREQUEST,
 			["value"]  = enum.missionType.STRIKE,
 		},
@@ -26,10 +35,7 @@ local testcmds = {
 	},
 	[2] = {
 		["data"] = {
-			["id"]     = gid,
-			["name"]   = name,
-			["side"]   = side,
-			["actype"] = unitType,
+			["name"]   = grp:getName(),
 			["type"]   = enum.uiRequestType.THEATERSTATUS,
 		},
 		["assert"]     = true,
@@ -40,17 +46,15 @@ local testcmds = {
 	},
 	[3] = {
 		["data"] = {
-			["id"]     = gid,
-			["name"]   = name,
-			["side"]   = side,
-			["actype"] = unitType,
+			["name"]   = grp:getName(),
 			["type"]   = enum.uiRequestType.MISSIONBRIEF,
 		},
 		["assert"]     = true,
 		["expected"]   = "ID: STRIKE0085\nTarget AO: 88°07.2'N 063°27.6'W"..
 			" (SEOUL)\nBriefing:\nGround units operating in Iran have"..
 			" informed us of an Iranian Ammo Dump 88°07.2'N 063°27.6'W."..
-			" Find and destroy the bunkers and the ordnance within.\n    \n"..
+			" Find and destroy the bunkers and the ordnance within.\n"..
+			"    Tot: 2001-06-22 19:02:20z\n    \n"..
 			"    Primary Objectives: Destroy the large, armoured bunker."..
 			" It is heavily fortified, so accuracy is key.\n    \n"..
 			"    Secondary Objectives: Destroy the two smaller, white"..
@@ -61,20 +65,16 @@ local testcmds = {
 	},
 	[4] = {
 		["data"] = {
-			["id"]     = gid,
-			["name"]   = name,
-			["side"]   = side,
-			["actype"] = unitType,
+			["name"]   = grp:getName(),
 			["type"]   = enum.uiRequestType.MISSIONSTATUS,
 		},
-		["assert"]     = false,
+		["assert"]     = true,
+		["expected"]   = "ID: STRIKE0085\nTimeout: "..
+			"2001-06-22 21:03:54z (in 297 mins)\nBDA: 0% complete\n",
 	},
 	[5] = {
 		["data"] = {
-			["id"]     = gid,
-			["name"]   = name,
-			["side"]   = side,
-			["actype"] = unitType,
+			["name"]   = grp:getName(),
 			["type"]   = enum.uiRequestType.MISSIONROLEX,
 			["value"]  = 120,
 		},
@@ -83,10 +83,7 @@ local testcmds = {
 	},
 	[6] = {
 		["data"] = {
-			["id"]     = gid,
-			["name"]   = name,
-			["side"]   = side,
-			["actype"] = unitType,
+			["name"]   = grp:getName(),
 			["type"]   = enum.uiRequestType.MISSIONCHECKIN,
 		},
 		["assert"]     = true,
@@ -94,30 +91,31 @@ local testcmds = {
 	},
 	[7] = {
 		["data"] = {
-			["id"]     = gid,
-			["name"]   = name,
-			["side"]   = side,
-			["actype"] = unitType,
+			["name"]   = grp:getName(),
 			["type"]   = enum.uiRequestType.MISSIONCHECKOUT,
 		},
 		["assert"]     = true,
-		["expected"]   = "off-station received",
+		["expected"]   = "off-station received, vul time: 0",
 	},
 	[8] = {
 		["data"] = {
-			["id"]     = gid,
-			["name"]   = name,
-			["side"]   = side,
-			["actype"] = unitType,
+			["name"]   = grp:getName(),
 			["type"]   = enum.uiRequestType.MISSIONABORT,
+			["value"]  = "player requested",
 		},
 		["assert"]     = true,
-		["expected"]   = "Mission STRIKE0085 aborted",
+		["expected"]   = "Mission STRIKE0085 aborted, player requested",
 	},
 }
 
 local function main()
 	local theater = dct.Theater.getInstance()
+	-- We need to send a birth event to populate the Theater.playergps table
+	theater:onEvent({
+		["id"]        = world.event.S_EVENT_BIRTH,
+		["initiator"] = unit1,
+	})
+
 	for _, v in ipairs(testcmds) do
 		trigger.action.setassert(v.assert)
 		trigger.action.setmsgbuffer(v.expected)
@@ -127,10 +125,7 @@ local function main()
 	trigger.action.setassert(false)
 
 	local data = {
-		["id"]     = gid,
-		["name"]   = name,
-		["side"]   = side,
-		["actype"] = unitType,
+		["name"]   = grp:getName(),
 		["type"]   = enum.uiRequestType.MISSIONREQUEST,
 		["value"]  = enum.missionType.STRIKE,
 	}

@@ -141,7 +141,7 @@ function Theater:playerRequest(data)
 	Logger:debug("playerRequest(); Received player request: "..
 		json:encode_pretty(data))
 
-	if self.playergps[data.id] == true then
+	if self.playergps[data.name].cmdpending == true then
 		Logger:debug("playerRequest(); request pending, ignoring")
 		trigger.action.outTextForGroup(data.id,
 			"F10 request already pending, please wait.", 20, true)
@@ -150,7 +150,7 @@ function Theater:playerRequest(data)
 
 	local cmd = uicmds[data.type](self, data)
 	self:queueCommand(UI_CMD_DELAY, cmd)
-	self.playergps[data.id] = true
+	self.playergps[data.name].cmdpending = true
 end
 
 function Theater:getATORestrictions(side, unittype)

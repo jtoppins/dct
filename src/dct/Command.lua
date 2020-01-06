@@ -8,7 +8,7 @@ local class = require("libs.class")
 
 local Command = class()
 function Command:execute(time)
-	assert(false, "this class method must be overridden")
+	assert(false, "runtime error: this class method must be overridden")
 end
 
 return Command

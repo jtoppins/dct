@@ -105,7 +105,7 @@ function AssetManager:__init(theater)
 end
 
 function AssetManager:remove(asset)
-	assert(asset ~= nil, "value error, asset object must be provided")
+	assert(asset ~= nil, "value error: asset object must be provided")
 
 	local isstrat = enum.assetClass.STRATEGIC[asset["type"]] or false
 
@@ -127,7 +127,7 @@ function AssetManager:remove(asset)
 end
 
 function AssetManager:add(asset)
-	assert(asset ~= nil, "value error, asset object must be provided")
+	assert(asset ~= nil, "value error: asset object must be provided")
 
 	-- add asset to master list
 	assert(self._assetset[asset:getName()] == nil, "asset name ('"..
