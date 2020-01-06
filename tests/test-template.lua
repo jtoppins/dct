@@ -3,6 +3,8 @@
 require("dcttestlibs")
 require("dct")
 local utils = require("libs.utils")
+local enum = require("dct.enum")
+local Template = require("dct.Template")
 
 local sampletpls = {
 	[1] = {
@@ -14,7 +16,7 @@ local sampletpls = {
 			["ship"]       = 1,
 			["plane"]      = 1,
 		},
-		["objtype"] = dct.enum.assetType.AMMODUMP,
+		["objtype"] = enum.assetType.AMMODUMP,
 		["hasDeathGoals"] = false,
 	},
 	[2] = {
@@ -26,7 +28,7 @@ local sampletpls = {
 			["ship"]       = 0,
 			["plane"]      = 0,
 		},
-		["objtype"] = dct.enum.assetType.C2,
+		["objtype"] = enum.assetType.C2,
 		["hasDeathGoals"] = false,
 	},
 	[3] = {
@@ -38,7 +40,7 @@ local sampletpls = {
 			["ship"]       = 0,
 			["plane"]      = 0,
 		},
-		["objtype"] = dct.enum.assetType.BASEDEFENSE,
+		["objtype"] = enum.assetType.BASEDEFENSE,
 		["hasDeathGoals"] = true,
 	},
 }
@@ -52,19 +54,19 @@ local sampletpls = {
 --]]
 
 local function stmexists()
-	dct.Template.fromFile("test",
+	Template.fromFile("test",
 		"dct-does-not-exist",
 		lfs.writedir()..utils.sep.."test.stm")
 end
 
 local function dctexists()
-	dct.Template.fromFile("test",
+	Template.fromFile("test",
 		lfs.writedir()..utils.sep.."test.dct",
 		"stm-does-not-exist")
 end
 
 local function singleside()
-	dct.Template.fromFile("test",
+	Template.fromFile("test",
 		lfs.writedir()..utils.sep.."test.dct",
 		lfs.writedir()..utils.sep.."test-both-sides.stm")
 end
@@ -76,7 +78,7 @@ local function main()
 
 	for _, data in pairs(sampletpls) do
 		--print("tplname: "..data.name)
-		local t = dct.Template.fromFile(rname,
+		local t = Template.fromFile(rname,
 			lfs.writedir()..utils.sep..data.name..".dct",
 			lfs.writedir()..utils.sep..data.name..".stm")
 

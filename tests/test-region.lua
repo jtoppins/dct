@@ -2,12 +2,14 @@
 
 require("dcttestlibs")
 require("dct")
+local Region = require("dct.Region")
+
 local utils = require("libs.utils")
 
 local function main()
 	local regiondir = lfs.tempdir()..utils.sep.."theater"..
 		utils.sep.."region1"
-	dct.Region(regiondir)
+	Region(regiondir)
 	return 0
 end
 

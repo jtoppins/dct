@@ -10,12 +10,7 @@ local dct = {
 
 _G.dct = dct
 dct.settings  = require("dct.settings")(dctsettings)
-dct.enum      = require("dct.enum")
 dct.init      = require("dct.init")
-dct.Template  = require("dct.Template")
-dct.Region    = require("dct.Region")
 dct.Theater   = require("dct.Theater")
-dct.Asset     = require("dct.Asset")
-dct.Profiler  = require("dct.Profiler")
 
 return dct
