@@ -26,17 +26,6 @@ local enemymap = {
 	[coalition.side.RED]     = coalition.side.BLUE,
 }
 
-local AssetCheckCmd = class(Command)
-
-function AssetCheckCmd:__init(assetmgr)
-	self._assetmgr = assetmgr
-end
-
-function AssetCheckCmd:execute(time)
-	self._assetmgr:checkAssets(time)
-	return nil
-end
-
 local ASSET_CHECK_DELAY = 30  -- seconds
 
 local substats = {
@@ -216,7 +205,8 @@ function AssetManager:queueCheckAsset()
 		Logger:debug("queueCheckAsset() - already queued, ignoring")
 		return
 	end
-	self._theater:queueCommand(ASSET_CHECK_DELAY, AssetCheckCmd(self))
+	self._theater:queueCommand(ASSET_CHECK_DELAY,
+		Command(self.checkAssets, self))
 	self._checkqueued = true
 end
 

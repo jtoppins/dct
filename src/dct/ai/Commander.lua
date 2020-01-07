@@ -37,16 +37,6 @@ local function genstatids()
 	return tbl
 end
 
-local CmdrUpdate = class(Command)
-function CmdrUpdate:__init(cmdr)
-	assert(cmdr ~= nil, "value error: cmdr required")
-	self.cmdr = cmdr
-end
-
-function CmdrUpdate:execute(time)
-	return self.cmdr:update(time)
-end
-
 --[[
 -- For now the commander is only concerned with flight missions
 --]]
@@ -60,7 +50,7 @@ function Commander:__init(theater, side)
 	self.assigned     = {}
 	self.aifreq       = 300 -- seconds
 
-	self.theater:queueCommand(self.aifreq, CmdrUpdate(self))
+	self.theater:queueCommand(self.aifreq, Command(self.update, self))
 end
 
 function Commander:update(time)

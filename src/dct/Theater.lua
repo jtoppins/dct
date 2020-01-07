@@ -28,17 +28,6 @@ local settings    = _G.dct.settings
 local RESCHEDULE_FREQ = 0.5 -- seconds
 local UI_CMD_DELAY    = 2
 
-local SaveStateCmd = class(Command)
-function SaveStateCmd:__init(theater)
-	self.reschedDelay = 7*60 -- seconds
-	self.theater = theater
-end
-
-function SaveStateCmd:execute(time)
-	self.theater:export()
-	return self.reschedDelay
-end
-
 --[[
 --  Theater class
 --    base class that reads in all region and template information
@@ -58,6 +47,7 @@ function Theater:__init()
 	Observable.__init(self)
 	Profiler:profileStart("Theater:init()")
 	--DebugStats:registerStat("regions", 0, "region(s) loaded")
+	self.savestatefreq = 7*60 -- seconds
 	self.complete  = false
 	self.statef    = false
 	self.regions   = {}
@@ -76,7 +66,7 @@ function Theater:__init()
 	self:_loadRegions()
 	self:_loadOrGenerate()
 	uimenu(self)
-	self:queueCommand(100, SaveStateCmd(self))
+	self:queueCommand(100, Command(self.export, self))
 	Profiler:profileStop("Theater:init()")
 end
 
@@ -145,7 +135,7 @@ function Theater:_loadOrGenerate()
 	self.statetbl = nil
 end
 
-function Theater:export()
+function Theater:export(time)
 	local statefile, err = io.open(settings.statepath, "w")
 
 	assert(statefile ~= nil, "runtime error: unable to open '"..
@@ -162,6 +152,7 @@ function Theater:export()
 	statefile:write(json:encode_pretty(exporttbl))
 	statefile:flush()
 	statefile:close()
+	return self.savestatefreq
 end
 
 function Theater:generate()
