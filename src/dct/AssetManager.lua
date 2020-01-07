@@ -234,7 +234,7 @@ function AssetManager:checkAssets(time)
 		end
 	end
 	self._checkqueued = false
-	Logger:debug(string.format("checkAssets() - runtime: %4.2f ms, "..
+	Logger:debug(string.format("checkAssets() - runtime: %4.3f ms, "..
 		"forced: %s, assets checked: %d",
 		(timer.getTime()-perftime_s)*1000, tostring(force), cnt))
 	return nil
@@ -251,15 +251,21 @@ function AssetManager:onDCSEvent(event)
 	}
 
 	if not relevents[event.id] then
-		return
-	end
-
-	if not event.initiator or
-	   objcat[event.initiator:getCategory()] == nil then
+		Logger:debug("onDCSEvent - not relevent event: "..tostring(event.id))
 		return
 	end
 
 	local obj = event.initiator
+	if event.id == world.event.S_EVENT_HIT then
+		obj = event.target
+	end
+
+	if not obj or objcat[obj:getCategory()] == nil then
+		Logger:debug(string.format("onDCSEvent - bad object (%s) or"..
+			" category; event id: %d", tostring(event.initiator), event.id))
+		return
+	end
+
 	local name = obj:getName()
 	if obj:getCategory() == Object.Category.UNIT then
 		name = obj:getGroup():getName()
@@ -267,10 +273,12 @@ function AssetManager:onDCSEvent(event)
 
 	local asset = self._object2asset[name]
 	if asset == nil then
+		Logger:debug("onDCSEvent - not tracked object, obj name: "..name)
 		return
 	end
 	asset = self._assetset[asset]
 	if asset == nil then
+		Logger:debug("onDCSEvent - asset doesn't exist, name: "..name)
 		return
 	end
 
