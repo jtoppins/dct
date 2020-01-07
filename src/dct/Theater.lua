@@ -21,7 +21,6 @@ local AssetManager= require("dct.AssetManager")
 local Commander   = require("dct.ai.Commander")
 local Command     = require("dct.Command")
 local Logger      = require("dct.Logger").getByName("Theater")
---local DebugStats  = require("dct.DebugStats").getDebugStats()
 local Profiler    = require("dct.Profiler").getProfiler()
 local settings    = _G.dct.settings
 
@@ -46,7 +45,6 @@ local Theater = class(Observable)
 function Theater:__init()
 	Observable.__init(self)
 	Profiler:profileStart("Theater:init()")
-	--DebugStats:registerStat("regions", 0, "region(s) loaded")
 	self.savestatefreq = 7*60 -- seconds
 	self.complete  = false
 	self.statef    = false
@@ -100,7 +98,6 @@ function Theater:_loadRegions()
 				assert(self.regions[r.name] == nil, "duplicate regions " ..
 					"defined for theater: " .. settings.theaterpath)
 				self.regions[r.name] = r
-				--DebugStats:incstat("regions", 1)
 			end
 		end
 	end

@@ -6,7 +6,6 @@ dctsettings = {
 	["profile"] = true,
 	["debug"]   = false,
 	["logger"]  = {
-		["DebugStats"] = "debug",
 	},
 	["theaterpath"] = os.getenv("DCT_TEMPLATE_PATH"),
 }
@@ -27,7 +26,6 @@ local function main()
 		string.format(", got: %d", dctcheck.spawngroups))
 	assert(dctcheck.spawnstatics == 745, "static spawn broken; expected: 745"..
 		string.format(", got: %d", dctcheck.spawnstatics))
-	--dct.DebugStats.getDebugStats():log()
 	--print(t.assetmgr:getStats(coalition.side.RED):tostring("%s: %d\n"))
 	return 0
 end

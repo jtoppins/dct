@@ -17,6 +17,5 @@ dct.Region    = require("dct.Region")
 dct.Theater   = require("dct.Theater")
 dct.Asset     = require("dct.Asset")
 dct.Profiler  = require("dct.Profiler")
-dct.DebugStats= require("dct.DebugStats")
 
 return dct
