@@ -19,7 +19,7 @@ local function main()
 		return 0
 	end
 
-	local t = dct.Theater()
+	dct.Theater()
 	--print("Groups spawned:  "..dctcheck.spawngroups)
 	--print("Statics spawned: "..dctcheck.spawnstatics)
 	assert(dctcheck.spawngroups == 83, "group spawn broken; expected: 83"..

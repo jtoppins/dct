@@ -153,7 +153,7 @@ function Theater:_loadOrGenerate()
 	self.statetbl = nil
 end
 
-function Theater:export(time)
+function Theater:export(_)
 	local statefile
 	local msg
 

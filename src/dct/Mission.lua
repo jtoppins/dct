@@ -110,7 +110,7 @@ end
 
 -- for now just track if the mission has not timmed out and
 -- if it has queue an abort command with abort reason
-function Mission:update(time)
+function Mission:update(_)
 	if self:isComplete() then
 		return
 	end
