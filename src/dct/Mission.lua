@@ -68,6 +68,7 @@ function Mission:__init(cmdr, missiontype, grpname, tgtname)
 	-- compose the briefing at mission creation to represent
 	-- known intel the pilots were given before departing
 	self.briefing  = self:_composeBriefing()
+	self.cmdr:getAsset(tgtname):setTargeted(true)
 
 	-- TODO: setup remaining mission parameters;
 	--   * mission world states

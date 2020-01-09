@@ -12,6 +12,7 @@ local dctutils   = require("dct.utils")
 local Mission    = require("dct.Mission")
 local Stats      = require("dct.Stats")
 local Command    = require("dct.Command")
+local Logger     = require("dct.Logger").getByName("Commander")
 
 local function heapsort_tgtlist(assetmgr, owner, filterlist)
 	local tgtlist = assetmgr:getTargets(owner, filterlist)
@@ -138,6 +139,8 @@ function Commander:requestMission(grpname, missiontype)
 	if tgt == nil then
 		return nil
 	end
+	Logger:debug(string.format("requestMission() - tgt name: '%s'; "..
+		"isTargeted: %s", tgt:getName(), tostring(tgt:isTargeted())))
 
 	local mission = Mission(self, missiontype, grpname, tgt:getName())
 	self:addMission(mission)
