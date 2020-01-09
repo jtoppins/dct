@@ -104,9 +104,30 @@ function Theater:_loadRegions()
 end
 
 local function isStateValid(state)
-	return state ~= nil and state.complete == false and
-		state.theater == env.mission.theatre and
-		state.sortie == env.getValueDictByKey(env.mission.sortie)
+	if state == nil then
+		Logger:warn("isStateValid() - state object nil")
+		return false
+	end
+
+	if state.complete == true then
+		Logger:warn("isStateValid() - theater goals were completed")
+		return false
+	end
+
+	if state.theater ~= env.mission.theatre then
+		Logger:warn(string.format("isStateValid() - wrong theater; "..
+			"state: '%s'; mission: '%s'", state.theater, env.mission.theatre))
+		return false
+	end
+
+	if state.sortie ~= env.getValueDictByKey(env.mission.sortie) then
+		Logger:warn(string.format("isStateValid() - wrong sortie; "..
+			"state: '%s'; mission: '%s'", state.sortie,
+			env.getCalueDictByKey(env.mission.sortie)))
+		return false
+	end
+
+	return true
 end
 
 function Theater:_initFromState()
@@ -133,10 +154,16 @@ function Theater:_loadOrGenerate()
 end
 
 function Theater:export(time)
-	local statefile, err = io.open(settings.statepath, "w")
+	local statefile
+	local msg
 
-	assert(statefile ~= nil, "runtime error: unable to open '"..
-		settings.statepath.."'; msg: "..tostring(err))
+	statefile, msg = io.open(settings.statepath, "w+")
+
+	if statefile == nil then
+		Logger:error("export() - unable to open '"..
+			settings.statepath.."'; msg: "..tostring(msg))
+		return self.savestatefreq
+	end
 
 	local exporttbl = {
 		["complete"] = self.complete,
