@@ -20,12 +20,11 @@ local function main()
 	end
 
 	theater:export()
-	theater = nil
 	local f = io.open(settings.statepath, "r")
 	local sumorig = md5.sum(f:read("*all"))
 	f:close()
 
-	newtheater = dct.Theater()
+	local newtheater = dct.Theater()
 	newtheater:export()
 	f = io.open(settings.statepath, "r")
 	local sumsave = md5.sum(f:read("*all"))
