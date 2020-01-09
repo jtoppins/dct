@@ -100,6 +100,7 @@ function Asset:_removeDeathGoal(name, goal)
 		"value error: name must be provided")
 	assert(goal ~= nil, "value error: goal must be provided")
 
+	Logger:debug("_removeDeathGoal() - obj name: "..name)
 	if self:isDead() then
 		Logger:error("_removeDeathGoal() called and Asset("..
 			self:getName()..") marked as dead")
@@ -231,11 +232,16 @@ end
 function Asset:checkDead()
 	assert(self:isSpawned() == true, "runtime error: asset must be spawned")
 
+	local cnt = 0
 	for name, goal in pairs(self._deathgoals) do
+		cnt = cnt + 1
 		if goal:checkComplete() then
 			self:_removeDeathGoal(name, goal)
 		end
 	end
+	Logger:debug(string.format("checkDead(%s) - max goals: %d; "..
+		"cur goals: %d; checked: %d", self:getName(),
+		self._maxdeathgoals, self._curdeathgoals, cnt))
 end
 
 -- Get the names of all DCS objects associated with this
@@ -251,24 +257,36 @@ function Asset:getObjectNames()
 end
 
 function Asset:onDCSEvent(event)
+	-- only handle DEAD events
+	if event.id ~= world.event.S_EVENT_DEAD then
+		Logger:debug(string.format("onDCSEvent() - Asset(%s) not DEAD "..
+			"event, ignoring", self:getName()))
+		return
+	end
+
 	local obj = event.initiator
 
-	if event.id == world.event.S_EVENT_DEAD then
-		-- mark the unit/group/static as dead in the template, dct_dead
-		-- set dirty bit
-		local unitname = obj:getName()
-		if obj:getCategory() == Object.Category.UNIT then
-			local grpname = obj:getGroup():getName()
-			local grp = self._assets[grpname]
-			for _, unit in pairs(grp.units) do
-				if unit.name == unitname then
-					unit.dct_dead = true
-					break
-				end
+	-- mark the unit/group/static as dead in the template, dct_dead
+	local unitname = obj:getName()
+	if obj:getCategory() == Object.Category.UNIT then
+		local grpname = obj:getGroup():getName()
+		local grp = self._assets[grpname]
+		for _, unit in pairs(grp.units) do
+			if unit.name == unitname then
+				unit.dct_dead = true
+				break
 			end
-		else
-			self._assets[unitname].dct_dead = true
 		end
+	else
+		self._assets[unitname].dct_dead = true
+	end
+
+	-- delete any deathgoal related to the unit notified as dead,
+	-- this may work around any bug in DCS where the object is still
+	-- kept and its health reports a non-zero value
+	local goal = self._deathgoals[unitname]
+	if goal ~= nil then
+		self:_removeDeathGoal(unitname, goal)
 	end
 end
 

@@ -26,7 +26,7 @@ local enemymap = {
 	[coalition.side.RED]     = coalition.side.BLUE,
 }
 
-local ASSET_CHECK_DELAY = 30  -- seconds
+local ASSET_CHECK_PERIOD = 12*60  -- seconds
 
 local substats = {
 	["ALIVE"]   = 1,
@@ -58,7 +58,6 @@ function AssetManager:__init(theater)
 	self._theater = theater
 
 	-- variables to track the checking of assets' death goals
-	self._checkqueued = false
 	self._lastchecked = 0
 
 	-- The master list of assets, regardless of side, indexed by name.
@@ -91,7 +90,8 @@ function AssetManager:__init(theater)
 	self._object2asset = {}
 
 	self._theater:registerHandler(self.onDCSEvent, self)
-	self:queueCheckAsset()
+	self._theater:queueCommand(ASSET_CHECK_PERIOD,
+		Command(self.checkAssets, self))
 end
 
 function AssetManager:remove(asset)
@@ -185,32 +185,6 @@ function AssetManager:getTargets(requestingside, assettypelist)
 end
 
 --[[
--- Queue up a delayed command to perform the time consuming task
--- of checking if an asset's dead goal has been met.
--- We should delay processing for at least 10 seconds to accumulate
--- other possible hits, like a rocket attack. If a check is already
--- outstanding we should not request another until the queued check
--- has been processed.
---
--- NOTE: This might be a problem resulting in a race condition
--- manifesting in what appears to be dropping asset events, the
--- solution is to queue a command for each asset. This could be
--- handled by queuing a delayed command check (with the Theater)
--- and then an internal per asset queue to check each asset.
--- TODO: we could implement a way of detecting this by each
--- asset tracking when it was last hit and when it was last checked.
---]]
-function AssetManager:queueCheckAsset()
-	if self._checkqueued then
-		Logger:debug("queueCheckAsset() - already queued, ignoring")
-		return
-	end
-	self._theater:queueCommand(ASSET_CHECK_DELAY,
-		Command(self.checkAssets, self))
-	self._checkqueued = true
-end
-
---[[
 -- Check all assets to see if their death goal has been met.
 --
 -- *Note:* We just do the simple thing, check all assets.
@@ -218,7 +192,7 @@ end
 --]]
 function AssetManager:checkAssets(time)
 	local force = false
-	if (time - self._lastchecked) > 600 then
+	if (time - self._lastchecked) > ASSET_CHECK_PERIOD then
 		force = true
 	end
 
@@ -233,11 +207,10 @@ function AssetManager:checkAssets(time)
 			self:remove(asset)
 		end
 	end
-	self._checkqueued = false
 	Logger:debug(string.format("checkAssets() - runtime: %4.3f ms, "..
 		"forced: %s, assets checked: %d",
 		(timer.getTime()-perftime_s)*1000, tostring(force), cnt))
-	return nil
+	return ASSET_CHECK_PERIOD
 end
 
 function AssetManager:onDCSEvent(event)
@@ -282,8 +255,13 @@ function AssetManager:onDCSEvent(event)
 		return
 	end
 
+	-- remove object from object2asset list if the event is a DEAD event
+	if event.id == world.event.S_EVENT_DEAD and
+	   self._object2asset[obj:getName()] ~= nil then
+		self._object2asset[obj:getName()] = nil
+	end
+
 	asset:onDCSEvent(event)
-	self:queueCheckAsset()
 end
 
 function AssetManager:marshal()
