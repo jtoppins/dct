@@ -241,7 +241,8 @@ function Template:__loadSTM(stmfile)
 	assert(lfs.attributes(stmfile) ~= nil, "file does not exist: "..stmfile)
 	local rc = pcall(dofile, stmfile)
 	assert(rc, "failed to parse: "..stmfile)
-	assert(staticTemplate ~= nil)
+	assert(staticTemplate ~= nil, "no 'staticTemplate' defined for: "..
+		stmfile)
 
 	local tpl = staticTemplate
 	staticTemplate = nil
