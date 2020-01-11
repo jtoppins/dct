@@ -84,6 +84,7 @@ local function settings(missioncfg)
 				},
 			},
 		},
+		["schedfreq"] = 2, -- hertz
 	}
 
 	if attr ~= nil then

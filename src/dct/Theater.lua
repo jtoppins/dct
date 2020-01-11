@@ -24,9 +24,6 @@ local Logger      = require("dct.Logger").getByName("Theater")
 local Profiler    = require("dct.Profiler").getProfiler()
 local settings    = _G.dct.settings
 
-local RESCHEDULE_FREQ = 0.5 -- seconds
-local UI_CMD_DELAY    = 2
-
 --[[
 --  Theater class
 --    base class that reads in all region and template information
@@ -46,6 +43,9 @@ function Theater:__init()
 	Observable.__init(self)
 	Profiler:profileStart("Theater:init()")
 	self.savestatefreq = 7*60 -- seconds
+	self.cmdmindelay   = 8/settings.schedfreq
+	self.uicmddelay    = self.cmdmindelay
+	self:setCmdFreq(settings.schedfreq)
 	self.complete  = false
 	self.statef    = false
 	self.regions   = {}
@@ -101,6 +101,10 @@ function Theater:_loadRegions()
 			end
 		end
 	end
+end
+
+function Theater:setCmdFreq(freq)
+	self.cmdqfreq    = 1/freq
 end
 
 local function isStateValid(state)
@@ -205,7 +209,7 @@ function Theater:playerRequest(data)
 	end
 
 	local cmd = uicmds[data.type](self, data)
-	self:queueCommand(UI_CMD_DELAY, cmd)
+	self:queueCommand(self.uicmddelay, cmd)
 	self.playergps[data.name].cmdpending = true
 end
 
@@ -234,6 +238,12 @@ end
 -- cmd   - the command to be run
 --]]
 function Theater:queueCommand(delay, cmd)
+	if delay < self.cmdmindelay then
+		Logger:warn(string.format("queueCommand(); delay(%2.2f) less than "..
+			"schedular minimum(%2.2f), setting to schedular minumum",
+			delay, self.cmdmindelay))
+		delay = self.cmdmindelay
+	end
 	self.cmdq:push(self.ctime + delay, cmd)
 	Logger:debug("queueCommand(); cmdq size: "..self.cmdq:size())
 end
@@ -243,15 +253,14 @@ function Theater:_exec(time)
 	-- 10 samples for how long it takes to execute a command
 	self.ltime = self.ctime
 	self.ctime = time
-	local rescheduletime = time + RESCHEDULE_FREQ
 
 	if self.cmdq:empty() then
-		return rescheduletime
+		return
 	end
 
 	local _, prio = self.cmdq:peek()
 	if time < prio then
-		return rescheduletime
+		return
 	end
 
 	Logger:debug("exec() - execute command")
@@ -260,21 +269,19 @@ function Theater:_exec(time)
 	if requeue ~= nil and type(requeue) == "number" then
 		self:queueCommand(requeue, cmd)
 	end
-	return rescheduletime
 end
 
 function Theater:exec(time)
-	local retval
 	local errhandler = function(err)
 		Logger:error("protected call - "..tostring(err).."\n"..
 			debug.traceback())
 	end
 	local pcallfunc = function()
-		retval = self:_exec(time)
+		self:_exec(time)
 	end
 
 	xpcall(pcallfunc, errhandler)
-	return retval
+	return time + self.cmdqfreq
 end
 
 return Theater

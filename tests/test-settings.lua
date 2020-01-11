@@ -30,6 +30,7 @@ local function main()
 			["F-14B"]         = dctutils.posfmt.DDM,
 			["FA-18C_hornet"] = dctutils.posfmt.DDM,
 		},
+		["schedfreq"] = 2,
 	}
 
 	for k, v in pairs(cfgvalidation) do
