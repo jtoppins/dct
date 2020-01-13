@@ -4,20 +4,23 @@
 -- Defines the Theater class.
 --]]
 
+require("os")
+require("io")
 require("lfs")
 local class       = require("libs.class")
 local utils       = require("libs.utils")
 local containers  = require("libs.containers")
 local json        = require("libs.json")
 local enum        = require("dct.enum")
+local dctutils    = require("dct.utils")
 local uicmds      = require("dct.ui.cmds")
 local uimenu      = require("dct.ui.groupmenu")
 local Observable  = require("dct.Observable")
 local Region      = require("dct.Region")
 local AssetManager= require("dct.AssetManager")
 local Commander   = require("dct.ai.Commander")
+local Command     = require("dct.Command")
 local Logger      = require("dct.Logger").getByName("Theater")
-local DebugStats  = require("dct.DebugStats").getDebugStats()
 local Profiler    = require("dct.Profiler").getProfiler()
 local settings    = _G.dct.settings
 
@@ -42,9 +45,9 @@ local Theater = class(Observable)
 function Theater:__init()
 	Observable.__init(self)
 	Profiler:profileStart("Theater:init()")
-	DebugStats:registerStat("regions", 0, "region(s) loaded")
-	self.path      = _G.dct.settings.theaterpath
-	self.statepath = _G.dct.settings.statepath
+	self.savestatefreq = 7*60 -- seconds
+	self.complete  = false
+	self.statef    = false
 	self.regions   = {}
 	self.cmdq      = containers.PriorityQueue()
 	self.ctime     = timer.getTime()
@@ -61,6 +64,7 @@ function Theater:__init()
 	self:_loadRegions()
 	self:_loadOrGenerate()
 	uimenu(self)
+	self:queueCommand(100, Command(self.export, self))
 	Profiler:profileStop("Theater:init()")
 end
 
@@ -69,7 +73,7 @@ end
 -- verify it was read correctly, contains the token expected, returns the
 -- token on the stack and clears the global token space
 function Theater:_loadGoals()
-	local goalpath = self.path..utils.sep.."theater.goals"
+	local goalpath = settings.theaterpath..utils.sep.."theater.goals"
 	local rc = pcall(dofile, goalpath)
 	assert(rc, "failed to parse: theater goal file, '" ..
 			goalpath .. "' path likely doesn't exist")
@@ -84,43 +88,95 @@ function Theater:_loadGoals()
 end
 
 function Theater:_loadRegions()
-	for filename in lfs.dir(self.path) do
+	for filename in lfs.dir(settings.theaterpath) do
 		if filename ~= "." and filename ~= ".." and
 			filename ~= ".git" then
-			local fpath = self.path..utils.sep..filename
+			local fpath = settings.theaterpath..utils.sep..filename
 			local fattr = lfs.attributes(fpath)
 			if fattr.mode == "directory" then
 				local r = Region(fpath)
 				assert(self.regions[r.name] == nil, "duplicate regions " ..
-						"defined for theater: " .. self.path)
+					"defined for theater: " .. settings.theaterpath)
 				self.regions[r.name] = r
-				DebugStats:incstat("regions", 1)
 			end
 		end
 	end
 end
 
+local function isStateValid(state)
+	if state == nil then
+		Logger:warn("isStateValid() - state object nil")
+		return false
+	end
+
+	if state.complete == true then
+		Logger:warn("isStateValid() - theater goals were completed")
+		return false
+	end
+
+	if state.theater ~= env.mission.theatre then
+		Logger:warn(string.format("isStateValid() - wrong theater; "..
+			"state: '%s'; mission: '%s'", state.theater, env.mission.theatre))
+		return false
+	end
+
+	if state.sortie ~= env.getValueDictByKey(env.mission.sortie) then
+		Logger:warn(string.format("isStateValid() - wrong sortie; "..
+			"state: '%s'; mission: '%s'", state.sortie,
+			env.getCalueDictByKey(env.mission.sortie)))
+		return false
+	end
+
+	return true
+end
+
+function Theater:_initFromState()
+	self.statef = true
+	self:getAssetMgr():unmarshal(self.statetbl.assetmgr)
+end
+
 function Theater:_loadOrGenerate()
-	self.objectives = {}
-	local statefile = io.open(self.statepath)
+	local statefile = io.open(settings.statepath)
 
 	if statefile ~= nil then
-		local statetbl = json:decode(statefile:read("*all"))
+		self.statetbl = json:decode(statefile:read("*all"))
 		statefile:close()
-		self:_initFromState(statetbl)
+	end
+
+	if isStateValid(self.statetbl) then
+		Logger:info("restoring saved state")
+		self:_initFromState()
 	else
+		Logger:info("saved state was invalid, generating new theater")
 		self:generate()
 	end
+	self.statetbl = nil
 end
 
-function Theater:_initFromState(jsontbl)
-	-- TODO: use saved state recreate objects
-	return
-end
+function Theater:export(_)
+	local statefile
+	local msg
 
-function Theater:export()
-	-- TODO: export a copy of the game state in a
-	-- flat table representation
+	statefile, msg = io.open(settings.statepath, "w+")
+
+	if statefile == nil then
+		Logger:error("export() - unable to open '"..
+			settings.statepath.."'; msg: "..tostring(msg))
+		return self.savestatefreq
+	end
+
+	local exporttbl = {
+		["complete"] = self.complete,
+		["date"]     = os.date("*t", dctutils.time(timer.getAbsTime())),
+		["theater"]  = env.mission.theatre,
+		["sortie"]   = env.getValueDictByKey(env.mission.sortie),
+		["assetmgr"] = self:getAssetMgr():marshal(),
+	}
+
+	statefile:write(json:encode_pretty(exporttbl))
+	statefile:flush()
+	statefile:close()
+	return self.savestatefreq
 end
 
 function Theater:generate()

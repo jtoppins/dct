@@ -11,7 +11,6 @@ local utils      = require("libs.utils")
 local Template   = require("dct.Template")
 local Asset      = require("dct.Asset")
 local Logger     = require("dct.Logger").getByName("Region")
-local DebugStats = require("dct.DebugStats").getDebugStats()
 local dctenums   = require("dct.enum")
 
 local tplkind = {
@@ -70,8 +69,6 @@ function Region:__init(regionpath)
 	self._exclusions = {}
 	Logger:debug("=> regionpath: "..regionpath)
 	self:_loadMetadata(regionpath..utils.sep.."region.def")
-	DebugStats:registerStat(self.name.."-templates", 0,
-		self.name.."-template(s) loaded")
 	self:_loadTemplates()
 end
 
@@ -150,7 +147,6 @@ function Region:_getTemplates(dirname, basepath)
 					Logger:debug("=> process template: "..fpath)
 					local dctString = string.gsub(fpath, ".stm", ".dct")
 					self:_addTemplate(Template(self.name, fpath, dctString))
-					DebugStats:incstat(self.name.."-templates", 1)
 				end
 			end
 		end

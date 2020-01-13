@@ -12,6 +12,7 @@ local dctutils   = require("dct.utils")
 local Mission    = require("dct.Mission")
 local Stats      = require("dct.Stats")
 local Command    = require("dct.Command")
+local Logger     = require("dct.Logger").getByName("Commander")
 
 local function heapsort_tgtlist(assetmgr, owner, filterlist)
 	local tgtlist = assetmgr:getTargets(owner, filterlist)
@@ -37,30 +38,20 @@ local function genstatids()
 	return tbl
 end
 
-local CmdrUpdate = class(Command)
-function CmdrUpdate:__init(cmdr)
-	assert(cmdr ~= nil, "value error: cmdr required")
-	self.cmdr = cmdr
-end
-
-function CmdrUpdate:execute(time)
-	return self.cmdr:update(time)
-end
-
 --[[
 -- For now the commander is only concerned with flight missions
 --]]
 local Commander = class()
 
-function Commander:__init(theater, coalition)
-	self.owner        = coalition
+function Commander:__init(theater, side)
+	self.owner        = side
 	self.theater      = theater
 	self.missionstats = Stats(genstatids())
 	self.missions     = {}
 	self.assigned     = {}
 	self.aifreq       = 300 -- seconds
 
-	self.theater:queueCommand(self.aifreq, CmdrUpdate(self))
+	self.theater:queueCommand(self.aifreq, Command(self.update, self))
 end
 
 function Commander:update(time)
@@ -148,6 +139,8 @@ function Commander:requestMission(grpname, missiontype)
 	if tgt == nil then
 		return nil
 	end
+	Logger:debug(string.format("requestMission() - tgt name: '%s'; "..
+		"isTargeted: %s", tgt:getName(), tostring(tgt:isTargeted())))
 
 	local mission = Mission(self, missiontype, grpname, tgt:getName())
 	self:addMission(mission)

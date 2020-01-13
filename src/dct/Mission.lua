@@ -68,6 +68,7 @@ function Mission:__init(cmdr, missiontype, grpname, tgtname)
 	-- compose the briefing at mission creation to represent
 	-- known intel the pilots were given before departing
 	self.briefing  = self:_composeBriefing()
+	self.cmdr:getAsset(tgtname):setTargeted(true)
 
 	-- TODO: setup remaining mission parameters;
 	--   * mission world states
@@ -109,7 +110,7 @@ end
 
 -- for now just track if the mission has not timmed out and
 -- if it has queue an abort command with abort reason
-function Mission:update(time)
+function Mission:update(_)
 	if self:isComplete() then
 		return
 	end

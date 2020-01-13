@@ -18,6 +18,7 @@ local enum     = require("dct.enum")
 local Logger   = require("dct.Logger").getByName("AssetManager")
 local Command  = require("dct.Command")
 local Stats    = require("dct.Stats")
+local Asset    = require("dct.Asset")
 
 local enemymap = {
 	[coalition.side.NEUTRAL] = false,
@@ -25,18 +26,7 @@ local enemymap = {
 	[coalition.side.RED]     = coalition.side.BLUE,
 }
 
-local AssetCheckCmd = class(Command)
-
-function AssetCheckCmd:__init(assetmgr)
-	self._assetmgr = assetmgr
-end
-
-function AssetCheckCmd:execute(time)
-	self._assetmgr:checkAssets(time)
-	return nil
-end
-
-local ASSET_CHECK_DELAY = 30  -- seconds
+local ASSET_CHECK_PERIOD = 12*60  -- seconds
 
 local substats = {
 	["ALIVE"]   = 1,
@@ -68,7 +58,6 @@ function AssetManager:__init(theater)
 	self._theater = theater
 
 	-- variables to track the checking of assets' death goals
-	self._checkqueued = false
 	self._lastchecked = 0
 
 	-- The master list of assets, regardless of side, indexed by name.
@@ -101,7 +90,8 @@ function AssetManager:__init(theater)
 	self._object2asset = {}
 
 	self._theater:registerHandler(self.onDCSEvent, self)
-	self:queueCheckAsset()
+	self._theater:queueCommand(ASSET_CHECK_PERIOD,
+		Command(self.checkAssets, self))
 end
 
 function AssetManager:remove(asset)
@@ -195,31 +185,6 @@ function AssetManager:getTargets(requestingside, assettypelist)
 end
 
 --[[
--- Queue up a delayed command to perform the time consuming task
--- of checking if an asset's dead goal has been met.
--- We should delay processing for at least 10 seconds to accumulate
--- other possible hits, like a rocket attack. If a check is already
--- outstanding we should not request another until the queued check
--- has been processed.
---
--- NOTE: This might be a problem resulting in a race condition
--- manifesting in what appears to be dropping asset events, the
--- solution is to queue a command for each asset. This could be
--- handled by queuing a delayed command check (with the Theater)
--- and then an internal per asset queue to check each asset.
--- TODO: we could implement a way of detecting this by each
--- asset tracking when it was last hit and when it was last checked.
---]]
-function AssetManager:queueCheckAsset()
-	if self._checkqueued then
-		Logger:debug("queueCheckAsset() - already queued, ignoring")
-		return
-	end
-	self._theater:queueCommand(ASSET_CHECK_DELAY, AssetCheckCmd(self))
-	self._checkqueued = true
-end
-
---[[
 -- Check all assets to see if their death goal has been met.
 --
 -- *Note:* We just do the simple thing, check all assets.
@@ -227,7 +192,7 @@ end
 --]]
 function AssetManager:checkAssets(time)
 	local force = false
-	if (time - self._lastchecked) > 600 then
+	if (time - self._lastchecked) > ASSET_CHECK_PERIOD then
 		force = true
 	end
 
@@ -242,10 +207,10 @@ function AssetManager:checkAssets(time)
 			self:remove(asset)
 		end
 	end
-	self._checkqueued = false
-	Logger:debug(string.format("checkAssets() - runtime: %4.2f ms, "..
+	Logger:debug(string.format("checkAssets() - runtime: %4.3f ms, "..
 		"forced: %s, assets checked: %d",
 		(timer.getTime()-perftime_s)*1000, tostring(force), cnt))
+	return ASSET_CHECK_PERIOD
 end
 
 function AssetManager:onDCSEvent(event)
@@ -259,15 +224,21 @@ function AssetManager:onDCSEvent(event)
 	}
 
 	if not relevents[event.id] then
-		return
-	end
-
-	if not event.initiator or
-	   objcat[event.initiator:getCategory()] == nil then
+		Logger:debug("onDCSEvent - not relevent event: "..tostring(event.id))
 		return
 	end
 
 	local obj = event.initiator
+	if event.id == world.event.S_EVENT_HIT then
+		obj = event.target
+	end
+
+	if not obj or objcat[obj:getCategory()] == nil then
+		Logger:debug(string.format("onDCSEvent - bad object (%s) or"..
+			" category; event id: %d", tostring(event.initiator), event.id))
+		return
+	end
+
 	local name = obj:getName()
 	if obj:getCategory() == Object.Category.UNIT then
 		name = obj:getGroup():getName()
@@ -275,23 +246,58 @@ function AssetManager:onDCSEvent(event)
 
 	local asset = self._object2asset[name]
 	if asset == nil then
+		Logger:debug("onDCSEvent - not tracked object, obj name: "..name)
 		return
 	end
 	asset = self._assetset[asset]
 	if asset == nil then
+		Logger:debug("onDCSEvent - asset doesn't exist, name: "..name)
 		return
 	end
 
+	-- remove object from object2asset list if the event is a DEAD event
+	if event.id == world.event.S_EVENT_DEAD and
+	   self._object2asset[obj:getName()] ~= nil then
+		self._object2asset[obj:getName()] = nil
+	end
+
 	asset:onDCSEvent(event)
-	self:queueCheckAsset()
 end
 
-function AssetManager:marshal(ignoredirty)
-	-- TODO: marshal assets into a table and return to the caller
+function AssetManager:marshal()
+	local tbl = {
+		["assets"] = {},
+		["stats"]  = {},
+	}
+
+	for name, asset in pairs(self._assetset) do
+		if enum.assetClass.STRATEGIC[asset.type] ~= nil then
+			tbl.assets[name] = asset:marshal()
+		end
+	end
+	for _,v in pairs(coalition.side) do
+		tbl.stats[v] = self._sideassets[v].stats:marshal()
+	end
+	return tbl
 end
 
 function AssetManager:unmarshal(data)
-	-- TODO: read in and create all assets that were saved off
+	local statszero = {}
+	for _,v in pairs(enum.assetType) do
+		statszero[v..".1"] = 0
+	end
+	for side, stat in pairs(data.stats) do
+		side = tonumber(side)
+		self._sideassets[side].stats:unmarshal(stat)
+		for k,v in pairs(statszero) do
+			self._sideassets[side].stats:set(k, v)
+		end
+	end
+	for _, assettbl in pairs(data.assets) do
+		local asset = Asset()
+		asset:unmarshal(assettbl)
+		self:add(asset)
+	end
 end
 
 return AssetManager

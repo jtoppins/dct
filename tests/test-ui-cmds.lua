@@ -26,6 +26,17 @@ local testcmds = {
 	[1] = {
 		["data"] = {
 			["name"]   = grp:getName(),
+			["type"]   = enum.uiRequestType.THEATERSTATUS,
+		},
+		["assert"]     = true,
+		["expected"]   = "== Theater Threat Status ==\n  Sea:    medium\n"..
+			"  Air:    parity\n  ELINT:  medium\n  SAM:    medium\n\n"..
+			"== Current Active Air Missions ==\n  No Active Missions\n\n"..
+			"Recommended Mission Type: STRIKE\n",
+	},
+	[2] = {
+		["data"] = {
+			["name"]   = grp:getName(),
 			["type"]   = enum.uiRequestType.MISSIONREQUEST,
 			["value"]  = enum.missionType.STRIKE,
 		},
@@ -33,7 +44,7 @@ local testcmds = {
 		["expected"]   = "Mission STRIKE0085 assigned, see briefing for"..
 			" details",
 	},
-	[2] = {
+	[3] = {
 		["data"] = {
 			["name"]   = grp:getName(),
 			["type"]   = enum.uiRequestType.THEATERSTATUS,
@@ -42,9 +53,9 @@ local testcmds = {
 		["expected"]   = "== Theater Threat Status ==\n  Sea:    medium\n"..
 			"  Air:    parity\n  ELINT:  medium\n  SAM:    medium\n\n"..
 			"== Current Active Air Missions ==\n  STRIKE:   1\n\n"..
-			"Recommended Mission Type: STRIKE\n",
+			"Recommended Mission Type: None\n",
 	},
-	[3] = {
+	[4] = {
 		["data"] = {
 			["name"]   = grp:getName(),
 			["type"]   = enum.uiRequestType.MISSIONBRIEF,
@@ -63,7 +74,7 @@ local testcmds = {
 			"    Recommended Ordnance: Heavy ordnance required for bunker"..
 			" targets, e.g. Mk-84s or PGM Variants.",
 	},
-	[4] = {
+	[5] = {
 		["data"] = {
 			["name"]   = grp:getName(),
 			["type"]   = enum.uiRequestType.MISSIONSTATUS,
@@ -72,7 +83,7 @@ local testcmds = {
 		["expected"]   = "ID: STRIKE0085\nTimeout: "..
 			"2001-06-22 21:03:54z (in 297 mins)\nBDA: 0% complete\n",
 	},
-	[5] = {
+	[6] = {
 		["data"] = {
 			["name"]   = grp:getName(),
 			["type"]   = enum.uiRequestType.MISSIONROLEX,
@@ -81,7 +92,7 @@ local testcmds = {
 		["assert"]     = true,
 		["expected"]   = "+2 mins added to mission timeout",
 	},
-	[6] = {
+	[7] = {
 		["data"] = {
 			["name"]   = grp:getName(),
 			["type"]   = enum.uiRequestType.MISSIONCHECKIN,
@@ -89,7 +100,7 @@ local testcmds = {
 		["assert"]     = true,
 		["expected"]   = "on-station received",
 	},
-	[7] = {
+	[8] = {
 		["data"] = {
 			["name"]   = grp:getName(),
 			["type"]   = enum.uiRequestType.MISSIONCHECKOUT,
@@ -97,7 +108,7 @@ local testcmds = {
 		["assert"]     = true,
 		["expected"]   = "off-station received, vul time: 0",
 	},
-	[8] = {
+	[9] = {
 		["data"] = {
 			["name"]   = grp:getName(),
 			["type"]   = enum.uiRequestType.MISSIONABORT,
