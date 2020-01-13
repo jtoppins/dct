@@ -22,9 +22,9 @@ local function main()
 	dct.Theater()
 	--print("Groups spawned:  "..dctcheck.spawngroups)
 	--print("Statics spawned: "..dctcheck.spawnstatics)
-	assert(dctcheck.spawngroups == 83, "group spawn broken; expected: 83"..
+	assert(dctcheck.spawngroups == 75, "group spawn broken; expected: 75"..
 		string.format(", got: %d", dctcheck.spawngroups))
-	assert(dctcheck.spawnstatics == 745, "static spawn broken; expected: 745"..
+	assert(dctcheck.spawnstatics == 598, "static spawn broken; expected: 598"..
 		string.format(", got: %d", dctcheck.spawnstatics))
 	--print(t.assetmgr:getStats(coalition.side.RED):tostring("%s: %d\n"))
 	return 0
