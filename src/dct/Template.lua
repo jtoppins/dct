@@ -134,7 +134,7 @@ end
 --      category = {
 --        # = {
 --          countryid = id,
---          grpdata   = {
+--          data      = {
 --            # group def members
 --            dct_deathgoal = goalspec
 --          }
@@ -249,8 +249,8 @@ function Template:__loadSTM(stmfile)
 
 	self.tplnames= tpl.localization.DEFAULT
 	self.name    = self:__lookupname(tpl.name)
-	self.theatre = tpl.theatre
-	self.desc    = tpl.desc
+	self.theatre = self:__lookupname(tpl.theatre)
+	self.desc    = self:__lookupname(tpl.desc)
 	self.tpldata = {}
 
 	for coa_key, coa_data in pairs(tpl.coalition) do
@@ -311,7 +311,7 @@ function Template:__processCountry(side, ctry)
 end
 
 function Template:__overrideUnitOptions(key, unit, ctx)
-	if unit.playerCanDriver ~= nil then
+	if unit.playerCanDrive ~= nil then
 		unit.playerCanDrive = false
 	end
 	unit.unitId = nil
