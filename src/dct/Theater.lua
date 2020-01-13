@@ -198,6 +198,12 @@ function Theater:getCommander(side)
 end
 
 function Theater:playerRequest(data)
+	if data == nil then
+		Logger:error("value error: data must be provided; "..
+			debug.traceback())
+		return
+	end
+
 	Logger:debug("playerRequest(); Received player request: "..
 		json:encode_pretty(data))
 
