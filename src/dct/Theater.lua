@@ -22,111 +22,24 @@ local Region      = require("dct.templates.Region")
 local AssetManager= require("dct.assets.AssetManager")
 local Commander   = require("dct.ai.Commander")
 local Command     = require("dct.Command")
+local Tickets     = require("dct.systems.tickets")
 local Logger      = dct.Logger.getByName("Theater")
 local settings    = _G.dct.settings.server
 
---[[
---  Theater class
---    base class that reads in all region and template information
---    and provides a base interface for manipulating data at a theater
---    level.
---
---  Storage of theater:
---		goals = {
---			<goalname> = State(),
---		},
---		regions = {
---			<regionname> = Region(),
---		},
---]]
-local Theater = class()
-function Theater:__init()
-	self._observers = {}
-	self.savestatefreq = 7*60 -- seconds
-	self.cmdmindelay   = 2
-	self.uicmddelay    = self.cmdmindelay
-	self:setTimings(settings.schedfreq, settings.tgtfps,
-		settings.percentTimeAllowed)
-	self.complete  = false
-	self.statef    = false
-	self.regions   = {}
-	self.cmdq      = containers.PriorityQueue()
-	self.ctime     = timer.getTime()
-	self.ltime     = 0
-	self.assetmgr  = AssetManager(self)
-	self.cmdrs     = {}
-	self.scratchpad= {}
-	self.startdate = os.date("!*t")
-	self.bldgPersist= bldgPersist(self)
-	self.namecntr  = 1000
-
-	for _, val in pairs(coalition.side) do
-		self.cmdrs[val] = Commander(self, val)
-	end
-
-	-- TODO: remove spawning from generation of the theater
-	self:_loadGoals()
-	self:_loadRegions()
-	self:queueCommand(20, Command(self._delayedInit, self))
-end
-
-function Theater.singleton()
-	if _G.dct.theater ~= nil then
-		return _G.dct.theater
-	end
-	_G.dct.theater = Theater()
-	return _G.dct.theater
-end
-
-function Theater:_delayedInit()
-	self:_loadOrGenerate()
-	self:_loadPlayerSlots()
-	uiscratchpad(self)
-	self:queueCommand(100, Command(self.export, self))
-end
-
--- a description of the world state that signifies a particular side wins
--- TODO: create a common function that will read in a lua file like below
--- verify it was read correctly, contains the token expected, returns the
--- token on the stack and clears the global token space
-function Theater:_loadGoals()
-	local goalpath = settings.theaterpath..utils.sep.."theater.goals"
-	local rc = pcall(dofile, goalpath)
-	assert(rc, "failed to parse: theater goal file, '" ..
-			goalpath .. "' path likely doesn't exist")
-	assert(theatergoals ~= nil, "no theatergoals structure defined")
-
-	self.goals = {}
-	-- TODO: translate goal definitions written in the lua files to any
-	-- needed internal state.
-	-- Theater goals are goals written in a success format, meaning the
-	-- first side to complete all their goals wins
-	theatergoals = nil
-end
-
-function Theater:_loadRegions()
-	for filename in lfs.dir(settings.theaterpath) do
-		if filename ~= "." and filename ~= ".." and
-			filename ~= ".git" and filename ~= "settings" then
-			local fpath = settings.theaterpath..utils.sep..filename
-			local fattr = lfs.attributes(fpath)
-			if fattr.mode == "directory" then
-				local r = Region(fpath)
-				assert(self.regions[r.name] == nil, "duplicate regions " ..
-					"defined for theater: " .. settings.theaterpath)
-				self.regions[r.name] = r
-			end
+local function isPlayerGroup(grp, _, _)
+	local slotcnt = 0
+	for _, unit in ipairs(grp.units) do
+		if unit.skill == "Client" then
+			slotcnt = slotcnt + 1
 		end
 	end
-end
-
-function Theater:setTimings(cmdfreq, tgtfps, percent)
-	self._cmdqfreq    = cmdfreq
-	self._targetfps   = tgtfps
-	self._tallowed    = percent
-	self.cmdqdelay    = 1/self._cmdqfreq
-	self.quanta       = self._tallowed * ((1 / self._targetfps) *
-		self.cmdqdelay)
+	if slotcnt > 1 then
+		Logger:warn(string.format("DCT requires 1 slot groups. Group '%s'"..
+			" of type a/c (%s) has more than one player slot.",
+			grp.name, grp.units[1].type))
+		return false
+	end
+	return true
 end
 
 local function isStateValid(state)
@@ -156,16 +69,103 @@ local function isStateValid(state)
 	return true
 end
 
-function Theater:_initFromState()
-	self.statef = true
-	self.startdate = self.statetbl.startdate
-	self.namecntr  = self.statetbl.namecntr
-	self:getAssetMgr():unmarshal(self.statetbl.assetmgr)
-	self.bldgPersist:restoreState(self.statetbl.bldgDest)
+--[[
+--  Theater class
+--    base class that reads in all region and template information
+--    and provides a base interface for manipulating data at a theater
+--    level.
+--]]
+local Theater = class()
+function Theater:__init()
+	self._observers = {}
+	self.savestatefreq = 7*60 -- seconds
+	self.cmdmindelay   = 2
+	self.uicmddelay    = self.cmdmindelay
+	self:setTimings(settings.schedfreq, settings.tgtfps,
+		settings.percentTimeAllowed)
+	self.statef    = false
+	self.regions   = {}
+	self.cmdq      = containers.PriorityQueue()
+	self.ctime     = timer.getTime()
+	self.ltime     = 0
+	self.assetmgr  = AssetManager(self)
+	self.tickets   = Tickets(self,
+		settings.theaterpath..utils.sep.."theater.goals")
+	self.cmdrs     = {}
+	self.scratchpad= {}
+	self.startdate = os.date("!*t")
+	self.bldgPersist= bldgPersist(self)
+	self.namecntr  = 1000
+
+	for _, val in pairs(coalition.side) do
+		self.cmdrs[val] = Commander(self, val)
+	end
+
+	self:loadRegions()
+	self:queueCommand(20, Command(self.delayedInit, self))
 end
 
+function Theater.singleton()
+	if _G.dct.theater ~= nil then
+		return _G.dct.theater
+	end
+	_G.dct.theater = Theater()
+	return _G.dct.theater
+end
 
-function Theater:_loadOrGenerate()
+function Theater:setTimings(cmdfreq, tgtfps, percent)
+	self._cmdqfreq    = cmdfreq
+	self._targetfps   = tgtfps
+	self._tallowed    = percent
+	self.cmdqdelay    = 1/self._cmdqfreq
+	self.quanta       = self._tallowed * ((1 / self._targetfps) *
+		self.cmdqdelay)
+end
+
+function Theater:loadRegions()
+	for filename in lfs.dir(settings.theaterpath) do
+		if filename ~= "." and filename ~= ".." and
+			filename ~= ".git" and filename ~= "settings" then
+			local fpath = settings.theaterpath..utils.sep..filename
+			local fattr = lfs.attributes(fpath)
+			if fattr.mode == "directory" then
+				local r = Region(fpath)
+				assert(self.regions[r.name] == nil, "duplicate regions " ..
+					"defined for theater: " .. settings.theaterpath)
+				self.regions[r.name] = r
+			end
+		end
+	end
+end
+
+function Theater:loadPlayerSlots()
+	local cnt = 0
+	for _, coa_data in pairs(env.mission.coalition) do
+		local grps = STM.processCoalition(coa_data,
+			env.getValueDictByKey,
+			isPlayerGroup,
+			nil)
+		for _, grp in ipairs(grps) do
+			local side = coalition.getCountryCoalition(grp.countryid)
+			local asset =
+			self:getAssetMgr():factory(enum.assetType.PLAYERGROUP)(Template({
+				["objtype"]   = "playergroup",
+				["name"]      = grp.data.name,
+				["regionname"]= "theater",
+				["coalition"] = side,
+				["cost"]      = self.tickets:getPlayerCost(side),
+				["desc"]      = "Player group",
+				["tpldata"]   = grp,
+			}), {["name"] = "theater", ["priority"] = 1000,})
+			self:getAssetMgr():add(asset)
+			asset:spawn()
+			cnt = cnt + 1
+		end
+	end
+	Logger:info(string.format("loadPlayerSlots(); found %d slots", cnt))
+end
+
+function Theater:loadOrGenerate()
 	local statefile = io.open(settings.statepath)
 
 	if statefile ~= nil then
@@ -175,55 +175,26 @@ function Theater:_loadOrGenerate()
 
 	if isStateValid(self.statetbl) then
 		Logger:info("restoring saved state")
-		self:_initFromState()
+		self.statef = true
+		self.startdate = self.statetbl.startdate
+		self.namecntr  = self.statetbl.namecntr
+		self:getAssetMgr():unmarshal(self.statetbl.assetmgr)
+		self.tickets:unmarshal(self.statetbl.tickets)
+		self.bldgPersist:restoreState(self.statetbl.bldgDest)
 	else
-		Logger:info("saved state was invalid, generating new theater")
-		self:generate()
+		Logger:info("generating new theater")
+		for _, r in pairs(self.regions) do
+			r:generate(self.assetmgr)
+		end
 	end
 	self.statetbl = nil
 end
 
-local function isPlayerGroup(grp, _, _)
-	local slotcnt = 0
-	for _, unit in ipairs(grp.units) do
-		if unit.skill == "Client" then
-			slotcnt = slotcnt + 1
-		end
-	end
-	if slotcnt > 0 then
-		if slotcnt > 1 then
-			Logger:warn(string.format("DCT requires 1 slot groups. Group "..
-				"'%s' of type a/c (%s) has more than one player slot.",
-				grp.name, grp.units[1].type))
-		end
-		return true
-	end
-	return false
-end
-
-function Theater:_loadPlayerSlots()
-	local cnt = 0
-	for _, coa_data in pairs(env.mission.coalition) do
-		local grps = STM.processCoalition(coa_data,
-			env.getValueDictByKey,
-			isPlayerGroup,
-			nil)
-		for _, grp in ipairs(grps) do
-			local asset =
-			self:getAssetMgr():factory(enum.assetType.PLAYERGROUP)(Template({
-				["objtype"]   = "playergroup",
-				["name"]      = grp.data.name,
-				["regionname"]= "theater",
-				["coalition"] = coalition.getCountryCoalition(grp.countryid),
-				["desc"]      = "Player group",
-				["tpldata"]   = grp,
-			}), {["name"] = "theater", ["priority"] = 1000,})
-			self:getAssetMgr():add(asset)
-			asset:spawn()
-			cnt = cnt + 1
-		end
-	end
-	Logger:info(string.format("_loadPlayerSlots(); found %d slots", cnt))
+function Theater:delayedInit()
+	uiscratchpad(self)
+	self:loadPlayerSlots()
+	self:loadOrGenerate()
+	self:queueCommand(100, Command(self.export, self))
 end
 
 function Theater:registerHandler(func, ctx, name)
@@ -253,6 +224,12 @@ function Theater:onEvent(event)
 		Logger:debug("executing handler: "..val.name)
 		handler(val.ctx, event)
 	end
+	if event.id == world.event.S_EVENT_MISSION_END then
+		local ok, err = os.remove(settings.statepath)
+		if not ok then
+			Logger:error("unable to remove statepath; "..err)
+		end
+	end
 end
 
 function Theater:export(_)
@@ -268,10 +245,11 @@ function Theater:export(_)
 	end
 
 	local exporttbl = {
-		["complete"] = self.complete,
+		["complete"] = self.tickets:isComplete(),
 		["date"]     = os.date("!*t", dctutils.zulutime(timer.getAbsTime())),
 		["theater"]  = env.mission.theatre,
 		["sortie"]   = env.getValueDictByKey(env.mission.sortie),
+		["tickets"]  = self.tickets:marshal(),
 		["assetmgr"] = self:getAssetMgr():marshal(),
 		["bldgDest"]  = self.bldgPersist:returnList(),
 		["startdate"] = self.startdate,
@@ -282,12 +260,6 @@ function Theater:export(_)
 	statefile:flush()
 	statefile:close()
 	return self.savestatefreq
-end
-
-function Theater:generate()
-	for _, r in pairs(self.regions) do
-		r:generate(self.assetmgr)
-	end
 end
 
 function Theater:getAssetMgr()
@@ -301,6 +273,10 @@ end
 function Theater:getcntr()
 	self.namecntr = self.namecntr + 1
 	return self.namecntr
+end
+
+function Theater:getTickets()
+	return self.tickets
 end
 
 function Theater:playerRequest(data)

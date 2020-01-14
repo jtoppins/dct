@@ -176,44 +176,37 @@ end
 
 local function getkeys(objtype)
 	local keys = {
-		[1] = {
+		{
 			["name"]  = "name",
 			["type"]  = "string",
-		},
-		[2] = {
+		}, {
 			["name"]  = "regionname",
 			["type"]  = "string",
-		},
-		[3] = {
+		}, {
 			["name"]  = "coalition",
 			["type"]  = "number",
 			["check"] = checkside,
-		},
-		[4] = {
+		}, {
 			["name"]    = "uniquenames",
 			["type"]    = "boolean",
 			["default"] = false,
-		},
-		[5] = {
+		}, {
 			["name"]    = "priority",
 			["type"]    = "number",
 			["default"] = enum.assetTypePriority[objtype] or 1000,
-		},
-		[6] = {
-			["name"]    = "primary",
-			["type"]    = "boolean",
-			["default"] = false,
-		},
-		[7] = {
+		}, {
 			["name"]    = "intel",
 			["type"]    = "number",
 			["default"] = 0,
-		},
-		[8] = {
+		}, {
 			["name"]    = "spawnalways",
 			["type"]    = "boolean",
 			["default"] = false,
-		},
+		}, {
+			["name"]    = "cost",
+			["type"]    = "number",
+			["default"] = 0,
+		}
 	}
 
 	if objtype ~= enum.assetType.AIRSPACE and

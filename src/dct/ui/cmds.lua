@@ -117,7 +117,22 @@ function CheckPayloadCmd:__init(theater, data)
 end
 
 function CheckPayloadCmd:_execute(_ --[[time]], _ --[[cmdr]])
-	local msg = loadout.check(self.asset)
+	local msg
+	local ok, costs = loadout.check(self.asset)
+	if ok then
+		msg = "Valid loadout, you may depart. Good luck!"
+	else
+		msg = "You are over budget! Re-arm before departing, or "..
+			"you will be kicked to spectator!"
+	end
+
+	-- print cost summary
+	msg = msg.."\n== Loadout Summary:"
+	for cat, val in pairs(enum.weaponCategory) do
+		msg = msg ..string.format("\n\t%s cost: %d / %d",
+			cat, costs[val].current, costs[val].max)
+	end
+
 	return msg
 end
 

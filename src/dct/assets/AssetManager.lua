@@ -145,7 +145,11 @@ end
 
 local function handleAssetDeath(self, event)
 	local asset = event.initiator
-	self:remove(asset)
+	dct.Theater.singleton():getTickets():loss(asset.owner,
+		asset.cost, false)
+	if asset.type ~= enum.assetType.PLAYERGROUP then
+		self:remove(asset)
+	end
 end
 
 local handlers = {

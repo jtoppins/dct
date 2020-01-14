@@ -93,7 +93,8 @@ function AssetBase:__init(template, region)
 		"rgnname",
 		"tplname",
 		"name",
-		"codename",})
+		"codename",
+		"cost",})
 	self._spawned    = false
 	self._dead       = false
 	self._targeted   = {}
@@ -128,6 +129,7 @@ function AssetBase:_completeinit(template, region)
 	self.owner    = template.coalition
 	self.rgnname  = region.name
 	self.tplname  = template.name
+	self.cost     = math.abs(template.cost)
 	if norenametype[self.type] == true then
 		self.name = self.tplname
 	else
