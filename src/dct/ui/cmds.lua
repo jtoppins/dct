@@ -22,6 +22,7 @@ function UICmd:__init(theater, data)
 	local grpdata = theater.playergps[data.name]
 
 	self.theater      = theater
+	self.type         = data.type
 	self.grpid        = grpdata.id
 	self.grpname      = data.name
 	self.side         = grpdata.side
@@ -35,8 +36,12 @@ function UICmd:isAlive()
 end
 
 function UICmd:execute(time)
-	if not self:isAlive() then
-		Logger:debug("UICmd thinks player is dead "..debug.traceback())
+	-- only process commands from live players unless they are abort
+	-- commands
+	if not self:isAlive() and
+	   self.type ~= enum.uiRequestType.MISSIONABORT then
+		Logger:debug("UICmd thinks player is dead, ignore cmd; "..
+			debug.traceback())
 		self.theater.playergps[self.grpname].cmdpending = false
 		return nil
 	end
