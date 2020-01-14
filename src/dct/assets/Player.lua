@@ -7,35 +7,209 @@
 -- A player asset doesn't die, is always spawned, never
 -- reduces status, and is associated with a squadron.
 -- Optionally the player can be associated with an airbase.
+--
+-- ## Ticket Consumption
+-- Players only consume a ticket when a when they die or otherwise
+-- leave the slot is an 'invalid' way. A valid way to leave a slot
+-- is at an authorized airbase.
+--
+-- ## Slot Management
+-- Spawned player objects are used as a signal for enabling/disabling
+-- the slot. This is additionally combined with a transient state
+-- potentially defined in the Player's State class (EmptyState or
+-- OccupiedState) to ultimately determine if the slot is 'enabled'.
+-- The hooks script used for slot management can utilize this by
+-- directly asking the Player object if it is enabled via the
+-- 'isEnabled()' API call.
+-- This API call will combine the spawned(S) and kick pending(K)
+-- states to prevent a race between posting a kick request
+-- and affecting the kick in the hooks script. The boolean table
+-- below shows the logic governing when a slot is considered
+-- 'enabled';
+--     EmptyState:     enabled = S & !K
+--     OccupiedState:  enabled = S; we really don't care through
+--                                  because the slot should be
+--                                  occupied
 --]]
 
+require("math")
 local class = require("libs.class")
 local AssetBase = require("dct.assets.AssetBase")
 local uimenu  = require("dct.ui.groupmenu")
 local Logger  = dct.Logger.getByName("Asset")
 local loadout = require("dct.systems.loadouts")
+local State   = require("dct.libs.State")
+local Command = require("dct.Command")
 local settings = _G.dct.settings
+
+local notifymsg =
+	"Please read the loadout limits in the briefing and "..
+	"use the F10 Menu to validate your loadout before departing."
+
+local OccupiedState = class(State)
+local EmptyState    = class(State)
+function EmptyState:enter(asset)
+	asset:kick()
+end
+
+function EmptyState:onDCTEvent(asset, event)
+	if world.event.S_EVENT_BIRTH ~= event.id then
+		return nil
+	end
+
+	local theater = dct.Theater.singleton()
+	local grp = event.initiator:getGroup()
+	local id = grp:getID()
+	if asset.groupId ~= id then
+		Logger:warn(
+			string.format("(%s) - asset.groupId(%d) != object:getID(%d)",
+				asset.name, asset.groupId, id))
+	end
+	asset.groupId = id
+	uimenu.createMenu(asset)
+	local cmdr = theater:getCommander(grp:getCoalition())
+	local msn  = cmdr:getAssigned(asset)
+
+	if msn then
+		trigger.action.outTextForGroup(asset.groupId,
+			"Welcome. A mission is already assigned to this slot, "..
+			"use the F10 menu to get the briefing or find another.",
+			20, false)
+	else
+		trigger.action.outTextForGroup(asset.groupId,
+			"Welcome. Use the F10 Menu to get a theater update and "..
+			"request a mission.",
+			20, false)
+	end
+	trigger.action.outTextForGroup(asset.groupId, notifymsg, 20, false)
+	return OccupiedState(event.initiator:inAir())
+end
+
+function OccupiedState:__init(inair)
+	self.inair = inair
+	self.loseticket = false
+	self.bleedctr = 0
+	self.bleedperiod = 5
+	self.bleedwarn = false
+	self._eventhandlers = {
+		[world.event.S_EVENT_TAKEOFF]           = self.handleTakeoff,
+		[world.event.S_EVENT_EJECTION]          = self.handleLoseTicket,
+		[world.event.S_EVENT_DEAD]              = self.handleLoseTicket,
+		[world.event.S_EVENT_PILOT_DEAD]        = self.handleLoseTicket,
+		[world.event.S_EVENT_CRASH]             = self.handleLoseTicket,
+		[world.event.S_EVENT_PLAYER_LEAVE_UNIT] = self.handleSwitchEmpty,
+		[world.event.S_EVENT_LAND]              = self.handleLand,
+	}
+end
+
+function OccupiedState:enter(asset)
+	asset:setDead(false)
+end
+
+function OccupiedState:exit(asset)
+	if self.loseticket then
+		asset:setDead(true)
+	end
+end
+
+function OccupiedState:_bleed(asset)
+	local theater = dct.Theater.singleton()
+	local tickets = theater:getTickets()
+	if not (tickets:getConfig(asset.owner).bleed and
+		self.inair == true) then
+		return nil
+	end
+
+	local cmdr = theater:getCommander(asset.owner)
+	local msn  = cmdr:getAssigned(asset)
+	if msn then
+		self.bleedctr = 0
+		self.bleedwarn = false
+	else
+		self.bleedctr = self.bleedctr + 1
+	end
+
+	local state = nil
+	if not self.bleedwarn and
+	   self.bleedctr > math.floor(self.bleedperiod / 2) then
+		self.bleedwarn = true
+		trigger.action.outTextForGroup(asset.groupId,
+			"WARNING! You do not have a mission assigned, land or obtain "..
+			"a mission or you will be kicked.",
+			20, true)
+	end
+	if self.bleedctr >= self.bleedperiod then
+		self.loseticket = true
+		self.bleedctr = 0
+		trigger.action.outTextForGroup(asset.groupId,
+			"You have been kicked for not having a mission assigned.",
+			20, true)
+		state = EmptyState()
+	end
+	return state
+end
+
+function OccupiedState:update(asset)
+	local grp = Group.getByName(asset.name)
+	if grp == nil then
+		return EmptyState()
+	end
+	return self:_bleed(asset)
+end
+
+function OccupiedState:onDCTEvent(asset, event)
+	local handler = self._eventhandlers[event.id]
+	Logger:debug(string.format(
+		"OccupiedState:onDCTEvent; event.id: %d, handler: %s",
+		event.id, tostring(handler)))
+	local state
+	if handler ~= nil then
+		state = handler(self, asset, event)
+	end
+	return state
+end
+
+function OccupiedState:handleTakeoff(asset, _ --[[event]])
+	self.loseticket = true
+	self.inair = true
+	local ok = loadout.check(asset)
+	if not ok then
+		trigger.action.outTextForGroup(asset.groupId,
+			"You have been removed to spectator for flying with an "..
+			"invalid loadout. "..notifymsg,
+			20, true)
+		return EmptyState()
+	end
+	return nil
+end
+
+function OccupiedState:handleLand(--[[asset, event]])
+	-- TODO: if returned to an authorized airbase clear loseticket flag
+	-- for now if they land at all we are ok
+	self.loseticket = false
+	self.inair = false
+	return nil
+end
+
+function OccupiedState:handleLoseTicket(--[[asset, event]])
+	self.loseticket = true
+	return EmptyState()
+end
+
+function OccupiedState:handleSwitchEmpty(--[[asset, event]])
+	return EmptyState()
+end
 
 --[[
 -- Player - represents a player slot in DCS
---
--- Slot Management
---   Player objects cannot die however they can be spawned. Spawning
---   is used as the signal for enabling/disabling the slot. The external
---   hooks script will check if this object is spawned before allowing
---   a player to enter the slot.
---
---   This covers disabling the other side is covering kicking a player
---   from a slot.
 --]]
 local Player = class(AssetBase)
 function Player:__init(template, region)
 	self.__clsname = "Player"
-	self._eventhandlers = {
-		[world.event.S_EVENT_BIRTH]   = self.handleBirth,
-		[world.event.S_EVENT_TAKEOFF] = self.handleTakeoff,
-	}
+	self.updateperiod = 90
 	AssetBase.__init(self, template, region)
+	trigger.action.setUserFlag(self.name, false)
+	trigger.action.setUserFlag(self.name.."_kick", false)
 	self.marshal   = nil
 	self.unmarshal = nil
 end
@@ -52,8 +226,13 @@ function Player:_completeinit(template, region)
 		self.ato = require("dct.enum").missionType
 	end
 	self.payloadlimits = settings.payloadlimits
-	trigger.action.setUserFlag(self.name, false)
-	trigger.action.setUserFlag(self.name.."_kick", false)
+end
+
+function Player:_setup()
+	self.state = EmptyState()
+	self.state:enter(self)
+	dct.Theater.singleton():queueCommand(self.updateperiod,
+		Command(self.update, self))
 end
 
 function Player:getObjectNames()
@@ -66,36 +245,22 @@ function Player:getLocation()
 	return self._location
 end
 
-function Player:handleBirth(event)
-	local theater = require("dct.Theater").singleton()
-	local grp = event.initiator:getGroup()
-	local id = grp:getID()
-	if self.groupId ~= id then
-		Logger:warn(
-			string.format("(%s) - asset.groupId(%d) != object:getID(%d)",
-				self.name, self.groupId, id))
+function Player:update()
+	local newstate = self.state:update(self)
+	if newstate ~= nil then
+		self.state:exit(self)
+		self.state = newstate
+		self.state:enter(self)
 	end
-	self.groupId = id
-	uimenu.createMenu(self)
-	local cmdr = theater:getCommander(grp:getCoalition())
-	local msn  = cmdr:getAssigned(self)
-
-	if msn then
-		trigger.action.outTextForGroup(self.groupId,
-			"Welcome. A mission is already assigned to this slot, "..
-			"use the F10 menu to get the briefing or find another.",
-			20, false)
-	else
-		trigger.action.outTextForGroup(self.groupId,
-			"Welcome. Use the F10 Menu to get a theater update and "..
-			"request a mission.",
-			20, false)
-	end
-	loadout.notify(self)
 end
 
-function Player:handleTakeoff(_ --[[event]])
-	loadout.kick(self)
+function Player:onDCTEvent(event)
+	local newstate = self.state:onDCTEvent(self, event)
+	if newstate ~= nil then
+		self.state:exit(self)
+		self.state = newstate
+		self.state:enter(self)
+	end
 end
 
 function Player:spawn()
@@ -109,10 +274,14 @@ function Player:despawn()
 end
 
 --[[
--- kick - cause the player to be removed from the slot
+-- kick - request player to be kicked from slot
 --
--- players are immediately removed from the slot, however, this
--- action does not prevent another player from joing the slot
+-- Posts a request for the player to be kicked from the slot.
+-- This depends on an outside DCS hooks script to be running
+-- which will kick the player from the slot and reset the
+-- kick flag.
+-- This will then allow the player state the be reset allowing
+-- another player to join the slot.
 --]]
 function Player:kick()
 	trigger.action.setUserFlag(self.name.."_kick", true)

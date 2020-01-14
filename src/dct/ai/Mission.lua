@@ -17,6 +17,15 @@ local uicmds   = require("dct.ui.cmds")
 
 local MISSION_LIMIT = 60*60*3  -- 3 hours in seconds
 
+local function composeBriefing(msn, tgt)
+	local briefing = tgt.briefing
+	local interptbl = {
+		["TOT"] = os.date("!%F %Rz",
+			dctutils.zulutime(msn:getTimeout()*.6)),
+	}
+	return dctutils.interp(briefing, interptbl)
+end
+
 local Mission = class()
 function Mission:__init(cmdr, missiontype, grpname, tgtname)
 	self._complete = false
@@ -37,22 +46,14 @@ function Mission:__init(cmdr, missiontype, grpname, tgtname)
 
 	-- compose the briefing at mission creation to represent
 	-- known intel the pilots were given before departing
-	self.briefing  = self:_composeBriefing()
-	self.cmdr:getAsset(tgtname):setTargeted(self.cmdr.owner, true)
+	local tgt = self.cmdr:getAsset(tgtname)
+	self.briefing  = composeBriefing(self, tgt)
+	tgt:addObserver(self.onTgtEvent, self, "Mission.onDCTEvent")
+	tgt:setTargeted(self.cmdr.owner, true)
 	self:addAssigned(self.cmdr:getAsset(grpname))
 
 	-- TODO: setup remaining mission parameters;
 	--   * mission world states
-end
-
-function Mission:_composeBriefing()
-	local tgt = self.cmdr:getAsset(self.target)
-	local briefing = tgt.briefing
-	local interptbl = {
-		["TOT"] = os.date("!%F %Rz",
-			dctutils.zulutime(self:getTimeout()*.6)),
-	}
-	return dctutils.interp(briefing, interptbl)
 end
 
 function Mission:getID()
@@ -112,6 +113,32 @@ function Mission:abort(asset)
 	return self.id
 end
 
+function Mission:queueabort(reason)
+	self:_setComplete()
+	local theater = dct.Theater.singleton()
+	for _, name in ipairs(self.assigned) do
+		local request = {
+			["type"]   = enum.uiRequestType.MISSIONABORT,
+			["name"]   = name,
+			["value"]  = reason,
+		}
+		-- We have to use theater:queueCommand() to bypass the
+		-- limiting of players sending too many commands
+		theater:queueCommand(10, uicmds[request.type](theater, request))
+	end
+end
+
+function Mission:onTgtEvent(event)
+	if event.id ~= enum.event.DCT_EVENT_DEAD then
+		return
+	end
+	local tgt = event.initiator
+	dct.Theater.singleton():getTickets():reward(self.cmdr.owner,
+		tgt.cost, true)
+	tgt:removeObserver(self.onTgtEvent)
+	self:queueabort(enum.missionAbortType.COMPLETE)
+end
+
 -- for now just track if the mission has not timmed out and
 -- if it has queue an abort command with abort reason
 function Mission:update(_)
@@ -119,29 +146,14 @@ function Mission:update(_)
 		return
 	end
 
-	local reason
-	local tgt = self.cmdr:getAsset(self.target)
-	if tgt == nil or tgt:isDead() then
-		reason = enum.missionAbortType.COMPLETE
-		self._complete = true
-	elseif timer.getAbsTime() > self.timeend then
-		reason = enum.missionAbortType.TIMEOUT
-	end
-
-	if reason ~= nil then
-		for _, name in ipairs(self.assigned) do
-			local request = {
-				["type"]   = enum.uiRequestType.MISSIONABORT,
-				["name"]   = name,
-				["value"]  = reason,
-			}
-			-- We have to use theater:queueCommand() to bypass the
-			-- limiting of players sending too many commands
-			local theater = require("dct.Theater").singleton()
-			theater:queueCommand(10, uicmds[request.type](theater, request))
-		end
+	if timer.getAbsTime() > self.timeend then
+		self:queueabort(enum.missionAbortType.TIMEOUT)
 	end
 	return
+end
+
+function Mission:_setComplete()
+	self._complete = true
 end
 
 function Mission:isComplete()
