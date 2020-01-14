@@ -58,7 +58,7 @@ function Commander:update(time)
 	for _, mission in pairs(self.missions) do
 		mission:update(time)
 	end
-	return time + self.aifreq
+	return self.aifreq
 end
 
 --[[
