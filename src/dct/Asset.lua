@@ -345,7 +345,7 @@ local function filterDeadObjects(tbl, grp)
 	if grp.data.dct_dead == true then
 		-- we either skip or if a static object that is a primary target
 		-- we set dead
-		if settings.spawn.deadobjects == false or
+		if settings.spawndead == false or
 			grp.data.dct_deathgoal == nil then
 			return
 		end
