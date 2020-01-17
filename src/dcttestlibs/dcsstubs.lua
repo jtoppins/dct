@@ -76,6 +76,96 @@ function timer.scheduleFunction(_, _, _)
 end
 _G.timer = timer
 
+local country = {}
+country.id = {
+	["RUSSIA"]                  = 0,
+	["UKRAINE"]                 = 1,
+	["USA"]                     = 2,
+	["TURKEY"]                  = 3,
+	["UK"]                      = 4,
+	["FRANCE"]                  = 5,
+	["GERMANY"]                 = 6,
+	["AGGRESSORS"]              = 7,
+	["CANADA"]                  = 8,
+	["SPAIN"]                   = 9,
+	["THE_NETHERLANDS"]         = 10,
+	["BELGIUM"]                 = 11,
+	["NORWAY"]                  = 12,
+	["DENMARK"]                 = 13,
+	["ISRAEL"]                  = 15,
+	["GEORGIA"]                 = 16,
+	["INSURGENTS"]              = 17,
+	["ABKHAZIA"]                = 18,
+	["SOUTH_OSETIA"]            = 19,
+	["ITALY"]                   = 20,
+	["AUSTRALIA"]               = 21,
+	["SWITZERLAND"]             = 22,
+	["AUSTRIA"]                 = 23,
+	["BELARUS"]                 = 24,
+	["BULGARIA"]                = 25,
+	["CHEZH_REPUBLIC"]          = 26,
+	["CHINA"]                   = 27,
+	["CROATIA"]                 = 28,
+	["EGYPT"]                   = 29,
+	["FINLAND"]                 = 30,
+	["GREECE"]                  = 31,
+	["HUNGARY"]                 = 32,
+	["INDIA"]                   = 33,
+	["IRAN"]                    = 34,
+	["IRAQ"]                    = 35,
+	["JAPAN"]                   = 36,
+	["KAZAKHSTAN"]              = 37,
+	["NORTH_KOREA"]             = 38,
+	["PAKISTAN"]                = 39,
+	["POLAND"]                  = 40,
+	["ROMANIA"]                 = 41,
+	["SAUDI_ARABIA"]            = 42,
+	["SERBIA"]                  = 43,
+	["SLOVAKIA"]                = 44,
+	["SOUTH_KOREA"]             = 45,
+	["SWEDEN"]                  = 46,
+	["SYRIA"]                   = 47,
+	["YEMEN"]                   = 48,
+	["VIETNAM"]                 = 49,
+	["VENEZUELA"]               = 50,
+	["TUNISIA"]                 = 51,
+	["THAILAND"]                = 52,
+	["SUDAN"]                   = 53,
+	["PHILIPPINES"]             = 54,
+	["MOROCCO"]                 = 55,
+	["MEXICO"]                  = 56,
+	["MALAYSIA"]                = 57,
+	["LIBYA"]                   = 58,
+	["JORDAN"]                  = 59,
+	["INDONESIA"]               = 60,
+	["HONDURAS"]                = 61,
+	["ETHIOPIA"]                = 62,
+	["CHILE"]                   = 63,
+	["BRAZIL"]                  = 64,
+	["BAHRAIN"]                 = 65,
+	["THIRDREICH"]              = 66,
+	["YUGOSLAVIA"]              = 67,
+	["USSR"]                    = 68,
+	["ITALIAN_SOCIAL_REPUBLIC"] = 69,
+	["ALGERIA"]                 = 70,
+	["KUWAIT"]                  = 71,
+	["QATAR"]                   = 72,
+	["OMAN"]                    = 73,
+	["UNITED_ARAB_EMIRATES"]    = 74,
+}
+
+country.name  = {}
+country.names = {}
+for k,v in pairs(country.id) do
+	country.name[v] = k
+	country.names[v] = string.gsub(k, "_", " ")
+end
+_G.country = country
+
+local radio = {}
+radio.modulation = {AM = 0, FM = 1}
+_G.radio = radio
+
 local coalition = {}
 coalition.side = {}
 coalition.side.NEUTRAL = 0
@@ -296,14 +386,18 @@ world.event = {
 	["S_EVENT_REFUELING_STOP"]    = 14,
 	["S_EVENT_BIRTH"]             = 15,
 	["S_EVENT_HUMAN_FAILURE"]     = 16,
-	["S_EVENT_ENGINE_STARTUP"]    = 17,
-	["S_EVENT_ENGINE_SHUTDOWN"]   = 18,
-	["S_EVENT_PLAYER_ENTER_UNIT"] = 19,
-	["S_EVENT_PLAYER_LEAVE_UNIT"] = 20,
-	["S_EVENT_PLAYER_COMMENT"]    = 21,
-	["S_EVENT_SHOOTING_START"]    = 22,
-	["S_EVENT_SHOOTING_END"]      = 23,
-	["S_EVENT_MAX"]               = 24,
+	["S_EVENT_DETAILED_FAILURE"]  = 17,
+	["S_EVENT_ENGINE_STARTUP"]    = 18,
+	["S_EVENT_ENGINE_SHUTDOWN"]   = 19,
+	["S_EVENT_PLAYER_ENTER_UNIT"] = 20,
+	["S_EVENT_PLAYER_LEAVE_UNIT"] = 21,
+	["S_EVENT_PLAYER_COMMENT"]    = 22,
+	["S_EVENT_SHOOTING_START"]    = 23,
+	["S_EVENT_SHOOTING_END"]      = 24,
+	["S_EVENT_MARK_ADDED"]        = 25,
+	["S_EVENT_MARK_CHANGE"]       = 26,
+	["S_EVENT_MARK_REMOVED"]      = 27,
+	["S_EVENT_MAX"]               = 28,
 }
 function world.addEventHandler(_)
 end
