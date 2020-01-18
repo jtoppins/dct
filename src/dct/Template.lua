@@ -105,7 +105,7 @@ local function makeNamesUnique(data)
 	for _, cat_data in pairs(data) do
 		for _, grp in ipairs(cat_data) do
 			grp.data.name = grp.data.name .. " #" .. getcntr()
-			for _, v in ipairs(grp.units or {}) do
+			for _, v in ipairs(grp.data.units or {}) do
 				v.name = v.name .. " #" .. getcntr()
 			end
 		end
