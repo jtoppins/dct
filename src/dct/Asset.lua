@@ -10,7 +10,7 @@ require("math")
 local class    = require("libs.class")
 local utils    = require("libs.utils")
 local dctutils = require("dct.utils")
-local Template = require("dct.Template")
+local STM      = require("dct.STM")
 local Goal     = require("dct.Goal")
 local Logger   = require("dct.Logger").getByName("Asset")
 local settings = _G.dct.settings
@@ -320,7 +320,7 @@ function Asset:_spawn()
 				coalition.addStaticObject(gcpy.countryid, gcpy.data)
 			else
 				coalition.addGroup(gcpy.countryid,
-					Unit.Category[Template.categorymap[string.upper(cat_idx)]],
+					Unit.Category[STM.categorymap[string.upper(cat_idx)]],
 					gcpy.data)
 			end
 		end

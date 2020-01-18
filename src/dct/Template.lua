@@ -9,31 +9,29 @@ local class = require("libs.class")
 local utils = require("libs.utils")
 local enum  = require("dct.enum")
 local Goal  = require("dct.Goal")
-
-local categorymap = {
-	["HELICOPTER"] = 'HELICOPTER',
-	["SHIP"]       = 'SHIP',
-	["VEHICLE"]    = 'GROUND_UNIT',
-	["PLANE"]      = 'AIRPLANE',
-	["STATIC"]     = 'STRUCTURE',
-}
+local STM   = require("dct.STM")
 
 local function checktype(val)
 	local allowed = enum.assetType
-	if allowed[string.upper(val)] then
+	if type(val) == "number" then
 		return true
+	elseif type(val) == "string" then
+		return (allowed[string.upper(val)] ~= nil)
 	end
 	return false
 end
 
 local function settype(tbl, key)
 	local allowed = enum.assetType
-	tbl[key] = allowed[string.upper(tbl[key])]
+	local t = type(tbl[key])
+	if t == "string" then
+		tbl[key] = allowed[string.upper(tbl[key])]
+	end
 end
 
 --[[
 -- represents the amount of damage that can be taken before
--- that state is no longer consitered valid.
+-- that state is no longer considered valid.
 -- example:
 --   goal: damage unit to 85% of original health (aka incapacitate)
 --
@@ -112,6 +110,50 @@ local function makeNamesUnique(data)
 	end
 end
 
+local function overrideUnitOptions(unit, key, tpl, basename)
+	if unit.playerCanDrive ~= nil then
+		unit.playerCanDrive = false
+	end
+	unit.unitId = nil
+	unit.dct_deathgoal = goalFromName(unit.name, Goal.objtype.UNIT)
+	if unit.dct_deathgoal ~= nil then
+		tpl.hasDeathGoals = true
+	end
+	unit.name = basename.."-"..key
+end
+
+local function overrideGroupOptions(grp, idx, tpl, category)
+	local opts = {
+		visible        = true,
+		uncontrollable = true,
+		uncontrolled   = true,
+		hidden         = false,
+		lateActivation = false,
+	}
+
+	for k, v in pairs(opts) do
+		if grp[k] ~= nil then grp[k] = v end
+	end
+
+	local goaltype = Goal.objtype.GROUP
+	if string.lower(category) == "static" then
+		goaltype = Goal.objtype.STATIC
+	end
+
+	grp.groupId = nil
+	grp.start_time = 0
+	grp.dct_deathgoal = goalFromName(grp.name, goaltype)
+	if grp.dct_deathgoal ~= nil then
+		tpl.hasDeathGoals = true
+	end
+	grp.name = tpl.regionname.."_"..tpl.name.." "..tpl.coalition.." "..
+		category.." "..tostring(idx)
+
+	for i, unit in ipairs(grp.units or {}) do
+		overrideUnitOptions(unit, i, tpl, grp.name)
+	end
+end
+
 --[[
 --  Template class
 --    base class that reads in a template file and organizes
@@ -137,10 +179,7 @@ end
 --          data      = {
 --            # group def members
 --            dct_deathgoal = goalspec
---          }
---        }
---      }
---    }
+--    }}}}
 --
 --    DCT File
 --    --------
@@ -160,60 +199,43 @@ end
 --
 --]]
 local Template = class()
-function Template:__init(regionname, stmfile, dctfile)
-	assert(regionname ~= nil, "regionname is required")
-	assert(stmfile ~= nil,    "stmfile is required")
-	assert(dctfile ~= nil,    "dctfile is required")
-	self.regionname = regionname
-	self.path = stmfile
+function Template:__init(data)
+	assert(data and type(data) == "table", "value error: data required")
 	self.hasDeathGoals = false
-	self:__loadMetadata(dctfile)
-	self:__loadSTM(stmfile)
+	utils.mergetables(self, utils.deepcopy(data))
+	self:validate()
 
-	-- remove unneeded functions
-	self.__lookupname = nil
-	self.categorymap  = nil
+	self.fromFile = nil
 end
 
-function Template:__lookupname(name)
-	local newname = name
-	local namelist = self.tplnames or {}
-	if namelist[name] ~= nil then
-		newname = namelist[name]
-	end
-	return newname
-end
-
-function Template:__loadMetadata(dctfile)
+function Template:validate()
 	local requiredkeys = {
 		["objtype"]  = {
-			["type"]  = "string",
 			["check"] = checktype,
 			["set"]   = settype,
 		},
+		["tpldata"] = {
+			["check"] = function (t) return type(t) == "table" end,
+		},
+		["coalition"] = {
+			["check"] = function (t) return t ~= nil end,
+		},
 	}
 
-	assert(lfs.attributes(dctfile) ~= nil, "file does not exist: "..dctfile)
-	local rc = pcall(dofile, dctfile)
-	assert(rc, "failed to parse: "..dctfile)
-	assert(metadata ~= nil)
-
-	-- validate metadata
-	for key, data in pairs(requiredkeys) do
-		if metadata[key] == nil or
-		   type(metadata[key]) ~= data["type"] or
-		   not data["check"](metadata[key]) then
-			assert(false, "invalid or missing option '"..key..
-			       "' in dct file; "..dctfile)
+	for key, val in pairs(requiredkeys) do
+		if self[key] == nil or
+		   not val["check"](self[key]) then
+			assert(false, "invalid or missing option '"..key.."'")
 		else
-			if data["set"] ~= nil and type(data["set"]) == "function" then
-				data["set"](metadata, key)
+			if val["set"] ~= nil and type(val["set"]) == "function" then
+				val["set"](self, key)
 			end
 		end
 	end
-	utils.mergetables(self, metadata)
-	metadata = nil
 
+	-- order is important here otherwise the default priority will be
+	-- nil because objtype will have not been converted from a string
+	-- to its numerical value
 	local optionalkeys = {
 		["uniquenames"] = {
 			["type"]    = "boolean",
@@ -227,6 +249,10 @@ function Template:__loadMetadata(dctfile)
 			["type"]    = "number",
 			["default"] = Goal.priority.SECONDARY,
 		},
+		["regionname"] = {
+			["type"]    = "string",
+			["default"] = env.mission.theatre,
+		},
 	}
 
 	for key, data in pairs(optionalkeys) do
@@ -235,162 +261,12 @@ function Template:__loadMetadata(dctfile)
 			self[key] = data.default
 		end
 	end
-end
 
-function Template:__loadSTM(stmfile)
-	assert(lfs.attributes(stmfile) ~= nil, "file does not exist: "..stmfile)
-	local rc = pcall(dofile, stmfile)
-	assert(rc, "failed to parse: "..stmfile)
-	assert(staticTemplate ~= nil, "no 'staticTemplate' defined for: "..
-		stmfile)
-
-	local tpl = staticTemplate
-	staticTemplate = nil
-
-	self.tplnames= tpl.localization.DEFAULT
-	self.name    = self:__lookupname(tpl.name)
-	self.theatre = self:__lookupname(tpl.theatre)
-	self.desc    = self:__lookupname(tpl.desc)
-	self.tpldata = {}
-
-	for coa_key, coa_data in pairs(tpl.coalition) do
-		self:__processCoalition(coa_key, coa_data)
-	end
-	self.tplnames= nil
-end
-
-function Template:__processCoalition(side, coa)
-	if side ~= 'red' and side ~= 'blue' and
-	   type(coa) ~= 'table' then
-		return
-	end
-
-	if coa.country == nil or type(coa.country) ~= 'table' then
-		return
-	end
-
-	for _, ctry_data in ipairs(coa.country) do
-		side = coalition.getCountryCoalition(ctry_data.id)
-		self:__processCountry(side, ctry_data)
-	end
-end
-
-function Template:__processCountry(side, ctry)
-	local funcmap = {
-		["HELICOPTER"] = self.__addOneGroup,
-		["SHIP"]       = self.__addOneGroup,
-		["VEHICLE"]    = self.__addOneGroup,
-		["PLANE"]      = self.__addOneGroup,
-		["STATIC"]     = self.__addOneStatic,
-	}
-
-	local ctx = {}
-	ctx.side      = side
-	ctx.category  = "none"
-	ctx.countryid = ctry.id
-
-	for cat, _ in pairs(categorymap) do
-		cat = string.lower(cat)
-		if ctry[cat] and type(ctry[cat]) == 'table' and
-		   ctry[cat].group then
-			if self.coalition == nil then
-				self.coalition = side
-			end
-			assert(self.coalition == side, "country("..ctry.id..") does not"..
-				" belong to template.coalition("..self.coalition.."),"..
-				" country belongs to "..side.." in file: "..self.path)
-
-			ctx.category = cat
-			utils.foreach(self,
-					ipairs,
-					funcmap[string.upper(cat)],
-					ctry[cat].group,
-					ctx)
+	-- loop over all tpldata and process names and existence of deathgoals
+	for cat, cat_data in pairs(self.tpldata) do
+		for idx, grp in ipairs(cat_data) do
+			overrideGroupOptions(grp.data, idx, self, cat)
 		end
-	end
-end
-
-function Template:__overrideUnitOptions(key, unit, ctx)
-	if unit.playerCanDrive ~= nil then
-		unit.playerCanDrive = false
-	end
-	unit.unitId = nil
-	unit.dct_deathgoal = goalFromName(self:__lookupname(unit.name),
-	                                  Goal.objtype.UNIT)
-	if unit.dct_deathgoal ~= nil then
-		self.hasDeathGoals = true
-	end
-	unit.name = ctx.basename.."-"..key
-end
-
-function Template:__overrideGroupOptions(grp, ctx)
-	local opts = {
-		visible        = true,
-		uncontrollable = true,
-		uncontrolled   = true,
-		hidden         = false,
-		lateActivation = false,
-	}
-
-	for k, v in pairs(opts) do
-		if grp[k] ~= nil then grp[k] = v end
-	end
-	grp.groupId = nil
-	grp.start_time = 0
-	grp.dct_deathgoal = goalFromName(self:__lookupname(grp.name),
-	                                 Goal.objtype.GROUP)
-	if grp.dct_deathgoal ~= nil then
-		self.hasDeathGoals = true
-	end
-	grp.name = self.regionname.."_"..self.name.." "..ctx.side.." "..
-			ctx.category.." "..#self.tpldata[ctx.category]
-	ctx.basename = grp.name
-	utils.foreach(self,
-		ipairs,
-		self.__overrideUnitOptions,
-		grp.units or {},
-		ctx)
-	-- lookup waypoint names
-	utils.foreach(ctx,
-		ipairs,
-		function(_, _, obj)
-			obj.name = self:__lookupname(obj.name)
-		end,
-		grp.route.points or {})
-end
-
-function Template:__addOneStatic(_, grp, ctx)
-	local tbl = {}
-
-	self:__createTable(ctx)
-
-	self:__overrideGroupOptions(grp, ctx)
-	tbl.data      = grp.units[1]
-	if tbl.data.dct_deathgoal ~= nil then
-		tbl.data.dct_deathgoal.objtype = Goal.objtype.STATIC
-	end
-	tbl.data.dead = grp.dead
-	tbl.countryid = ctx.countryid
-
-	table.insert(self.tpldata[ctx.category], tbl)
-end
-
-function Template:__addOneGroup(_, grp, ctx)
-	local tbl = {}
-
-	self:__createTable(ctx)
-
-	self:__overrideGroupOptions(grp, ctx)
-	tbl.data = grp
-	tbl.countryid = ctx.countryid
-
-	table.insert(self.tpldata[ctx.category], tbl)
-end
-
-function Template:__createTable(ctx)
-	local data = self.tpldata
-	if data[ctx.category] == nil then
-		data[ctx.category] = {}
 	end
 end
 
@@ -403,6 +279,17 @@ function Template:copyData()
 	return copy
 end
 
-Template.categorymap = categorymap
+function Template.fromFile(regionname, stmfile, dctfile)
+	assert(regionname ~= nil, "regionname is required")
+	assert(stmfile ~= nil, "stmfile is required")
+	assert(dctfile ~= nil, "dctfile is required")
+
+	local template = STM.transform(utils.readlua(stmfile, "staticTemplate"))
+	template.regionname = regionname
+	template.path = stmfile
+	template = utils.mergetables(template,
+		utils.readlua(dctfile, "metadata"))
+	return Template(template)
+end
 
 return Template

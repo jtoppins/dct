@@ -52,19 +52,19 @@ local sampletpls = {
 --]]
 
 local function stmexists()
-	dct.Template("test",
+	dct.Template.fromFile("test",
 		lfs.writedir()..utils.sep.."test.stm",
 		"dct-does-not-exist")
 end
 
 local function dctexists()
-	dct.Template("test",
+	dct.Template.fromFile("test",
 		"stm-does-not-exist",
 		lfs.writedir()..utils.sep.."test.dct")
 end
 
 local function singleside()
-	dct.Template("test",
+	dct.Template.fromFile("test",
 		lfs.writedir()..utils.sep.."test-both-sides.stm",
 		lfs.writedir()..utils.sep.."test.dct")
 end
@@ -76,7 +76,7 @@ local function main()
 
 	for _, data in pairs(sampletpls) do
 		--print("tplname: "..data.name)
-		local t = dct.Template(rname,
+		local t = dct.Template.fromFile(rname,
 			lfs.writedir()..utils.sep..data.name..".stm",
 			lfs.writedir()..utils.sep..data.name..".dct")
 

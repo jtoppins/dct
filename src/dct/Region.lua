@@ -146,7 +146,8 @@ function Region:_getTemplates(dirname, basepath)
 				if string.find(fpath, ".stm") ~= nil then
 					Logger:debug("=> process template: "..fpath)
 					local dctString = string.gsub(fpath, ".stm", ".dct")
-					self:_addTemplate(Template(self.name, fpath, dctString))
+					self:_addTemplate(
+						Template.fromFile(self.name, fpath, dctString))
 				end
 			end
 		end
