@@ -195,8 +195,20 @@ local coaltbl = {
 		["name"] = "UAE",
 		["side"] = coalition.side.BLUE,
 	},
+	[39] = {
+		["name"] = "Pakistan",
+		["side"] = coalition.side.BLUE,
+	},
+	[35] = {
+		["name"] = "Iraq",
+		["side"] = coalition.side.BLUE,
+	},
 
 	-- RED Coalition
+	[25] = {
+		["name"] = "Bulgaria",
+		["side"] = coalition.side.RED,
+	},
 	[18] = {
 		["name"] = "Abkhazia",
 		["side"] = coalition.side.RED,
@@ -260,7 +272,7 @@ local coaltbl = {
 }
 
 function coalition.getCountryCoalition(id)
-	--print("get country coalition id: "..id)
+	assert(coaltbl[id] ~= nil, "get country coalition id: "..id)
 	return coaltbl[id]["side"]
 end
 _G.coalition = coalition
