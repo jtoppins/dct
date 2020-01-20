@@ -105,10 +105,22 @@ function MissionCmd:_execute(time, cmdr)
 end
 
 
+local function briefingmsg(msn, actype)
+	local tgtinfo = msn:getTargetInfo()
+	local msg = string.format("ID: %s\n", msn:getID())..
+		string.format("%s: %s (%s)\n", human.locationhdr(msn.type),
+			human.grid2actype(actype, tgtinfo.location,
+				AO_LOC_PRECISION),
+			tgtinfo.callsign)..
+		"Briefing:\n"..msn:getDescription(actype, AO_LOC_PRECISION)
+	return msg
+end
+
 local MissionRqstCmd = class(MissionCmd)
 function MissionRqstCmd:__init(theater, data)
 	MissionCmd.__init(self, theater, data)
 	self.missiontype = data.value
+	self.displaytime = 120
 end
 
 function MissionRqstCmd:_execute(time, cmdr)
@@ -127,9 +139,9 @@ function MissionRqstCmd:_execute(time, cmdr)
 		msg = string.format("No %s missions available.",
 			human.missiontype(self.missiontype))
 	else
-		msg = string.format("Mission %s assigned, use the F10 Menu "..
-			"to see your briefing.",
-			msn:getID())
+		msg = string.format("Mission %s assigned, use F10 menu "..
+			"to see this briefing again\n", msn:getID())
+		msg = msg..briefingmsg(msn, self.actype)
 	end
 	return msg
 end
@@ -142,17 +154,7 @@ function MissionBriefCmd:__init(theater, data)
 end
 
 function MissionBriefCmd:_mission(time, cmdr, msn)
-	local msg
-	local tgtinfo = msn:getTargetInfo()
-
-	msg = string.format("ID: %s\n", msn:getID()) ..
-		string.format("%s: %s (%s)\n", human.locationhdr(msn.type),
-			human.grid2actype(self.actype, tgtinfo.location,
-				AO_LOC_PRECISION),
-			tgtinfo.callsign) ..
-		"Briefing:\n" .. msn:getDescription(self.actype, AO_LOC_PRECISION)
-
-	return msg
+	return briefingmsg(msn, self.actype)
 end
 
 

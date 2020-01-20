@@ -41,8 +41,22 @@ local testcmds = {
 			["value"]  = enum.missionType.STRIKE,
 		},
 		["assert"]     = true,
-		["expected"]   = "Mission STRIKE0085 assigned, use the F10 Menu "..
-			"to see your briefing.",
+		["expected"]   = "Mission STRIKE0085 assigned, use F10 menu to "..
+			"see this briefing again\n"..
+			"ID: STRIKE0085\n"..
+			"Target AO: 88°07.2'N 063°27.6'W (SEOUL)\n"..
+			"Briefing:\n"..
+			"Ground units operating in Iran have informed us of an "..
+			"Iranian Ammo Dump 88°07.2'N 063°27.6'W. Find and destroy "..
+			"the bunkers and the ordnance within.\n"..
+			"    Tot: 2001-06-22 19:02:20z\n    \n"..
+			"    Primary Objectives: Destroy the large, armoured bunker. "..
+			"It is heavily fortified, so accuracy is key.\n    \n"..
+			"    Secondary Objectives: Destroy the two smaller, white "..
+			"hangars.\n    \n"..
+			"    Recommended Pilots: 2\n    \n"..
+			"    Recommended Ordnance: Heavy ordnance required for "..
+			"bunker targets, e.g. Mk-84s or PGM Variants.",
 	},
 	[3] = {
 		["data"] = {
