@@ -2,7 +2,7 @@
 
 require("os")
 require("io")
-require("md5")
+local md5 = require("md5")
 require("dcttestlibs")
 require("dct")
 local settings = _G.dct.settings

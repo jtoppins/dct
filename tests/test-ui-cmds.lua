@@ -1,5 +1,8 @@
 #!/usr/bin/lua
 
+require("math")
+math.randomseed(50)
+
 require("dcttestlibs")
 
 require("dct")
@@ -95,7 +98,7 @@ local testcmds = {
 			["type"]   = enum.uiRequestType.MISSIONSTATUS,
 		},
 		["assert"]     = true,
-		["expected"]   = "ID: STRIKE0085\nTimeout: "..
+		["expected"]   = "ID: STRIKE0090\nTimeout: "..
 			"2001-06-22 21:03:54z (in 297 mins)\nBDA: 0% complete\n",
 	},
 	[6] = {
@@ -130,7 +133,7 @@ local testcmds = {
 			["value"]  = "player requested",
 		},
 		["assert"]     = true,
-		["expected"]   = "Mission STRIKE0085 aborted, player requested",
+		["expected"]   = "Mission STRIKE0090 aborted, player requested",
 	},
 }
 
