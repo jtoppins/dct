@@ -1,3 +1,8 @@
+# Use this 'git ls-files -i --exclude-standard'
+# to check if there is something excluded that belongs
+# to the repository.
+
 .*
 !.gitignore
 !.luacheckrc
+!.github

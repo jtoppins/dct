@@ -1,0 +1,42 @@
+name: check pull request
+
+on:
+  pull_request:
+    branches:
+    - master
+
+env:
+  PACKAGES: lua5.1 lua-md5 lua-filesystem lua-check
+
+jobs:
+  luacheck:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Install Packages
+      run: sudo apt-get install $PACKAGES
+
+    - name: Checkout DCT
+      uses: actions/checkout@v2
+
+    - name: Run luacheck
+      run: luacheck .
+
+  runtests:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Install Packages
+      run: sudo apt-get install $PACKAGES
+
+    - name: Checkout DCT
+      uses: actions/checkout@v2
+      with:
+        path: dct
+
+    - name: Checkout lua-libs
+      uses: actions/checkout@v2
+      with:
+        repository: jtoppins/lua-libs
+        path: lua-libs
+
+    - name: Run Tests
+      run: ./dct/tests/runtests
