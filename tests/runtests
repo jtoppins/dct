@@ -1,5 +1,7 @@
 #!/bin/sh
 
+export LC_ALL=C
+
 #set -e
 cwd=$(pwd)
 base=$(dirname $0)
@@ -8,6 +10,9 @@ fail=0
 
 DCT_DATA_ROOT=${DCT_DATA_ROOT:-${srcroot}/data}
 DCT_TEMPLATE_PATH=${DCT_TEMPLATE_PATH:-${srcroot}/../dcs-mission-oeo-templates}
+if ! test -d "${DCT_TEMPLATE_PATH}"; then
+	unset DCT_TEMPLATE_PATH
+fi
 LUA_LIB_PATH=${LUA_LIB_PATH:-${srcroot}/../lua-libs/src/?.lua}
 LUA_PATH="${srcroot}/src/?.lua;${LUA_LIB_PATH}"
 LUA_PATH="${LUA_PATH};;"
