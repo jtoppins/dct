@@ -12,6 +12,7 @@ dctsettings = {
 }
 require("dct")
 
+-- luacheck: ignore 561
 local function main()
 	local cfgvalidation = {
 		["theaterpath"] = lfs.tempdir()..utils.sep.."theater",
@@ -41,8 +42,8 @@ local function main()
 				assert(grid == dct.settings[k][ac],
 					"cfgvalidation."..k.."."..ac.." invalid value: "..grid)
 			end
+		-- luacheck: ignore 542
 		elseif k == "codenamedb" or k == "atorestrictions" then
-			-- skip
 		else
 			assert(dct.settings[k] == v,
 				"cfgvalidation unexpected field '"..k.."'")
@@ -55,8 +56,8 @@ local function main()
 				assert(grid == cfgvalidation[k][ac],
 					"dct.settings."..k.."."..ac.." invalid value: "..grid)
 			end
+		-- luacheck: ignore 542
 		elseif k == "codenamedb" or k == "atorestrictions" then
-			-- skip
 		else
 			assert(cfgvalidation[k] == v,
 				"dct.settings unexpected field '"..k.."'")

@@ -220,6 +220,7 @@ function Region:addAndSpawnAsset(name, assetmgr)
 	return asset
 end
 
+-- luacheck: ignore 561
 function Region:_generate(assetmgr, objtype, names, bases, centroids)
 	local limits = {
 		["min"]     = #names,

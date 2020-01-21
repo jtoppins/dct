@@ -57,7 +57,7 @@ function ScratchPadDisplay:__init(theater, data)
 	UICmd.__init(self, theater, data)
 end
 
-function ScratchPadDisplay:_execute(time, cmdr)
+function ScratchPadDisplay:_execute(_, _)
 	local msg = string.format("Scratch Pad: '%s'",
 		tostring(self.theater.playergps[self.grpname].scratchpad))
 	return msg
@@ -68,7 +68,7 @@ function ScratchPadSet:__init(theater, data)
 	UICmd.__init(self, theater, data)
 end
 
-function ScratchPadSet:_execute(time, cmdr)
+function ScratchPadSet:_execute(_, _)
 	local mrkid = human.getMarkID()
 	local pos   = Group.getByName(self.grpname):getUnit(1):getPoint()
 	local title = "SCRATCHPAD "..tostring(self.grpid)
@@ -89,7 +89,7 @@ function TheaterUpdateCmd:__init(theater, data)
 	UICmd.__init(self, theater, data)
 end
 
-function TheaterUpdateCmd:_execute(time, cmdr)
+function TheaterUpdateCmd:_execute(_, cmdr)
 	local update = cmdr:getTheaterUpdate()
 	local msg =
 		string.format("== Theater Threat Status ==\n") ..
@@ -150,7 +150,7 @@ function MissionRqstCmd:__init(theater, data)
 	self.displaytime = 120
 end
 
-function MissionRqstCmd:_execute(time, cmdr)
+function MissionRqstCmd:_execute(_, cmdr)
 	local msn = cmdr:getAssigned(self.grpname)
 	local msg
 
@@ -181,7 +181,7 @@ function MissionBriefCmd:__init(theater, data)
 	self.displaytime = 120
 end
 
-function MissionBriefCmd:_mission(time, cmdr, msn)
+function MissionBriefCmd:_mission(_, _, msn)
 	return briefingmsg(msn, self.actype)
 end
 
@@ -191,7 +191,7 @@ function MissionStatusCmd:__init(theater, data)
 	MissionCmd.__init(self, theater, data)
 end
 
-function MissionStatusCmd:_mission(time, cmdr, msn)
+function MissionStatusCmd:_mission(time, _, msn)
 	local msg
 	local tgtinfo  = msn:getTargetInfo()
 	local timeout  = msn:getTimeout()
@@ -218,7 +218,7 @@ function MissionAbortCmd:__init(theater, data)
 	self.reason   = data.value
 end
 
-function MissionAbortCmd:_mission(time, cmdr, msn)
+function MissionAbortCmd:_mission(time, _, msn)
 	return string.format("Mission %s aborted, %s",
 		msn:abort(time), self.reason)
 end
@@ -230,7 +230,7 @@ function MissionRolexCmd:__init(theater, data)
 	self.rolextime = data.value
 end
 
-function MissionRolexCmd:_mission(time, cmdr, msn)
+function MissionRolexCmd:_mission(_, _, msn)
 	return string.format("+%d mins added to mission timeout",
 		msn:addTime(self.rolextime)/60)
 end
@@ -241,7 +241,7 @@ function MissionCheckinCmd:__init(theater, data)
 	MissionCmd.__init(self, theater, data)
 end
 
-function MissionCheckinCmd:_mission(time, cmdr, msn)
+function MissionCheckinCmd:_mission(time, _, msn)
 	msn:checkin(time)
 	return string.format("on-station received")
 end
@@ -252,7 +252,7 @@ function MissionCheckoutCmd:__init(theater, data)
 	MissionCmd.__init(self, theater, data)
 end
 
-function MissionCheckoutCmd:_mission(time, cmdr, msn)
+function MissionCheckoutCmd:_mission(time, _, msn)
 	return string.format("off-station received, vul time: %d",
 		msn:checkout(time))
 end
