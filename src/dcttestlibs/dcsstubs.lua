@@ -16,7 +16,6 @@ end
 function lfs.tempdir()
 	return lfs.dct_testdata .. utils.sep .. "mission"
 end
-require("socket")
 local class = require("libs.class")
 
 local dctcheck = {}
@@ -64,7 +63,7 @@ _G.env = env
 
 local timer = {}
 function timer.getTime()
-	return socket.gettime()
+	return os.clock()
 end
 function timer.getAbsTime()
 	return (2*3600)+234
