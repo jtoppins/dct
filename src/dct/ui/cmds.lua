@@ -94,9 +94,9 @@ function MissionCmd:_execute(time, cmdr)
 	local msg
 	local msn = cmdr:getAssigned(self.grpname)
 	if msn == nil then
-		msg = "No mission assigned"
+		msg = "You do not have a mission assigned"
 		if self.erequest == true then
-			msg = msg .. ", request one first"
+			msg = msg .. ", use the F10 menu to request one first!"
 		end
 		return msg
 	end
@@ -116,7 +116,7 @@ function MissionRqstCmd:_execute(time, cmdr)
 	local msg
 
 	if msn then
-		msg = string.format("Mission %s already assigned, abort first",
+		msg = string.format("You have mission %s already assigned, use the F10 Menu to abort first!",
 					msn:getID())
 		return msg
 	end
@@ -126,7 +126,7 @@ function MissionRqstCmd:_execute(time, cmdr)
 		msg = string.format("No %s missions available.",
 			human.missiontype(self.missiontype))
 	else
-		msg = string.format("Mission %s assigned, see briefing for details",
+		msg = string.format("Mission %s assigned, use the F10 Menu to see your briefing! Good luck!",
 			msn:getID())
 	end
 	return msg
