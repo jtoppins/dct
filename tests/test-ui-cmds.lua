@@ -41,8 +41,8 @@ local testcmds = {
 			["value"]  = enum.missionType.STRIKE,
 		},
 		["assert"]     = true,
-		["expected"]   = "Mission STRIKE0085 assigned, see briefing for"..
-			" details",
+		["expected"]   = "Mission STRIKE0085 assigned, use the F10 Menu "..
+			"to see your briefing.",
 	},
 	[3] = {
 		["data"] = {

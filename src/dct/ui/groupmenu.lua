@@ -130,11 +130,13 @@ local function uiDCSEventHandler(theater, event)
 
 	if msn then
 		trigger.action.outTextForGroup(grp:getID(),
-			"mission already assigned, manage in F10 mission menu",
+			"Welcome. A mission is already assigned to this slot, "..
+			"use the F10 menu to get the briefing or find another.",
 			20, true)
 	else
 		trigger.action.outTextForGroup(grp:getID(),
-			"theater status and mission management available in F10 menu",
+			"Welcome. Use the F10 Menu to get a theater update and "..
+			"request a mission.",
 			20, true)
 	end
 end

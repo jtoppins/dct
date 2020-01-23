@@ -30,8 +30,8 @@ local testcmds = {
 			["initiator"] = unit1,
 		},
 		["assert"] = true,
-		["expect"] = "theater status and mission management available"
-			.." in F10 menu",
+		["expect"] = "Welcome. Use the F10 Menu to get a theater "..
+			"update and request a mission.",
 	},
 }
 
