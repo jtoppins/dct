@@ -14,7 +14,7 @@ local function main()
 
 	local restriction =
 		theater:getATORestrictions(coalition.side.BLUE, "A-10C")
-	local validtbl = { ["BAI"] = 5, ["CAS"] = 1, }
+	local validtbl = { ["BAI"] = 5, ["CAS"] = 1, ["STRIKE"] = 3,}
 	for k, v in pairs(restriction) do
 		assert(validtbl[k] == v, "ATO Restriction error")
 	end

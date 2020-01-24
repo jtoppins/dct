@@ -54,12 +54,14 @@ local function settings(missioncfg)
 			[coalition.side.RED]  = {},
 			[coalition.side.BLUE] = {
 				["A-10C"] = {
-					["CAS"] = enum.missionType.CAS,
-					["BAI"] = enum.missionType.BAI,
+					["CAS"]    = enum.missionType.CAS,
+					["BAI"]    = enum.missionType.BAI,
+					["STRIKE"] = enum.missionType.STRIKE,
 				},
 				["A-10A"] = {
-					["CAS"] = enum.missionType.CAS,
-					["BAI"] = enum.missionType.BAI,
+					["CAS"]    = enum.missionType.CAS,
+					["BAI"]    = enum.missionType.BAI,
+					["STRIKE"] = enum.missionType.STRIKE,
 				},
 				["F-15C"] = {
 					["CAP"] = enum.missionType.CAP,
@@ -67,16 +69,21 @@ local function settings(missioncfg)
 				["F-5E-3"] = {
 					["STRIKE"] = enum.missionType.STRIKE,
 					["BAI"]    = enum.missionType.BAI,
+					["CAS"]    = enum.missionType.CAS,
+					["OCA"]    = enum.missionType.OCA,
 				},
 				["M-2000C"] = {
 					["STRIKE"] = enum.missionType.STRIKE,
 					["BAI"]    = enum.missionType.BAI,
 					["OCA"]    = enum.missionType.OCA,
+					["CAP"]    = enum.missionType.CAP,
 				},
 				["AV8BNA"] = {
 					["STRIKE"] = enum.missionType.STRIKE,
 					["BAI"]    = enum.missionType.BAI,
 					["OCA"]    = enum.missionType.OCA,
+					["SEAD"]   = enum.missionType.SEAD,
+					["CAS"]    = enum.missionType.CAS,
 				},
 				["AJS37"] = {
 					["STRIKE"] = enum.missionType.STRIKE,
