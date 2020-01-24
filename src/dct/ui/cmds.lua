@@ -203,7 +203,7 @@ function MissionStatusCmd:_mission(time, _, msn)
 
 	msg = string.format("ID: %s\n", msn:getID()) ..
 		string.format("Timeout: %s (in %d mins)\n",
-			os.date("%Y-%m-%d %H:%M:%Sz", dctutils.time(timeout)),
+			dctutils.date("%F %Rz", dctutils.zulutime(timeout)),
 			minsleft) ..
 		string.format("BDA: %d%% complete\n", tgtinfo.status)
 

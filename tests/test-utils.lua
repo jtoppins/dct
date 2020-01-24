@@ -139,6 +139,11 @@ local function main()
 			json:encode_pretty(centroid).."; expected: "..
 			json:encode_pretty(v.expected))
 	end
+
+	assert("2001-06-22 16:00l" == utils.date("%F %Rl", utils.time(3600)),
+		"failed: "..utils.date("%F %Rl", utils.time(3600)))
+	assert("2001-06-22 10:00z" == utils.date("%F %Rz", utils.zulutime(3600)),
+		"failed: "..utils.date("%F %Rz", utils.zulutime(3600)))
 	return 0
 end
 

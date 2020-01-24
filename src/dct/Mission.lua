@@ -79,8 +79,8 @@ function Mission:_composeBriefing()
 	local briefing = tgt.briefing
 	local interptbl = {
 		["LOCATIONMETHOD"] = genLocationMethod(),
-		["TOT"] = os.date("%Y-%m-%d %H:%M:%Sz",
-			dctutils.time(self:getTimeout()*.6)),
+		["TOT"] = dctutils.date("%F %Rz",
+			dctutils.zulutime(self:getTimeout()*.6)),
 	}
 	return interp(briefing, interptbl)
 end

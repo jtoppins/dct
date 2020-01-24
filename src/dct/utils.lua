@@ -82,6 +82,32 @@ function utils.time(dcsabstime)
 	return time + timer.getTime0() + dcsabstime
 end
 
+local offsettbl = {
+	["Test Theater"] = -6*3600,
+	["PersianGulf"]  = -4*3600,
+	["Nevada"]       =  8*3600,
+	["Caucuses"]     = -4*3600,
+	["Normandy"]     =  1*3600,
+}
+
+function utils.zulutime(abstime)
+	local correction = offsettbl[env.mission.theatre]
+	return (utils.time(abstime) + correction)
+end
+
+local dst
+function utils.date(fmt, time)
+	if dst == nil then
+		local t = os.date("*t")
+		dst = t.isdst
+	end
+
+	if dst == true then
+		time = time - 3600
+	end
+	return os.date(fmt, time)
+end
+
 function utils.centroid(points)
 	local i = 0
 	local centroid = {

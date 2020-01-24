@@ -753,4 +753,9 @@ function trigger.action.outTextForGroup(_, msg, _, _)
 			msg.."';\n expected '"..msgbuffer.."'")
 	end
 end
+
+function trigger.action.markToGroup(
+	_, _, _, _, _, _
+	--[[id, title, pos, grpid, readonly, msg]])
+end
 _G.trigger = trigger

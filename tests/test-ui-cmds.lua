@@ -25,6 +25,19 @@ local unit1 = Unit({
 	},
 }, grp, "bobplayer")
 
+local briefingtxt = "ID: STRIKE0090\nTarget AO: 88°07.2'N 063°27.6'W"..
+			" (WARSAW)\nBriefing:\nA recon flight earlier today discovered"..
+			" an Iranian Ammo Dump 88°07.2'N 063°27.6'W."..
+			" Find and destroy the bunkers and the ordnance within.\n"..
+			"    Tot: 2001-06-22 12:02z\n    \n"..
+			"    Primary Objectives: Destroy the large, armoured bunker."..
+			" It is heavily fortified, so accuracy is key.\n    \n"..
+			"    Secondary Objectives: Destroy the two smaller, white"..
+			" hangars.\n    \n"..
+			"    Recommended Pilots: 2\n    \n"..
+			"    Recommended Ordnance: Heavy ordnance required for bunker"..
+			" targets, e.g. Mk-84s or PGM Variants."
+
 local testcmds = {
 	[1] = {
 		["data"] = {
@@ -44,22 +57,8 @@ local testcmds = {
 			["value"]  = enum.missionType.STRIKE,
 		},
 		["assert"]     = true,
-		["expected"]   = "Mission STRIKE0085 assigned, use F10 menu to "..
-			"see this briefing again\n"..
-			"ID: STRIKE0085\n"..
-			"Target AO: 88°07.2'N 063°27.6'W (SEOUL)\n"..
-			"Briefing:\n"..
-			"Satellite Imaging of Iran has found an "..
-			"Iranian Ammo Dump 88°07.2'N 063°27.6'W. Find and destroy "..
-			"the bunkers and the ordnance within.\n"..
-			"    Tot: 2001-06-22 19:02:20z\n    \n"..
-			"    Primary Objectives: Destroy the large, armoured bunker. "..
-			"It is heavily fortified, so accuracy is key.\n    \n"..
-			"    Secondary Objectives: Destroy the two smaller, white "..
-			"hangars.\n    \n"..
-			"    Recommended Pilots: 2\n    \n"..
-			"    Recommended Ordnance: Heavy ordnance required for "..
-			"bunker targets, e.g. Mk-84s or PGM Variants.",
+		["expected"]   = "Mission STRIKE0090 assigned, use F10 menu to "..
+			"see this briefing again\n"..briefingtxt,
 	},
 	[3] = {
 		["data"] = {
@@ -78,19 +77,7 @@ local testcmds = {
 			["type"]   = enum.uiRequestType.MISSIONBRIEF,
 		},
 		["assert"]     = true,
-		["expected"]   = "ID: STRIKE0085\nTarget AO: 88°07.2'N 063°27.6'W"..
-			" (SEOUL)\nBriefing:\n"..
-			"Satellite Imaging of Iran has found an "..
-			"Iranian Ammo Dump 88°07.2'N 063°27.6'W."..
-			" Find and destroy the bunkers and the ordnance within.\n"..
-			"    Tot: 2001-06-22 19:02:20z\n    \n"..
-			"    Primary Objectives: Destroy the large, armoured bunker."..
-			" It is heavily fortified, so accuracy is key.\n    \n"..
-			"    Secondary Objectives: Destroy the two smaller, white"..
-			" hangars.\n    \n"..
-			"    Recommended Pilots: 2\n    \n"..
-			"    Recommended Ordnance: Heavy ordnance required for bunker"..
-			" targets, e.g. Mk-84s or PGM Variants.",
+		["expected"]   = briefingtxt,
 	},
 	[5] = {
 		["data"] = {
@@ -99,7 +86,7 @@ local testcmds = {
 		},
 		["assert"]     = true,
 		["expected"]   = "ID: STRIKE0090\nTimeout: "..
-			"2001-06-22 21:03:54z (in 297 mins)\nBDA: 0% complete\n",
+			"2001-06-22 14:03z (in 297 mins)\nBDA: 0% complete\n",
 	},
 	[6] = {
 		["data"] = {

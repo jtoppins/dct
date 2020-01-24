@@ -179,7 +179,7 @@ function Theater:export(_)
 
 	local exporttbl = {
 		["complete"] = self.complete,
-		["date"]     = os.date("*t", dctutils.time(timer.getAbsTime())),
+		["date"]     = dctutils.date("*t", dctutils.time(timer.getAbsTime())),
 		["theater"]  = env.mission.theatre,
 		["sortie"]   = env.getValueDictByKey(env.mission.sortie),
 		["assetmgr"] = self:getAssetMgr():marshal(),
