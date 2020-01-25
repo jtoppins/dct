@@ -32,6 +32,7 @@ local assetType = {
 	["CHECKPOINT"]  = 16,
 	["FACTORY"]     = 17,
 	["AIRSPACE"]    = 18,
+	["SHORAD"]      = 19,
 }
 
 --[[
@@ -52,6 +53,7 @@ local assetTypePriority = {
 	[assetType.OCA]         = 70,
 	[assetType.PORT]        = 70,
 	[assetType.LOGISTICS]   = 70,
+	[assetType.SHORAD]      = 100,
 	[assetType.FACILITY]    = 100,
 	[assetType.BUNKER]      = 100,
 	[assetType.CHECKPOINT]  = 100,
@@ -82,6 +84,7 @@ local assetClass = {
 		[assetType.BUNKER]      = true,
 		[assetType.CHECKPOINT]  = true,
 		[assetType.FACTORY]     = true,
+		[assetType.SHORAD]      = true,
 	},
 	--[[
 	-- Means ground tactical units
