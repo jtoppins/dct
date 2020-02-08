@@ -53,20 +53,20 @@ local sampletpls = {
 
 local function stmexists()
 	dct.Template.fromFile("test",
-		lfs.writedir()..utils.sep.."test.stm",
-		"dct-does-not-exist")
+		"dct-does-not-exist",
+		lfs.writedir()..utils.sep.."test.stm")
 end
 
 local function dctexists()
 	dct.Template.fromFile("test",
-		"stm-does-not-exist",
-		lfs.writedir()..utils.sep.."test.dct")
+		lfs.writedir()..utils.sep.."test.dct",
+		"stm-does-not-exist")
 end
 
 local function singleside()
 	dct.Template.fromFile("test",
-		lfs.writedir()..utils.sep.."test-both-sides.stm",
-		lfs.writedir()..utils.sep.."test.dct")
+		lfs.writedir()..utils.sep.."test.dct",
+		lfs.writedir()..utils.sep.."test-both-sides.stm")
 end
 
 --local json = require("")
@@ -77,8 +77,8 @@ local function main()
 	for _, data in pairs(sampletpls) do
 		--print("tplname: "..data.name)
 		local t = dct.Template.fromFile(rname,
-			lfs.writedir()..utils.sep..data.name..".stm",
-			lfs.writedir()..utils.sep..data.name..".dct")
+			lfs.writedir()..utils.sep..data.name..".dct",
+			lfs.writedir()..utils.sep..data.name..".stm")
 
 		-- test: group values read
 		for grpname, value in pairs(data.groups) do

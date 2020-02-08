@@ -132,11 +132,14 @@ function Region:_getTemplates(dirname, basepath)
 			if fattr.mode == "directory" then
 				self:_getTemplates(filename, tplpath)
 			else
-				if string.find(fpath, ".stm") ~= nil then
+				if string.find(fpath, ".dct", -4, true) ~= nil then
 					Logger:debug("=> process template: "..fpath)
-					local dctString = string.gsub(fpath, ".stm", ".dct")
+					local stmpath = string.gsub(fpath, "[.]dct", ".stm")
+					if lfs.attributes(stmpath) == nil then
+						stmpath = nil
+					end
 					self:_addTemplate(
-						Template.fromFile(self.name, fpath, dctString))
+						Template.fromFile(self.name, fpath, stmpath))
 				end
 			end
 		end

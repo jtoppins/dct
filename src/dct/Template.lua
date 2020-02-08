@@ -279,16 +279,17 @@ function Template:copyData()
 	return copy
 end
 
-function Template.fromFile(regionname, stmfile, dctfile)
+function Template.fromFile(regionname, dctfile, stmfile)
 	assert(regionname ~= nil, "regionname is required")
-	assert(stmfile ~= nil, "stmfile is required")
 	assert(dctfile ~= nil, "dctfile is required")
 
-	local template = STM.transform(utils.readlua(stmfile, "staticTemplate"))
+	local template = utils.readlua(dctfile, "metadata")
 	template.regionname = regionname
-	template.path = stmfile
-	template = utils.mergetables(template,
-		utils.readlua(dctfile, "metadata"))
+	template.path = dctfile
+	if stmfile ~= nil then
+		template = utils.mergetables(template,
+			STM.transform(utils.readlua(stmfile, "staticTemplate")))
+	end
 	return Template(template)
 end
 
