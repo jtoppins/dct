@@ -83,13 +83,7 @@ function Region:_loadMetadata(regiondefpath)
 		},
 	}
 
-	assert(lfs.attributes(regiondefpath) ~= nil,
-		"file does not exist: "..regiondefpath)
-
-	local rc = pcall(dofile, regiondefpath)
-	assert(rc, "failed to parse: "..regiondefpath)
-	assert(region ~= nil, "no region structure defined in: "..regiondefpath)
-
+	local region = utils.readlua(regiondefpath, "region")
 	for key, data in pairs(requiredkeys) do
 		if region[key] == nil or
 		   type(region[key]) ~= data["type"] then
@@ -111,9 +105,7 @@ function Region:_loadMetadata(regiondefpath)
 		end
 	end
 	region.limits = limits
-
 	utils.mergetables(self, region)
-	region = nil
 end
 
 
