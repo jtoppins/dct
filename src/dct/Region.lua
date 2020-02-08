@@ -74,9 +74,6 @@ end
 
 function Region:_loadMetadata(regiondefpath)
 	Logger:debug("=> regiondefpath: "..regiondefpath)
-	-- TODO: this construct on validating table keys is repeated
-	-- a few times in the codebase, look at centeralizing this
-	-- in a cleanup later.
 	local requiredkeys = {
 		["name"] = {
 			["type"] = "string",
@@ -196,8 +193,6 @@ function Region:_registerType(kind, ttype, name)
 	table.insert(self._tpltypes[ttype], entry)
 end
 
--- TODO: Note this function does not check that for a given asset
---   type the names/templates associated belong to a single coalition
 function Region:_generate(assetmgr, objtype, names)
 	local limits = {
 		["min"]     = #names,
@@ -226,10 +221,6 @@ function Region:_generate(assetmgr, objtype, names)
 	end
 
 	while #names >= 1 and limits.current < limits.limit do
-		-- this could be optimized a little in that if we have no
-		-- specific limits and want all the templates spawned
-		-- we could skip getting the random number, not really worth it
-
 		local idx  = math.random(1, #names)
 		local name = names[idx].name
 		if names[idx].kind == tplkind.EXCLUSION then
