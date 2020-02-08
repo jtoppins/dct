@@ -116,23 +116,23 @@ end
 
 local function isStateValid(state)
 	if state == nil then
-		Logger:warn("isStateValid() - state object nil")
+		Logger:info("isStateValid(); state object nil")
 		return false
 	end
 
 	if state.complete == true then
-		Logger:warn("isStateValid() - theater goals were completed")
+		Logger:info("isStateValid(); theater goals were completed")
 		return false
 	end
 
 	if state.theater ~= env.mission.theatre then
-		Logger:warn(string.format("isStateValid() - wrong theater; "..
+		Logger:warn(string.format("isStateValid(); wrong theater; "..
 			"state: '%s'; mission: '%s'", state.theater, env.mission.theatre))
 		return false
 	end
 
 	if state.sortie ~= env.getValueDictByKey(env.mission.sortie) then
-		Logger:warn(string.format("isStateValid() - wrong sortie; "..
+		Logger:warn(string.format("isStateValid(); wrong sortie; "..
 			"state: '%s'; mission: '%s'", state.sortie,
 			env.getCalueDictByKey(env.mission.sortie)))
 		return false
@@ -171,7 +171,7 @@ function Theater:export(_)
 	statefile, msg = io.open(settings.statepath, "w+")
 
 	if statefile == nil then
-		Logger:error("export() - unable to open '"..
+		Logger:error("export(); unable to open '"..
 			settings.statepath.."'; msg: "..tostring(msg))
 		return self.savestatefreq
 	end
@@ -207,8 +207,8 @@ end
 
 function Theater:playerRequest(data)
 	if data == nil then
-		Logger:error("value error: data must be provided; "..
-			debug.traceback())
+		Logger:error("playerRequest(); value error: data must be "..
+			"provided; "..debug.traceback())
 		return
 	end
 
@@ -284,12 +284,12 @@ function Theater:_exec(time)
 
 		tdiff = os.clock() - tstart
 		if tdiff >= self.quanta then
-			Logger:debug("exec() - quanta reached, quanta: "..
+			Logger:debug("exec(); quanta reached, quanta: "..
 				tostring(self.quanta))
 			break
 		end
 	end
-	Logger:debug(string.format("exec() - time taken: %4.2fms;"..
+	Logger:debug(string.format("exec(); time taken: %4.2fms;"..
 		" cmds executed: %d", tdiff*1000, cmdctr))
 end
 
