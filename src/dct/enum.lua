@@ -33,6 +33,7 @@ local assetType = {
 	["FACTORY"]     = 17,
 	["AIRSPACE"]    = 18,
 	["SHORAD"]      = 19,
+	["AIRBASE"]     = 20,
 }
 
 --[[
@@ -53,6 +54,7 @@ local assetTypePriority = {
 	[assetType.OCA]         = 70,
 	[assetType.PORT]        = 70,
 	[assetType.LOGISTICS]   = 70,
+	[assetType.AIRBASE]     = 70,
 	[assetType.SHORAD]      = 100,
 	[assetType.FACILITY]    = 100,
 	[assetType.BUNKER]      = 100,
@@ -85,6 +87,10 @@ local assetClass = {
 		[assetType.CHECKPOINT]  = true,
 		[assetType.FACTORY]     = true,
 		[assetType.SHORAD]      = true,
+		[assetType.AIRBASE]     = true,
+	},
+	["BASES"] = {
+		[assetType.AIRBASE]     = true,
 	},
 	--[[
 	-- Means ground tactical units
@@ -113,6 +119,7 @@ local missionTypeMap = {
 	},
 	[missionType.OCA] = {
 		[assetType.OCA]        = true,
+		[assetType.AIRBASE]    = true,
 	},
 	[missionType.BAI] = {
 		[assetType.LOGISTICS]  = true,

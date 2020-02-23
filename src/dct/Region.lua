@@ -201,7 +201,26 @@ function Region:_registerType(kind, ttype, name)
 	table.insert(self._tpltypes[ttype], entry)
 end
 
-function Region:_generate(assetmgr, objtype, names)
+function Region:addAndSpawnAsset(name, assetmgr)
+	if name == nil then
+		return nil
+	end
+
+	local tpl = self._templates[name]
+	if tpl == nil then
+		return nil
+	end
+
+	local asset = Asset(tpl, self)
+	assetmgr:add(asset)
+	asset:spawn()
+	if asset then
+		assetmgr:getStats(asset.owner):inc(asset.type..".2")
+	end
+	return asset
+end
+
+function Region:_generate(assetmgr, objtype, names, bases, centroids)
 	local limits = {
 		["min"]     = #names,
 		["max"]     = #names,
@@ -218,11 +237,7 @@ function Region:_generate(assetmgr, objtype, names)
 	for i, tpl in ipairs(names) do
 		if tpl.kind ~= tplkind.EXCLUSION and
 			self._templates[tpl.name].spawnalways == true then
-			local tplSpawn = self._templates[tpl.name]
-			local asset = Asset(tplSpawn, self)
-			assetmgr:add(asset)
-			asset:spawn()
-			assetmgr:getStats(asset.owner):inc(asset.type..".2")
+			self:addAndSpawnAsset(tpl.name, assetmgr)
 			table.remove(names, i)
 			limits.current = 1 + limits.current
 		end
@@ -235,13 +250,14 @@ function Region:_generate(assetmgr, objtype, names)
 			local i = math.random(1, #self._exclusions[name].names)
 			name = self._exclusions[name]["names"][i]
 		end
-		local tpl = self._templates[name]
-		local asset = Asset(tpl, self)
-		assetmgr:add(asset)
-		asset:spawn()
-		-- TODO: magic value need to expose the ALIVE and NOMINAL
-		-- values
-		assetmgr:getStats(asset.owner):inc(asset.type..".2")
+		local asset = self:addAndSpawnAsset(name, assetmgr)
+		if asset then
+			table.insert(centroids, asset:getLocation())
+			if dctenums.assetClass["BASES"][objtype] ~= nil then
+				bases[asset.name] = true
+			end
+		end
+
 		table.remove(names, idx)
 		limits.current = 1 + limits.current
 	end
@@ -254,12 +270,20 @@ end
 -- be limited to mission startup.
 function Region:generate(assetmgr)
 	local tpltypes = utils.deepcopy(self._tpltypes)
+	local bases = {}
+	local centroidpoints = {}
 
 	for objtype, _ in pairs(dctenums.assetClass["STRATEGIC"]) do
 		local names = tpltypes[objtype]
 		if names ~= nil then
-			self:_generate(assetmgr, objtype, names)
+			self:_generate(assetmgr, objtype, names, bases,
+				centroidpoints)
 		end
+	end
+
+	for basename, _ in pairs(bases) do
+		self:addAndSpawnAsset(assetmgr:getAsset(basename).defenses,
+			assetmgr)
 	end
 end
 
