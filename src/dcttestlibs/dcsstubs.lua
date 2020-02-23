@@ -293,6 +293,10 @@ local coaltbl = {
 		["name"] = "Iraq",
 		["side"] = coalition.side.BLUE,
 	},
+	[42] = {
+		["name"] = "SAUDI_ARABIA",
+		["side"] = coalition.side.BLUE,
+	},
 
 	-- RED Coalition
 	[25] = {
@@ -357,6 +361,10 @@ local coaltbl = {
 	},
 	[72] = {
 		["name"] = "Unknown-RED3",
+		["side"] = coalition.side.RED,
+	},
+	[59] = {
+		["name"] = "JORDAN",
 		["side"] = coalition.side.RED,
 	},
 }

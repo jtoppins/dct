@@ -1,0 +1,7 @@
+metadata = {
+	["objtype"] = "airbase",
+	["name"] = "Bandar-e-jask airfield",
+	["coalition"] = 2,
+	["defenses"] = "Bandar E Jask Airbase Defence",
+	["ignore"] = "true",
+}

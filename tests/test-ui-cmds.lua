@@ -46,7 +46,7 @@ local testcmds = {
 			"ID: STRIKE0085\n"..
 			"Target AO: 88°07.2'N 063°27.6'W (SEOUL)\n"..
 			"Briefing:\n"..
-			"A recon flight earlier today discovered an "..
+			"Satellite Imaging of Iran has found an "..
 			"Iranian Ammo Dump 88°07.2'N 063°27.6'W. Find and destroy "..
 			"the bunkers and the ordnance within.\n"..
 			"    Tot: 2001-06-22 19:02:20z\n    \n"..
@@ -77,7 +77,7 @@ local testcmds = {
 		["assert"]     = true,
 		["expected"]   = "ID: STRIKE0085\nTarget AO: 88°07.2'N 063°27.6'W"..
 			" (SEOUL)\nBriefing:\n"..
-			"A recon flight earlier today discovered an "..
+			"Satellite Imaging of Iran has found an "..
 			"Iranian Ammo Dump 88°07.2'N 063°27.6'W."..
 			" Find and destroy the bunkers and the ordnance within.\n"..
 			"    Tot: 2001-06-22 19:02:20z\n    \n"..

@@ -1,0 +1,6 @@
+metadata = {
+	["rank"]     = 2,
+	["objtype"]  = "basedefense",
+
+	["base"]     = "Bandar-e-jask airfield",
+}
