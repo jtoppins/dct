@@ -32,7 +32,7 @@ local testcmds = {
 		["expected"]   = "== Theater Threat Status ==\n  Sea:    medium\n"..
 			"  Air:    parity\n  ELINT:  medium\n  SAM:    medium\n\n"..
 			"== Current Active Air Missions ==\n  No Active Missions\n\n"..
-			"Recommended Mission Type: STRIKE\n",
+			"Recommended Mission Type: CAP\n",
 	},
 	[2] = {
 		["data"] = {
@@ -46,7 +46,7 @@ local testcmds = {
 			"ID: STRIKE0085\n"..
 			"Target AO: 88°07.2'N 063°27.6'W (SEOUL)\n"..
 			"Briefing:\n"..
-			"Ground units operating in Iran have informed us of an "..
+			"A recon flight earlier today discovered an "..
 			"Iranian Ammo Dump 88°07.2'N 063°27.6'W. Find and destroy "..
 			"the bunkers and the ordnance within.\n"..
 			"    Tot: 2001-06-22 19:02:20z\n    \n"..
@@ -67,7 +67,7 @@ local testcmds = {
 		["expected"]   = "== Theater Threat Status ==\n  Sea:    medium\n"..
 			"  Air:    parity\n  ELINT:  medium\n  SAM:    medium\n\n"..
 			"== Current Active Air Missions ==\n  STRIKE:   1\n\n"..
-			"Recommended Mission Type: None\n",
+			"Recommended Mission Type: CAP\n",
 	},
 	[4] = {
 		["data"] = {
@@ -76,8 +76,9 @@ local testcmds = {
 		},
 		["assert"]     = true,
 		["expected"]   = "ID: STRIKE0085\nTarget AO: 88°07.2'N 063°27.6'W"..
-			" (SEOUL)\nBriefing:\nGround units operating in Iran have"..
-			" informed us of an Iranian Ammo Dump 88°07.2'N 063°27.6'W."..
+			" (SEOUL)\nBriefing:\n"..
+			"A recon flight earlier today discovered an "..
+			"Iranian Ammo Dump 88°07.2'N 063°27.6'W."..
 			" Find and destroy the bunkers and the ordnance within.\n"..
 			"    Tot: 2001-06-22 19:02:20z\n    \n"..
 			"    Primary Objectives: Destroy the large, armoured bunker."..

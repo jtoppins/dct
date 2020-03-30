@@ -121,7 +121,13 @@ function AssetManager:add(asset)
 
 	-- add asset to approperate side lists
 	if not asset:isDead() then
-		self._sideassets[asset.owner].assets[asset.name] = asset.type
+		if asset.type == enum.assetType.AIRSPACE then
+			for _, side in pairs(coalition.side) do
+				self._sideassets[side].assets[asset.name] = asset.type
+			end
+		else
+			self._sideassets[asset.owner].assets[asset.name] = asset.type
+		end
 		self._sideassets[asset.owner].stats:inc(asset.type.."."..
 			substats.ALIVE)
 

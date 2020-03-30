@@ -8,11 +8,11 @@ require("lfs")
 require("math")
 local class      = require("libs.class")
 local utils      = require("libs.utils")
+local dctenums   = require("dct.enum")
 local dctutils   = require("dct.utils")
 local Template   = require("dct.Template")
 local Asset      = require("dct.Asset")
 local Logger     = require("dct.Logger").getByName("Region")
-local dctenums   = require("dct.enum")
 
 local tplkind = {
 	["TEMPLATE"]  = 1,
@@ -161,7 +161,7 @@ end
 
 function Region:_addTemplate(tpl)
 	assert(self._templates[tpl.name] == nil,
-			"duplicate template '"..tpl.name.."' defined; "..tpl.path)
+		"duplicate template '"..tpl.name.."' defined; "..tostring(tpl.path))
 	self._templates[tpl.name] = tpl
 	if tpl.exclusion ~= nil then
 		if self._exclusions[tpl.exclusion] == nil then
@@ -285,6 +285,23 @@ function Region:generate(assetmgr)
 		self:addAndSpawnAsset(assetmgr:getAsset(basename).defenses,
 			assetmgr)
 	end
+
+	-- create airspace asset based on the centroid of this region
+	self.location = dctutils.centroid(centroidpoints)
+	local airspacetpl = Template({
+		["objtype"]    = "airspace",
+		["name"]       = "airspace",
+		["regionname"] = self.name,
+		["desc"]       = "",
+		["coalition"]  = coalition.side.NEUTRAL,
+		["location"]   = self.location,
+		["volume"]     = {
+			["point"]  = self.location,
+			["radius"] = 55560,  -- 30NM
+		},
+	})
+	self:_addTemplate(airspacetpl)
+	self:addAndSpawnAsset(airspacetpl.name, assetmgr)
 end
 
 return Region

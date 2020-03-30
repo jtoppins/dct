@@ -29,6 +29,8 @@ local function getcollection(assettype, asset, template, region)
 	local collection = nil
 	if assettype == dctenum.assetType.AIRBASE then
 		collection = require("dct.dcscollections.NullCollection")
+	elseif assettype == dctenum.assetType.AIRSPACE then
+		collection = require("dct.dcscollections.AirspaceCollection")
 	elseif dctenum.assetClass.STRATEGIC[assettype] then
 		collection = require("dct.dcscollections.StaticCollection")
 	else
