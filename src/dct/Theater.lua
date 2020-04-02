@@ -181,6 +181,7 @@ function Theater:export(_)
 		["theater"]  = env.mission.theatre,
 		["sortie"]   = env.getValueDictByKey(env.mission.sortie),
 		["assetmgr"] = self:getAssetMgr():marshal(),
+		["currentDate"] = os.date("*t")
 	}
 
 	statefile:write(json:encode_pretty(exporttbl))
