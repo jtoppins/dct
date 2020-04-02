@@ -56,6 +56,7 @@ function Theater:__init()
 	self.assetmgr  = AssetManager(self)
 	self.cmdrs     = {}
 	self.playergps = {}
+	self.startdate = os.date("*t")
 
 	for _, val in pairs(coalition.side) do
 		self.cmdrs[val] = Commander(self, val)
@@ -181,6 +182,7 @@ function Theater:export(_)
 		["theater"]  = env.mission.theatre,
 		["sortie"]   = env.getValueDictByKey(env.mission.sortie),
 		["assetmgr"] = self:getAssetMgr():marshal(),
+		["startdate"] = self.startdate
 	}
 
 	statefile:write(json:encode_pretty(exporttbl))
