@@ -9,6 +9,18 @@ require("math")
 local enum  = require("dct.enum")
 local utils = {}
 
+local enemymap = {
+	[coalition.side.NEUTRAL] = false,
+	[coalition.side.BLUE]    = coalition.side.RED,
+	[coalition.side.RED]     = coalition.side.BLUE,
+}
+
+utils.INTELMAX = 5
+
+function utils.getenemy(side)
+	return enemymap[side]
+end
+
 local function errorhandler(key, m, path)
 	local msg = string.format("%s: %s; file: %s",
 		key, m, path or "nil")

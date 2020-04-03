@@ -68,7 +68,7 @@ function Mission:__init(cmdr, missiontype, grpname, tgtname)
 	-- compose the briefing at mission creation to represent
 	-- known intel the pilots were given before departing
 	self.briefing  = self:_composeBriefing()
-	self.cmdr:getAsset(tgtname):setTargeted(true)
+	self.cmdr:getAsset(tgtname):setTargeted(self.cmdr.owner, true)
 
 	-- TODO: setup remaining mission parameters;
 	--   * mission world states
@@ -76,7 +76,7 @@ end
 
 function Mission:_composeBriefing()
 	local tgt = self.cmdr:getAsset(self.target)
-	local briefing = tgt:getBriefing()
+	local briefing = tgt.briefing
 	local interptbl = {
 		["LOCATIONMETHOD"] = genLocationMethod(),
 		["TOT"] = os.date("%Y-%m-%d %H:%M:%Sz",
@@ -103,7 +103,7 @@ function Mission:abort()
 	self.cmdr:removeMission(self.id)
 	local tgt = self.cmdr:getAsset(self.target)
 	if tgt then
-		tgt:setTargeted(false)
+		tgt:setTargeted(self.cmdr.owner, false)
 	end
 	return self.id
 end
@@ -160,9 +160,9 @@ function Mission:getTargetInfo()
 	local asset = self.cmdr:getAsset(self.target)
 	local tgtinfo = {}
 	tgtinfo.location = asset:getLocation()
-	tgtinfo.callsign = asset:getCallsign()
+	tgtinfo.callsign = asset.codename
 	tgtinfo.status   = asset:getStatus()
-	tgtinfo.intellvl = asset:getIntelLevel()
+	tgtinfo.intellvl = asset:getIntel(self.cmdr.owner)
 	return tgtinfo
 end
 

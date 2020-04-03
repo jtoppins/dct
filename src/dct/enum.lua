@@ -108,22 +108,20 @@ local missionTypeMap = {
 		[assetType.FACTORY]    = true,
 	},
 	[missionType.SEAD] = {
-		[assetType.EWR]      = true,
-		[assetType.SAM]      = true,
+		[assetType.EWR]        = true,
+		[assetType.SAM]        = true,
 	},
 	[missionType.OCA] = {
-		[assetType.OCA]         = true,
-		[assetType.BASEDEFENSE] = true,
+		[assetType.OCA]        = true,
 	},
 	[missionType.BAI] = {
-		[assetType.LOGISTICS] = true,
-		[assetType.SEA]       = true,
+		[assetType.LOGISTICS]  = true,
 	},
 	[missionType.CAS] = {
-		[assetType.JTAC] = true,
+		[assetType.JTAC]       = true,
 	},
 	[missionType.CAP] = {
-		[assetType.AIRSPACE] = true,
+		[assetType.AIRSPACE]   = true,
 	},
 }
 
@@ -139,12 +137,12 @@ local uiRequestType = {
 }
 
 local enum = {
-	["assetType"] = assetType,
+	["assetType"]         = assetType,
 	["assetTypePriority"] = assetTypePriority,
-	["assetClass"] = assetClass,
-	["missionType"] = missionType,
-	["missionTypeMap"] = missionTypeMap,
-	["uiRequestType"] = uiRequestType,
+	["assetClass"]        = assetClass,
+	["missionType"]       = missionType,
+	["missionTypeMap"]    = missionTypeMap,
+	["uiRequestType"]     = uiRequestType,
 }
 
 return enum

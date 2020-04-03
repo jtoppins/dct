@@ -9,24 +9,9 @@
 require("math")
 local class    = require("libs.class")
 local utils    = require("libs.utils")
+local dctenum  = require("dct.enum")
 local dctutils = require("dct.utils")
-local STM      = require("dct.STM")
-local Goal     = require("dct.Goal")
-local Logger   = require("dct.Logger").getByName("Asset")
 local settings = _G.dct.settings
-
-local function defaultgoal(static)
-	local goal = {}
-	goal.priority = Goal.priority.PRIMARY
-	goal.goaltype = Goal.goaltype.DAMAGE
-	goal.objtype  = Goal.objtype.GROUP
-	goal.value    = 90
-
-	if static then
-		goal.objtype = Goal.objtype.STATIC
-	end
-	return goal
-end
 
 local function generateCodename(objtype)
 	local codenamedb = settings.codenamedb
@@ -37,394 +22,242 @@ local function generateCodename(objtype)
 	end
 
 	local idx = math.random(1, #typetbl)
-	local codename = typetbl[idx]
-
-	return codename
+	return typetbl[idx]
 end
+
+local function getcollection(assettype, asset, template, region)
+	local collection = nil
+	if dctenum.assetClass.STRATEGIC[assettype] then
+		collection = require("dct.dcscollections.StaticCollection")
+	else
+		assert(false, "unsupported asset type: "..assettype)
+	end
+	return collection(asset, template, region)
+end
+
+--[[
+Asset:
+	attributes(private):
+	- _collection<IObjectCollection>
+
+	attributes(public, read-only):
+	- type
+	- briefing
+	- owner
+	- rgnname
+	- tplname
+	- name
+	- codename
+
+	methods(public):
+	- getPriority(side)
+		- get the priority of the asset
+	- setPriority(side, tbl)
+		- modify the priority of the asset
+
+	Intel - an intel level of zero implies the given side has no
+	idea about the asset
+	- getIntel(side)
+		- get the intel level the specified side has on this asset
+	- setIntel(side, val)
+
+	- isTargeted(side)
+		- is the specified side currently targeting the asset?
+	- setTargeted(side, val)
+		- set the targeted state for a side for an asset
+	- marshal()
+		- marshal the asset for serialization
+	- unmarshal(data)
+		- unmarshal the asset from a seralized stream
+	- IObjectCollection methods
+--]]
 
 local Asset = class()
 function Asset:__init(template, region)
+	self._marshalnames = {
+		"_targeted", "_intel", "_priority", "type", "briefing",
+		"owner", "rgnname", "tplname", "name", "codename",
+	}
+
+	self._targeted   = {}
+	self._intel      = {}
+	self._priority   = {}
+	for _, side in pairs(coalition.side) do
+		-- TODO: convert targeted to a number instead of a bool
+		--   check so we can count how many times a given asset
+		--   is targeted, used for CAP stations.
+		self._targeted[side] = false
+		self._intel[side]    = 0
+		self._priority[side] = {
+			["region"] = 0,
+			["asset"]  = 0,
+		}
+	end
 	self._initcomplete = false
-	self._spawned    = false
-	self._dead       = false
-	self._targeted   = false
-	self._maxdeathgoals = 0
-	self._curdeathgoals = 0
-	self._deathgoals = {}
-	self._assets     = {}
-
 	if template ~= nil and region ~= nil then
-		self._hasDeathGoals = template.hasDeathGoals
-		self._tpldata   = template:copyData()
-		self._briefing  = template.desc
-		self.owner      = template.coalition
-		self.type       = template.objtype
-		self.name       = region.name.."_"..self.owner.."_"..template.name
-		self.regionname = region.name
-		self.codename   = generateCodename(self.type)
-		self.priority   = region.priority * 65536 + template.priority
-		self:_setupmaps()
-		self._initcomplete = true
-		assert(next(self._deathgoals) ~= nil,
-			"runtime error: Asset must have a deathgoal")
-	end
-end
-
---[[
--- ignore all but primary targets when it comes to determining
--- if an Asset is "dead"
---]]
-function Asset:_addDeathGoal(name, goalspec)
-	assert(name ~= nil and type(name) == "string",
-		"value error: name must be provided")
-	assert(goalspec ~= nil, "value error: goalspec must be provided")
-
-	if goalspec.priority ~= Goal.priority.PRIMARY then
-		return
-	end
-
-	self._deathgoals[name] = Goal.factory(name, goalspec)
-	self._curdeathgoals = self._curdeathgoals + 1
-	self._maxdeathgoals = math.max(self._curdeathgoals, self._maxdeathgoals)
-end
-
---[[
--- This function needs to do three things:
---   mark the object(unit/static/group) in the template dead,
---      dct_dead == true
---   remove deathgoal entry
---   upon no more deathgoals set dead
---]]
-function Asset:_removeDeathGoal(name, goal)
-	assert(name ~= nil and type(name) == "string",
-		"value error: name must be provided")
-	assert(goal ~= nil, "value error: goal must be provided")
-
-	Logger:debug("_removeDeathGoal() - obj name: "..name)
-	if self:isDead() then
-		Logger:error("_removeDeathGoal() called and Asset("..
-			self:getName()..") marked as dead")
-		return
-	end
-
-	local grpdata = self._assets[goal:getGroupName()]
-	if grpdata.name == name then
-		grpdata.dct_dead = true
-	else
-		assert(grpdata.units ~= nil, "no units found, this is a problem")
-		for _, unit in ipairs(grpdata.units) do
-			if unit.name == name then
-				unit.dct_dead = true
-				break
-			end
+		self.type     = template.objtype
+		self.briefing = template.desc
+		self.owner    = template.coalition
+		self.rgnname  = region.name
+		self.tplname  = template.name
+		self.name     = region.name.."_"..self.owner.."_"..template.name
+		self.codename = generateCodename(self.type)
+		self._intel[self.owner] = dctutils.INTELMAX
+		if self.owner ~= coalition.side.NEUTRAL and template.intel then
+			self._intel[dctutils.getenemy(self.owner)] = template.intel
 		end
-	end
-
-	self._deathgoals[name] = nil
-	self._curdeathgoals = self._curdeathgoals - 1
-	if next(self._deathgoals) == nil then
-		self:_setDead()
-	end
-end
-
---[[
--- Adds a death goal to an Asset class, which determines
--- when an Asset is determined to be dead. If no death
--- goals have been defined a default of 90% damaged for all
--- objects in the Asset is used.
---]]
-function Asset:_setupDeathGoal(grpdata, static)
-	if self._hasDeathGoals then
-		if grpdata.dct_deathgoal ~= nil then
-			self:_addDeathGoal(grpdata.name, grpdata.dct_deathgoal)
-		end
-		for _, unit in ipairs(grpdata.units or {}) do
-			if unit.dct_deathgoal ~= nil then
-				self:_addDeathGoal(unit.name, unit.dct_deathgoal)
-			end
-		end
-	else
-		self:_addDeathGoal(grpdata.name, defaultgoal(static))
-	end
-end
-
---[[
--- Adds an object (group or static) to the monitored list for this
--- asset. This list will be needed later to save state.
---]]
-function Asset:_setupmaps()
-	for cat_idx, cat_data in pairs(self._tpldata) do
-		for _, grp in ipairs(cat_data) do
-			self:_setupDeathGoal(grp.data, cat_idx == 'static')
-			self._assets[grp.data.name] = grp.data
-		end
-	end
-end
-
--- TODO: if this is a movable asset we should not calculate
--- the centroid, not sure what location we should return -
--- the starting position or something else? We shouldn't return
--- the current position I do not think.
-function Asset:getLocation()
-	if self.centroid == nil then
-		local points = {}
-		for k,v in pairs(self._assets) do
-			points[k] = {
-				["x"] = v.x, ["y"] = 0, ["z"] = v.y,
+		for _, side in pairs(coalition.side) do
+			self._priority[side] = {
+				["region"] = region.priority,
+				["asset"]  = template.priority,
 			}
 		end
-
-		self.centroid = dctutils.centroid(points)
+		self._collection = getcollection(self.type, self, template, region)
+		self._initcomplete = true
 	end
-	return self.centroid
 end
 
-function Asset:getCallsign()
-	return self.codename
+-- TODO: not sure intel and priority should be stored with a given
+--  Asset because each side may have a different view and ordering
+--  for the Asset.
+function Asset:getPriority(side)
+	return ((self._priority[side].region * 65536) +
+		self._priority[side].asset)
 end
 
-function Asset:getIntelLevel()
-	return 4
-	-- TODO: base this on a value related to the asset type
+function Asset:setPriority(side, tbl)
+	utils.mergetables(self._priority[side], tbl)
 end
 
---[[
--- getStatus - percentage remaining of the asset from 0 - 100
---]]
-function Asset:getStatus()
-	return math.floor((1 - (self._curdeathgoals / self._maxdeathgoals)) * 100)
+function Asset:getIntel(side)
+	return self._intel[side]
 end
 
-function Asset:getBriefing()
-	return self._briefing
+function Asset:setIntel(side, val)
+	assert(type(val) == "number", "value error: must be a number")
+	self._intel[side] = val
 end
 
-function Asset:isTargeted()
-	return self._targeted
+function Asset:isTargeted(side)
+	return self._targeted[side]
 end
 
-function Asset:setTargeted(val)
+function Asset:setTargeted(side, val)
 	assert(type(val) == "boolean",
 		"value error: argument must be of type bool")
-	self._targeted = val
+	self._targeted[side] = val
 end
 
-function Asset:isSpawned()
-	return self._spawned
+function Asset:getCollection()
+	return self._collection
 end
 
-function Asset:getName()
-	return self.name
+function Asset:getLocation()
+	return self._collection:getLocation()
 end
 
-function Asset:getPriority()
-	return self.priority
-end
-
-function Asset:_setDead()
-	self._dead = true
+function Asset:getStatus()
+	return self._collection:getStatus()
 end
 
 function Asset:isDead()
-	return self._dead
+	return self._collection:isDead()
+end
+
+function Asset:setDead(val)
+	return self._collection:setDead(val)
 end
 
 function Asset:checkDead()
-	assert(self:isSpawned() == true, "runtime error: asset must be spawned")
-
-	local cnt = 0
-	for name, goal in pairs(self._deathgoals) do
-		cnt = cnt + 1
-		if goal:checkComplete() then
-			self:_removeDeathGoal(name, goal)
-		end
-	end
-	Logger:debug(string.format("checkDead(%s) - max goals: %d; "..
-		"cur goals: %d; checked: %d", self:getName(),
-		self._maxdeathgoals, self._curdeathgoals, cnt))
+	self._collection:checkDead()
 end
 
--- Get the names of all DCS objects associated with this
--- Asset class.
 function Asset:getObjectNames()
-	local keyset = {}
-	local n      = 0
-	for k,_ in pairs(self._assets) do
-		n = n+1
-		keyset[n] = k
-	end
-	return keyset
+	return self._collection:getObjectNames()
 end
 
 function Asset:onDCSEvent(event)
-	-- only handle DEAD events
-	if event.id ~= world.event.S_EVENT_DEAD then
-		Logger:debug(string.format("onDCSEvent() - Asset(%s) not DEAD "..
-			"event, ignoring", self:getName()))
-		return
-	end
-
-	local obj = event.initiator
-
-	-- mark the unit/group/static as dead in the template, dct_dead
-	local unitname = obj:getName()
-	if obj:getCategory() == Object.Category.UNIT then
-		local grpname = obj:getGroup():getName()
-		local grp = self._assets[grpname]
-		for _, unit in pairs(grp.units) do
-			if unit.name == unitname then
-				unit.dct_dead = true
-				break
-			end
-		end
-	else
-		self._assets[unitname].dct_dead = true
-	end
-
-	-- delete any deathgoal related to the unit notified as dead,
-	-- this may work around any bug in DCS where the object is still
-	-- kept and its health reports a non-zero value
-	local goal = self._deathgoals[unitname]
-	if goal ~= nil then
-		self:_removeDeathGoal(unitname, goal)
-	end
+	self._collection:onDCSEvent(event)
 end
 
-local dctkeys = {
-	["dct_deathgoal"] = true,
-	["dct_dead"]      = true
-}
-
--- modifies 'tbl' with 'keys' keys removed from 'tbl'
-local function removekeys(tbl, keys)
-	for k, _ in pairs(keys) do
-		tbl[k] = nil
-	end
-end
-
--- returns a copy of 'grp' with all dct table keys removed
-local function removeDCTKeys(grp)
-	local g = utils.deepcopy(grp)
-	removekeys(g.data, dctkeys)
-	for _, unit in ipairs(g.data.units or {}) do
-		removekeys(unit, dctkeys)
-	end
-	return g
-end
-
-function Asset:_spawn()
-	for cat_idx, cat_data in pairs(self._tpldata) do
-		for _, grp in ipairs(cat_data) do
-			local gcpy = removeDCTKeys(grp)
-			if cat_idx == 'static' then
-				coalition.addStaticObject(gcpy.countryid, gcpy.data)
-			else
-				coalition.addGroup(gcpy.countryid,
-					Unit.Category[STM.categorymap[string.upper(cat_idx)]],
-					gcpy.data)
-			end
-		end
-	end
-
-	self._spawned = true
-	for _, goal in pairs(self._deathgoals) do
-		goal:onSpawn()
-	end
+function Asset:isSpawned()
+	return self._collection:isSpawned()
 end
 
 function Asset:spawn()
-	if self:isSpawned() then
-		Logger:error("runtime bug - asset already spawned")
-		return
-	end
-	self:_spawn()
+	self._collection:spawn()
 end
 
-local function filterDeadObjects(tbl, grp)
-	-- remove groups that are dead
-	if grp.data.dct_dead == true then
-		-- we either skip or if a static object that is a primary target
-		-- we set dead
-		if settings.spawndead == false or
-			grp.data.dct_deathgoal == nil then
-			return
-		end
-
-		if not (grp.data.dct_deathgoal.priority == Goal.priority.PRIMARY and
-			grp.data.dct_deathgoal.objtype == Goal.objtype.STATIC) then
-			return
-		end
-
-		local gcpy = utils.deepcopy(grp)
-		gcpy.data.dead = true
-		table.insert(tbl, gcpy)
-		-- we need to return here because the object is dead
-		-- so nothing else to do, skip rest of function
-		return
-	end
-
-	local gcpy = utils.deepcopy(grp)
-	-- remove dead units from the group
-	if grp.data.units then
-		gcpy.data.units = {}
-		for _, unit in ipairs(grp.data.units) do
-			if unit.dct_dead ~= true then
-				table.insert(gcpy.data.units, utils.deepcopy(unit))
-			end
-		end
-	end
-	table.insert(tbl, gcpy)
-end
-
-local function filterTemplateData(tpldata)
-	local cpytbl = {}
-
-	for cat_idx, cat_data in pairs(tpldata) do
-		cpytbl[cat_idx] = {}
-		for _, grp in ipairs(cat_data) do
-			filterDeadObjects(cpytbl[cat_idx], grp)
-		end
-		if not next(cpytbl[cat_idx]) then
-			cpytbl[cat_idx] = nil
-		end
-	end
-	if not next(cpytbl) then
-		cpytbl = nil
-	end
-	return cpytbl
+function Asset:destroy()
+	self._collection:destroy()
 end
 
 function Asset:marshal()
 	assert(self._initcomplete == true, "runtime error: init not complete")
 	local tbl = {}
-
-	tbl._tpldata       = filterTemplateData(self._tpldata)
-	if next(tbl._tpldata) == nil then
-		return nil
+	tbl.collection = self._collection:marshal()
+	for _, attribute in pairs(self._marshalnames) do
+		tbl[attribute] = self[attribute]
 	end
-	tbl._dead          = self._dead
-	tbl._spawned       = self._spawned
-	tbl._maxdeathgoals = self._maxdeathgoals
-	tbl._hasDeathGoals = self._hasDeathGoals
-	tbl._briefing      = self._briefing
-	tbl.name           = self.name
-	tbl.regionname     = self.regionname
-	tbl.codename       = self.codename
-	tbl.owner          = self.owner
-	tbl.type           = self.type
-	tbl.priority       = self.priority
 	return tbl
 end
 
 function Asset:unmarshal(data)
 	assert(self._initcomplete == false,
 		"runtime error: init completed already")
+	local collectiondata = data.collection
+	data.collection = nil
 	utils.mergetables(self, data)
-	self:_setupmaps()
-	if self:isSpawned() then
-		self:_spawn()
-	end
+	self._collection = getcollection(data.type, self)
+	self._collection:unmarshal(collectiondata)
 	self._initcomplete = true
 end
 
 return Asset
+
+--[[
+-- DynamicAsset
+--   represents assets that can move
+--  difference from BaseAsset
+   * DCS-objects, has associated DCS objects
+     * objects move
+     * has death goals due to having DCS objects
+   * associates a "team leader" AI with the asset to control the
+     spawned DCS objects
+
+-- PlayerAsset
+--  inherents from DynamicAsset
+--   flight groups with player slots in them
+--  difference from BaseAsset and DynamicAsset
+   * DCS-objects, has associated DCS objects
+     * objects move
+     * has death goals due to having DCS objects
+     * spawn, nothing to spawn
+   * invincible, asset cannot die (i.e. be deleted)
+   * no associated "team leader" AI
+   * player specific isSpawned() test - why?
+   * enabled, asset can be enabled/disabled
+     * DCS flag associated to control if the slot is enabled
+       (think airbase captured so slot should not be joinable)
+   * registers with an airbase asset
+
+-- AirbaseAsset
+-- is a composite asset consisting of multiple other assets
+--   (squadrons, players, defense forces, etc)
+--  inherents from BaseAsset, difference from:
+   * depending on underlying DCS object type the deathgoal will either
+     be the death of the underlying unit or the asset can never die it
+     just triggers an internal event notifying the observers of the
+     change in side
+   * ability to register an associated asset; registration would
+     consist of:
+       - asset name and asset type (player, squadron, defense force,
+         underlying asset)
+   * on death the assets associated are marked as dead or disabled
+   * provides custom functions to spawn an aircraft group
+
+-- SquadronAsset
+--  inherets from BaseAsset
+   * being spawned means the asset is "active"
+   * the deathgoal is when all aircraft in the squadron are destroyed
+--]]

@@ -21,8 +21,8 @@ local function heapsort_tgtlist(assetmgr, owner, filterlist)
 	-- priority sort target list
 	for tgtname, _ in pairs(tgtlist) do
 		local tgt = assetmgr:getAsset(tgtname)
-		if tgt ~= nil and not tgt:isDead() and not tgt:isTargeted() then
-			pq:push(tgt:getPriority(), tgt)
+		if tgt ~= nil and not tgt:isDead() and not tgt:isTargeted(owner) then
+			pq:push(tgt:getPriority(owner), tgt)
 		end
 	end
 
@@ -140,9 +140,9 @@ function Commander:requestMission(grpname, missiontype)
 		return nil
 	end
 	Logger:debug(string.format("requestMission() - tgt name: '%s'; "..
-		"isTargeted: %s", tgt:getName(), tostring(tgt:isTargeted())))
+		"isTargeted: %s", tgt.name, tostring(tgt:isTargeted())))
 
-	local mission = Mission(self, missiontype, grpname, tgt:getName())
+	local mission = Mission(self, missiontype, grpname, tgt.name)
 	self:addMission(mission)
 	return mission
 end

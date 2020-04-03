@@ -15,16 +15,11 @@
 
 local class    = require("libs.class")
 local enum     = require("dct.enum")
+local dctutils = require("dct.utils")
 local Logger   = require("dct.Logger").getByName("AssetManager")
 local Command  = require("dct.Command")
 local Stats    = require("dct.Stats")
 local Asset    = require("dct.Asset")
-
-local enemymap = {
-	[coalition.side.NEUTRAL] = false,
-	[coalition.side.BLUE]    = coalition.side.RED,
-	[coalition.side.RED]     = coalition.side.BLUE,
-}
 
 local ASSET_CHECK_PERIOD = 12*60  -- seconds
 
@@ -103,11 +98,11 @@ function AssetManager:remove(asset)
 	--  strategic target. This supports the feature where dead
 	--  strategic assets can be spawned in as dead.
 	if not isstrat then
-		self._assetset[asset:getName()] = nil
+		self._assetset[asset.name] = nil
 	end
 
 	-- remove asset name from per-side asset list
-	self._sideassets[asset.owner].assets[asset:getName()] = nil
+	self._sideassets[asset.owner].assets[asset.name] = nil
 	self._sideassets[asset.owner].stats:dec(asset.type.."."..substats.ALIVE)
 
 	-- remove asset object names from name list
@@ -120,20 +115,20 @@ function AssetManager:add(asset)
 	assert(asset ~= nil, "value error: asset object must be provided")
 
 	-- add asset to master list
-	assert(self._assetset[asset:getName()] == nil, "asset name ('"..
-		asset:getName().."') already exists")
-	self._assetset[asset:getName()] = asset
+	assert(self._assetset[asset.name] == nil, "asset name ('"..
+		asset.name.."') already exists")
+	self._assetset[asset.name] = asset
 
 	-- add asset to approperate side lists
 	if not asset:isDead() then
-		self._sideassets[asset.owner].assets[asset:getName()] = asset.type
+		self._sideassets[asset.owner].assets[asset.name] = asset.type
 		self._sideassets[asset.owner].stats:inc(asset.type.."."..
 			substats.ALIVE)
 
 		-- read Asset's object names and setup object to asset mapping
 		-- to be used in handling DCS events and other uses
 		for _, objname in pairs(asset:getObjectNames()) do
-			self._object2asset[objname] = asset:getName()
+			self._object2asset[objname] = asset.name
 		end
 	end
 end
@@ -157,7 +152,7 @@ end
 --    filter list requested
 --]]
 function AssetManager:getTargets(requestingside, assettypelist)
-	local enemy = enemymap[requestingside]
+	local enemy = dctutils.getenemy(requestingside)
 	local tgtlist = {}
 	local filterlist
 
@@ -271,7 +266,8 @@ function AssetManager:marshal()
 	}
 
 	for name, asset in pairs(self._assetset) do
-		if enum.assetClass.STRATEGIC[asset.type] ~= nil then
+		if enum.assetClass.STRATEGIC[asset.type] ~= nil or
+		   enum.assetType.AIRSPACE == asset.type then
 			tbl.assets[name] = asset:marshal()
 		end
 	end
