@@ -74,9 +74,6 @@ end
 
 function Region:_loadMetadata(regiondefpath)
 	Logger:debug("=> regiondefpath: "..regiondefpath)
-	-- TODO: this construct on validating table keys is repeated
-	-- a few times in the codebase, look at centeralizing this
-	-- in a cleanup later.
 	local requiredkeys = {
 		["name"] = {
 			["type"] = "string",
@@ -86,13 +83,7 @@ function Region:_loadMetadata(regiondefpath)
 		},
 	}
 
-	assert(lfs.attributes(regiondefpath) ~= nil,
-		"file does not exist: "..regiondefpath)
-
-	local rc = pcall(dofile, regiondefpath)
-	assert(rc, "failed to parse: "..regiondefpath)
-	assert(region ~= nil, "no region structure defined in: "..regiondefpath)
-
+	local region = utils.readlua(regiondefpath, "region")
 	for key, data in pairs(requiredkeys) do
 		if region[key] == nil or
 		   type(region[key]) ~= data["type"] then
@@ -114,9 +105,7 @@ function Region:_loadMetadata(regiondefpath)
 		end
 	end
 	region.limits = limits
-
 	utils.mergetables(self, region)
-	region = nil
 end
 
 
@@ -143,11 +132,14 @@ function Region:_getTemplates(dirname, basepath)
 			if fattr.mode == "directory" then
 				self:_getTemplates(filename, tplpath)
 			else
-				if string.find(fpath, ".stm") ~= nil then
+				if string.find(fpath, ".dct", -4, true) ~= nil then
 					Logger:debug("=> process template: "..fpath)
-					local dctString = string.gsub(fpath, ".stm", ".dct")
+					local stmpath = string.gsub(fpath, "[.]dct", ".stm")
+					if lfs.attributes(stmpath) == nil then
+						stmpath = nil
+					end
 					self:_addTemplate(
-						Template.fromFile(self.name, fpath, dctString))
+						Template.fromFile(self.name, fpath, stmpath))
 				end
 			end
 		end
@@ -196,8 +188,6 @@ function Region:_registerType(kind, ttype, name)
 	table.insert(self._tpltypes[ttype], entry)
 end
 
--- TODO: Note this function does not check that for a given asset
---   type the names/templates associated belong to a single coalition
 function Region:_generate(assetmgr, objtype, names)
 	local limits = {
 		["min"]     = #names,
@@ -213,21 +203,20 @@ function Region:_generate(assetmgr, objtype, names)
 	end
 
 
-   if tpl.kind ~= tplkind.EXCLUSION and self._templates[tpl.name].alwaysSpawn == true then
-      local tplSpawn = self._templates[tpl.name]
-      local asset = Asset(tplSpawn, self)
-      assetmgr:add(asset)
-      asset:spawn()
-      assetmgr:getStats(asset.owner):inc(asset.type..".2")
-      table.remove(names, i)
-      limits.current = 1 + limits.current
-    end
-    
-   
+	for i, tpl in ipairs(names) do
+		if tpl.kind ~= tplkind.EXCLUSION and
+			self._templates[tpl.name].spawnalways == true then
+			local tplSpawn = self._templates[tpl.name]
+			local asset = Asset(tplSpawn, self)
+			assetmgr:add(asset)
+			asset:spawn()
+			assetmgr:getStats(asset.owner):inc(asset.type..".2")
+			table.remove(names, i)
+			limits.current = 1 + limits.current
+		end
+	end
+
 	while #names >= 1 and limits.current < limits.limit do
-		-- this could be optimized a little in that if we have no
-		-- specific limits and want all the templates spawned
-		-- we could skip getting the random number, not really worth it
     
 		local idx  = math.random(1, #names)
 		local name = names[idx].name

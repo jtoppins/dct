@@ -20,13 +20,9 @@ local function main()
 	end
 
 	dct.Theater()
-	--print("Groups spawned:  "..dctcheck.spawngroups)
-	--print("Statics spawned: "..dctcheck.spawnstatics)
-	assert(dctcheck.spawngroups == 72, "group spawn broken; expected: 72"..
-		string.format(", got: %d", dctcheck.spawngroups))
-	assert(dctcheck.spawnstatics == 547, "static spawn broken; expected: 547"..
-		string.format(", got: %d", dctcheck.spawnstatics))
-	--print(t.assetmgr:getStats(coalition.side.RED):tostring("%s: %d\n"))
+	local Logger = require("dct.Logger").getByName("Tests")
+	Logger:debug("Groups spawned:  "..dctcheck.spawngroups)
+	Logger:debug("Statics spawned: "..dctcheck.spawnstatics)
 	return 0
 end
 
