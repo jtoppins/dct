@@ -8,26 +8,9 @@ require("lfs")
 local class = require("libs.class")
 local utils = require("libs.utils")
 local enum  = require("dct.enum")
+local dctutils = require("dct.utils")
 local Goal  = require("dct.Goal")
 local STM   = require("dct.STM")
-
-local function checktype(val)
-	local allowed = enum.assetType
-	if type(val) == "number" then
-		return true
-	elseif type(val) == "string" then
-		return (allowed[string.upper(val)] ~= nil)
-	end
-	return false
-end
-
-local function settype(tbl, key)
-	local allowed = enum.assetType
-	local t = type(tbl[key])
-	if t == "string" then
-		tbl[key] = allowed[string.upper(tbl[key])]
-	end
-end
 
 --[[
 -- represents the amount of damage that can be taken before
@@ -154,6 +137,152 @@ local function overrideGroupOptions(grp, idx, tpl, category)
 	end
 end
 
+local function checktpldata(_, tbl)
+	-- loop over all tpldata and process names and existence of deathgoals
+	for cat, cat_data in pairs(tbl.tpldata) do
+		for idx, grp in ipairs(cat_data) do
+			overrideGroupOptions(grp.data, idx, tbl, cat)
+		end
+	end
+	return true
+end
+
+local function checktable(keydata, tbl)
+	return type(tbl[keydata.name]) == "table"
+end
+
+local function checkstring(keydata, tbl)
+	return type(tbl[keydata.name]) == "string"
+end
+
+local function checknumber(keydata, tbl)
+	if tbl[keydata.name] == nil then
+		if keydata.default == nil then
+			return false
+		else
+			tbl[keydata.name] = keydata.default
+			return true
+		end
+	end
+	return type(tbl[keydata.name]) == "number"
+end
+
+local function checkbool(keydata, tbl)
+	if tbl[keydata.name] == nil then
+		if keydata.default == nil then
+			return false
+		else
+			tbl[keydata.name] = keydata.default
+			return true
+		end
+	end
+	return type(tbl[keydata.name]) == "boolean"
+end
+
+local function checkobjtype(keydata, tbl)
+	if type(tbl[keydata.name]) == "number" and
+		dctutils.getkey(enum.assetType, tbl[keydata.name]) ~= nil then
+		return true
+	elseif type(tbl[keydata.name]) == "string" and
+		enum.assetType[string.upper(tbl[keydata.name])] ~= nil then
+		tbl[keydata.name] = enum.assetType[string.upper(tbl[keydata.name])]
+		return true
+	end
+	return false
+end
+
+local function checkside(keydata, tbl)
+	if type(tbl[keydata.name]) == "number" and
+		dctutils.getkey(coalition.side, tbl[keydata.name]) ~= nil then
+		return true
+	elseif type(tbl[keydata.name]) == "string" and
+		coalition.side[string.upper(tbl[keydata.name])] ~= nil then
+		tbl[keydata.name] = coalition.side[string.upper(tbl[keydata.name])]
+		return true
+	end
+	return false
+end
+
+local function getkeys(objtype)
+	local keys = {
+		[1] = {
+			["name"]  = "name",
+			["check"] = checkstring,
+		},
+		[2] = {
+			["name"]  = "regionname",
+			["check"] = checkstring,
+		},
+		[3] = {
+			["name"]  = "coalition",
+			["check"] = checkside,
+		},
+		[4] = {
+			["name"]    = "uniquenames",
+			["check"]   = checkbool,
+			["default"] = false,
+		},
+		[5] = {
+			["name"]    = "priority",
+			["check"]   = checknumber,
+			["default"] = enum.assetTypePriority[objtype],
+		},
+		[6] = {
+			["name"]    = "primary",
+			["check"]   = checkbool,
+			["default"] = false,
+		},
+		[7] = {
+			["name"]    = "intel",
+			["check"]   = checknumber,
+			["default"] = 0,
+		},
+		[8] = {
+			["name"]    = "spawnalways",
+			["check"]   = checkbool,
+			["default"] = false,
+		},
+	}
+
+	if objtype ~= enum.assetType.AIRSPACE and
+		objtype ~= enum.assetType.AIRBASE then
+		table.insert(keys, {
+			["name"]  = "tpldata",
+			["check"] = checktpldata,})
+	end
+
+	if objtype == enum.assetType.AIRSPACE then
+		table.insert(keys, {
+			["name"]  = "location",
+			["check"] = checktable, })
+		table.insert(keys, {
+			["name"]  = "volume",
+			["check"] = checktable, })
+	end
+
+	if objtype == enum.assetType.AIRBASE then
+		table.insert(keys, {
+			["name"]  = "defenses",
+			["check"] = checkstring, })
+	end
+
+	return keys
+end
+
+local function errorhandler(key, m, path)
+	local msg = string.format("%s: %s; template-file: %s",
+		key, m, path or "nil")
+	error(msg, 2)
+end
+
+local function checkkey(keydata, tbl)
+	if keydata.default == nil and tbl[keydata.name] == nil then
+		errorhandler(keydata.name, "missing required key", tbl.path)
+	elseif not keydata.check(keydata, tbl) then
+		errorhandler(keydata.name, "invalid key value", tbl.path)
+	end
+end
+
 --[[
 --  Template class
 --    base class that reads in a template file and organizes
@@ -209,64 +338,14 @@ function Template:__init(data)
 end
 
 function Template:validate()
-	local requiredkeys = {
-		["objtype"]  = {
-			["check"] = checktype,
-			["set"]   = settype,
-		},
-		["tpldata"] = {
-			["check"] = function (t) return type(t) == "table" end,
-		},
-		["coalition"] = {
-			["check"] = function (t) return t ~= nil end,
-		},
-	}
+	checkkey({
+		["name"]  = "objtype",
+		["check"] = checkobjtype,
+	}, self)
 
-	for key, val in pairs(requiredkeys) do
-		if self[key] == nil or
-		   not val["check"](self[key]) then
-			assert(false, "invalid or missing option '"..key.."'")
-		else
-			if val["set"] ~= nil and type(val["set"]) == "function" then
-				val["set"](self, key)
-			end
-		end
-	end
-
-	-- order is important here otherwise the default priority will be
-	-- nil because objtype will have not been converted from a string
-	-- to its numerical value
-	local optionalkeys = {
-		["uniquenames"] = {
-			["type"]    = "boolean",
-			["default"] = false,
-		},
-		["priority"] = {
-			["type"]    = "number",
-			["default"] = enum.assetTypePriority[self.objtype],
-		},
-		["rank"] = {
-			["type"]    = "number",
-			["default"] = Goal.priority.SECONDARY,
-		},
-		["regionname"] = {
-			["type"]    = "string",
-			["default"] = env.mission.theatre,
-		},
-	}
-
-	for key, data in pairs(optionalkeys) do
-		if self[key] == nil or
-		   type(self[key]) ~= data.type then
-			self[key] = data.default
-		end
-	end
-
-	-- loop over all tpldata and process names and existence of deathgoals
-	for cat, cat_data in pairs(self.tpldata) do
-		for idx, grp in ipairs(cat_data) do
-			overrideGroupOptions(grp.data, idx, self, cat)
-		end
+	local keys = getkeys(self.objtype)
+	for _, keydata in ipairs(keys) do
+		checkkey(keydata, self)
 	end
 end
 
