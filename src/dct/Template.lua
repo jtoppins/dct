@@ -352,7 +352,7 @@ end
 -- PUBLIC INTERFACE
 function Template:copyData()
 	local copy = utils.deepcopy(self.tpldata)
-	if self.uniquenames ~= true then
+	if self.uniquenames == true then
 		makeNamesUnique(copy)
 	end
 	return copy

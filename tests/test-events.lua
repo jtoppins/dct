@@ -14,7 +14,7 @@ local testcases = {
 		["event"] = {
 			["id"] = world.event.S_EVENT_HIT,
 			["object"] = {
-				["name"] = "Test region_Abu Musa Ammo Dump 1 static 1 #1017",
+				["name"] = "Test region_Abu Musa Ammo Dump 1 static 1",
 				["objtype"] = Object.Category.STATIC,
 				["life"] = 1,
 			},
@@ -24,7 +24,7 @@ local testcases = {
 		["event"] = {
 			["id"] = world.event.S_EVENT_DEAD,
 			["object"] = {
-				["name"] = "Test region_Abu Musa Ammo Dump 1 static 1 #1017",
+				["name"] = "Test region_Abu Musa Ammo Dump 1 static 1",
 				["objtype"] = Object.Category.STATIC,
 			},
 		},
@@ -45,6 +45,7 @@ local function createEvent(eventdata, player)
 		assert(false, "other object types not supported")
 	end
 
+	assert(objref, "objref is nil")
 	event.id = eventdata.id
 	event.time = 2345
 	if event.id == world.event.S_EVENT_DEAD then
