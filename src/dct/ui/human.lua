@@ -4,6 +4,7 @@
 -- common functions to convert data to human readable formats
 --]]
 
+require("math")
 local enum     = require("dct.enum")
 local dctutils = require("dct.utils")
 local settings = _G.dct.settings
@@ -81,6 +82,29 @@ function human.grid2actype(actype, location, precision)
 		fmt = dctutils.posfmt.DMS
 	end
 	return dctutils.fmtposition(location, precision, fmt)
+end
+
+function human.position(posvec, accuracy)
+	local scale = math.pow(10, 5 - accuracy)
+	local degradedpos = {}
+	degradedpos.x = math.floor(posvec.x / scale) * scale
+	degradedpos.y = math.floor(posvec.y / scale) * scale
+	degradedpos.z = math.floor(posvec.z / scale) * scale
+	return degradedpos
+end
+
+function human.drawTargetIntel(msn, grpid, readonly)
+	local tgtinfo = msn:getTargetInfo()
+	local degpos = human.position(tgtinfo.location, tgtinfo.intellvl)
+	local msg = "desc: "..tostring(tgtinfo.description).."\n"..
+		string.format("status: %d%% complete\nthreats: TODO",
+			tgtinfo.status)
+	trigger.action.markToGroup(human.getMarkID(),
+		"TGT: "..tgtinfo.callsign,
+		degpos,
+		grpid,
+		readonly,
+		msg)
 end
 
 return human

@@ -173,6 +173,7 @@ function MissionRqstCmd:_execute(time, cmdr)
 		msg = string.format("Mission %s assigned, use F10 menu "..
 			"to see this briefing again\n", msn:getID())
 		msg = msg..briefingmsg(msn, self.actype)
+		human.drawTargetIntel(msn, self.grpid, false)
 	end
 	return msg
 end
