@@ -29,6 +29,13 @@ local function heapsort_tgtlist(assetmgr, owner, filterlist)
 	return pq
 end
 
+local idcntr = 1000
+
+local function getcntr()
+  idcntr = idcntr + 1
+  return idcntr
+end
+
 local function genstatids()
 	local tbl = {}
 
@@ -183,6 +190,11 @@ function Commander:addMission(mission)
 	self.missions[mission:getID()]  = mission
 	self.assigned[mission.assigned] = mission:getID()
 	self.missionstats:inc(mission.type)
+	local grp = Group.getByName(mission.assigned)
+	local position = mission:getTargetInfo().location
+	position.x = math.floor((position.x)/100)*100
+	position.z = math.floor((position.z)/100)*100
+	trigger.action.markToGroup(getcntr(), mission:getTargetInfo().callsign, position, grp:getID())
 end
 
 return Commander

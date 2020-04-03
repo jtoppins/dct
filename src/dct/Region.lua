@@ -212,11 +212,23 @@ function Region:_generate(assetmgr, objtype, names)
 		limits.limit = math.random(limits.min, limits.max)
 	end
 
+
+   if tpl.kind ~= tplkind.EXCLUSION and self._templates[tpl.name].alwaysSpawn == true then
+      local tplSpawn = self._templates[tpl.name]
+      local asset = Asset(tplSpawn, self)
+      assetmgr:add(asset)
+      asset:spawn()
+      assetmgr:getStats(asset.owner):inc(asset.type..".2")
+      table.remove(names, i)
+      limits.current = 1 + limits.current
+    end
+    
+   
 	while #names >= 1 and limits.current < limits.limit do
 		-- this could be optimized a little in that if we have no
 		-- specific limits and want all the templates spawned
 		-- we could skip getting the random number, not really worth it
-
+    
 		local idx  = math.random(1, #names)
 		local name = names[idx].name
 		if names[idx].kind == tplkind.EXCLUSION then
