@@ -147,38 +147,6 @@ local function checktpldata(_, tbl)
 	return true
 end
 
-local function checktable(keydata, tbl)
-	return type(tbl[keydata.name]) == "table"
-end
-
-local function checkstring(keydata, tbl)
-	return type(tbl[keydata.name]) == "string"
-end
-
-local function checknumber(keydata, tbl)
-	if tbl[keydata.name] == nil then
-		if keydata.default == nil then
-			return false
-		else
-			tbl[keydata.name] = keydata.default
-			return true
-		end
-	end
-	return type(tbl[keydata.name]) == "number"
-end
-
-local function checkbool(keydata, tbl)
-	if tbl[keydata.name] == nil then
-		if keydata.default == nil then
-			return false
-		else
-			tbl[keydata.name] = keydata.default
-			return true
-		end
-	end
-	return type(tbl[keydata.name]) == "boolean"
-end
-
 local function checkobjtype(keydata, tbl)
 	if type(tbl[keydata.name]) == "number" and
 		dctutils.getkey(enum.assetType, tbl[keydata.name]) ~= nil then
@@ -207,39 +175,40 @@ local function getkeys(objtype)
 	local keys = {
 		[1] = {
 			["name"]  = "name",
-			["check"] = checkstring,
+			["type"]  = "string",
 		},
 		[2] = {
 			["name"]  = "regionname",
-			["check"] = checkstring,
+			["type"]  = "string",
 		},
 		[3] = {
 			["name"]  = "coalition",
+			["type"]  = "number",
 			["check"] = checkside,
 		},
 		[4] = {
 			["name"]    = "uniquenames",
-			["check"]   = checkbool,
+			["type"]    = "boolean",
 			["default"] = false,
 		},
 		[5] = {
 			["name"]    = "priority",
-			["check"]   = checknumber,
+			["type"]    = "number",
 			["default"] = enum.assetTypePriority[objtype],
 		},
 		[6] = {
 			["name"]    = "primary",
-			["check"]   = checkbool,
+			["type"]    = "boolean",
 			["default"] = false,
 		},
 		[7] = {
 			["name"]    = "intel",
-			["check"]   = checknumber,
+			["type"]    = "number",
 			["default"] = 0,
 		},
 		[8] = {
 			["name"]    = "spawnalways",
-			["check"]   = checkbool,
+			["type"]    = "boolean",
 			["default"] = false,
 		},
 	}
@@ -248,39 +217,26 @@ local function getkeys(objtype)
 		objtype ~= enum.assetType.AIRBASE then
 		table.insert(keys, {
 			["name"]  = "tpldata",
+			["type"]  = "table",
 			["check"] = checktpldata,})
 	end
 
 	if objtype == enum.assetType.AIRSPACE then
 		table.insert(keys, {
 			["name"]  = "location",
-			["check"] = checktable, })
+			["type"]  = "table",})
 		table.insert(keys, {
 			["name"]  = "volume",
-			["check"] = checktable, })
+			["type"]  = "table", })
 	end
 
 	if objtype == enum.assetType.AIRBASE then
 		table.insert(keys, {
 			["name"]  = "defenses",
-			["check"] = checkstring, })
+			["type"]  = "string", })
 	end
 
 	return keys
-end
-
-local function errorhandler(key, m, path)
-	local msg = string.format("%s: %s; template-file: %s",
-		key, m, path or "nil")
-	error(msg, 2)
-end
-
-local function checkkey(keydata, tbl)
-	if keydata.default == nil and tbl[keydata.name] == nil then
-		errorhandler(keydata.name, "missing required key", tbl.path)
-	elseif not keydata.check(keydata, tbl) then
-		errorhandler(keydata.name, "invalid key value", tbl.path)
-	end
 end
 
 --[[
@@ -338,15 +294,13 @@ function Template:__init(data)
 end
 
 function Template:validate()
-	checkkey({
+	dctutils.checkkeys({ [1] = {
 		["name"]  = "objtype",
+		["type"]  = "string",
 		["check"] = checkobjtype,
-	}, self)
+	},}, self)
 
-	local keys = getkeys(self.objtype)
-	for _, keydata in ipairs(keys) do
-		checkkey(keydata, self)
-	end
+	dctutils.checkkeys(getkeys(self.objtype), self)
 end
 
 -- PUBLIC INTERFACE
