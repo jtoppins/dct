@@ -8,6 +8,7 @@ require("lfs")
 require("math")
 local class      = require("libs.class")
 local utils      = require("libs.utils")
+local dctutils   = require("dct.utils")
 local Template   = require("dct.Template")
 local Asset      = require("dct.Asset")
 local Logger     = require("dct.Logger").getByName("Region")
@@ -72,39 +73,51 @@ function Region:__init(regionpath)
 	self:_loadTemplates()
 end
 
-function Region:_loadMetadata(regiondefpath)
-	Logger:debug("=> regiondefpath: "..regiondefpath)
-	local requiredkeys = {
-		["name"] = {
-			["type"] = "string",
-		},
-		["priority"] = {
-			["type"] = "number",
-		},
-	}
-
-	local region = utils.readlua(regiondefpath, "region")
-	for key, data in pairs(requiredkeys) do
-		if region[key] == nil or
-		   type(region[key]) ~= data["type"] then
-			assert(false, "invalid or missing option '"..key..
-			       "' in region file; "..regiondefpath)
-		end
-	end
-
+local function processlimits(_, tbl)
 	-- process limits; convert the human readable asset type names into
 	-- their numerical equivalents.
 	local limits = {}
-	for key, data in pairs(region.limits or {}) do
+	for key, data in pairs(tbl.limits) do
 		local typenum = dctenums.assetType[string.upper(key)]
 		if typenum == nil then
 			Logger:warn("invalid asset type '"..key..
-				"' found in limits definition in file: "..regiondefpath)
+				"' found in limits definition in file: "..
+				tbl.defpath or "nil")
 		else
 			limits[typenum] = data
 		end
 	end
-	region.limits = limits
+	tbl.limits = limits
+	return true
+end
+
+function Region:_loadMetadata(regiondefpath)
+	Logger:debug("=> regiondefpath: "..regiondefpath)
+	local keys = {
+		[1] = {
+			["name"] = "name",
+			["type"] = "string",
+		},
+		[2] = {
+			["name"] = "priority",
+			["type"] = "number",
+		},
+		[3] = {
+			["name"] = "limits",
+			["type"] = "table",
+			["default"] = {},
+			["check"] = processlimits,
+		},
+		[4] = {
+			["name"] = "airspace",
+			["type"] = "boolean",
+			["default"] = true,
+		},
+	}
+
+	local region = utils.readlua(regiondefpath, "region")
+	region.defpath = regiondefpath
+	dctutils.checkkeys(keys, region)
 	utils.mergetables(self, region)
 end
 

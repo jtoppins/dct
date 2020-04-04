@@ -9,6 +9,31 @@ require("math")
 local enum  = require("dct.enum")
 local utils = {}
 
+local function errorhandler(key, m, path)
+	local msg = string.format("%s: %s; file: %s",
+		key, m, path or "nil")
+	error(msg, 2)
+end
+
+function utils.checkkeys(keys, tbl)
+	for _, keydata in ipairs(keys) do
+		if keydata.default == nil and tbl[keydata.name] == nil then
+			errorhandler(keydata.name, "missing required key", tbl.path)
+		elseif keydata.default ~= nil and tbl[keydata.name] == nil then
+			tbl[keydata.name] = keydata.default
+		else
+			if type(tbl[keydata.name]) ~= keydata.type then
+				errorhandler(keydata.name, "invalid key value", tbl.path)
+			end
+
+			if type(keydata.check) == "function" and
+				not keydata.check(keydata, tbl) then
+				errorhandler(keydata.name, "invalid key value", tbl.path)
+			end
+		end
+	end
+end
+
 function utils.isalive(grpname)
 	local grp = Group.getByName(grpname)
 	return (grp and grp:isExist() and grp:getSize() > 0)
