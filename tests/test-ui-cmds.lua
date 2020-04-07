@@ -25,8 +25,10 @@ local unit1 = Unit({
 	},
 }, grp, "bobplayer")
 
-local briefingtxt = "ID: STRIKE0090\nTarget AO: 88°07.2'N 063°27.6'W"..
-			" (PHOENIX)\nBriefing:\n"..
+local briefingtxt = "Package: #5720\n"..
+			"IFF Codes: M1(05), M3(5720)\n"..
+			"Target AO: 88°07.2'N 063°27.6'W (PHOENIX)\n"..
+			"Briefing:\n"..
 			"Ground units operating in the area have informed us of"..
 			" an Iranian Ammo Dump 88°07.2'N 063°27.6'W."..
 			" Find and destroy the bunkers and the ordnance within.\n"..
@@ -58,7 +60,7 @@ local testcmds = {
 			["value"]  = enum.missionType.STRIKE,
 		},
 		["assert"]     = true,
-		["expected"]   = "Mission STRIKE0090 assigned, use F10 menu to "..
+		["expected"]   = "Mission 5720 assigned, use F10 menu to "..
 			"see this briefing again\n"..briefingtxt,
 	},
 	[3] = {
@@ -86,7 +88,7 @@ local testcmds = {
 			["type"]   = enum.uiRequestType.MISSIONSTATUS,
 		},
 		["assert"]     = true,
-		["expected"]   = "ID: STRIKE0090\nTimeout: "..
+		["expected"]   = "Package: 5720\nTimeout: "..
 			"2001-06-22 14:03z (in 297 mins)\nBDA: 0% complete\n",
 	},
 	[6] = {
@@ -121,7 +123,7 @@ local testcmds = {
 			["value"]  = "player requested",
 		},
 		["assert"]     = true,
-		["expected"]   = "Mission STRIKE0090 aborted, player requested",
+		["expected"]   = "Mission 5720 aborted, player requested",
 	},
 }
 

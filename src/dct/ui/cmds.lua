@@ -135,13 +135,18 @@ function MissionCmd:_execute(time, cmdr)
 end
 
 
-local function briefingmsg(msn, actype)
+local function briefingmsg(msn, asset)
 	local tgtinfo = msn:getTargetInfo()
-	local msg = string.format("ID: %s\n", msn:getID())..
-		string.format("%s: %s (%s)\n", human.locationhdr(msn.type),
-			human.grid2actype(actype, tgtinfo.location, tgtinfo.intellvl),
+	local msg = string.format("Package: #%s\n", msn:getID())..
+		string.format("IFF Codes: M1(%02o), M3(%04o)\n",
+			msn.iffcodes.m1, msn.iffcodes.m3)..
+		string.format("%s: %s (%s)\n",
+			human.locationhdr(msn.type),
+			human.grid2actype(asset.unittype,
+				tgtinfo.location, tgtinfo.intellvl),
 			tgtinfo.callsign)..
-		"Briefing:\n"..msn:getDescription(actype, tgtinfo.intellvl)
+		"Briefing:\n"..msn:getDescription(asset.unittype,
+			tgtinfo.intellvl)
 	return msg
 end
 
@@ -170,7 +175,8 @@ function MissionRqstCmd:_execute(_, cmdr)
 	else
 		msg = string.format("Mission %s assigned, use F10 menu "..
 			"to see this briefing again\n", msn:getID())
-		msg = msg..briefingmsg(msn, self.actype)
+		msg = msg..briefingmsg(msn,
+			self.theater:getAssetMgr():getAsset(self.grpname))
 		human.drawTargetIntel(msn, self.grpid, false)
 	end
 	return msg
@@ -184,7 +190,8 @@ function MissionBriefCmd:__init(theater, data)
 end
 
 function MissionBriefCmd:_mission(_, _, msn)
-	return briefingmsg(msn, self.actype)
+	return briefingmsg(msn,
+		self.theater:getAssetMgr():getAsset(self.grpname))
 end
 
 
@@ -203,7 +210,7 @@ function MissionStatusCmd:_mission(time, _, msn)
 	end
 	minsleft = minsleft / 60
 
-	msg = string.format("ID: %s\n", msn:getID()) ..
+	msg = string.format("Package: %s\n", msn:getID()) ..
 		string.format("Timeout: %s (in %d mins)\n",
 			dctutils.date("%F %Rz", dctutils.zulutime(timeout)),
 			minsleft) ..

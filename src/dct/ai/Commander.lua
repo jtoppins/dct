@@ -89,6 +89,64 @@ function Commander:getTheaterUpdate()
 	return theaterUpdate
 end
 
+local MISSION_ID = math.random(1,63)
+local invalidXpdrTbl = {
+	["7700"] = true,
+	["7600"] = true,
+	["7500"] = true,
+	["7400"] = true,
+}
+
+local squawkMissionType = {
+	["SAR"]  = 0,
+	["SUPT"] = 1,
+	["A2A"]  = 2,
+	["SEAD"] = 3,
+	["SEA"]  = 4,
+	["A2G"]  = 5,
+}
+
+local function map_mission_type(msntype)
+	local sqwkcode
+	if msntype == enum.missionType.CAP then
+		sqwkcode = squawkMissionType.A2A
+	--elseif msntype == enum.missionType.SAR then
+	--	sqwkcode = squawkMissionType.SAR
+	--elseif msntype == enum.missionType.SUPPORT then
+	--	sqwkcode = squawkMissionType.SUPT
+	elseif msntype == enum.missionType.SEAD then
+		sqwkcode = squawkMissionType.SEAD
+	else
+		sqwkcode = squawkMissionType.A2G
+	end
+	return sqwkcode
+end
+
+--[[
+-- Generates a mission id as well as generating IFF codes for the
+-- mission.
+--
+-- Returns: a table with the following:
+--   * id (string): is the mission ID
+--   * m1 (number): is the mode 1 IFF code
+--   * m3 (number): is the mode 3 IFF code
+--  If 'nil' is returned no valid mission id could be generated.
+--]]
+function Commander:genMissionCodes(msntype)
+	local id
+	local m1 = map_mission_type(msntype)
+	while true do
+		MISSION_ID = (MISSION_ID + 1) % 64
+		id = string.format("%01o%02o0", m1, MISSION_ID)
+		if invalidXpdrTbl[id] == nil and
+			self:getMission(id) == nil then
+			break
+		end
+	end
+	local m3 = (512*m1)+(MISSION_ID*8)
+	return { ["id"] = id, ["m1"] = m1, ["m3"] = m3, }
+end
+
 --[[
 -- recommendMission - recommend a mission type given a unit type
 -- unittype - (string) the type of unit making request requesting

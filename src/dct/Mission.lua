@@ -15,28 +15,14 @@ local uihuman  = require("dct.ui.human")
 local uicmds   = require("dct.ui.cmds")
 
 local MISSION_LIMIT = 60*60*3  -- 3 hours in seconds
-local MISSION_ID = math.random(1,99)
-
-local function genMissionID(cmdr, msntype)
-	local msnid = dctutils.getkey(enum.missionType, msntype)
-	local id
-
-	while true do
-		MISSION_ID = (MISSION_ID + 1) % 10000
-		id = msnid..string.format("%04d", MISSION_ID)
-		if cmdr:getMission(id) == nil then
-			break
-		end
-	end
-	return id
-end
 
 local Mission = class()
 function Mission:__init(cmdr, missiontype, grpname, tgtname)
 	self._complete = false
+	self.iffcodes  = cmdr:genMissionCodes(missiontype)
+	self.id        = self.iffcodes.id
 	-- reference to owning commander
 	self.cmdr      = cmdr
-	self.id        = genMissionID(cmdr, missiontype)
 	self.type      = missiontype
 	self.target    = tgtname
 	self.assigned  = grpname
