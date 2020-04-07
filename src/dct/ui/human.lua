@@ -54,17 +54,10 @@ function human.threat(value)
 	return "high"
 end
 
--- TODO: this function is the exact same as utils.getkey(t,v)
--- remove this and utilize getkey() instead
 function human.missiontype(mtype)
-	for name, val in pairs(enum.missionType) do
-		if val == mtype then
-			return name
-		end
-	end
-	assert(false, "no name found for mission type ("..mtype..")")
+	return assert(dctutils.getkey(enum.missionType, mtype),
+		"no name found for mission type ("..mtype..")")
 end
-
 
 function human.locationhdr(msntype)
 	local hdr = "Target AO"
