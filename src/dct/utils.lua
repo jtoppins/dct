@@ -14,6 +14,12 @@ function utils.isalive(grpname)
 	return (grp and grp:isExist() and grp:getSize() > 0)
 end
 
+local _cntr = 10000
+function utils.getcntr()
+	_cntr = _cntr + 1
+	return _cntr
+end
+
 function utils.getkey(tbl, val)
 	for k, v in pairs(tbl) do
 		if v == val then

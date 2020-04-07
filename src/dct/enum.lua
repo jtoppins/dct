@@ -136,6 +136,8 @@ local uiRequestType = {
 	["MISSIONROLEX"]    = 6,
 	["MISSIONCHECKIN"]  = 7,
 	["MISSIONCHECKOUT"] = 8,
+	["SCRATCHPADGET"]   = 9,
+	["SCRATCHPADSET"]   = 10,
 }
 
 local enum = {

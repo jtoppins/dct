@@ -56,6 +56,7 @@ function Theater:__init()
 	self.assetmgr  = AssetManager(self)
 	self.cmdrs     = {}
 	self.playergps = {}
+	self.scratchpad= {}
 	self.startdate = os.date("*t")
 
 	for _, val in pairs(coalition.side) do

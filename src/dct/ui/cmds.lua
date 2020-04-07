@@ -55,6 +55,37 @@ function UICmd:execute(time)
 	return nil
 end
 
+local ScratchPadDisplay = class(UICmd)
+function ScratchPadDisplay:__init(theater, data)
+	UICmd.__init(self, theater, data)
+end
+
+function ScratchPadDisplay:_execute(time, cmdr)
+	local msg = string.format("Scratch Pad: '%s'",
+		tostring(self.theater.playergps[self.grpname].scratchpad))
+	return msg
+end
+
+local ScratchPadSet = class(UICmd)
+function ScratchPadSet:__init(theater, data)
+	UICmd.__init(self, theater, data)
+end
+
+function ScratchPadSet:_execute(time, cmdr)
+	local mrkid = dctutils.getcntr()
+	local unit = Group.getByName(self.grpname):getUnits()[1]
+	local pos = unit:getPoint()
+	local title = "SCRATCHPAD "..tonumber(self.grpid)
+
+	self.theater.scratchpad[mrkid] = self.grpname
+	trigger.action.markToGroup(mrkid, title, pos, self.grpid, false, nil)
+	local msg = "Look on F10 MAP for user mark with title: "..
+		title.."\n"..
+		"Edit body with your scratchpad information. "..
+		"Click off the mark when finished. "..
+		"The mark will automatically be deleted."
+	return msg
+end
 
 local TheaterUpdateCmd = class(UICmd)
 function TheaterUpdateCmd:__init(theater, data)
@@ -238,6 +269,8 @@ local cmds = {
 	[enum.uiRequestType.MISSIONROLEX]    = MissionRolexCmd,
 	[enum.uiRequestType.MISSIONCHECKIN]  = MissionCheckinCmd,
 	[enum.uiRequestType.MISSIONCHECKOUT] = MissionCheckoutCmd,
+	[enum.uiRequestType.SCRATCHPADGET]   = ScratchPadDisplay,
+	[enum.uiRequestType.SCRATCHPADSET]   = ScratchPadSet,
 }
 
 return cmds
