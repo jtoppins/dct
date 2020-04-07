@@ -20,6 +20,7 @@
 
 local enum    = require("dct.enum")
 local Logger  = require("dct.Logger").getByName("UIMenu")
+local human   = require("dct.ui.human")
 local addmenu = missionCommands.addSubMenuForGroup
 local addcmd  = missionCommands.addCommandForGroup
 
@@ -51,6 +52,17 @@ local function createMenu(theater, grp)
 
 	local grpentry = buildPlayerGroupEntry(grp)
 	theater.playergps[name] = grpentry
+
+	local padmenu = addmenu(gid, "Scratch Pad", nil)
+	for k, v in pairs({
+		["DISPLAY"] = enum.uiRequestType.SCRATCHPADGET,
+		["SET"] = enum.uiRequestType.SCRATCHPADSET}) do
+		addcmd(gid, k, padmenu, theater.playerRequest, theater,
+			{
+				["name"]   = name,
+				["type"]   = v,
+			})
+	end
 
 	addcmd(gid, "Theater Update", nil, theater.playerRequest, theater,
 		{
@@ -141,10 +153,26 @@ local function uiDCSEventHandler(theater, event)
 	end
 end
 
+local function uiScratchPad(theater, event)
+	if event.id ~= world.event.S_EVENT_MARK_CHANGE then
+		return
+	end
+
+	local name = theater.scratchpad[event.idx]
+	if name == nil then
+		return
+	end
+
+	theater.playergps[name].scratchpad = human.sanatize(event.text)
+	theater.scratchpad[event.idx] = nil
+	trigger.action.removeMark(event.idx)
+end
+
 local function init(theater)
 	assert(theater ~= nil, "value error: theater must be a non-nil value")
 	Logger:debug("init UI Menu event handler")
 	theater:registerHandler(uiDCSEventHandler, theater)
+	theater:registerHandler(uiScratchPad, theater)
 end
 
 return init
