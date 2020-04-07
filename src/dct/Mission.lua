@@ -31,23 +31,6 @@ local function genMissionID(cmdr, msntype)
 	return id
 end
 
-local function interp(s, tab)
-	return (s:gsub('(%b%%)', function(w) return tab[w:sub(2,-2)] or w end))
-end
-
-local function genLocationMethod()
-	local txt = {
-		"NATO Reconaissasnce elements have located",
-		"A recon flight earlier today discovered",
-		"We have reason to believe there is",
-		"Aerial photography shows that there is",
-		"Satellite Imaging of Iran has found",
-		"Ground units operating in Iran have informed us of",
-	}
-	local idx = math.random(1,#txt)
-	return txt[idx]
-end
-
 local Mission = class()
 function Mission:__init(cmdr, missiontype, grpname, tgtname)
 	self._complete = false
@@ -78,11 +61,10 @@ function Mission:_composeBriefing()
 	local tgt = self.cmdr:getAsset(self.target)
 	local briefing = tgt.briefing
 	local interptbl = {
-		["LOCATIONMETHOD"] = genLocationMethod(),
 		["TOT"] = dctutils.date("%F %Rz",
 			dctutils.zulutime(self:getTimeout()*.6)),
 	}
-	return interp(briefing, interptbl)
+	return dctutils.interp(briefing, interptbl)
 end
 
 function Mission:getID()
@@ -198,7 +180,7 @@ function Mission:getDescription(actype, locprecision)
 		["LOCATION"] = uihuman.grid2actype(actype, tgt:getLocation(),
 			locprecision)
 	}
-	return interp(self.briefing, interptbl)
+	return dctutils.interp(self.briefing, interptbl)
 end
 
 return Mission

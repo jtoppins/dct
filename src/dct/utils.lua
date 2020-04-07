@@ -60,6 +60,10 @@ function utils.getkey(tbl, val)
 	return nil
 end
 
+function utils.interp(s, tab)
+	return (s:gsub('(%b%%)', function(w) return tab[w:sub(2,-2)] or w end))
+end
+
 function utils.assettype2mission(assettype)
 	for k, v in pairs(enum.missionTypeMap) do
 		if v[assettype] then

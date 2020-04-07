@@ -26,7 +26,8 @@ local unit1 = Unit({
 }, grp, "bobplayer")
 
 local briefingtxt = "ID: STRIKE0090\nTarget AO: 88°07.2'N 063°27.6'W"..
-			" (WARSAW)\nBriefing:\nA recon flight earlier today discovered"..
+			" (PHOENIX)\nBriefing:\n"..
+			"Ground units operating in the area have informed us of"..
 			" an Iranian Ammo Dump 88°07.2'N 063°27.6'W."..
 			" Find and destroy the bunkers and the ordnance within.\n"..
 			"    Tot: 2001-06-22 12:02z\n    \n"..

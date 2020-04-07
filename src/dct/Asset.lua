@@ -39,6 +39,19 @@ local function getcollection(assettype, asset, template, region)
 	return collection(asset, template, region)
 end
 
+local function genLocationMethod()
+	local txt = {
+		"Reconaissasnce elements have located",
+		"A recon flight earlier today discovered",
+		"We have reason to believe there is",
+		"Aerial photography shows that there is",
+		"Satellite Imaging has found",
+		"Ground units operating in the area have informed us of",
+	}
+	local idx = math.random(1,#txt)
+	return txt[idx]
+end
+
 --[[
 Asset:
 	attributes(private):
@@ -100,7 +113,9 @@ function Asset:__init(template, region)
 	self._initcomplete = false
 	if template ~= nil and region ~= nil then
 		self.type     = template.objtype
-		self.briefing = template.desc
+		self.briefing = dctutils.interp(template.desc, {
+			["LOCATIONMETHOD"] = genLocationMethod(),
+		})
 		self.owner    = template.coalition
 		self.rgnname  = region.name
 		self.tplname  = template.name
