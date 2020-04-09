@@ -3,7 +3,7 @@
 local _G   = _G
 local _ENV = nil
 local dct = {
-    _VERSION = "0.1",
+    _VERSION = "0.5",
     _DESCRIPTION = "DCT: DCS Dynamic Campaign Tools",
     _COPYRIGHT = "Copyright (c) 2019 Jonathan Toppins"
 }
