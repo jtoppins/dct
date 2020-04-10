@@ -6,3 +6,6 @@
 !.gitignore
 !.luacheckrc
 !.github
+
+# ignore release zip files
+*.zip

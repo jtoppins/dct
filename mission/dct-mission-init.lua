@@ -18,13 +18,21 @@ if not lfs or not io or not require then
 end
 
 -- 'dctsettings' can be defined in the mission to override any of the
--- possible dct settings. Including 'luapath' which can override
--- the package path location.
+-- possible dct settings.
 dctsettings = dctsettings or {}
-if dctsettings.luapath == nil then
-	dctsettings.luapath = lfs.writedir() .. "Scripts\\?.lua;"
+
+-- Check that DCT mod is installed
+local modpath = lfs.writedir() .. "Mods\\tech\\DCT"
+if lfs.attributes(modpath) == nil then
+	local errmsg = "DCT: module not installed, mission not DCT enabled"
+	if dctsettings.nomodlog then
+		env.error(errmsg)
+	else
+		assert(false, errmsg)
+	end
+else
+	package.path = package.path .. ";" .. modpath .. "\\lua\\?.lua;"
+	require("dct")
+	dct.init()
 end
 
-package.path = package.path .. ";" .. dctsettings.luapath
-require("dct")
-dct.init()
