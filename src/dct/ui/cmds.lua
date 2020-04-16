@@ -12,9 +12,6 @@ local human    = require("dct.ui.human")
 local Command  = require("dct.Command")
 local Logger   = require("dct.Logger").getByName("uiCmds")
 
--- precision of the coordinates given for a target area
-local AO_LOC_PRECISION = 2
-
 local UICmd = class(Command)
 function UICmd:__init(theater, data)
 	assert(theater ~= nil, "value error: theater required")
@@ -140,10 +137,9 @@ local function briefingmsg(msn, actype)
 	local tgtinfo = msn:getTargetInfo()
 	local msg = string.format("ID: %s\n", msn:getID())..
 		string.format("%s: %s (%s)\n", human.locationhdr(msn.type),
-			human.grid2actype(actype, tgtinfo.location,
-				AO_LOC_PRECISION),
+			human.grid2actype(actype, tgtinfo.location, tgtinfo.intellvl),
 			tgtinfo.callsign)..
-		"Briefing:\n"..msn:getDescription(actype, AO_LOC_PRECISION)
+		"Briefing:\n"..msn:getDescription(actype, tgtinfo.intellvl)
 	return msg
 end
 

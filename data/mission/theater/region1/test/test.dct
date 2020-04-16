@@ -5,4 +5,5 @@ metadata = {
         ["limit"] = 3,
         ["time"]  = 30,
     },
+    ["intel"] = 2,
 }
