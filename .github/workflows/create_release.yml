@@ -1,0 +1,48 @@
+name: Create Release
+
+on:
+  push:
+    tags:
+    - 'v*'
+
+env:
+  PACKAGES: make zip wget
+
+jobs:
+  build:
+    name: Upload DCS Mod package
+    runs-on: ubuntu-latest
+    steps:
+    - name: Install Packages
+      run: sudo apt-get install $PACKAGES
+
+    - id: trim_ref
+      run: echo "::set-env name=VERSION::$(basename ${{ github.ref }})"
+
+    - name: Checkout Code
+      uses: actions/checkout@v2
+
+    - name: Build Mod
+      run: make build
+
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        draft: false
+        prerelease: false
+
+    - name: Upload Release
+      id: upload_release_asset
+      uses: actions/upload-release-asset@v1.0.2
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./DCT-${{ env.VERSION }}.zip
+        asset_name: DCT-${{ env.VERSION }}.zip
+        asset_content_type: application/zip

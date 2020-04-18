@@ -1,7 +1,7 @@
 MAKEFLAGS  := --no-print-directory
 SRCPATH    := $(CURDIR)
 BUILDPATH  ?= $(CURDIR)/build
-VERSION    := $(shell git describe)
+VERSION    ?= $(shell git describe)
 LUALIBSVER := 1
 LUALIBSAR  := v$(LUALIBSVER).zip
 LUALIBSURL := https://github.com/jtoppins/lua-libs/archive/$(LUALIBSAR)
