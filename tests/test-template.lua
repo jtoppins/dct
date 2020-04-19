@@ -4,6 +4,7 @@ require("dcttestlibs")
 require("dct")
 local utils = require("libs.utils")
 local enum = require("dct.enum")
+local STM = require("dct.STM")
 local Template = require("dct.Template")
 
 local sampletpls = {
@@ -85,9 +86,13 @@ local function main()
 		-- test: group values read
 		for grpname, value in pairs(data.groups) do
 			--print("name: "..grpname.." val: "..value)
+			local cat =
+				Unit.Category[STM.categorymap[string.upper(grpname)]]
 			local val = 0
-			if t.tpldata[grpname] ~= nil then
-				val = #t.tpldata[grpname]
+			for _, grp in ipairs(t.tpldata) do
+				if grp.category == cat then
+					val = val + 1
+				end
 			end
 			assert(val == value,
 				grpname.." expected: "..value.."; got: "..val)

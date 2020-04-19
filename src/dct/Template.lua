@@ -83,12 +83,10 @@ local function getcntr()
 end
 
 local function makeNamesUnique(data)
-	for _, cat_data in pairs(data) do
-		for _, grp in ipairs(cat_data) do
-			grp.data.name = grp.data.name .. " #" .. getcntr()
-			for _, v in ipairs(grp.data.units or {}) do
-				v.name = v.name .. " #" .. getcntr()
-			end
+	for _, grp in ipairs(data) do
+		grp.data.name = grp.data.name .. " #" .. getcntr()
+		for _, v in ipairs(grp.data.units or {}) do
+			v.name = v.name .. " #" .. getcntr()
 		end
 	end
 end
@@ -105,7 +103,7 @@ local function overrideUnitOptions(unit, key, tpl, basename)
 	unit.name = basename.."-"..key
 end
 
-local function overrideGroupOptions(grp, idx, tpl, category)
+local function overrideGroupOptions(grp, idx, tpl)
 	local opts = {
 		visible        = true,
 		uncontrollable = true,
@@ -117,30 +115,28 @@ local function overrideGroupOptions(grp, idx, tpl, category)
 	end
 
 	local goaltype = Goal.objtype.GROUP
-	if string.lower(category) == "static" then
+	if grp.category == Unit.Category.STRUCTURE then
 		goaltype = Goal.objtype.STATIC
 	end
 
-	grp.groupId = nil
-	grp.start_time = 0
-	grp.dct_deathgoal = goalFromName(grp.name, goaltype)
-	if grp.dct_deathgoal ~= nil then
+	grp.data.groupId = nil
+	grp.data.start_time = 0
+	grp.data.dct_deathgoal = goalFromName(grp.data.name, goaltype)
+	if grp.data.dct_deathgoal ~= nil then
 		tpl.hasDeathGoals = true
 	end
-	grp.name = tpl.regionname.."_"..tpl.name.." "..tpl.coalition.." "..
-		category.." "..tostring(idx)
+	grp.data.name = tpl.regionname.."_"..tpl.name.." "..tpl.coalition.." "..
+		dctutils.getkey(Unit.Category, grp.category).." "..tostring(idx)
 
-	for i, unit in ipairs(grp.units or {}) do
-		overrideUnitOptions(unit, i, tpl, grp.name)
+	for i, unit in ipairs(grp.data.units or {}) do
+		overrideUnitOptions(unit, i, tpl, grp.data.name)
 	end
 end
 
-local function checktpldata(_, tbl)
+local function checktpldata(_, tpl)
 	-- loop over all tpldata and process names and existence of deathgoals
-	for cat, cat_data in pairs(tbl.tpldata) do
-		for idx, grp in ipairs(cat_data) do
-			overrideGroupOptions(grp.data, idx, tbl, cat)
-		end
+	for idx, grp in ipairs(tpl.tpldata) do
+		overrideGroupOptions(grp, idx, tpl)
 	end
 	return true
 end
@@ -256,13 +252,13 @@ end
 --    Storage
 --    -------
 --    tpldata = {
---      category = {
---        # = {
+--      # = {
+--          category = Unit.Category
 --          countryid = id,
 --          data      = {
 --            # group def members
 --            dct_deathgoal = goalspec
---    }}}}
+--    }}}
 --
 --    DCT File
 --    --------

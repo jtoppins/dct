@@ -15,107 +15,86 @@ local categorymap = {
 	["STATIC"]     = 'STRUCTURE',
 }
 
-local function lookupname(name, names)
-	assert(name and type(name) == "string", "name must be provided")
-	local newname = name
-	local namelist = names or {}
-	if namelist[name] ~= nil then
-		newname = namelist[name]
-	end
-	return newname
-end
-
-local function createTable(tpl, ctx)
-	local data = tpl.tpldata
-	if data[ctx.category] == nil then
-		data[ctx.category] = {}
-	end
-end
-
-local function convertNames(data, names)
-	data.name = lookupname(data.name, names)
+local function convertNames(data, namefunc)
+	data.name = namefunc(data.name)
 
 	for _, unit in ipairs(data.units or {}) do
-		unit.name = lookupname(unit.name, names)
+		unit.name = namefunc(unit.name)
 	end
 
 	if data.route then
 		for _, wypt in ipairs(data.route.points or {}) do
-			wypt.name = lookupname(wypt.name, names)
+			wypt.name = namefunc(wypt.name)
 		end
 	end
 end
 
-local function addOneStatic(tpl, _, grp, ctx)
-	local tbl = {}
-	createTable(tpl, ctx)
-	tbl.data      = grp.units[1]
-	tbl.data.dead = grp.dead
-	tbl.countryid = ctx.countryid
-	convertNames(tbl.data, tpl.names)
-	table.insert(tpl.tpldata[ctx.category], tbl)
+local function modifyStatic(grpdata, _, dcscategory)
+	if dcscategory ~= Unit.Category.STRUCTURE then
+		return grpdata
+	end
+	local grpcpy = utils.deepcopy(grpdata.units[1])
+	grpcpy.dead = grpdata.dead
+	return grpcpy
 end
 
-local function addOneGroup(tpl, _, grp, ctx)
-	local tbl = {}
-	createTable(tpl, ctx)
-	tbl.data = grp
-	tbl.countryid = ctx.countryid
-	convertNames(tbl.data, tpl.names)
-	table.insert(tpl.tpldata[ctx.category], tbl)
-end
-
-local function processCountry(tpl, side, ctry)
-	local funcmap = {
-		["HELICOPTER"] = addOneGroup,
-		["SHIP"]       = addOneGroup,
-		["VEHICLE"]    = addOneGroup,
-		["PLANE"]      = addOneGroup,
-		["STATIC"]     = addOneStatic,
-	}
-
-	local ctx = {}
-	ctx.side      = side
-	ctx.category  = "none"
-	ctx.countryid = ctry.id
-
-	for cat, _ in pairs(categorymap) do
-		cat = string.lower(cat)
-		if ctry[cat] and type(ctry[cat]) == 'table' and
-		   ctry[cat].group then
-			if tpl.coalition == nil then
-				tpl.coalition = side
+local function processCategory(grplist, cattbl, cntryid, dcscategory, ops)
+	if type(cattbl) ~= 'table' or cattbl.group == nil then
+		return
+	end
+	for _, grp in ipairs(cattbl.group) do
+		if ops.grpfilter == nil or
+			ops.grpfilter(grp, cntryid, dcscategory) == true then
+			if type(ops.grpmodify) == 'function' then
+				grp = ops.grpmodify(grp, cntryid, dcscategory)
 			end
-			assert(tpl.coalition == side, "country("..ctry.id..") does not"..
-				" belong to template.coalition("..tpl.coalition.."),"..
-				" country belongs to "..side)
-			ctx.category = cat
-			utils.foreach(tpl,
-				ipairs,
-				funcmap[string.upper(cat)],
-				ctry[cat].group,
-				ctx)
+			local grptbl = {
+				["data"]      = utils.deepcopy(grp),
+				["countryid"] = cntryid,
+				["category"]  = dcscategory,
+			}
+			convertNames(grptbl.data, ops.namefunc)
+			table.insert(grplist, grptbl)
 		end
 	end
 end
 
-local function processCoalition(tpl, side, coa)
-	if side ~= 'red' and side ~= 'blue' and
-	   type(coa) ~= 'table' then
-		return
-	end
-
-	if coa.country == nil or type(coa.country) ~= 'table' then
-		return
-	end
-
-	for _, ctry_data in ipairs(coa.country) do
-		side = coalition.getCountryCoalition(ctry_data.id)
-		processCountry(tpl, side, ctry_data)
-	end
-end
 
 local STM = {}
+
+-- return all groups matching `grpfilter` from `tbl`
+-- grpfilter(grpdata, countryid, Unit.Category)
+--   returns true if the filter matches and the group entry should be kept
+-- grpmodify(grpdata, countryid, Unit.Category)
+--   returns a copy of the group data modified as needed
+-- always returns a table, even if it is empty
+function STM.processCoalition(tbl, namefunc, grpfilter, grpmodify)
+	assert(type(tbl) == 'table', "value error: `tbl` must be a table")
+	assert(tbl.country ~= nil and type(tbl.country) == 'table',
+		"value error: `tbl` must have a member `country` that is a table")
+
+	local grplist = {}
+	if namefunc == nil then
+		namefunc = env.getValueDictByKey
+	end
+	local ops = {
+		["namefunc"] = namefunc,
+		["grpfilter"] = grpfilter,
+		["grpmodify"] = grpmodify,
+	}
+
+	for _, cntrytbl in ipairs(tbl.country) do
+		for cat, unitcat in pairs(categorymap) do
+			processCategory(grplist,
+				cntrytbl[string.lower(cat)],
+				cntrytbl.id,
+				Unit.Category[unitcat],
+				ops)
+		end
+	end
+	return grplist
+end
+
 
 --[[
 -- Convert STM data format
@@ -134,30 +113,52 @@ local STM = {}
 -- to an internal, simplier, storage format
 --
 --    tpldata = {
---      category = {
---        # = {
---          countryid = id,
---          data      = {
---            # group def members
+--      [#] = {
+--        category  = Unit.Category[STM_category],
+--        countryid = id,
+--        data      = {
+--            # group definition
 --            dct_deathgoal = goalspec
---    }}}}
---
--- where category == {vehicle, plane, ...}
---
+--    }}}
 --]]
 
 function STM.transform(stmdata)
 	local template   = {}
-	template.names   = stmdata.localization.DEFAULT
-	template.name    = lookupname(stmdata.name, template.names)
-	template.theater = lookupname(stmdata.theatre, template.names)
-	template.desc    = lookupname(stmdata.desc, template.names)
+	local lookupname =  function(name)
+		assert(name and type(name) == "string",
+			"value error: name must be provided and a string")
+		local newname = name
+		local namelist = stmdata.localization.DEFAULT
+		if namelist[name] ~= nil then
+			newname = namelist[name]
+		end
+		return newname
+	end
+	local trackUniqueCoalition = function(_, cntryid, _)
+		local side = coalition.getCountryCoalition(cntryid)
+		if template.coalition == nil then
+			template.coalition = side
+		end
+		assert(template.coalition == side,
+			"runtime error: invalid template STM; country("..cntryid..")"..
+			" does not belong to template.coalition("..template.coalition..
+			"), country belongs to "..side)
+		return true
+	end
+
+	template.name    = lookupname(stmdata.name)
+	template.theater = lookupname(stmdata.theatre)
+	template.desc    = lookupname(stmdata.desc)
 	template.tpldata = {}
 
-	for coa_key, coa_data in pairs(stmdata.coalition) do
-		processCoalition(template, coa_key, coa_data)
+	for _, coa_data in pairs(stmdata.coalition) do
+		for _, grp in ipairs(STM.processCoalition(coa_data,
+				lookupname,
+				trackUniqueCoalition,
+				modifyStatic)) do
+			table.insert(template.tpldata, grp)
+		end
 	end
-	template.names = nil
 	return template
 end
 

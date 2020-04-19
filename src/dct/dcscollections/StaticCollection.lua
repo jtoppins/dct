@@ -11,7 +11,6 @@ local class    = require("libs.class")
 local utils    = require("libs.utils")
 local Logger   = require("dct.Logger").getByName("Asset")
 local dctutils = require("dct.utils")
-local STM      = require("dct.STM")
 local Goal     = require("dct.Goal")
 local IDCSObjectCollection = require("dct.dcscollections.IDCSObjectCollection")
 local settings = _G.dct.settings
@@ -135,11 +134,10 @@ end
 -- asset. This list will be needed later to save state.
 --]]
 function StaticCollection:_setup()
-	for cat_idx, cat_data in pairs(self._tpldata) do
-		for _, grp in ipairs(cat_data) do
-			self:_setupDeathGoal(grp.data, cat_idx == 'static')
-			self._assets[grp.data.name] = grp.data
-		end
+	for _, grp in ipairs(self._tpldata) do
+		self:_setupDeathGoal(grp.data,
+			grp.category == Unit.Category.STRUCTURE)
+		self._assets[grp.data.name] = grp.data
 	end
 	assert(next(self._deathgoals) ~= nil,
 		"runtime error: StaticCollection must have a deathgoal: "..
@@ -259,16 +257,12 @@ local function removeDCTKeys(grp)
 end
 
 function StaticCollection:_spawn()
-	for cat_idx, cat_data in pairs(self._tpldata) do
-		for _, grp in ipairs(cat_data) do
-			local gcpy = removeDCTKeys(grp)
-			if cat_idx == 'static' then
-				coalition.addStaticObject(gcpy.countryid, gcpy.data)
-			else
-				coalition.addGroup(gcpy.countryid,
-					Unit.Category[STM.categorymap[string.upper(cat_idx)]],
-					gcpy.data)
-			end
+	for _, grp in ipairs(self._tpldata) do
+		local gcpy = removeDCTKeys(grp)
+		if gcpy.category == Unit.Category.STRUCTURE then
+			coalition.addStaticObject(gcpy.countryid, gcpy.data)
+		else
+			coalition.addGroup(gcpy.countryid, gcpy.category, gcpy.data)
 		end
 	end
 
@@ -340,14 +334,8 @@ end
 local function filterTemplateData(tpldata)
 	local cpytbl = {}
 
-	for cat_idx, cat_data in pairs(tpldata) do
-		cpytbl[cat_idx] = {}
-		for _, grp in ipairs(cat_data) do
-			filterDeadObjects(cpytbl[cat_idx], grp)
-		end
-		if not next(cpytbl[cat_idx]) then
-			cpytbl[cat_idx] = nil
-		end
+	for _, grp in ipairs(tpldata) do
+		filterDeadObjects(cpytbl, grp)
 	end
 	if not next(cpytbl) then
 		cpytbl = nil
