@@ -33,6 +33,8 @@ local function getcollection(assettype, asset, template, region)
 		collection = require("dct.dcscollections.AirspaceCollection")
 	elseif dctenum.assetClass.STRATEGIC[assettype] then
 		collection = require("dct.dcscollections.StaticCollection")
+	elseif assettype == dctenum.assetType.PLAYERGROUP then
+		collection = require("dct.dcscollections.PlayerCollection")
 	else
 		assert(false, "unsupported asset type: "..assettype)
 	end
@@ -119,7 +121,11 @@ function Asset:__init(template, region)
 		self.owner    = template.coalition
 		self.rgnname  = region.name
 		self.tplname  = template.name
-		self.name     = region.name.."_"..self.owner.."_"..template.name
+		if self.type == dctenum.assetType.PLAYERGROUP then
+			self.name = self.tplname
+		else
+			self.name = region.name.."_"..self.owner.."_"..template.name
+		end
 		self.codename = generateCodename(self.type)
 		self._intel[self.owner] = dctutils.INTELMAX
 		if self.owner ~= coalition.side.NEUTRAL and template.intel then
@@ -195,8 +201,8 @@ function Asset:getObjectNames()
 	return self._collection:getObjectNames()
 end
 
-function Asset:onDCSEvent(event)
-	self._collection:onDCSEvent(event)
+function Asset:onDCSEvent(event, theater)
+	self._collection:onDCSEvent(event, theater)
 end
 
 function Asset:isSpawned()
@@ -243,22 +249,6 @@ return Asset
      * has death goals due to having DCS objects
    * associates a "team leader" AI with the asset to control the
      spawned DCS objects
-
--- PlayerAsset
---  inherents from DynamicAsset
---   flight groups with player slots in them
---  difference from BaseAsset and DynamicAsset
-   * DCS-objects, has associated DCS objects
-     * objects move
-     * has death goals due to having DCS objects
-     * spawn, nothing to spawn
-   * invincible, asset cannot die (i.e. be deleted)
-   * no associated "team leader" AI
-   * player specific isSpawned() test - why?
-   * enabled, asset can be enabled/disabled
-     * DCS flag associated to control if the slot is enabled
-       (think airbase captured so slot should not be joinable)
-   * registers with an airbase asset
 
 -- AirbaseAsset
 -- is a composite asset consisting of multiple other assets

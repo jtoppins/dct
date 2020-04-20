@@ -17,13 +17,6 @@ function human.getMarkID()
 	return markindex
 end
 
-function human.sanatize(txt)
-	if type(txt) ~= "string" then
-		return nil
-	end
-	return txt:gsub('[^%w%.%-_: ]', '')
-end
-
 -- enemy air superiroty as defined by the US-DOD is
 --  'incapability', 'denial', 'parity', 'superiority',
 --  'supremacy' - this is simply represented by a number

@@ -34,6 +34,7 @@ local assetType = {
 	["AIRSPACE"]    = 18,
 	["SHORAD"]      = 19,
 	["AIRBASE"]     = 20,
+	["PLAYERGROUP"] = 21,
 }
 
 --[[
@@ -92,6 +93,10 @@ local assetClass = {
 	["BASES"] = {
 		[assetType.AIRBASE]     = true,
 	},
+	-- agents never get seralized to the state file
+	["AGENTS"] = {
+		[assetType.PLAYERGROUP] = true,
+	}
 	--[[
 	-- Means ground tactical units
 	["TACTICAL"] = {

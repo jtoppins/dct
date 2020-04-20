@@ -41,6 +41,7 @@ local function main()
 		trigger.action.setmsgbuffer(data.expect)
 		trigger.action.setassert(data.assert)
 		theater:onEvent(data.event)
+		trigger.action.chkmsgbuffer()
 	end
 	return 0
 end

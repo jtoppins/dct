@@ -14,9 +14,12 @@ local json        = require("libs.json")
 local enum        = require("dct.enum")
 local dctutils    = require("dct.utils")
 local uicmds      = require("dct.ui.cmds")
-local uimenu      = require("dct.ui.groupmenu")
+local uiscratchpad= require("dct.ui.scratchpad")
 local Observable  = require("dct.Observable")
+local STM         = require("dct.STM")
+local Template    = require("dct.Template")
 local Region      = require("dct.Region")
+local Asset       = require("dct.Asset")
 local AssetManager= require("dct.AssetManager")
 local Commander   = require("dct.ai.Commander")
 local Command     = require("dct.Command")
@@ -55,7 +58,6 @@ function Theater:__init()
 	self.ltime     = 0
 	self.assetmgr  = AssetManager(self)
 	self.cmdrs     = {}
-	self.playergps = {}
 	self.scratchpad= {}
 	self.startdate = os.date("*t")
 
@@ -66,7 +68,8 @@ function Theater:__init()
 	self:_loadGoals()
 	self:_loadRegions()
 	self:_loadOrGenerate()
-	uimenu(self)
+	self:_loadPlayerSlots()
+	uiscratchpad(self)
 	self:queueCommand(100, Command(self.export, self))
 	Profiler:profileStop("Theater:init()")
 end
@@ -165,6 +168,38 @@ function Theater:_loadOrGenerate()
 	self.statetbl = nil
 end
 
+local function isPlayerGroup(grp, _, _)
+	for _, unit in ipairs(grp.units) do
+		if unit.skill == "Client" then
+			return true
+		end
+	end
+	return false
+end
+
+function Theater:_loadPlayerSlots()
+	local cnt = 0
+	for _, coa_data in pairs(env.mission.coalition) do
+		local grps = STM.processCoalition(coa_data,
+			env.getValueDictByKey,
+			isPlayerGroup,
+			nil)
+		for _, grp in ipairs(grps) do
+			local asset = Asset(Template({
+				["objtype"]   = "playergroup",
+				["name"]      = grp.data.name,
+				["regionname"]= "theater",
+				["coalition"] = coalition.getCountryCoalition(grp.countryid),
+				["desc"]      = "Player group",
+				["tpldata"]   = grp.data,
+			}), {["name"] = "theater", ["priority"] = 1000,})
+			self:getAssetMgr():add(asset)
+			cnt = cnt + 1
+		end
+	end
+	Logger:info(string.format("_loadPlayerSlots(); found %d slots", cnt))
+end
+
 function Theater:export(_)
 	local statefile
 	local msg
@@ -230,7 +265,9 @@ function Theater:playerRequest(data)
 	Logger:debug("playerRequest(); Received player request: "..
 		json:encode_pretty(data))
 
-	if self.playergps[data.name].cmdpending == true then
+	local playerasset = self:getAssetMgr():getAsset(data.name)
+
+	if playerasset.cmdpending == true then
 		Logger:debug("playerRequest(); request pending, ignoring")
 		trigger.action.outTextForGroup(data.id,
 			"F10 request already pending, please wait.", 20, true)
@@ -239,7 +276,7 @@ function Theater:playerRequest(data)
 
 	local cmd = uicmds[data.type](self, data)
 	self:queueCommand(self.uicmddelay, cmd)
-	self.playergps[data.name].cmdpending = true
+	playerasset.cmdpending = true
 end
 
 function Theater:getATORestrictions(side, unittype)

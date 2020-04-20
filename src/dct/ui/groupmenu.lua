@@ -19,39 +19,23 @@
 --]]
 
 local enum    = require("dct.enum")
-local Logger  = require("dct.Logger").getByName("UIMenu")
-local human   = require("dct.ui.human")
+local Logger  = require("dct.Logger").getByName("UI")
 local addmenu = missionCommands.addSubMenuForGroup
 local addcmd  = missionCommands.addCommandForGroup
 
-local function buildPlayerGroupEntry(grp)
-	local tbl = {}
-	tbl.id         = grp:getID()
-	tbl.name       = grp:getName()
-	tbl.side       = grp:getCoalition()
-	tbl.unittype   = "invalid-type"
-	tbl.cmdpending = false
+local menus = {}
+function menus.createMenu(theater, asset)
+	local gid  = asset.groupId
+	local name = asset.name
 
-	local unit = grp:getUnit(1)
-	if unit ~= nil then
-		tbl.unittype = unit:getTypeName()
-	end
-	return tbl
-end
-
-local function createMenu(theater, grp)
-	local gid  = grp:getID()
-	local name = grp:getName()
-
-	if theater.playergps[name] ~= nil then
+	if asset.uimenus ~= nil then
 		Logger:debug("createMenu - group("..name..") already had menu added")
 		return
 	end
 
 	Logger:debug("createMenu - adding menu for group: "..tostring(name))
 
-	local grpentry = buildPlayerGroupEntry(grp)
-	theater.playergps[name] = grpentry
+	asset.uimenus = {}
 
 	local padmenu = addmenu(gid, "Scratch Pad", nil)
 	for k, v in pairs({
@@ -75,8 +59,8 @@ local function createMenu(theater, grp)
 	-- TODO: I am knowingly not sorting the keys so the order in which
 	-- commands are applied could be random, do this later if it seems to
 	-- be a problem as lua doesn't provide a default solution.
-	for k, v in pairs(theater:getATORestrictions(grpentry.side,
-		grpentry.unittype)) do
+	for k, v in pairs(theater:getATORestrictions(asset.owner,
+		asset.unittype)) do
 		addcmd(gid, k, rqstmenu, theater.playerRequest, theater,
 			{
 				["name"]   = name,
@@ -119,60 +103,4 @@ local function createMenu(theater, grp)
 		})
 end
 
-local function uiDCSEventHandler(theater, event)
-	if not (event.id == world.event.S_EVENT_BIRTH and
-		event.initiator and
-		event.initiator.getGroup) then
-		Logger:debug("uiDCSEventHandler - not handling event: "..
-			tostring(event.id))
-		return
-	end
-
-	local pname = event.initiator:getPlayerName()
-	local grp = event.initiator:getGroup()
-	if not grp or not pname or pname == "" then
-		Logger:debug("uiDCSEventHandler - bad player name ("..
-			tostring(pname)..") or group ("..tostring(grp)..")")
-		return
-	end
-
-	createMenu(theater, grp)
-	local cmdr = theater:getCommander(grp:getCoalition())
-	local msn  = cmdr:getAssigned(grp:getName())
-
-	if msn then
-		trigger.action.outTextForGroup(grp:getID(),
-			"Welcome. A mission is already assigned to this slot, "..
-			"use the F10 menu to get the briefing or find another.",
-			20, true)
-	else
-		trigger.action.outTextForGroup(grp:getID(),
-			"Welcome. Use the F10 Menu to get a theater update and "..
-			"request a mission.",
-			20, true)
-	end
-end
-
-local function uiScratchPad(theater, event)
-	if event.id ~= world.event.S_EVENT_MARK_CHANGE then
-		return
-	end
-
-	local name = theater.scratchpad[event.idx]
-	if name == nil then
-		return
-	end
-
-	theater.playergps[name].scratchpad = human.sanatize(event.text)
-	theater.scratchpad[event.idx] = nil
-	trigger.action.removeMark(event.idx)
-end
-
-local function init(theater)
-	assert(theater ~= nil, "value error: theater must be a non-nil value")
-	Logger:debug("init UI Menu event handler")
-	theater:registerHandler(uiDCSEventHandler, theater)
-	theater:registerHandler(uiScratchPad, theater)
-end
-
-return init
+return menus

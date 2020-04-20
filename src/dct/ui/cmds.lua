@@ -10,22 +10,22 @@ local enum     = require("dct.enum")
 local dctutils = require("dct.utils")
 local human    = require("dct.ui.human")
 local Command  = require("dct.Command")
-local Logger   = require("dct.Logger").getByName("uiCmds")
+local Logger   = require("dct.Logger").getByName("UI")
 
 local UICmd = class(Command)
 function UICmd:__init(theater, data)
 	assert(theater ~= nil, "value error: theater required")
 	assert(data ~= nil, "value error: data required")
-	local grpdata = theater.playergps[data.name]
+	local asset = theater:getAssetMgr():getAsset(data.name)
 
 	self.theater      = theater
 	self.type         = data.type
-	self.grpid        = grpdata.id
+	self.grpid        = asset.groupId
 	self.grpname      = data.name
-	self.side         = grpdata.side
+	self.side         = asset.owner
 	self.displaytime  = 30
 	self.displayclear = true
-	self.actype       = grpdata.unittype
+	self.actype       = asset.unittype
 end
 
 function UICmd:isAlive()
@@ -33,13 +33,14 @@ function UICmd:isAlive()
 end
 
 function UICmd:execute(time)
+	local asset = self.theater:getAssetMgr():getAsset(self.grpname)
 	-- only process commands from live players unless they are abort
 	-- commands
 	if not self:isAlive() and
 	   self.type ~= enum.uiRequestType.MISSIONABORT then
 		Logger:debug("UICmd thinks player is dead, ignore cmd; "..
 			debug.traceback())
-		self.theater.playergps[self.grpname].cmdpending = false
+		asset.cmdpending = false
 		return nil
 	end
 
@@ -48,7 +49,7 @@ function UICmd:execute(time)
 	assert(msg ~= nil and type(msg) == "string", "msg must be a string")
 	trigger.action.outTextForGroup(self.grpid, msg, self.displaytime,
 		self.displayclear)
-	self.theater.playergps[self.grpname].cmdpending = false
+	asset.cmdpending = false
 	return nil
 end
 
@@ -58,8 +59,9 @@ function ScratchPadDisplay:__init(theater, data)
 end
 
 function ScratchPadDisplay:_execute(_, _)
+	local asset = self.theater:getAssetMgr():getAsset(self.grpname)
 	local msg = string.format("Scratch Pad: '%s'",
-		tostring(self.theater.playergps[self.grpname].scratchpad))
+		tostring(asset.scratchpad))
 	return msg
 end
 

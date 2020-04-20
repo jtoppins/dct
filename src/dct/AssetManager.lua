@@ -211,10 +211,45 @@ function AssetManager:checkAssets(time)
 	return ASSET_CHECK_PERIOD
 end
 
+local function handleDead(self, event)
+	local obj = event.initiator
+
+	-- TODO: I am not sure this is correct, and will at least need
+	--   to be changed to handle player groups. Also, this is an
+	--   group object to asset name mapping so I don't understand
+	--   how a single dead event on a unit would cause the removal
+	--   of something from this table.
+	-- remove object from object2asset list if the event is a DEAD event
+	if event.id == world.event.S_EVENT_DEAD and
+	   self._object2asset[obj:getName()] ~= nil then
+		self._object2asset[obj:getName()] = nil
+	end
+end
+
+local handlers = {
+	[world.event.S_EVENT_DEAD] = handleDead,
+}
+
+-- TODO: need to fix this handler to listen to all events given that
+-- we are going to track all players
 function AssetManager:onDCSEvent(event)
 	local relevents = {
-		[world.event.S_EVENT_HIT] = true,
-		[world.event.S_EVENT_DEAD] = true,
+		[world.event.S_EVENT_BIRTH]           = true,
+		[world.event.S_EVENT_ENGINE_STARTUP]  = true,
+		[world.event.S_EVENT_ENGINE_SHUTDOWN] = true,
+		[world.event.S_EVENT_TAKEOFF]         = true,
+		[world.event.S_EVENT_LAND]            = true,
+		[world.event.S_EVENT_CRASH]           = true,
+		[world.event.S_EVENT_KILL]            = true,
+		[world.event.S_EVENT_PILOT_DEAD]      = true,
+		[world.event.S_EVENT_EJECTION]        = true,
+		[world.event.S_EVENT_HIT]             = true,
+		[world.event.S_EVENT_DEAD]            = true,
+		--[world.event.S_EVENT_UNIT_LOST]     = true,
+	}
+	local objmap = {
+		[world.event.S_EVENT_HIT]  = "target",
+		[world.event.S_EVENT_KILL] = "target",
 	}
 	local objcat = {
 		[Object.Category.UNIT]   = true,
@@ -227,13 +262,13 @@ function AssetManager:onDCSEvent(event)
 	end
 
 	local obj = event.initiator
-	if event.id == world.event.S_EVENT_HIT then
-		obj = event.target
+	if objmap[event.id] ~= nil then
+		obj = event[objmap[event.id]]
 	end
 
 	if not obj or objcat[obj:getCategory()] == nil then
 		Logger:debug(string.format("onDCSEvent - bad object (%s) or"..
-			" category; event id: %d", tostring(event.initiator), event.id))
+			" category; event id: %d", tostring(obj), event.id))
 		return
 	end
 
@@ -247,19 +282,18 @@ function AssetManager:onDCSEvent(event)
 		Logger:debug("onDCSEvent - not tracked object, obj name: "..name)
 		return
 	end
-	asset = self._assetset[asset]
+	asset = self:getAsset(asset)
 	if asset == nil then
 		Logger:debug("onDCSEvent - asset doesn't exist, name: "..name)
 		return
 	end
 
-	-- remove object from object2asset list if the event is a DEAD event
-	if event.id == world.event.S_EVENT_DEAD and
-	   self._object2asset[obj:getName()] ~= nil then
-		self._object2asset[obj:getName()] = nil
+	local handler = handlers[event.id]
+	if handler ~= nil then
+		handler(self, event)
 	end
 
-	asset:onDCSEvent(event)
+	asset:onDCSEvent(event, self._theater)
 end
 
 function AssetManager:marshal()

@@ -38,7 +38,7 @@ local objectcat = {
 }
 
 local env = {}
-env.mission = {}
+env.mission = utils.readlua(lfs.tempdir()..utils.sep.."mission", "mission")
 env.mission.theatre = "Test Theater"
 env.mission.sortie  = "test mission"
 env.mission.date = {
@@ -46,7 +46,13 @@ env.mission.date = {
 	["Month"] = 6,
 	["Day"]   = 22,
 }
+local dictkeys = utils.readlua(lfs.tempdir()..utils.sep..
+	table.concat({"l10n", "DEFAULT", "dictionary"}, utils.sep), "dictionary")
 function env.getValueDictByKey(s)
+	local r = dictkeys[s]
+	if r ~= nil then
+		return r
+	end
 	return s
 end
 
@@ -404,7 +410,12 @@ world.event = {
 	["S_EVENT_MARK_ADDED"]        = 25,
 	["S_EVENT_MARK_CHANGE"]       = 26,
 	["S_EVENT_MARK_REMOVED"]      = 27,
-	["S_EVENT_MAX"]               = 28,
+	["S_EVENT_KILL"]              = 28,
+	["S_EVENT_SCORE"]             = 29,
+	["S_EVENT_UNIT_LOST"]         = 30,
+	["S_EVENT_LANDING_AFTER_EJECTION"] = 31,
+	["S_EVENT_RESERVED1"]         = 32,
+	["S_EVENT_MAX"]               = 33,
 }
 function world.addEventHandler(_)
 end
@@ -737,20 +748,29 @@ _G.coord = coord
 local trigger = {}
 trigger.action = {}
 
+local chkbuffer  = ""
 local msgbuffer  = ""
 local enabletest = false
 function trigger.action.setmsgbuffer(msg)
-	msgbuffer = msg
+	chkbuffer = msg
 end
 
 function trigger.action.setassert(val)
 	enabletest = val
 end
 
+function trigger.action.chkmsgbuffer()
+	assert(msgbuffer == chkbuffer,
+		"generated output not as expected;\ngot '"..
+		msgbuffer.."';\n expected '"..chkbuffer.."'")
+end
+
 function trigger.action.outTextForGroup(_, msg, _, _)
+	msgbuffer = msg
 	if enabletest == true then
-		assert(msg == msgbuffer, "generated output not as expected;\ngot '"..
-			msg.."';\n expected '"..msgbuffer.."'")
+		assert(msgbuffer == chkbuffer,
+			"generated output not as expected;\ngot '"..
+			msg.."';\n expected '"..chkbuffer.."'")
 	end
 end
 
