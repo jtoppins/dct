@@ -8,10 +8,6 @@
 --   mission such as delivering special forces to a location where
 --   they then act as a JTAC.
 --
--- TODO: in AssetManager define an "AirSpace" asset class that can be
---   assigned to commanders, this type of asset can be used to define
---   CAP sorties, DCA patrols, and OCA sweeps.
---
 
 local class    = require("libs.class")
 local utils    = require("libs.utils")
