@@ -109,8 +109,6 @@ local function overrideGroupOptions(grp, idx, tpl, category)
 	local opts = {
 		visible        = true,
 		uncontrollable = true,
-		uncontrolled   = true,
-		hidden         = false,
 		lateActivation = false,
 	}
 
