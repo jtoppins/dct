@@ -194,7 +194,7 @@ local function getkeys(objtype)
 		[5] = {
 			["name"]    = "priority",
 			["type"]    = "number",
-			["default"] = enum.assetTypePriority[objtype],
+			["default"] = enum.assetTypePriority[objtype] or 1000,
 		},
 		[6] = {
 			["name"]    = "primary",
