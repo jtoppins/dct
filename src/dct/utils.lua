@@ -233,6 +233,15 @@ function utils.MGRStostring(mgrs, precision)
 		string.format(fmtstr, (mgrs.Northing/divisor))
 end
 
+function utils.degrade_position(position, precision)
+	local lat, long = coord.LOtoLL(position)
+	lat  = tonumber(string.format("%0"..(3+precision).."."..precision.."f",
+		lat))
+	long = tonumber(string.format("%0"..(3+precision).."."..precision.."f",
+		long))
+	return coord.LLtoLO(lat, long, 0)
+end
+
 function utils.fmtposition(position, precision, fmt)
 	precision = math.floor(precision)
 	assert(precision >= 0 and precision <= 5,

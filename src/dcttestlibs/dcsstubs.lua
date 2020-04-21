@@ -735,6 +735,14 @@ function coord.LOtoLL(pos)
 	return 88.123, -63.456, pos.y
 end
 
+function coord.LLtoLO(lat, long, alt)
+	return {
+		["x"] = 1000*lat/2,
+		["y"] = alt,
+		["z"] = 1000*long/2
+	}
+end
+
 function coord.LLtoMGRS(_, _)
 	return {
 		["UTMZone"] = "DD",
