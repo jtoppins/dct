@@ -168,12 +168,13 @@ end
 function Theater:export(_)
 	local statefile
 	local msg
+	local ok
+	local newfile = settings.statepath..".new"
 
-	statefile, msg = io.open(settings.statepath, "w+")
-
+	statefile, msg = io.open(newfile, "w")
 	if statefile == nil then
-		Logger:error("export(); unable to open '"..
-			settings.statepath.."'; msg: "..tostring(msg))
+		Logger:error("export(); unable to open '"..newfile..
+			"'; msg: "..tostring(msg))
 		return self.savestatefreq
 	end
 
@@ -186,9 +187,22 @@ function Theater:export(_)
 		["startdate"] = self.startdate
 	}
 
-	statefile:write(json:encode_pretty(exporttbl))
+	ok, msg = statefile:write(json:encode_pretty(exporttbl))
+	if ok == nil then
+		Logger:error("export(); '"..newfile.."'; msg: "..tostring(msg))
+		return self.savestatefreq
+	end
 	statefile:flush()
-	statefile:close()
+	ok, msg = statefile:close()
+	if ok == nil then
+		Logger:error("export(); '"..newfile.."'; msg: "..tostring(msg))
+		return self.savestatefreq
+	end
+	ok, msg = os.rename(newfile, settings.statepath)
+	if ok == nil then
+		Logger:error("export(); unable to rename; msg: "..tostring(msg))
+		return self.savestatefreq
+	end
 	return self.savestatefreq
 end
 
