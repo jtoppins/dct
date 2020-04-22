@@ -70,6 +70,12 @@ function menus.createMenu(theater, asset)
 			})
 	end
 
+	addcmd(gid, "Join", msnmenu, theater.playerRequest, theater,
+		{
+			["name"]   = name,
+			["type"]   = enum.uiRequestType.MISSIONJOIN,
+		})
+
 	addcmd(gid, "Briefing", msnmenu, theater.playerRequest, theater,
 		{
 			["name"]   = name,
@@ -84,7 +90,7 @@ function menus.createMenu(theater, asset)
 		{
 			["name"]   = name,
 			["type"]   = enum.uiRequestType.MISSIONABORT,
-			["value"]  = "player requested"
+			["value"]  = enum.missionAbortType.ABORT,
 		})
 	addcmd(gid, "Rolex +30", msnmenu, theater.playerRequest, theater,
 		{

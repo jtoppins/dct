@@ -48,7 +48,6 @@ function Commander:__init(theater, side)
 	self.theater      = theater
 	self.missionstats = Stats(genstatids())
 	self.missions     = {}
-	self.assigned     = {}
 	self.aifreq       = 300 -- seconds
 
 	self.theater:queueCommand(self.aifreq, Command(self.update, self))
@@ -212,19 +211,9 @@ function Commander:getMission(id)
 	return self.missions[id]
 end
 
---[[
--- return the mission assigned to the given asset name (grpname)
---]]
-function Commander:getAssigned(grpname)
-	local id = self.assigned[grpname]
-	if id == nil then
-		return nil
-	end
-	return self.missions[id]
-end
-
-function Commander:getAsset(name)
-	return self.theater:getAssetMgr():getAsset(name)
+function Commander:addMission(mission)
+	self.missions[mission:getID()] = mission
+	self.missionstats:inc(mission.type)
 end
 
 --[[
@@ -233,14 +222,27 @@ end
 function Commander:removeMission(id)
 	local mission = self.missions[id]
 	self.missions[id] = nil
-	self.assigned[mission.assigned] = nil
 	self.missionstats:dec(mission.type)
 end
 
-function Commander:addMission(mission)
-	self.missions[mission:getID()]  = mission
-	self.assigned[mission.assigned] = mission:getID()
-	self.missionstats:inc(mission.type)
+function Commander:getAssigned(asset)
+	local msn = self.missions[asset.missionid]
+
+	if msn == nil then
+		asset.missionid = 0
+		return nil
+	end
+
+	local member = msn:isMember(asset.name)
+	if not member then
+		asset.missionid = 0
+		return nil
+	end
+	return msn
+end
+
+function Commander:getAsset(name)
+	return self.theater:getAssetMgr():getAsset(name)
 end
 
 return Commander

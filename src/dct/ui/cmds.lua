@@ -18,8 +18,10 @@ function UICmd:__init(theater, data)
 	assert(theater ~= nil, "value error: theater required")
 	assert(data ~= nil, "value error: data required")
 	local asset = theater:getAssetMgr():getAsset(data.name)
+	assert(asset, "runtime error: asset was nil, "..data.name)
 
 	self.theater      = theater
+	self.asset        = asset
 	self.type         = data.type
 	self.grpid        = asset.groupId
 	self.grpname      = data.name
@@ -30,18 +32,17 @@ function UICmd:__init(theater, data)
 end
 
 function UICmd:isAlive()
-	return dctutils.isalive(self.grpname)
+	return dctutils.isalive(self.asset.name)
 end
 
 function UICmd:execute(time)
-	local asset = self.theater:getAssetMgr():getAsset(self.grpname)
 	-- only process commands from live players unless they are abort
 	-- commands
 	if not self:isAlive() and
 	   self.type ~= enum.uiRequestType.MISSIONABORT then
 		Logger:debug("UICmd thinks player is dead, ignore cmd; "..
 			debug.traceback())
-		asset.cmdpending = false
+		self.asset.cmdpending = false
 		return nil
 	end
 
@@ -50,7 +51,7 @@ function UICmd:execute(time)
 	assert(msg ~= nil and type(msg) == "string", "msg must be a string")
 	trigger.action.outTextForGroup(self.grpid, msg, self.displaytime,
 		self.displayclear)
-	asset.cmdpending = false
+	self.asset.cmdpending = false
 	return nil
 end
 
@@ -60,9 +61,8 @@ function ScratchPadDisplay:__init(theater, data)
 end
 
 function ScratchPadDisplay:_execute(_, _)
-	local asset = self.theater:getAssetMgr():getAsset(self.grpname)
 	local msg = string.format("Scratch Pad: '%s'",
-		tostring(asset.scratchpad))
+		tostring(self.asset.scratchpad))
 	return msg
 end
 
@@ -133,7 +133,7 @@ end
 
 function MissionCmd:_execute(time, cmdr)
 	local msg
-	local msn = cmdr:getAssigned(self.grpname)
+	local msn = cmdr:getAssigned(self.asset)
 	if msn == nil then
 		msg = "You do not have a mission assigned"
 		if self.erequest == true then
@@ -161,6 +161,35 @@ local function briefingmsg(msn, asset)
 	return msg
 end
 
+local MissionJoinCmd = class(MissionCmd)
+function MissionJoinCmd:__init(theater, data)
+	MissionCmd.__init(self, theater, data)
+end
+
+function MissionJoinCmd:_execute(_, cmdr)
+	local missioncode = self.asset.scratchpad or 0
+	local msn = cmdr:getAssigned(self.asset)
+	local msg
+
+	if msn then
+		msg = string.format("You have mission %s already assigned, "..
+			"use the F10 Menu to abort first.", msn:getID())
+		return msg
+	end
+
+	msn = cmdr:getMission(missioncode)
+	if msn == nil then
+		msg = string.format("No mission of ID(%s) available, use"..
+			" scratch pad to set id.", tostring(missioncode))
+	else
+		msn:addAssigned(self.asset)
+		msg = string.format("Mission %s assigned, use F10 menu "..
+			"to see this briefing again\n", msn:getID())
+		msg = msg..briefingmsg(msn, self.asset)
+	end
+	return msg
+end
+
 local MissionRqstCmd = class(MissionCmd)
 function MissionRqstCmd:__init(theater, data)
 	MissionCmd.__init(self, theater, data)
@@ -169,13 +198,12 @@ function MissionRqstCmd:__init(theater, data)
 end
 
 function MissionRqstCmd:_execute(_, cmdr)
-	local msn = cmdr:getAssigned(self.grpname)
+	local msn = cmdr:getAssigned(self.asset)
 	local msg
 
 	if msn then
 		msg = string.format("You have mission %s already assigned, "..
-			"use the F10 Menu to abort first.",
-					msn:getID())
+			"use the F10 Menu to abort first.", msn:getID())
 		return msg
 	end
 
@@ -186,8 +214,7 @@ function MissionRqstCmd:_execute(_, cmdr)
 	else
 		msg = string.format("Mission %s assigned, use F10 menu "..
 			"to see this briefing again\n", msn:getID())
-		msg = msg..briefingmsg(msn,
-			self.theater:getAssetMgr():getAsset(self.grpname))
+		msg = msg..briefingmsg(msn, self.asset)
 		human.drawTargetIntel(msn, self.grpid, false)
 	end
 	return msg
@@ -201,8 +228,7 @@ function MissionBriefCmd:__init(theater, data)
 end
 
 function MissionBriefCmd:_mission(_, _, msn)
-	return briefingmsg(msn,
-		self.theater:getAssetMgr():getAsset(self.grpname))
+	return briefingmsg(msn, self.asset)
 end
 
 
@@ -238,9 +264,22 @@ function MissionAbortCmd:__init(theater, data)
 	self.reason   = data.value
 end
 
-function MissionAbortCmd:_mission(time, _, msn)
-	return string.format("Mission %s aborted, %s",
-		msn:abort(time), self.reason)
+function MissionAbortCmd:_mission(_ --[[time]], _, msn)
+	local msgs = {
+		[enum.missionAbortType.ABORT] =
+			"aborted",
+		[enum.missionAbortType.COMPLETE] =
+			"completed",
+		[enum.missionAbortType.TIMEOUT] =
+			"timed out",
+	}
+	local msg = msgs[self.reason]
+	if msg == nil then
+		msg = "aborted - unknown reason"
+	end
+	return string.format("Mission %s %s",
+		msn:abort(self.asset),
+		msg)
 end
 
 
@@ -289,6 +328,7 @@ local cmds = {
 	[enum.uiRequestType.SCRATCHPADGET]   = ScratchPadDisplay,
 	[enum.uiRequestType.SCRATCHPADSET]   = ScratchPadSet,
 	[enum.uiRequestType.CHECKPAYLOAD]    = CheckPayloadCmd,
+	[enum.uiRequestType.MISSIONJOIN]     = MissionJoinCmd,
 }
 
 return cmds

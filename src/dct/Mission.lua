@@ -9,6 +9,7 @@
 require("os")
 require("math")
 local class    = require("libs.class")
+local utils    = require("libs.utils")
 local enum     = require("dct.enum")
 local dctutils = require("dct.utils")
 local uihuman  = require("dct.ui.human")
@@ -25,7 +26,7 @@ function Mission:__init(cmdr, missiontype, grpname, tgtname)
 	self.cmdr      = cmdr
 	self.type      = missiontype
 	self.target    = tgtname
-	self.assigned  = grpname
+	self.assigned  = {}
 	self.timestart = timer.getAbsTime()
 	self.timeend   = self.timestart + MISSION_LIMIT
 	self.station   = {
@@ -38,6 +39,7 @@ function Mission:__init(cmdr, missiontype, grpname, tgtname)
 	-- known intel the pilots were given before departing
 	self.briefing  = self:_composeBriefing()
 	self.cmdr:getAsset(tgtname):setTargeted(self.cmdr.owner, true)
+	self:addAssigned(self.cmdr:getAsset(grpname))
 
 	-- TODO: setup remaining mission parameters;
 	--   * mission world states
@@ -57,21 +59,61 @@ function Mission:getID()
 	return self.id
 end
 
+function Mission:isMember(name)
+	local i = dctutils.getkey(self.assigned, name)
+	if i then
+		return true, i
+	end
+	return false
+end
+
+function Mission:getAssigned()
+	return utils.shallowclone(self.assigned)
+end
+
+function Mission:addAssigned(asset)
+	if self:isMember(asset.name) then
+		return
+	end
+	table.insert(self.assigned, asset.name)
+	asset.missionid = self:getID()
+end
+
+function Mission:removeAssigned(asset)
+	local member, i = self:isMember(asset.name)
+	if not member then
+		return
+	end
+	table.remove(self.assigned, i)
+	asset.missionid = 0
+end
+
 --[[
--- Abort - aborts a mission putting the targeted asset back into
---   the pool.
+-- Abort - aborts a mission for etiher a single group or
+--   completely terminating the mission for everyone assigned.
 --
 -- Things that need to be managed;
---  * removing the mission from the owning commander's mission
---    list(s)
---  * releasing the targeted asset by resetting the asset's targeted
---    bit
+--  * remove requesting group from the assigned list
+--  * if assigned list is empty or we need to force terminate the
+--    mission
+--    - remove the mission from the owning commander's mission list(s)
+--    - release the targeted asset by resetting the asset's targeted
+--      bit
 --]]
-function Mission:abort()
-	self.cmdr:removeMission(self.id)
-	local tgt = self.cmdr:getAsset(self.target)
-	if tgt then
-		tgt:setTargeted(self.cmdr.owner, false)
+function Mission:abort(asset)
+	self:removeAssigned(asset)
+	if next(self.assigned) == nil then
+		--[[
+		for _, grpname in ipairs(self.assigned) do
+			local a = self.cmdr:getAsset(grpname)
+			self:removeAssigned(a)
+		end
+		--]]
+		self.cmdr:removeMission(self.id)
+		local tgt = self.cmdr:getAsset(self.target)
+		if tgt then
+			tgt:setTargeted(self.cmdr.owner, false)
+		end
 	end
 	return self.id
 end
@@ -86,22 +128,24 @@ function Mission:update(_)
 	local reason
 	local tgt = self.cmdr:getAsset(self.target)
 	if tgt == nil or tgt:isDead() then
-		reason = "mission complete"
+		reason = enum.missionAbortType.COMPLETE
 		self._complete = true
 	elseif timer.getAbsTime() > self.timeend then
-		reason = "mission timeout"
+		reason = enum.missionAbortType.TIMEOUT
 	end
 
 	if reason ~= nil then
-		local request = {
-			["type"]   = enum.uiRequestType.MISSIONABORT,
-			["name"]   = self.assigned,
-			["value"]  = reason,
-		}
-		-- We have to use theater:queueCommand() to bypass the
-		-- limiting of players sending too many commands
-		self.cmdr.theater:queueCommand(10,
-			uicmds[request.type](self.cmdr.theater, request))
+		for _, name in ipairs(self.assigned) do
+			local request = {
+				["type"]   = enum.uiRequestType.MISSIONABORT,
+				["name"]   = name,
+				["value"]  = reason,
+			}
+			-- We have to use theater:queueCommand() to bypass the
+			-- limiting of players sending too many commands
+			self.cmdr.theater:queueCommand(10,
+				uicmds[request.type](self.cmdr.theater, request))
+		end
 	end
 	return
 end
@@ -160,11 +204,15 @@ function Mission:checkout(time)
 	return self.station.total
 end
 
-function Mission:getDescription(actype, locprecision)
+function Mission:getDescription(actype)
 	local tgt = self.cmdr:getAsset(self.target)
+	if tgt == nil then
+		return "Target destroyed abort mission"
+	end
 	local interptbl = {
-		["LOCATION"] = uihuman.grid2actype(actype, tgt:getLocation(),
-			locprecision)
+		["LOCATION"] = uihuman.grid2actype(actype,
+			tgt:getLocation(),
+			tgt:getIntel(self.cmdr.owner))
 	}
 	return dctutils.interp(self.briefing, interptbl)
 end

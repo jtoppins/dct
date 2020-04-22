@@ -137,6 +137,12 @@ local missionTypeMap = {
 	},
 }
 
+local missionAbortType = {
+	["ABORT"]    = 0,
+	["COMPLETE"] = 1,
+	["TIMEOUT"]  = 2,
+}
+
 local uiRequestType = {
 	["THEATERSTATUS"]   = 1,
 	["MISSIONREQUEST"]  = 2,
@@ -149,6 +155,7 @@ local uiRequestType = {
 	["SCRATCHPADGET"]   = 9,
 	["SCRATCHPADSET"]   = 10,
 	["CHECKPAYLOAD"]    = 11,
+	["MISSIONJOIN"]     = 12,
 }
 
 local enum = {
@@ -157,6 +164,7 @@ local enum = {
 	["assetClass"]        = assetClass,
 	["missionType"]       = missionType,
 	["missionTypeMap"]    = missionTypeMap,
+	["missionAbortType"]  = missionAbortType,
 	["uiRequestType"]     = uiRequestType,
 }
 

@@ -68,6 +68,9 @@ Asset:
 	- name
 	- codename
 
+	attributes(public, read/write):
+	- missionid
+
 	methods(public):
 	- getPriority(side)
 		- get the priority of the asset
@@ -113,6 +116,7 @@ function Asset:__init(template, region)
 		}
 	end
 	self._initcomplete = false
+	self.missionid = 0
 	if template ~= nil and region ~= nil then
 		self.type     = template.objtype
 		self.briefing = dctutils.interp(template.desc, {

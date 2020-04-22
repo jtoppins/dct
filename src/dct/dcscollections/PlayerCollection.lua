@@ -31,7 +31,6 @@ local loadout = require("dct.systems.loadouts")
 local PlayerCollection = class(IDCSObjectCollection)
 function PlayerCollection:__init(asset, template, region)
 	table.insert(asset._marshalnames, "unittype")
-	table.insert(asset._marshalnames, "cmdpending")
 	table.insert(asset._marshalnames, "groupId")
 	IDCSObjectCollection.__init(self, asset, template, region)
 end
@@ -58,7 +57,7 @@ local function handleBirth(self, event, theater)
 	self._asset.groupId = id
 	uimenu.createMenu(theater, self._asset)
 	local cmdr = theater:getCommander(grp:getCoalition())
-	local msn  = cmdr:getAssigned(grp:getName())
+	local msn  = cmdr:getAssigned(self._asset)
 
 	if msn then
 		trigger.action.outTextForGroup(grp:getID(),

@@ -120,16 +120,15 @@ local testcmds = {
 		["data"] = {
 			["name"]   = grp:getName(),
 			["type"]   = enum.uiRequestType.MISSIONABORT,
-			["value"]  = "player requested",
+			["value"]  = enum.missionAbortType.ABORT,
 		},
 		["assert"]     = true,
-		["expected"]   = "Mission 5720 aborted, player requested",
+		["expected"]   = "Mission 5720 aborted",
 	},
 }
 
 local function main()
 	local theater = dct.Theater()
-	-- We need to send a birth event to populate the Theater.playergps table
 	theater:onEvent({
 		["id"]        = world.event.S_EVENT_BIRTH,
 		["initiator"] = unit1,
