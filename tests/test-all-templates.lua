@@ -19,10 +19,15 @@ local function main()
 		return 0
 	end
 
-	dct.Theater()
+	local t = dct.Theater()
 	local Logger = require("dct.Logger").getByName("Tests")
 	Logger:debug("Groups spawned:  "..dctcheck.spawngroups)
 	Logger:debug("Statics spawned: "..dctcheck.spawnstatics)
+	local tstart = os.clock()
+	t:export()
+	os.remove(dct.settings.statepath)
+	Logger:warn(string.format("took %4.2fms to write statefile",
+		(os.clock() - tstart)*1000))
 	return 0
 end
 
