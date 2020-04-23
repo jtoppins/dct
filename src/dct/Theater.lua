@@ -222,7 +222,7 @@ function Theater:export(_)
 		["startdate"] = self.startdate
 	}
 
-	ok, msg = statefile:write(json:encode_pretty(exporttbl))
+	ok, msg = statefile:write(json:encode(exporttbl))
 	if ok == nil then
 		Logger:error("export(); '"..newfile.."'; msg: "..tostring(msg))
 		return self.savestatefreq
