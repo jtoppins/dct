@@ -19,6 +19,140 @@ local tplkind = {
 	["EXCLUSION"] = 2,
 }
 
+local function processlimits(_, tbl)
+	-- process limits; convert the human readable asset type names into
+	-- their numerical equivalents.
+	local limits = {}
+	for key, data in pairs(tbl.limits) do
+		local typenum = dctenums.assetType[string.upper(key)]
+		if typenum == nil then
+			Logger:warn("invalid asset type '"..key..
+				"' found in limits definition in file: "..
+				tbl.defpath or "nil")
+		else
+			limits[typenum] = data
+		end
+	end
+	tbl.limits = limits
+	return true
+end
+
+local function loadMetadata(self, regiondefpath)
+	Logger:debug("=> regiondefpath: "..regiondefpath)
+	local keys = {
+		[1] = {
+			["name"] = "name",
+			["type"] = "string",
+		},
+		[2] = {
+			["name"] = "priority",
+			["type"] = "number",
+		},
+		[3] = {
+			["name"] = "limits",
+			["type"] = "table",
+			["default"] = {},
+			["check"] = processlimits,
+		},
+		[4] = {
+			["name"] = "airspace",
+			["type"] = "boolean",
+			["default"] = true,
+		},
+	}
+
+	local region = utils.readlua(regiondefpath, "region")
+	region.defpath = regiondefpath
+	dctutils.checkkeys(keys, region)
+	utils.mergetables(self, region)
+end
+
+local function getTemplates(self, dirname, basepath)
+	local tplpath = basepath .. "/" .. dirname
+	Logger:debug("=> tplpath: "..tplpath)
+
+	for filename in lfs.dir(tplpath) do
+		if filename ~= "." and filename ~= ".." then
+			local fpath = tplpath .. "/" .. filename
+			local fattr = lfs.attributes(fpath)
+			if fattr.mode == "directory" then
+				getTemplates(self, filename, tplpath)
+			else
+				if string.find(fpath, ".dct", -4, true) ~= nil then
+					Logger:debug("=> process template: "..fpath)
+					local stmpath = string.gsub(fpath, "[.]dct", ".stm")
+					if lfs.attributes(stmpath) == nil then
+						stmpath = nil
+					end
+					self:addTemplate(
+						Template.fromFile(self.name, fpath, stmpath))
+				end
+			end
+		end
+	end
+end
+
+local function loadTemplates(self)
+	for filename in lfs.dir(self.path) do
+		if filename ~= "." and filename ~= ".." then
+			local fpath = self.path.."/"..filename
+			local fattr = lfs.attributes(fpath)
+			if fattr.mode == "directory" then
+				getTemplates(self, filename, self.path)
+			end
+		end
+	end
+end
+
+local function createExclusion(self, tpl)
+	self._exclusions[tpl.exclusion] = {
+		["ttype"] = tpl.objtype,
+		["names"] = {},
+	}
+end
+
+local function registerExclusion(self, tpl)
+	assert(tpl.objtype == self._exclusions[tpl.exclusion].ttype,
+	       "exclusions across objective types not allowed, '"..
+	       tpl.name.."'")
+	table.insert(self._exclusions[tpl.exclusion].names,
+	             tpl.name)
+end
+
+local function registerType(self, kind, ttype, name)
+	local entry = {
+		["kind"] = kind,
+		["name"] = name,
+	}
+
+	if self._tpltypes[ttype] == nil then
+		self._tpltypes[ttype] = {}
+	end
+	table.insert(self._tpltypes[ttype], entry)
+end
+
+local function addAndSpawnAsset(self, name, assetmgr, bases, centroids)
+	if name == nil then
+		return nil
+	end
+
+	local tpl = self:getTemplateByName(name)
+	if tpl == nil then
+		return nil
+	end
+
+	local asset = Asset(tpl, self)
+	assetmgr:add(asset)
+	asset:spawn()
+	if centroids then
+		table.insert(centroids, asset:getLocation())
+	end
+	if bases and dctenums.assetType.AIRBASE == asset.type then
+		bases[asset.name] = true
+	end
+	return asset
+end
+
 --[[
 --  Region class
 --    base class that reads in a region definition.
@@ -64,157 +198,33 @@ local tplkind = {
 --]]
 local Region = class()
 function Region:__init(regionpath)
-	self.path = regionpath
-	self._templates  = {}
-	self._tpltypes   = {}
-	self._exclusions = {}
+	self.path          = regionpath
+	self._templates    = {}
+	self._tpltypes     = {}
+	self._exclusions   = {}
 	Logger:debug("=> regionpath: "..regionpath)
-	self:_loadMetadata(regionpath..utils.sep.."region.def")
-	self:_loadTemplates()
+	loadMetadata(self, regionpath..utils.sep.."region.def")
+	loadTemplates(self)
 end
 
-local function processlimits(_, tbl)
-	-- process limits; convert the human readable asset type names into
-	-- their numerical equivalents.
-	local limits = {}
-	for key, data in pairs(tbl.limits) do
-		local typenum = dctenums.assetType[string.upper(key)]
-		if typenum == nil then
-			Logger:warn("invalid asset type '"..key..
-				"' found in limits definition in file: "..
-				tbl.defpath or "nil")
-		else
-			limits[typenum] = data
-		end
-	end
-	tbl.limits = limits
-	return true
-end
-
-function Region:_loadMetadata(regiondefpath)
-	Logger:debug("=> regiondefpath: "..regiondefpath)
-	local keys = {
-		[1] = {
-			["name"] = "name",
-			["type"] = "string",
-		},
-		[2] = {
-			["name"] = "priority",
-			["type"] = "number",
-		},
-		[3] = {
-			["name"] = "limits",
-			["type"] = "table",
-			["default"] = {},
-			["check"] = processlimits,
-		},
-		[4] = {
-			["name"] = "airspace",
-			["type"] = "boolean",
-			["default"] = true,
-		},
-	}
-
-	local region = utils.readlua(regiondefpath, "region")
-	region.defpath = regiondefpath
-	dctutils.checkkeys(keys, region)
-	utils.mergetables(self, region)
-end
-
-
-function Region:_loadTemplates()
-	for filename in lfs.dir(self.path) do
-		if filename ~= "." and filename ~= ".." then
-			local fpath = self.path.."/"..filename
-			local fattr = lfs.attributes(fpath)
-			if fattr.mode == "directory" then
-				self:_getTemplates(filename, self.path)
-			end
-		end
-	end
-end
-
-function Region:_getTemplates(dirname, basepath)
-	local tplpath = basepath .. "/" .. dirname
-	Logger:debug("=> tplpath: "..tplpath)
-
-	for filename in lfs.dir(tplpath) do
-		if filename ~= "." and filename ~= ".." then
-			local fpath = tplpath .. "/" .. filename
-			local fattr = lfs.attributes(fpath)
-			if fattr.mode == "directory" then
-				self:_getTemplates(filename, tplpath)
-			else
-				if string.find(fpath, ".dct", -4, true) ~= nil then
-					Logger:debug("=> process template: "..fpath)
-					local stmpath = string.gsub(fpath, "[.]dct", ".stm")
-					if lfs.attributes(stmpath) == nil then
-						stmpath = nil
-					end
-					self:_addTemplate(
-						Template.fromFile(self.name, fpath, stmpath))
-				end
-			end
-		end
-	end
-end
-
-function Region:_addTemplate(tpl)
+function Region:addTemplate(tpl)
 	assert(self._templates[tpl.name] == nil,
 		"duplicate template '"..tpl.name.."' defined; "..tostring(tpl.path))
 	self._templates[tpl.name] = tpl
 	if tpl.exclusion ~= nil then
 		if self._exclusions[tpl.exclusion] == nil then
-			self:_createExclusion(tpl)
-			self:_registerType(tplkind.EXCLUSION, tpl.objtype, tpl.exclusion)
+			createExclusion(self, tpl)
+			registerType(self, tplkind.EXCLUSION,
+				tpl.objtype, tpl.exclusion)
 		end
-		self:_registerExclusion(tpl)
+		registerExclusion(self, tpl)
 	else
-		self:_registerType(tplkind.TEMPLATE, tpl.objtype, tpl.name)
+		registerType(self, tplkind.TEMPLATE, tpl.objtype, tpl.name)
 	end
 end
 
-function Region:_createExclusion(tpl)
-	self._exclusions[tpl.exclusion] = {
-		["ttype"] = tpl.objtype,
-		["names"] = {},
-	}
-end
-
-function Region:_registerExclusion(tpl)
-	assert(tpl.objtype == self._exclusions[tpl.exclusion].ttype,
-	       "exclusions across objective types not allowed, '"..
-	       tpl.name.."'")
-	table.insert(self._exclusions[tpl.exclusion].names,
-	             tpl.name)
-end
-
-function Region:_registerType(kind, ttype, name)
-	local entry = {
-		["kind"] = kind,
-		["name"] = name,
-	}
-
-	if self._tpltypes[ttype] == nil then
-		self._tpltypes[ttype] = {}
-	end
-	table.insert(self._tpltypes[ttype], entry)
-end
-
-function Region:addAndSpawnAsset(name, assetmgr)
-	if name == nil then
-		return nil
-	end
-
-	local tpl = self._templates[name]
-	if tpl == nil then
-		return nil
-	end
-
-	local asset = Asset(tpl, self)
-	assetmgr:add(asset)
-	asset:spawn()
-	return asset
+function Region:getTemplateByName(name)
+	return self._templates[name]
 end
 
 -- luacheck: ignore 561
@@ -235,7 +245,7 @@ function Region:_generate(assetmgr, objtype, names, bases, centroids)
 	for i, tpl in ipairs(names) do
 		if tpl.kind ~= tplkind.EXCLUSION and
 			self._templates[tpl.name].spawnalways == true then
-			self:addAndSpawnAsset(tpl.name, assetmgr)
+			addAndSpawnAsset(self, tpl.name, assetmgr, bases, centroids)
 			table.remove(names, i)
 			limits.current = 1 + limits.current
 		end
@@ -248,14 +258,7 @@ function Region:_generate(assetmgr, objtype, names, bases, centroids)
 			local i = math.random(1, #self._exclusions[name].names)
 			name = self._exclusions[name]["names"][i]
 		end
-		local asset = self:addAndSpawnAsset(name, assetmgr)
-		if asset then
-			table.insert(centroids, asset:getLocation())
-			if dctenums.assetClass["BASES"][objtype] ~= nil then
-				bases[asset.name] = true
-			end
-		end
-
+		addAndSpawnAsset(self, name, assetmgr, bases, centroids)
 		table.remove(names, idx)
 		limits.current = 1 + limits.current
 	end
@@ -280,7 +283,7 @@ function Region:generate(assetmgr)
 	end
 
 	for basename, _ in pairs(bases) do
-		self:addAndSpawnAsset(assetmgr:getAsset(basename).defenses,
+		addAndSpawnAsset(self, assetmgr:getAsset(basename).defenses,
 			assetmgr)
 	end
 
@@ -290,7 +293,7 @@ function Region:generate(assetmgr)
 		["objtype"]    = "airspace",
 		["name"]       = "airspace",
 		["regionname"] = self.name,
-		["desc"]       = "",
+		["desc"]       = "airspace",
 		["coalition"]  = coalition.side.NEUTRAL,
 		["location"]   = self.location,
 		["volume"]     = {
@@ -298,8 +301,8 @@ function Region:generate(assetmgr)
 			["radius"] = 55560,  -- 30NM
 		},
 	})
-	self:_addTemplate(airspacetpl)
-	self:addAndSpawnAsset(airspacetpl.name, assetmgr)
+	self:addTemplate(airspacetpl)
+	addAndSpawnAsset(self, airspacetpl.name, assetmgr)
 end
 
 return Region
