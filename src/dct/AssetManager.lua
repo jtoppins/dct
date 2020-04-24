@@ -20,16 +20,11 @@ local Asset    = require("dct.Asset")
 local ASSET_CHECK_PERIOD = 12*60  -- seconds
 
 local AssetManager = class()
-
 function AssetManager:__init(theater)
-	-- back reference to theater class
 	self._theater = theater
 
-	-- variables to track the checking of assets' death goals
-	self._lastchecked = 0
-
 	-- The master list of assets, regardless of side, indexed by name.
-	-- Means Asset class names must be globally unique.
+	-- Means Asset names must be globally unique.
 	self._assetset = {}
 
 	-- The per side lists to maintain "short-cuts" to assets that
@@ -147,50 +142,30 @@ end
 -- *Note:* We just do the simple thing, check all assets.
 -- Nothing complicated for now.
 --]]
-function AssetManager:checkAssets(time)
-	local force = false
-	if (time - self._lastchecked) > ASSET_CHECK_PERIOD then
-		force = true
-	end
-
-	local perftime_s = timer.getTime()
-	self._lastchecked = time
+function AssetManager:checkAssets(_ --[[time]])
+	local perftime_s = os.clock()
 	local cnt = 0
 
 	for _, asset in pairs(self._assetset) do
 		cnt = cnt + 1
-		asset:checkDead(force)
+		asset:checkDead()
 		if asset:isDead() then
 			self:remove(asset)
 		end
 	end
 	Logger:debug(string.format("checkAssets() - runtime: %4.3f ms, "..
-		"forced: %s, assets checked: %d",
-		(timer.getTime()-perftime_s)*1000, tostring(force), cnt))
+		"assets checked: %d", (os.clock()-perftime_s)*1000, cnt))
 	return ASSET_CHECK_PERIOD
 end
 
 local function handleDead(self, event)
-	local obj = event.initiator
-
-	-- TODO: I am not sure this is correct, and will at least need
-	--   to be changed to handle player groups. Also, this is an
-	--   group object to asset name mapping so I don't understand
-	--   how a single dead event on a unit would cause the removal
-	--   of something from this table.
-	-- remove object from object2asset list if the event is a DEAD event
-	if event.id == world.event.S_EVENT_DEAD and
-	   self._object2asset[obj:getName()] ~= nil then
-		self._object2asset[obj:getName()] = nil
-	end
+	self._object2asset[event.initiator:getName()] = nil
 end
 
 local handlers = {
 	[world.event.S_EVENT_DEAD] = handleDead,
 }
 
--- TODO: need to fix this handler to listen to all events given that
--- we are going to track all players
 function AssetManager:onDCSEvent(event)
 	local relevents = {
 		[world.event.S_EVENT_BIRTH]           = true,
@@ -216,7 +191,8 @@ function AssetManager:onDCSEvent(event)
 	}
 
 	if not relevents[event.id] then
-		Logger:debug("onDCSEvent - not relevent event: "..tostring(event.id))
+		Logger:debug("onDCSEvent - not relevent event: "..
+			tostring(event.id))
 		return
 	end
 
