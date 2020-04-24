@@ -287,6 +287,11 @@ function Region:generate(assetmgr)
 			assetmgr)
 	end
 
+	-- do not create an airspace object if not wanted
+	if self.airspace ~= true then
+		return
+	end
+
 	-- create airspace asset based on the centroid of this region
 	self.location = dctutils.centroid(centroidpoints)
 	local airspacetpl = Template({
