@@ -147,6 +147,7 @@ end
 
 function Theater:_initFromState()
 	self.statef = true
+	self.startdate = self.statetbl.startdate
 	self:getAssetMgr():unmarshal(self.statetbl.assetmgr)
 end
 
