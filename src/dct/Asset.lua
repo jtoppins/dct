@@ -94,7 +94,7 @@ Asset:
 local Asset = class()
 function Asset:__init(template, region)
 	self._marshalnames = {
-		"_targeted", "_intel", "_priority", "type", "briefing",
+		"_intel", "_priority", "type", "briefing",
 		"owner", "rgnname", "tplname", "name", "codename",
 	}
 
