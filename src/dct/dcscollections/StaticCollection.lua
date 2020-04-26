@@ -327,6 +327,10 @@ local function filterDeadObjects(tbl, grp)
 				table.insert(gcpy.data.units, utils.deepcopy(unit))
 			end
 		end
+		if not next(gcpy.data.units) then
+			-- there are no alive units do not add the group
+			return
+		end
 	end
 	table.insert(tbl, gcpy)
 end
@@ -346,7 +350,7 @@ end
 function StaticCollection:marshal()
 	local tbl = {}
 	tbl._tpldata = filterTemplateData(self._tpldata)
-	if next(tbl._tpldata) == nil then
+	if tbl._tpldata == nil then
 		return nil
 	end
 	return utils.mergetables(tbl, IDCSObjectCollection.marshal(self))

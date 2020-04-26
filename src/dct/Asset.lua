@@ -221,6 +221,9 @@ function Asset:marshal()
 	assert(self._initcomplete == true, "runtime error: init not complete")
 	local tbl = {}
 	tbl.collection = self._collection:marshal()
+	if tbl.collection == nil then
+		return nil
+	end
 	for _, attribute in pairs(self._marshalnames) do
 		tbl[attribute] = self[attribute]
 	end
