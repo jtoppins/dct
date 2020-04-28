@@ -22,7 +22,6 @@ local function main()
 			"_"..env.getValueDictByKey(env.mission.sortie)..".state",
 		["servercfg"]   = true,
 		["missioncfg"]  = true,
-		["spawndead"]   = false,
 		["acgridfmt"] = {
 			["Ka-50"]         = dctutils.posfmt.DDM,
 			["M-2000C"]       = dctutils.posfmt.DDM,

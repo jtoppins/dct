@@ -13,7 +13,6 @@ local Logger   = require("dct.Logger").getByName("Asset")
 local dctutils = require("dct.utils")
 local Goal     = require("dct.Goal")
 local IDCSObjectCollection = require("dct.dcscollections.IDCSObjectCollection")
-local settings = _G.dct.settings
 
 --[[
 StaticCollection<IDCSObjectCollection>:
@@ -298,23 +297,6 @@ end
 local function filterDeadObjects(tbl, grp)
 	-- remove groups that are dead
 	if grp.data.dct_dead == true then
-		-- we either skip or if a static object that is a primary target
-		-- we set dead
-		if settings.spawndead == false or
-			grp.data.dct_deathgoal == nil then
-			return
-		end
-
-		if not (grp.data.dct_deathgoal.priority == Goal.priority.PRIMARY and
-			grp.data.dct_deathgoal.objtype == Goal.objtype.STATIC) then
-			return
-		end
-
-		local gcpy = utils.deepcopy(grp)
-		gcpy.data.dead = true
-		table.insert(tbl, gcpy)
-		-- we need to return here because the object is dead
-		-- so nothing else to do, skip rest of function
 		return
 	end
 
@@ -348,6 +330,9 @@ local function filterTemplateData(tpldata)
 end
 
 function StaticCollection:marshal()
+	if self:isDead() then
+		return nil
+	end
 	local tbl = {}
 	tbl._tpldata = filterTemplateData(self._tpldata)
 	if tbl._tpldata == nil then

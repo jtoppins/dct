@@ -89,14 +89,7 @@ end
 function AssetManager:remove(asset)
 	assert(asset ~= nil, "value error: asset object must be provided")
 
-	local isstrat = enum.assetClass.STRATEGIC[asset["type"]] or false
-
-	-- remove asset from master asset list if the asset is not a
-	--  strategic target. This supports the feature where dead
-	--  strategic assets can be spawned in as dead.
-	if not isstrat then
-		self._assetset[asset.name] = nil
-	end
+	self._assetset[asset.name] = nil
 
 	-- remove asset name from per-side asset list
 	self._sideassets[asset.owner].assets[asset.name] = nil

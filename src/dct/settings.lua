@@ -40,7 +40,6 @@ local function settings(missioncfg)
 		["profile"]     = false,
 		["statepath"]   = lfs.writedir()..utils.sep..env.mission.theatre..
 			"_"..env.getValueDictByKey(env.mission.sortie)..".state",
-		["spawndead"] = false,
 		["acgridfmt"] = {
 			["Ka-50"]         = dctutils.posfmt.DDM,
 			["M-2000C"]       = dctutils.posfmt.DDM,
