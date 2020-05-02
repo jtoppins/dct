@@ -17,12 +17,13 @@ build:
 	sed -e "s:%VERSION%:$(VERSION):" $(SRCPATH)/entry.lua.tpl > \
 		$(BUILDPATH)/DCT/entry.lua
 	cp -a $(SRCPATH)/mission $(BUILDPATH)/DCT/
+	cp $(SRCPATH)/README.md $(BUILDPATH)/
 	mkdir -p $(BUILDPATH)/temp
 	(cd $(BUILDPATH)/temp; \
 		wget -q $(LUALIBSURL) >/dev/null; \
 		unzip $(LUALIBSAR) >/dev/null; \
 		cp -a $(LUALIBSDIR)/src/libs* $(BUILDPATH)/DCT/lua)
 	(cd $(BUILDPATH); \
-		zip -r "DCT-$(VERSION).zip" DCT; \
+		zip -r "DCT-$(VERSION).zip" DCT README.md; \
 		mv DCT-$(VERSION).zip ../)
 	rm -rf $(BUILDPATH)
