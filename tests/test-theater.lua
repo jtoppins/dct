@@ -5,6 +5,7 @@ require("io")
 local md5 = require("md5")
 require("dcttestlibs")
 require("dct")
+local enum   = require("dct.enum")
 local settings = _G.dct.settings
 
 local events = {
@@ -204,7 +205,7 @@ end
 local function main()
 	local playergrp = Group(4, {
 		["id"] = 15,
-		["name"] = "Uzi 35",
+		["name"] = "Uzi 41",
 		["coalition"] = coalition.side.BLUE,
 		["exists"] = true,
 	})
@@ -242,6 +243,30 @@ local function main()
 	-- verify the units read in do not include the asset we killed off
 	assert(newtheater:getAssetMgr():getAsset(name) == nil,
 		"state saving has an issue")
+
+	-- attempt to get theater status
+	newtheater:onEvent({
+		["id"]        = world.event.S_EVENT_BIRTH,
+		["initiator"] = player1,
+	})
+
+	local status = {
+		["data"] = {
+			["name"]   = playergrp:getName(),
+			["type"]   = enum.uiRequestType.THEATERSTATUS,
+		},
+		["assert"]     = true,
+		["expected"]   = "== Theater Threat Status ==\n  Sea:    medium\n"..
+			"  Air:    parity\n  ELINT:  medium\n  SAM:    medium\n\n"..
+			"== Current Active Air Missions ==\n  No Active Missions\n\n"..
+			"Recommended Mission Type: CAP\n",
+	}
+	local uicmds = require("dct.ui.cmds")
+	trigger.action.setassert(status.assert)
+	trigger.action.setmsgbuffer(status.expected)
+	local cmd = uicmds[status.data.type](newtheater, status.data)
+	cmd:execute(400)
+
 	newtheater:export()
 	f = io.open(settings.statepath, "r")
 	local sumsave = md5.sum(f:read("*all"))

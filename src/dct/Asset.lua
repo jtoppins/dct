@@ -236,6 +236,16 @@ function Asset:unmarshal(data)
 	local collectiondata = data.collection
 	data.collection = nil
 	utils.mergetables(self, data)
+	-- need to handle the intel and priority tables special because even
+	-- though their keys were numbers when the state was serialized
+	-- in json's wisdom it decided to convert them to strings. So we need to
+	-- convert back so we can access the data in our lookups.
+	for _, tbl in ipairs({"_intel", "_priority"}) do
+		self[tbl] = {}
+		for k, v in pairs(data[tbl]) do
+			self[tbl][tonumber(k)] = v
+		end
+	end
 	self._collection = getcollection(data.type, self)
 	self._collection:unmarshal(collectiondata)
 	self._initcomplete = true
