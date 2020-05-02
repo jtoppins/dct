@@ -17,6 +17,16 @@ created in the Mission Editor, and configuration files. There is an initial
 learning curve but it is no more difficult that initially learning the DCS
 Mission Editor.
 
+## Installation
+
+DCT is distributed as a standard DCS module. It is installed by placing the
+`DCT` folder contained in this zip archive into:
+
+	C:\Users\<your-user-name>\Saved Games\DCS\Mods\tech
+
+If installed properly DCT will be displayed as a module in the game's
+module manager.
+
 ## Contribution Guide
 
 Contributions can be made with a standard github pull request. Code is
