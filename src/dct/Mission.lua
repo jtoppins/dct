@@ -153,7 +153,7 @@ end
 
 function Mission:checkout(time)
 	if self.station.onstation == false then
-		return
+		return 0
 	end
 	self.station.onstation = false
 	self.station.total = self.station.total + (time - self.station.start)
