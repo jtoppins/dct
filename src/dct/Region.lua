@@ -214,9 +214,6 @@ function Region:addAndSpawnAsset(name, assetmgr)
 	local asset = Asset(tpl, self)
 	assetmgr:add(asset)
 	asset:spawn()
-	if asset then
-		assetmgr:getStats(asset.owner):inc(asset.type..".2")
-	end
 	return asset
 end
 

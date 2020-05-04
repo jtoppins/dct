@@ -15,33 +15,9 @@ local enum     = require("dct.enum")
 local dctutils = require("dct.utils")
 local Logger   = require("dct.Logger").getByName("AssetManager")
 local Command  = require("dct.Command")
-local Stats    = require("dct.Stats")
 local Asset    = require("dct.Asset")
 
 local ASSET_CHECK_PERIOD = 12*60  -- seconds
-
-local substats = {
-	["ALIVE"]   = 1,
-	["NOMINAL"] = 2,
-}
-
-local statids = nil
-
-local function genstatids()
-	if statids ~= nil then
-		return statids
-	end
-
-	local tbl = {}
-
-	for k,v in pairs(enum.assetType) do
-		for k2,v2 in pairs(substats) do
-			table.insert(tbl, { v.."."..v2, 0, k.."."..k2 })
-		end
-	end
-	statids = tbl
-	return tbl
-end
 
 local AssetManager = class()
 
@@ -64,15 +40,12 @@ function AssetManager:__init(theater)
 	self._sideassets = {
 		[coalition.side.NEUTRAL] = {
 			["assets"] = {},
-			["stats"]  = Stats(genstatids()),
 		},
 		[coalition.side.RED]     = {
 			["assets"] = {},
-			["stats"]  = Stats(genstatids()),
 		},
 		[coalition.side.BLUE]    = {
 			["assets"] = {},
-			["stats"]  = Stats(genstatids()),
 		},
 	}
 
@@ -93,7 +66,6 @@ function AssetManager:remove(asset)
 
 	-- remove asset name from per-side asset list
 	self._sideassets[asset.owner].assets[asset.name] = nil
-	self._sideassets[asset.owner].stats:dec(asset.type.."."..substats.ALIVE)
 
 	-- remove asset object names from name list
 	for _, objname in pairs(asset:getObjectNames()) do
@@ -118,8 +90,6 @@ function AssetManager:add(asset)
 		else
 			self._sideassets[asset.owner].assets[asset.name] = asset.type
 		end
-		self._sideassets[asset.owner].stats:inc(asset.type.."."..
-			substats.ALIVE)
 
 		-- read Asset's object names and setup object to asset mapping
 		-- to be used in handling DCS events and other uses
@@ -131,10 +101,6 @@ end
 
 function AssetManager:getAsset(name)
 	return self._assetset[name]
-end
-
-function AssetManager:getStats(side)
-	return self._sideassets[side].stats
 end
 
 --[[
@@ -292,7 +258,6 @@ end
 function AssetManager:marshal()
 	local tbl = {
 		["assets"] = {},
-		["stats"]  = {},
 	}
 	local shouldmarshal = utils.shallowclone(enum.assetClass.STRATEGIC)
 	shouldmarshal[enum.assetType.AIRSPACE] = true
@@ -304,24 +269,10 @@ function AssetManager:marshal()
 			tbl.assets[name] = asset:marshal()
 		end
 	end
-	for _,v in pairs(coalition.side) do
-		tbl.stats[v] = self._sideassets[v].stats:marshal()
-	end
 	return tbl
 end
 
 function AssetManager:unmarshal(data)
-	local statszero = {}
-	for _,v in pairs(enum.assetType) do
-		statszero[v..".1"] = 0
-	end
-	for side, stat in pairs(data.stats) do
-		side = tonumber(side)
-		self._sideassets[side].stats:unmarshal(stat)
-		for k,v in pairs(statszero) do
-			self._sideassets[side].stats:set(k, v)
-		end
-	end
 	for _, assettbl in pairs(data.assets) do
 		local asset = Asset()
 		asset:unmarshal(assettbl)
