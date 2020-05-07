@@ -2,9 +2,9 @@
 
 local _G   = _G
 local dct = {
-    _VERSION = "0.5",
+    _VERSION = "0.6",
     _DESCRIPTION = "DCT: DCS Dynamic Campaign Tools",
-    _COPYRIGHT = "Copyright (c) 2019 Jonathan Toppins"
+    _COPYRIGHT = "Copyright (c) 2019-2020 Jonathan Toppins"
 }
 
 _G.dct = dct
