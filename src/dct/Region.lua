@@ -131,7 +131,7 @@ local function registerType(self, kind, ttype, name)
 	table.insert(self._tpltypes[ttype], entry)
 end
 
-local function addAndSpawnAsset(self, name, assetmgr, bases, centroids)
+local function addAndSpawnAsset(self, name, assetmgr, centroids)
 	if name == nil then
 		return nil
 	end
@@ -144,11 +144,9 @@ local function addAndSpawnAsset(self, name, assetmgr, bases, centroids)
 	local asset = Asset(tpl, self)
 	assetmgr:add(asset)
 	asset:spawn()
+	asset:generate(assetmgr, self)
 	if centroids then
 		table.insert(centroids, asset:getLocation())
-	end
-	if bases and dctenums.assetType.AIRBASE == asset.type then
-		bases[asset.name] = true
 	end
 	return asset
 end
@@ -227,8 +225,7 @@ function Region:getTemplateByName(name)
 	return self._templates[name]
 end
 
--- luacheck: ignore 561
-function Region:_generate(assetmgr, objtype, names, bases, centroids)
+function Region:_generate(assetmgr, objtype, names, centroids)
 	local limits = {
 		["min"]     = #names,
 		["max"]     = #names,
@@ -245,7 +242,7 @@ function Region:_generate(assetmgr, objtype, names, bases, centroids)
 	for i, tpl in ipairs(names) do
 		if tpl.kind ~= tplkind.EXCLUSION and
 			self._templates[tpl.name].spawnalways == true then
-			addAndSpawnAsset(self, tpl.name, assetmgr, bases, centroids)
+			addAndSpawnAsset(self, tpl.name, assetmgr, centroids)
 			table.remove(names, i)
 			limits.current = 1 + limits.current
 		end
@@ -258,7 +255,7 @@ function Region:_generate(assetmgr, objtype, names, bases, centroids)
 			local i = math.random(1, #self._exclusions[name].names)
 			name = self._exclusions[name]["names"][i]
 		end
-		addAndSpawnAsset(self, name, assetmgr, bases, centroids)
+		addAndSpawnAsset(self, name, assetmgr, centroids)
 		table.remove(names, idx)
 		limits.current = 1 + limits.current
 	end
@@ -271,20 +268,13 @@ end
 -- be limited to mission startup.
 function Region:generate(assetmgr)
 	local tpltypes = utils.deepcopy(self._tpltypes)
-	local bases = {}
 	local centroidpoints = {}
 
 	for objtype, _ in pairs(dctenums.assetClass["STRATEGIC"]) do
 		local names = tpltypes[objtype]
 		if names ~= nil then
-			self:_generate(assetmgr, objtype, names, bases,
-				centroidpoints)
+			self:_generate(assetmgr, objtype, names, centroidpoints)
 		end
-	end
-
-	for basename, _ in pairs(bases) do
-		addAndSpawnAsset(self, assetmgr:getAsset(basename).defenses,
-			assetmgr)
 	end
 
 	-- do not create an airspace object if not wanted

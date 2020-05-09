@@ -57,6 +57,9 @@ end
 function IDCSObjectCollection:_setup()
 end
 
+function IDCSObjectCollection:generate(_ --[[assetmgr]], _ --[[region]])
+end
+
 function IDCSObjectCollection:spawn(_ --[[ignore]])
 end
 

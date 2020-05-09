@@ -177,6 +177,10 @@ function Asset:getCollection()
 	return self._collection
 end
 
+function Asset:generate(assetmgr, region)
+	self._collection:generate(assetmgr, region)
+end
+
 function Asset:getLocation()
 	return self._collection:getLocation()
 end
