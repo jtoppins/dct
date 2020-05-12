@@ -1,0 +1,49 @@
+how to handle airbases, base defense templates, and squadrons?
+
+how current things work:
+  region
+     - templates
+
+  region:generate(assetmgr)
+     assetmgr:add(asset)
+
+
+
+How are we going to manage things?
+* have commanders assign targets by region, once N missions are assigned to a region
+   select and start assigning to another region
+* seperate template/region reading on disk from game objects
+* squadron definitions?
+  - <name>.sqn
+    - defines a/c type
+    - number of a/c available
+    - pilots available and the mean and sigma of pilot skill
+    - loadouts and the type of mission the loadout can service, this defines
+        what missions the squadron can fly
+* [air]base definitions
+  - define an airbase template that contains the initial side the airbase belongs to
+  - base templates do not need an stm file
+* [air]base defenses
+  - chain base defense templates to base assets
+
+Treat airbases, base defenses, and squadrons as assets, associate base defenses with
+a given base asset and provide an interface to spawn defenses independant of spawning
+the actual base asset.
+
+
+structure layout:
+
+theater
+  - regionlist
+     - region
+        - templates
+        - generate()
+
+assetmgr
+  - assetset
+  - assetsbyside
+
+cmdr
+  - targetregion
+  - activemissionlist
+  - 
