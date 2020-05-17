@@ -20,6 +20,7 @@
 
 local enum    = require("dct.enum")
 local Logger  = require("dct.Logger").getByName("UI")
+local loadout = require("dct.systems.loadouts")
 local addmenu = missionCommands.addSubMenuForGroup
 local addcmd  = missionCommands.addCommandForGroup
 
@@ -101,6 +102,7 @@ function menus.createMenu(theater, asset)
 			["name"]   = name,
 			["type"]   = enum.uiRequestType.MISSIONCHECKOUT,
 		})
+	loadout.addmenu(asset, nil, theater.playerRequest, theater)
 end
 
 return menus

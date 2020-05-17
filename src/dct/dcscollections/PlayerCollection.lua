@@ -26,6 +26,7 @@ local class = require("libs.class")
 local IDCSObjectCollection = require("dct.dcscollections.IDCSObjectCollection")
 local uimenu  = require("dct.ui.groupmenu")
 local Logger  = require("dct.Logger").getByName("Asset")
+local loadout = require("dct.systems.loadouts")
 
 local PlayerCollection = class(IDCSObjectCollection)
 function PlayerCollection:__init(asset, template, region)
@@ -47,21 +48,7 @@ function PlayerCollection:getObjectNames()
 end
 
 local function handleBirth(self, event, theater)
-	if not (event.initiator and event.initiator.getGroup) then
-		Logger:debug(string.format("(%s) - invalid initiator",
-			self._asset.name))
-		return
-	end
-
-	local pname = event.initiator:getPlayerName()
 	local grp = event.initiator:getGroup()
-	if not grp or not pname or pname == "" then
-		Logger:debug(
-			string.format("(%s) - bad player name (%s) or group (%s)",
-				self._asset.name, pname, grp))
-		return
-	end
-
 	local id = grp:getID()
 	if self._asset.groupId ~= id then
 		Logger:warn(
@@ -77,23 +64,26 @@ local function handleBirth(self, event, theater)
 		trigger.action.outTextForGroup(grp:getID(),
 			"Welcome. A mission is already assigned to this slot, "..
 			"use the F10 menu to get the briefing or find another.",
-			20, true)
+			20, false)
 	else
 		trigger.action.outTextForGroup(grp:getID(),
 			"Welcome. Use the F10 Menu to get a theater update and "..
 			"request a mission.",
-			20, true)
+			20, false)
 	end
+	loadout.notify(grp)
+end
+
+local function handleTakeoff(_, event, _)
+	loadout.kick(event.initiator:getGroup())
 end
 
 local handlers = {
 	[world.event.S_EVENT_BIRTH] = handleBirth,
+	[world.event.S_EVENT_TAKEOFF] = handleTakeoff,
 }
 
 function PlayerCollection:onDCSEvent(event, theater)
-	-- TODO: need to move the creation of the ui to menus to here
-	-- test if the groupid of the player object is the same as the
-	--   one we read from the mission
 	local handler = handlers[event.id]
 	if handler ~= nil then
 		handler(self, event, theater)

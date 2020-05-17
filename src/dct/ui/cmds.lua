@@ -11,6 +11,7 @@ local dctutils = require("dct.utils")
 local human    = require("dct.ui.human")
 local Command  = require("dct.Command")
 local Logger   = require("dct.Logger").getByName("UI")
+local loadout = require("dct.systems.loadouts")
 
 local UICmd = class(Command)
 function UICmd:__init(theater, data)
@@ -110,6 +111,16 @@ function TheaterUpdateCmd:_execute(_, cmdr)
 	msg = msg .. string.format("\nRecommended Mission Type: %s\n",
 		dctutils.getkey(enum.missionType,
 			cmdr:recommendMissionType(self.actype)) or "None")
+	return msg
+end
+
+local CheckPayloadCmd = class(UICmd)
+function CheckPayloadCmd:__init(theater, data)
+	UICmd.__init(self, theater, data)
+end
+
+function CheckPayloadCmd:_execute(_ --[[time]], _ --[[cmdr]])
+	local msg = loadout.check(Group.getByName(self.grpname))
 	return msg
 end
 
@@ -277,6 +288,7 @@ local cmds = {
 	[enum.uiRequestType.MISSIONCHECKOUT] = MissionCheckoutCmd,
 	[enum.uiRequestType.SCRATCHPADGET]   = ScratchPadDisplay,
 	[enum.uiRequestType.SCRATCHPADSET]   = ScratchPadSet,
+	[enum.uiRequestType.CHECKPAYLOAD]    = CheckPayloadCmd,
 }
 
 return cmds
