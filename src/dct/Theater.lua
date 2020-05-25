@@ -256,7 +256,7 @@ function Theater:playerRequest(data)
 
 	if playerasset.cmdpending == true then
 		Logger:debug("playerRequest(); request pending, ignoring")
-		trigger.action.outTextForGroup(data.id,
+		trigger.action.outTextForGroup(playerasset.groupId,
 			"F10 request already pending, please wait.", 20, true)
 		return
 	end
