@@ -773,7 +773,11 @@ function trigger.action.chkmsgbuffer()
 		msgbuffer.."';\n expected '"..chkbuffer.."'")
 end
 
-function trigger.action.outTextForGroup(_, msg, _, _)
+function trigger.action.outTextForGroup(grpid, msg, time, bool)
+	assert(type(grpid) == "number", "value error: grpid must be a number")
+	assert(type(msg) == "string", "value error: msg must be a string")
+	assert(type(time) == "number", "value error: time must be a number")
+	assert(type(bool) == "boolean", "value error: bool must be a boolean")
 	msgbuffer = msg
 	if enabletest == true then
 		assert(msgbuffer == chkbuffer,
