@@ -248,15 +248,14 @@ end
 --       includes the max allowed for the airframe
 local function validatePayload(grp)
 	local total = totalPayload(grp)
-	local valid = true
 
-	for _, cost in ipairs(total) do
+	for _, cost in pairs(total) do
 		if cost.current > cost.max then
-			valid = false
+			return false, total
 		end
 	end
 
-	return valid, total
+	return true, total
 end
 
 local notifymsg =
