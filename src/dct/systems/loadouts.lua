@@ -46,7 +46,7 @@ local restrictedWeapons = {
 	},
 	["GBU-10"] = {
 		["cost"]     = 15,
-		["category"] = weaponCategory.AA,
+		["category"] = weaponCategory.AG,
 	},
 	["GBU-12"] = {
 		["cost"]     = 5,
