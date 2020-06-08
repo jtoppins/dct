@@ -37,7 +37,7 @@ local restrictedWeapons = {
 		["category"] = weaponCategory.AA,
 	},
 	["SD-10"] = {
-		["cost"]     = 3,
+		["cost"]     = 5,
 		["category"] = weaponCategory.AA,
 	},
 	["R-77"] = {
@@ -93,7 +93,7 @@ local restrictedWeapons = {
 		["category"] = weaponCategory.AG,
 	},
 	["CM-802AKG"] = {
-		["cost"]     = 35,
+		["cost"]     = 30,
 		["category"] = weaponCategory.AG,
 	},
 	["C-802AK"] = {
@@ -190,6 +190,10 @@ local restrictedWeapons = {
 	},
 	["RN-28"] = {
 		["cost"]     = infcost,
+		["category"] = weaponCategory.AG,
+	},
+	["AGM-84E SLAM"] = {
+		["cost"]     = 30,
 		["category"] = weaponCategory.AG,
 	},
 }
