@@ -104,3 +104,59 @@ air defense commander:
 - critera for scrambling alert a/c 
    * alerts are only used when all airborne CAP car committed
    * alert a/c RTB once a threat has been dewlt with
+
+
+squadron {
+	type: // the kind of aircraft flown (only one type per squadron)
+	name:
+	skin:
+	country:
+	base:
+	roster {
+		lost:
+		maintenance:
+		available:
+		prep:
+		assigned:
+		skill: // base skill level of the squadron actual skill of
+		       // individual pilots will vary with the rough average
+		       // being this level
+	}
+	loadouts {
+		["mission type"] = {
+			[#] = {
+				attributes:
+				proficiency:  // 1 to 100 representing
+				              // proficiency for loadout
+				              // used in calculating
+				              // mission success probability
+				firepower:    // 1 to 100 the amount of
+				              // "damage" the loadout is
+				              // capable of
+				standoff:     // range of primary weapon
+				profile = {
+					["lolo"] = {
+					combatradius: // max range, nm
+					loiter:  // max station time, minutes
+					cruise = {
+						alt:   // base altitude, feet
+						speed: // avg speed, knots
+						agl:   // true / false
+					}
+					attack = {
+						alt:
+						speed:
+						agl:
+					}
+					["hi"] = {
+					}
+					["hilo"]
+				}
+				stores = {
+					// the stores entry from the mission
+					// editor
+				}
+			}
+		}
+	}
+}

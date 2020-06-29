@@ -1,27 +1,3 @@
-== Mission Template Directory Format
-
-DCT relies on content that can be built directly in the mission editor, these
-individuals need little to no programming stills to provide content to a DCT
-enabled mission.
-
-The directory hierarchy is:
-
-    + <Mission Template Directory>
-      - theater.goals
-      + <Region Directory 1>
-        - region.def
-        + [bases]
-        + [facilities]
-        + [missions]
-      + <Region Directory N>
-        - region.def
-        + [bases]
-        + [facilities]
-        + [missions]
-
-
-
-
 # Templates
 
 ## Usage
@@ -29,8 +5,8 @@ The directory hierarchy is:
 A template represents a non-unique DCT game object. These objects can be
 copied to represent unique game objects within the DCT/DCS game world. The
 primary usage for Template objects is to validate user/mission-creator
-provided game data in a consisitent and common way. This removes the
-responsability of Asset objects from having to perform this validation each
+provided game data in a consistent and common way. This removes the
+responsibility of Asset objects from having to perform this validation each
 time.
 
 ## Storage
@@ -54,8 +30,8 @@ template must define the attribute.
  * _value:_ string
 
 Defines the type of game object (Asset) that will be created from the
-template. Allowed values can be found in src/dct/enum.lua in the `assetType`
-table.
+template. Allowed values can be found in [src/dct/enum.lua](src/dct/enum.lua)
+in the `assetType` table.
 
 ### `name`
 
@@ -64,7 +40,7 @@ table.
 
 The name of the template. This name can be used to lookup the template from
 the Region object. If the template uses an STM file then the name field of the
-STM template will be used. This name fields is editable in the mission editor.
+STM template will be used. This name field is editable in the mission editor.
 If the template is an airbase type the name must reference an airbase object
 in the game world or define a tpldata to spawn a new airbase. This airbase
 validation is not done at template definition time and is instead done at
@@ -83,15 +59,14 @@ theater definition directory this region will need to be defined.
 ### `coalition`
 
  * _required:_ depends
- * _value:_ "red", "blue", "neutral" (case doen't matter) or their numerical
-   equivalents[\[1\]][1]
+ * _value:_ "red", "blue", "neutral" (case doen't matter)
  * _default:_ the coalition the DCS groups/statics belong too or this field is
    **required**
 
 A template can only belong to a single coalition (side) and any DCS
 groups/statics not belonging to the same side as the first group will cause a
 fatal error. This can be confusing sometimes when a template is attempted
-to be used across different missions. Your mission designer should come up
+to be used across different campaigns. Your campaign designer should come up
 with a standard country set for each coalition.
 
 ### `desc`
@@ -101,7 +76,7 @@ with a standard country set for each coalition.
 
 This is a text string field used to provide the 'target briefing' text when a
 mission is assigned to a player. This text can use string replacement to make
-certian parts of the message variable, the replacement fields are:
+certain parts of the message variable, the replacement fields are:
 
  * `LOCATIONMETHOD` - provides a randomly selected description of how the
    target was discovered.
@@ -118,13 +93,14 @@ For templates that are not associated with an STM file the format of `tpldata`
 follows:
 
 	tpldata = {
-	  category = {
 	    # = {
+	      category = Unit.Category,
 	      countryid = id,
 	      data      = {
 	        # group def members
 	        dct_deathgoal = goalspec
-	}}}}
+	      },
+	}}
 
 See [tpldata details][tpldata_details] for more information on specification
 of death goals and naming criteria.
@@ -214,8 +190,9 @@ Is a DCS volume spec[\[3\]][3] defining the airspace being taken up.
  * _required:_ no
  * _value:_ table or string
 
-The name(s) of the templates to use as airbase defense groups used to protect
-and control which side an airbase/farp belongs to.
+A list of template names that will be converted into DCT assets. These
+templates are usually base defenses or squadrons but there is nothing
+preventing the designer from spawning additional assets with this list.
 
 ### Squadron
 
