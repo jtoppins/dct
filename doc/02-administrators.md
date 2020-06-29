@@ -14,8 +14,26 @@ DCS saved games directory and place in;
 
 	<dcs-saved-games>/Mods/tech
 
-If the path does not exist just create it.
+If the path does not exist just create it. If installed properly DCT
+will be displayed as a module in the game's module manager.
 
 ## Configuration
 
-TODO
+TODO - this section
+
+store server related configuration in:
+
+	_G.dct.settings.server.<config-item>
+
+### Options
+
+configuration related to the server:
+- debug - globally enable debug logging and debug checks
+- logger settings - defines logging level for each logging subsystem
+- profile - enable profiling
+- statepath - defines where the statefile for the theater will be stored
+- theaterpath - defines where the "theater" exists
+- schedfreq - defines how often the command scheduler runs
+- tgtfps - defines what the server's target FPS is, is used to calculate
+     quanta for the command schedular
+- percentTimeAllowed - 

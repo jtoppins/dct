@@ -13,19 +13,13 @@ directly in the mission editor, these individuals need little to no
 programming skills to provide content to a DCT enabled mission.
 
 Scenarios are created through a theater definition consisting of templates,
-created in the Mission Editor, and configuration files. There is an initial
-learning curve but it is no more difficult that initially learning the DCS
+created in the Mission Editor and configuration files. There is an initial
+learning curve but it is no more difficult than initially learning the DCS
 Mission Editor.
 
 ## Installation
 
-DCT is distributed as a standard DCS module. It is installed by placing the
-`DCT` folder contained in this zip archive into:
-
-	C:\Users\<your-user-name>\Saved Games\DCS\Mods\tech
-
-If installed properly DCT will be displayed as a module in the game's
-module manager.
+See installation instructions in the [Administrators' guide](doc/02-administrators.md).
 
 ## Contribution Guide
 

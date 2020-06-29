@@ -15,6 +15,7 @@ mission, etc.
 	F1. Scratch Pad
 		F1. DISPLAY
 		F2. SET
+		F3. RUN
 
 
 #### DISPLAY
@@ -33,6 +34,9 @@ pad.
 be stored and the mark deleted from the map. Thus one cannot expect to go
 in and out of the F10 map to edit the mark.
 
+#### RUN
+
+Run a generic text based command from the user.
 
 ### Intel Menu
 
@@ -96,6 +100,8 @@ Example map mark report:
 			SAM: High; 2 x SA-6, 1 x SA-10
 			SHORAD: Medium
 			SEA: None
+		Weather:
+			METAR: <time> <wind> <clouds> <temps> <altimiter>
 
 
 #### Clear All
@@ -103,16 +109,31 @@ Example map mark report:
 Clears all marks made by the system for the player.
 
 
+### Ground Crew Menu
+
+	F3. Ground Crew
+		F1. Check Payload
+		F2. Carrier Status
+
+#### Check Payload
+
+If enabled provides a way for the player to verify that their payload is valid.
+
+#### Carrier Status
+
+Check what the status of the carrier is and if you can recover at the carrier.
+
 ### Mission Menu
 
 F10 menu for player requested/assigned missions.
 
 #### No Assigned Mission
 
-	F3. Mission
+	F4. Mission
 		F1. Request
 			F1. <allowed-mission-type-1>
-			FN. <allowed-mission-type-N>
+			...
+			FN. <allowed-mission-type-8>
 		F2. Join
 
 
@@ -130,7 +151,7 @@ mission being joined.
 
 #### Mission Assigned
 
-	F3. Mission
+	F4. Mission
 		F1. Briefing
 		F2. Status
 		F3. Rolex +30

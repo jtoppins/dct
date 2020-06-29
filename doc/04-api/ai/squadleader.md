@@ -1,3 +1,23 @@
+	-- kinds of states
+	--   * tactical states
+	--      - losses taken
+	--      - target dead
+	--      - joker
+	--      - bingo
+	--      - winchester
+	--      - goto location
+	--
+	--   * mission states
+	--      - target dead
+	--      - station time > #
+	--      - mission active for > X time
+	--      - assigned dead
+	--
+	--   * theater states
+	--      - tickets <= 0
+	--      - primary targets destroyed > %
+	--      - secondary targets destroyed > %
+
 defend
 escort
 attack
