@@ -185,16 +185,39 @@ Is a DCS volume spec[\[3\]][3] defining the airspace being taken up.
 
 ### Airbase
 
-#### `defenses`
+#### `subordinates`
 
  * _required:_ no
- * _value:_ table or string
+ * _value:_ table
 
 A list of template names that will be converted into DCT assets. These
 templates are usually base defenses or squadrons but there is nothing
 preventing the designer from spawning additional assets with this list.
 
 ### Squadron
+
+#### `planedata`
+
+ * _required:_ yes
+ * _value:_ table
+
+Defines the metatdata related to the plane defined in the associated STM file.
+
+Allowed fields inside `planedata`:
+
+ * `flightsize` - [number] the size of the flight
+ * `current` - [number] current number of airframes at squadron spawn
+ * `max` - [number] maximum number of airframes the squadron can have
+ * `payloads` - [list] of payloads the squadron can utilize
+ * `experience` - [table,pair] average experience level of the squadron,
+    of the form `{<mean>,<sigma>}`, where `<mean>` is the average
+    experience level and `<sigma>` is the variability from the mean.
+ * `readytime` - [table,pair] amount of time it takes to ready a plane for
+    takeoff, of the form `{<mean>,<sigma>}`, where `<mean>` is the average
+    time and `<sigma>` is the variability from the mean.
+ * `alerttime` - [table,pair] amount of time it takes to ready a plane on
+    alert status, of the form `{<mean>,<sigma>}`, where `<mean>` is the
+    average time and `<sigma>` is the variability from the mean.
 
 ## Template Data - DCS Object Definition
 
