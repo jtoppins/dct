@@ -30,8 +30,8 @@ template must define the attribute.
  * _value:_ string
 
 Defines the type of game object (Asset) that will be created from the
-template. Allowed values can be found in [src/dct/enum.lua](src/dct/enum.lua)
-in the `assetType` table.
+template. Allowed values can be found in
+[src/dct/enum.lua](../../../src/dct/enum.lua) in the `assetType` table.
 
 ### `name`
 
@@ -165,6 +165,14 @@ have the same string value the templates will be grouped together and only
 one template from the exclusion group will be selected. All other members
 of the group will be ignored.
 
+### `airbase`
+
+ * _required:_ no
+ * _value:_ string
+ * _default:_ nil
+
+Specifies which airbase the asset is associated with.
+
 ## Attributes - Type Specific
 
 ### Airspace
@@ -189,35 +197,123 @@ Is a DCS volume spec[\[3\]][3] defining the airspace being taken up.
 
  * _required:_ no
  * _value:_ table
+ * _default:_ none
 
 A list of template names that will be converted into DCT assets. These
 templates are usually base defenses or squadrons but there is nothing
 preventing the designer from spawning additional assets with this list.
 
+#### `contest_dist`
+
+ * _required:_ no
+ * _value:_ number
+ * _default:_ 10 nautical miles for land bases, disabled for ships
+
+The distance opposing troops are allowed to come within before the
+airbase is considered contested and the ability to launch aircraft
+will be disabled.
+
 ### Squadron
 
 #### `planedata`
 
- * _required:_ yes
+ * _required:_ no
  * _value:_ table
 
-Defines the metatdata related to the plane defined in the associated STM file.
-
+Defines the metatdata related to the squadron.
 Allowed fields inside `planedata`:
 
- * `flightsize` - [number] the size of the flight
- * `current` - [number] current number of airframes at squadron spawn
- * `max` - [number] maximum number of airframes the squadron can have
- * `payloads` - [list] of payloads the squadron can utilize
- * `experience` - [table,pair] average experience level of the squadron,
-    of the form `{<mean>,<sigma>}`, where `<mean>` is the average
-    experience level and `<sigma>` is the variability from the mean.
- * `readytime` - [table,pair] amount of time it takes to ready a plane for
-    takeoff, of the form `{<mean>,<sigma>}`, where `<mean>` is the average
-    time and `<sigma>` is the variability from the mean.
- * `alerttime` - [table,pair] amount of time it takes to ready a plane on
-    alert status, of the form `{<mean>,<sigma>}`, where `<mean>` is the
-    average time and `<sigma>` is the variability from the mean.
+**Common Options:**
+
+##### `ato`
+
+ * _required:_ no
+ * _value:_ list of strings
+ * _default:_ all mission types allowed
+
+The allowed mission types the squadron can fly.
+
+##### `max`
+
+ * _required:_ no
+ * _value:_ number
+ * _default:_ `-1`
+
+Maximum number of airframes the squadron can have, by default unlimited (-1).
+
+##### `current`
+
+ * _required:_ no
+ * _value:_ number
+ * _default:_ `-1`
+
+Current number of airframes a squadron has on hand, by default unlimited (-1).
+
+##### `flightsize`
+
+ * _required:_ no
+ * _value:_ number
+ * _default:_ `1`
+
+The size of the flight, used for calculating available number of possible
+missions the squadron can take.
+
+**AI Squadron:**
+
+##### `experience`
+
+ * _required:_ no
+ * _value:_ table
+ * _default:_ `{2, 1}`
+
+Average experience level of the squadron, of the form `{<mean>,<sigma>}`,
+where `<mean>` is the average experience level and `<sigma>` is the
+variability from the mean.
+
+##### `readytime`
+
+ * _required:_ no
+ * _value:_ table
+ * _default:_ `{300, 90}`
+
+Amount of time it takes to ready a plane for takeoff, of the form
+`{<mean>,<sigma>}`, where `<mean>` is the average time and `<sigma>`
+is the variability from the mean.
+
+##### `alerttime`
+
+ * _required:_ no
+ * _value:_ table
+ * _default:_ `{120, 45}`
+
+Amount of time it takes to ready a plane on alert status, of the form
+`{<mean>,<sigma>}`, where `<mean>` is the average time and `<sigma>`
+is the variability from the mean.
+
+**Player Squadron:**
+
+##### `payloadlimits`
+
+ * _required:_ no
+ * _value:_ table
+ * _default:_ no limit
+
+A table listing the cost limit for different ordinance groups, by default
+there is no limit. The format of the table is as follows:
+
+			["payloadlimits"]  = {
+				["ag"] = 20,
+				["aa"] = 10,
+			}
+
+##### `gridfmt`
+
+ * _required:_ no
+ * _value:_ string
+ * _default:_ `dms`
+
+The grid format used when reporting coordinates to players, if empty an
+appropriate default will be used.
 
 ## Template Data - DCS Object Definition
 

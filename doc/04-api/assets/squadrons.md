@@ -3,160 +3,79 @@
 A logical representation of a group of aircraft associated with a given
 airbase.
 
-## Attributes
+## Definition
 
- * airframe type
- * number available
- * homebase
- * combat radius
- * payloads
- * taskings the squadron is capable of
- * supply (the amount of resources the squadron has available)
- * resupply rate in seconds
+Like other templates[1] squadrons are defined in regions and
+associated with an airbase by means of the airbase's subordinate
+list. See [template](template.md) for details on individual attributes
+or the [examples](examples) section.
 
-## Squadron Death
+## AI Squadrons
 
- * only on the distruction of their airbase
+An STM file is associated with an AI squadron which defines various
+things including:
 
-## Not Able to Field Flights
+ * airplane type
+ * payload
+ * mission type
 
- * airframe count depleted
- * runway disabled
- * airbase captured
+The first helicopter or airplane group found in the STM will define the
+aircraft used for the squadron. The first unit in the remaining groups
+will define additional payloads the squadron is capable of carrying.
+The mission "task" type defined for the group will limit the payload to
+only be used for the equivalent DCT mission type, seen in table 1. The
+first group's payload will be used if there is not a more specific
+payload defined.
 
-problem:
-- be able to define CAP corradors
-- have an EWR/GCI network that feeds information to the CAP flights
+**(Table 1) Mission Editor Task Types:**
 
-example
-- 5 sqdns
-- define an airspace that each sqdn defends
+ - Nothing
+ - AFAC
+ - Anti-ship Strike (ASUW)
+ - AWACS
+ - CAP
+ - CAS
+ - Escort
+ - Fighter Sweep
+ - Ground Attack
+ - Intercept
+ - Pinpoint Strike
+ - Reconnaissance
+ - Refueling
+ - Runway Attack
+ - SEAD
+ - Transport
 
+## Player Squadrons
 
-CAP flight lead goals:
-- investigate
-   - 
-- intercept
-   - 
-- attack
-   - commit criteria
-- persue
-- disengage
-- refuel
-- rtb
-- race-track on-station hold
+Player squadrons do not need an STM file and have a few limitations:
 
-actions setup per flight
-- set reaction to threat
-- use flare
-- use ecm
+ * Player slots cannot be mixed with an AI squadron
+ * a slot can belong to one and only one squadron
 
+### Player Slot Membership
 
-flight lead actions:
-- use radar
-- set freq
-- set ROE
-- prohibit ab
-- land
-- takeoff
+All player slots must belong to a squadron. If the slot does not specify
+which squadron it is a member of the slot will be placed in a generic
+per-side squadron.
 
+A player slot can specify squadron membership by making the **first
+word of the group name** equal to any squadron template name defined
+in the theater definition.
 
-CAP flight lead actions:
-- goto waypoint
-- race-track hold (idle state until fuel low)
-- refuel
-- engageTargets
-- missile attack range
+## Disablement and Death
 
+Conditions which a squadron is no longer able to sortie missions.
 
-flight lead attributes monitored:
-- fuel state
-- Friendly and Enemy SAM threat
-- Friendly & enemy airbourne threats
-- damage taken
-- mission specific
-  - cap station orbit size
-  - ground targets
+Disable Conditions:
 
+ 1. Depleting airframe count
+ 2. Disabling airbase runway
+ 3. Airbase is contested
 
-flight lead personalities:
-- aggressiness
-- emission awareness
-- positioning (altitude & aspect)
-- dcs skill level
+Death Conditions:
 
+ 1. Capturing the airbase
 
-squadron:
-- skill range of pilot
-- define airframe
-- number of airframes available
-- define airfield operating out of
-- weapons loadouts; interceptor a/c vs. CAP a/c
-- squadrons should be able to scramble a certian amount of jets
-- allow designer to define the maintaince rate for given states of a/c returning
+## Create Flights from Mission Requests
 
-
-air defense commander:
-- morphable border, determined by presence of ground assets in a given area
-- select automatically CAP stations based on priority and threat
-- assign sqdns to CAP stations based on distance
-- be able to scramble alerts a/c
-- critera for scrambling alert a/c 
-   * alerts are only used when all airborne CAP car committed
-   * alert a/c RTB once a threat has been dewlt with
-
-
-squadron {
-	type: // the kind of aircraft flown (only one type per squadron)
-	name:
-	skin:
-	country:
-	base:
-	roster {
-		lost:
-		maintenance:
-		available:
-		prep:
-		assigned:
-		skill: // base skill level of the squadron actual skill of
-		       // individual pilots will vary with the rough average
-		       // being this level
-	}
-	loadouts {
-		["mission type"] = {
-			[#] = {
-				attributes:
-				proficiency:  // 1 to 100 representing
-				              // proficiency for loadout
-				              // used in calculating
-				              // mission success probability
-				firepower:    // 1 to 100 the amount of
-				              // "damage" the loadout is
-				              // capable of
-				standoff:     // range of primary weapon
-				profile = {
-					["lolo"] = {
-					combatradius: // max range, nm
-					loiter:  // max station time, minutes
-					cruise = {
-						alt:   // base altitude, feet
-						speed: // avg speed, knots
-						agl:   // true / false
-					}
-					attack = {
-						alt:
-						speed:
-						agl:
-					}
-					["hi"] = {
-					}
-					["hilo"]
-				}
-				stores = {
-					// the stores entry from the mission
-					// editor
-				}
-			}
-		}
-	}
-}

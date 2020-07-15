@@ -33,6 +33,25 @@ higher) the earlier assets/targets in that region will be scheduled.
 
  * _required:_ no
  * _value:_ table
+ * _default:_ empty table
+
+If not defined all templates will be spawned. If the limits table is defined
+it consists of keys that are the names of asset types\[[1][1]\] with the
+value being a table describing the min and max number of templates of that
+type that will be spawned.
+
+	["limits"] = {
+		["ammodump"] = {
+			["min"] = 2,
+			["max"] = 4,
+		},
+	}
+
+The spawning algorithm, from the sample above, will select at random a number
+between 2 and 4 inclusive as the maximum number(X) of ammodumps to spawn. The
+algorithm will then select X ammodumps defined in the region to spawn at
+random. If there are not X ammodumps to spawn then all possible ammodumps
+will be spawned.
 
 ### `airspace`
 
@@ -40,5 +59,9 @@ higher) the earlier assets/targets in that region will be scheduled.
  * _value:_ boolean
  * _default:_ true
 
-Specified if an airspace object is created over this region. Airspace
-objects are used as navigation points and CAP stations in mission assignment.
+Set to false if an airspace object should not be created over this region.
+Airspace objects are used as navigation points and analysis points for
+airspace combat. The default radius of an automatically generated airspace
+is 50 nautical miles.
+
+[1]: ../../../src/dct/enum.lua
