@@ -56,6 +56,7 @@ local function settings(missioncfg)
 					["CAS"]    = enum.missionType.CAS,
 					["BAI"]    = enum.missionType.BAI,
 					["STRIKE"] = enum.missionType.STRIKE,
+					["ARMEDRECON"] = enum.missionType.ARMEDRECON,
 				},
 				["A-10A"] = {
 					["CAS"]    = enum.missionType.CAS,
@@ -88,6 +89,18 @@ local function settings(missioncfg)
 					["STRIKE"] = enum.missionType.STRIKE,
 					["OCA"]    = enum.missionType.OCA,
 				},
+				["KA-50"] = {
+					["BAI"] = enum.missionType.BAI,
+					["CAS"] = enum.missionType.CAS,
+					["ARMEDRECON"] = enum.missionType.ARMEDRECON,
+				},
+				["UH-1H"] = {
+					["ARMEDRECON"] = enum.misssionType.ARMEDRECON,
+				},
+				["Mi-8MT"] = {
+					["ARMEDRECON"] = enum.missionType.ARMEDRECON,
+				},
+
 			},
 		},
 		["schedfreq"] = 2, -- hertz

@@ -135,6 +135,9 @@ local missionTypeMap = {
 	[missionType.CAP] = {
 		[assetType.AIRSPACE]   = true,
 	},
+	[missionType.ARMEDRECON] = {
+		[assetType.TBD] =      = true,
+	},
 }
 
 local missionAbortType = {
