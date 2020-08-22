@@ -60,6 +60,7 @@ local assetTypePriority = {
 	[assetType.FACILITY]    = 100,
 	[assetType.BUNKER]      = 100,
 	[assetType.CHECKPOINT]  = 100,
+	[assetType.SPECIALFORCES] = 100,
 	[assetType.FACTORY]     = 100,
 	[assetType.KEEPOUT]     = 10000,
 }
@@ -71,6 +72,7 @@ local missionType = {
 	["SEAD"]     = 4,
 	["BAI"]      = 5,
 	["OCA"]      = 6,
+	["ARMEDRECON"] = 7,
 }
 
 local assetClass = {
@@ -96,11 +98,12 @@ local assetClass = {
 	-- agents never get seralized to the state file
 	["AGENTS"] = {
 		[assetType.PLAYERGROUP] = true,
-	}
-	--[[
+	},
 	-- Means ground tactical units
 	["TACTICAL"] = {
+		[assetType.SPECIALFORCES] = true,
 	},
+	--[[
 	["AIRBORNE"] = {
 	},
 	--]]
@@ -136,7 +139,7 @@ local missionTypeMap = {
 		[assetType.AIRSPACE]   = true,
 	},
 	[missionType.ARMEDRECON] = {
-		[assetType.TBD] =      = true,
+		[assetType.SPECIALFORCES] = true,
 	},
 }
 
