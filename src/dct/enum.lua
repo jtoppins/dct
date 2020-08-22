@@ -35,6 +35,7 @@ local assetType = {
 	["SHORAD"]      = 19,
 	["AIRBASE"]     = 20,
 	["PLAYERGROUP"] = 21,
+	["SPECIALFORCES"] = 22,
 }
 
 --[[
@@ -91,6 +92,7 @@ local assetClass = {
 		[assetType.FACTORY]     = true,
 		[assetType.SHORAD]      = true,
 		[assetType.AIRBASE]     = true,
+		[assetType.SPECIALFORCES] = true,
 	},
 	["BASES"] = {
 		[assetType.AIRBASE]     = true,
@@ -99,11 +101,11 @@ local assetClass = {
 	["AGENTS"] = {
 		[assetType.PLAYERGROUP] = true,
 	},
+	--[[
 	-- Means ground tactical units
 	["TACTICAL"] = {
 		[assetType.SPECIALFORCES] = true,
 	},
-	--[[
 	["AIRBORNE"] = {
 	},
 	--]]
