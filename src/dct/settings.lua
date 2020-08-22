@@ -47,6 +47,11 @@ local function settings(missioncfg)
 			["AJS37"]         = dctutils.posfmt.DMS,
 			["F-14B"]         = dctutils.posfmt.DDM,
 			["FA-18C_hornet"] = dctutils.posfmt.DDM,
+			["F-16C"] 	  = dctutils.posfmt.DMS,
+			["UH-1H"] 	  = dctutils.posfmt.DDM,
+			["Mi-8MT"]	  = dctutils.posfmt.DDM,
+			["F-5E-3"]	  = dctutils.posfmt.DDM,
+			["AV8BNA"]	  = dctutils.posfmt.DDM,
 		},
 		["codenamedb"] = codenamedb,
 		["atorestrictions"] = {
@@ -89,13 +94,13 @@ local function settings(missioncfg)
 					["STRIKE"] = enum.missionType.STRIKE,
 					["OCA"]    = enum.missionType.OCA,
 				},
-				["KA-50"] = {
+				["Ka-50"] = {
 					["BAI"] = enum.missionType.BAI,
 					["CAS"] = enum.missionType.CAS,
 					["ARMEDRECON"] = enum.missionType.ARMEDRECON,
 				},
 				["UH-1H"] = {
-					["ARMEDRECON"] = enum.misssionType.ARMEDRECON,
+					["ARMEDRECON"] = enum.missionType.ARMEDRECON,
 				},
 				["Mi-8MT"] = {
 					["ARMEDRECON"] = enum.missionType.ARMEDRECON,
