@@ -48,6 +48,13 @@ local function settings(missioncfg)
 			["F-14B"]         = dctutils.posfmt.DDM,
 			["FA-18C_hornet"] = dctutils.posfmt.DDM,
 			["F-16C_50"]      = dctutils.posfmt.DDM,
+			["UH-1H"]         = dctutils.posfmt.DDM,
+			["Mi-8MT"]        = dctutils.posfmt.DDM,
+			["F-5E-3"]        = dctutils.posfmt.DDM,
+			["AV8BNA"]        = dctutils.posfmt.DDM,
+			["SA342M"]        = dctutils.posfmt.DDM,
+			["SA342L"]        = dctutils.posfmt.DDM,
+			["A-10C_2"]       = dctutils.posfmt.MGRS,
 		},
 		["codenamedb"] = codenamedb,
 		["atorestrictions"] = {
