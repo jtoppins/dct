@@ -57,11 +57,7 @@ function menus.createMenu(theater, asset)
 
 	local msnmenu = addmenu(gid, "Mission", nil)
 	local rqstmenu = addmenu(gid, "Request", msnmenu)
-	-- TODO: I am knowingly not sorting the keys so the order in which
-	-- commands are applied could be random, do this later if it seems to
-	-- be a problem as lua doesn't provide a default solution.
-	for k, v in pairs(theater:getATORestrictions(asset.owner,
-		asset.unittype)) do
+	for k, v in pairs(theater:getAssetMgr():getAsset(asset.name).ato) do
 		addcmd(gid, k, rqstmenu, theater.playerRequest, theater,
 			{
 				["name"]   = name,

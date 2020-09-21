@@ -7,7 +7,7 @@
 require("math")
 local enum     = require("dct.enum")
 local dctutils = require("dct.utils")
-local settings = _G.dct.settings
+local settings = _G.dct.settings.ui
 
 local human = {}
 
@@ -62,7 +62,7 @@ function human.locationhdr(msntype)
 end
 
 function human.grid2actype(actype, location, precision)
-	local fmt = settings.acgridfmt[actype]
+	local fmt = settings.gridfmt[actype]
 	precision = precision or 3
 	if fmt == nil then
 		fmt = dctutils.posfmt.DMS

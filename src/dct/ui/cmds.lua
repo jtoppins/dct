@@ -110,7 +110,7 @@ function TheaterUpdateCmd:_execute(_, cmdr)
 	end
 	msg = msg .. string.format("\nRecommended Mission Type: %s\n",
 		dctutils.getkey(enum.missionType,
-			cmdr:recommendMissionType(self.actype)) or "None")
+			cmdr:recommendMissionType(self.asset.ato)) or "None")
 	return msg
 end
 
@@ -120,7 +120,8 @@ function CheckPayloadCmd:__init(theater, data)
 end
 
 function CheckPayloadCmd:_execute(_ --[[time]], _ --[[cmdr]])
-	local msg = loadout.check(Group.getByName(self.grpname))
+	local msg = loadout.check(Group.getByName(self.grpname),
+		self.asset.payloadlimits)
 	return msg
 end
 

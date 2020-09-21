@@ -164,4 +164,11 @@ enum.uiRequestType = {
 	["MISSIONJOIN"]     = 12,
 }
 
+enum.weaponCategory = {
+	["AA"] = 1,
+	["AG"] = 2,
+}
+
+enum.WPNINFCOST = 5000
+
 return enum
