@@ -169,7 +169,8 @@ function DCTHooks:__init()
 	}
 	self.slotkicktimer = 0
 	self.slotkickperiod = 5
-	self.mission_start = 0
+	self.mission_start_mt = 0
+	self.mission_start_rt = 0
 	self.mission_period = settings.server.period or DEFAULT_PERIOD
 	self.mission_time = 0
 	self.restartwarnings = {
@@ -277,11 +278,14 @@ function DCTHooks:onMissionLoadEnd()
 		["sec"]   = 0,
 		["isdst"] = false,
 	}) + mission.start_time
+	self.mission_start_mt = DCS.getModelTime()
+	self.mission_start_rt = DCS.getRealTime()
 	log.write(facility, log.DEBUG, string.format("mission_time: %f, %s",
 		tostring(self.mission_time), os.date("!%F %R", self.mission_time)))
-	self.mission_start = DCS.getModelTime()
-	log.write(facility, log.DEBUG, "mission_start: "..
-		tostring(self.mission_start))
+	log.write(facility, log.DEBUG, "mission_start_mt: "..
+		tostring(self.mission_start_mt))
+	log.write(facility, log.DEBUG, "mission_start_rt: "..
+		tostring(self.mission_start_rt))
 	log.write(facility, log.DEBUG, "mission_period: "..
 		tostring(self.mission_period))
 	for _, data in pairs(self.restartwarnings) do
@@ -433,8 +437,9 @@ end
 
 function DCTHooks:sendheartbeat()
 	local info = {
-		["time"] = os.date("!*t", self.mission_time + DCS.getRealTime()),
-		["time_left"] = (self.mission_start + self.mission_period) -
+		["time"] = os.date("!*t", self.mission_time +
+			DCS.getRealTime() - self.mission_start_rt),
+		["time_left"] = (self.mission_start_mt + self.mission_period) -
 			DCS.getModelTime()
 	}
 	local msg = build_message(self.serverid, msgtypes.HEARTBEAT, info)
