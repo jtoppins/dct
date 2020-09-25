@@ -199,7 +199,6 @@ function DCTHooks:__init()
 end
 
 function DCTHooks:start()
-	log.write(facility, log.DEBUG, "start")
 	self.socket = assert(socket.udp())
 	log.write(facility, log.DEBUG,
 		string.format("binding UDP socket to peer; %s:%d",
@@ -209,7 +208,6 @@ function DCTHooks:start()
 end
 
 function DCTHooks:stop()
-	log.write(facility, log.DEBUG, "stop")
 	self.socket:close()
 	self.socket = nil
 	self.started = false
@@ -230,7 +228,12 @@ function DCTHooks:getslots()
 	end
 end
 
+function DCTHooks:onSimulationStart()
+	log.write(facility, log.DEBUG, "onSimulationStart")
+end
+
 function DCTHooks:onSimulationStop()
+	log.write(facility, log.DEBUG, "onSimulationStop")
 	if not self.started then
 		return
 	end
@@ -241,6 +244,7 @@ function DCTHooks:onSimulationStop()
 end
 
 function DCTHooks:onSimulationPause()
+	log.write(facility, log.DEBUG, "onSimulationPause")
 	if not self.started then
 		return
 	end
@@ -251,6 +255,7 @@ function DCTHooks:onSimulationPause()
 end
 
 function DCTHooks:onSimulationResume()
+	log.write(facility, log.DEBUG, "onSimulationResume")
 	if not DCS.isServer() then
 		return
 	end
@@ -261,7 +266,7 @@ function DCTHooks:onSimulationResume()
 end
 
 function DCTHooks:onMissionLoadEnd()
-	log.write(facility, log.DEBUG, "mission load end")
+	log.write(facility, log.DEBUG, "onMissionLoadEnd")
 	local mission = DCS.getCurrentMission().mission
 	self.mission_time = os.time({
 		["year"]  = mission.date.Year,
@@ -272,9 +277,13 @@ function DCTHooks:onMissionLoadEnd()
 		["sec"]   = 0,
 		["isdst"] = false,
 	}) + mission.start_time
-	log.write(facility, log.DEBUG, "mission_time: "..
-		tostring(self.mission_time))
+	log.write(facility, log.DEBUG, string.format("mission_time: %f, %s",
+		tostring(self.mission_time), os.date("!%F %R", self.mission_time)))
 	self.mission_start = DCS.getModelTime()
+	log.write(facility, log.DEBUG, "mission_start: "..
+		tostring(self.mission_start))
+	log.write(facility, log.DEBUG, "mission_period: "..
+		tostring(self.mission_period))
 	for _, data in pairs(self.restartwarnings) do
 		data.sent = false
 	end
@@ -543,6 +552,9 @@ end
 
 local function dct_load(hooks)
 	local handler = {}
+	function handler.onSimulationStart()
+		dct_call_hook(hooks.onSimulationStart, hooks)
+	end
 	function handler.onSimulationStop()
 		dct_call_hook(hooks.onSimulationStop, hooks)
 	end
