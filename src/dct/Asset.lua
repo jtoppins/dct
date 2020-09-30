@@ -43,11 +43,11 @@ end
 
 local function genLocationMethod()
 	local txt = {
-		"Reconaissasnce elements have located",
+		"reconnaissance elements have located",
 		"A recon flight earlier today discovered",
 		"We have reason to believe there is",
 		"Aerial photography shows that there is",
-		"Satellite Imaging has found",
+		"Satellite imaging has found",
 		"Ground units operating in the area have informed us of",
 	}
 	local idx = math.random(1,#txt)
