@@ -67,10 +67,10 @@ local function settings(missioncfg)
 					["ARMEDRECON"] = enum.missionType.ARMEDRECON,
 				},
 				["A-10C_2"] = {
-                                        ["CAS"]    = enum.missionType.CAS,
-                                        ["BAI"]    = enum.missionType.BAI,
-                                        ["STRIKE"] = enum.missionType.STRIKE,
-                                        ["ARMEDRECON"] = enum.missionType.ARMEDRECON,
+					["CAS"]    = enum.missionType.CAS,
+					["BAI"]    = enum.missionType.BAI,
+					["STRIKE"] = enum.missionType.STRIKE,
+					["ARMEDRECON"] = enum.missionType.ARMEDRECON,
                                 },
 				["A-10A"] = {
 					["CAS"]    = enum.missionType.CAS,
@@ -86,6 +86,7 @@ local function settings(missioncfg)
 					["BAI"]    = enum.missionType.BAI,
 					["CAS"]    = enum.missionType.CAS,
 					["OCA"]    = enum.missionType.OCA,
+					["ARMEDRECON"] = enum.missionType.ARMEDRECON,
 				},
 				["M-2000C"] = {
 					["STRIKE"] = enum.missionType.STRIKE,
@@ -99,34 +100,42 @@ local function settings(missioncfg)
 					["OCA"]    = enum.missionType.OCA,
 					["SEAD"]   = enum.missionType.SEAD,
 					["CAS"]    = enum.missionType.CAS,
+					["ARMEDRECON"] = enum.missionType.ARMEDRECON,
 				},
 				["AJS37"] = {
 					["STRIKE"] = enum.missionType.STRIKE,
 					["OCA"]    = enum.missionType.OCA,
+					["ARMEDRECON"] = enum.missionType.ARMEDRECON,
 				},
 				["Ka-50"] = {
+					["STRIKE"] = enum.missionType.STRIKE,
 					["BAI"] = enum.missionType.BAI,
 					["CAS"] = enum.missionType.CAS,
 					["ARMEDRECON"] = enum.missionType.ARMEDRECON,
 				},
 				["UH-1H"] = {
+					["CAS"]        = enum.missionType.CAS,
 					["ARMEDRECON"] = enum.missionType.ARMEDRECON,
 				},
 				["Mi-8MT"] = {
+					["CAS"]        = enum.missionType.CAS,
 					["ARMEDRECON"] = enum.missionType.ARMEDRECON,
 				},
 				["SA342M"] = {
+					["CAS"]        = enum.missionType.CAS,
 					["ARMEDRECON"] = enum.missionType.ARMEDRECON,
 				},
 				["SA342L"] = {
+					["CAS"]        = enum.missionType.CAS,
 					["ARMEDRECON"] = enum.missionType.ARMEDRECON,
 				},
 				["Su-25T"] = {
 					["STRIKE"] = enum.missionType.STRIKE,
-                                        ["BAI"]    = enum.missionType.BAI,
-                                        ["OCA"]    = enum.missionType.OCA,
-                                        ["SEAD"]   = enum.missionType.SEAD,
-                                        ["CAS"]    = enum.missionType.CAS,
+					["BAI"]    = enum.missionType.BAI,
+					["OCA"]    = enum.missionType.OCA,
+					["SEAD"]   = enum.missionType.SEAD,
+					["CAS"]    = enum.missionType.CAS,
+					["ARMEDRECON"] = enum.missionType.ARMEDRECON,
 				},
 				["FA-18C_Hornet"] = {
 					["OCA"]    = enum.missionType.OCA,
@@ -138,11 +147,11 @@ local function settings(missioncfg)
 				},
 				["F-16C_50"] = {
 					["OCA"]    = enum.missionType.OCA,
-                                        ["BAI"]    = enum.missionType.BAI,
-                                        ["CAP"]    = enum.missionType.CAP,
-                                        ["STRIKE"] = enum.missionType.STRIKE,
-                                        ["SEAD"]   = enum.missionType.SEAD,
-                                        ["CAS"]    = enum.missionType.CAS,
+					["BAI"]    = enum.missionType.BAI,
+					["CAP"]    = enum.missionType.CAP,
+					["STRIKE"] = enum.missionType.STRIKE,
+					["SEAD"]   = enum.missionType.SEAD,
+					["CAS"]    = enum.missionType.CAS,
 				},
 
 			},
