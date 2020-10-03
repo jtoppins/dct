@@ -36,6 +36,7 @@ local assetType = {
 	["AIRBASE"]     = 20,
 	["PLAYERGROUP"] = 21,
 	["SPECIALFORCES"] = 22,
+	["FOB"]           = 23,
 }
 
 --[[
@@ -62,6 +63,7 @@ local assetTypePriority = {
 	[assetType.BUNKER]      = 100,
 	[assetType.CHECKPOINT]  = 100,
 	[assetType.SPECIALFORCES] = 100,
+	[assetType.FOB]         = 100,
 	[assetType.FACTORY]     = 100,
 	[assetType.KEEPOUT]     = 10000,
 }
@@ -93,6 +95,7 @@ local assetClass = {
 		[assetType.SHORAD]      = true,
 		[assetType.AIRBASE]     = true,
 		[assetType.SPECIALFORCES] = true,
+		[assetType.FOB]           = true,
 	},
 	["BASES"] = {
 		[assetType.AIRBASE]     = true,
@@ -142,6 +145,7 @@ local missionTypeMap = {
 	},
 	[missionType.ARMEDRECON] = {
 		[assetType.SPECIALFORCES] = true,
+		[assetType.FOB]           = true,
 	},
 }
 
