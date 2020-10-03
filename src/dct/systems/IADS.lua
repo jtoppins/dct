@@ -29,7 +29,7 @@ local EWRARMShutdownChance = 25 -- %age chance EWR detection of ARM causing SAM 
 local SAMARMShutdownChance = 75-- %age chance SAM detection of ARM causings SAM shuttown
 local trackMemory = 20 -- Track persistance time after last detection
 local controlledSAMNoAmmo = true -- Have controlled SAMs stay off if no ammo remaining.
-local uncontrolledSAMNoAmmo = false -- Have uncontrolled SAMs stay off in no ammo remaining
+local uncontrolledSAMNoAmmo = false -- Have uncontrolled SAMs stay off if no ammo remaining
 local SAMSites = {}
 local EWRSites = {}
 local AWACSAircraft = {}
@@ -100,49 +100,47 @@ function IADS:disableSAM(site)
   elseif site.Enabled then
     site.SAMGroup:getController():setOption(AI.Option.Ground.id.ALARM_STATE,1)
     site.Enabled = false
+    env.info("SAM: "..site.Name.." disabled")
   end
 end
 
 function IADS:hideSAM(site)
   site.SAMGroup:getController():setOption(AI.Option.Ground.id.ALARM_STATE,1)
   site.Enabled = false
+  env.info("SAM: "..site.Name.." hidden")
+end
+
+local function ammoCheck(site)
+  for _, unt in pairs(site.SAMGroup:getUnits()) do
+    local ammo = unt:getAmmo()
+    if ammo then
+      for j=1, #ammo do
+        if ammo[j].count > 0 and ammo[j].desc.guidance == 3 or ammo[j].desc.guidance == 4 then
+          return true
+        end
+      end
+    end
+  end
 end
 
 function IADS:enableSAM(site)
   if (not site.Hidden) and (not site.Enabled) then
-  local hasAmmo = false
-  local ammo
+  local hasAmmo = ammoCheck(site)
     if tablelength(site.ControlledBy) > 0 then
-      for _, unt in pairs(site.SAMGroup:getUnits()) do
-         ammo = unt:getAmmo()
-         if ammo then
-           for j=1, #ammo do
-            if ammo[j].count > 0 and ammo[j].desc.guidance == 3 or ammo[j].desc.guidance == 4 then
-              hasAmmo = true
-           end
-          end
-        end
-      end
-      if controlledSAMNoAmmo and (not hasAmmo) then
+      if (controlledSAMNoAmmo and (not hasAmmo)) then
+        return
       else
         site.SAMGroup:getController():setOption(AI.Option.Ground.id.ALARM_STATE,2)
         site.Enabled = true
+        env.info("SAM: "..site.Name.." enabled")
       end
     else
-      for _, unt in pairs(site.SAMGroup:getUnits()) do
-         ammo = unt:getAmmo()
-         if ammo then
-           for j=1, #ammo do
-            if ammo[j].count > 0 and ammo[j].desc.guidance == 3 or ammo[j].desc.guidance == 4 then
-              hasAmmo = true
-           end
-          end
-        end
-      end
       if uncontrolledSAMNoAmmo and not hasAmmo  then
+        return
       else
         site.SAMGroup:getController():setOption(AI.Option.Ground.id.ALARM_STATE,2)
         site.Enabled = true
+        env.info("SAM: "..site.Name.." enabled")
       end
     end
   end
@@ -159,6 +157,26 @@ function IADS:associateSAMS()
     end
   end
 end
+
+--function IADS:associateSAMSgl(EWR)
+--  EWR.SAMsControlled = {}
+--  for _, SAM in pairs(SAMSites) do
+--    if SAM.SAMGroup:getCoalition() == EWR.EWRGroup:getCoalition() and self:getDistance3D(SAM.Location, EWR.Location) < EWRAssociationRange then
+--      EWR.SAMsControlled[SAM.Name] = SAM
+--      SAM.ControlledBy[EWR.Name] = EWR
+--    end
+--  end
+--end
+--
+--function IADS:associateEWRSgl(SAM)
+--  SAM.ControlledBy = {} 
+--  for _, EWR in pairs(EWRSites) do
+--    if SAM.SAMGroup:getCoalition() == EWR.EWRGroup:getCoalition() and self:getDistance3D(SAM.Location, EWR.Location) < EWRAssociationRange then
+--      EWR.SAMsControlled[SAM.Name] = SAM
+--      SAM.ControlledBy[EWR.Name] = EWR
+--    end
+--  end
+--end
 
 function IADS:magnumHide(site)
   if site.Type == "Tor 9A331" then
@@ -183,16 +201,36 @@ function IADS:prevDetected(Sys, ARM)
 
 end
 
+function IADS:addTrackFile(site, targets)
+  if targets.object:isExist() then
+    local trackName = targets.object.id_
+    site.trackFiles[trackName] = {}
+    site.trackFiles[trackName]["Name"] = trackName
+    site.trackFiles[trackName]["Object"] = targets.object
+    site.trackFiles[trackName]["LastDetected"] = timer.getAbsTime()
+    if targets.distance then
+      site.trackFiles[trackName]["Position"] = targets.object:getPosition()
+      site.trackFiles[trackName]["Velocity"] = targets.object:getVelocity()
+    end
+    if targets.type then
+      site.trackFiles[trackName]["Category"] = targets.object:getCategory()
+      site.trackFiles[trackName]["Type"] = targets.object:getTypeName()
+  
+    end
+    if site.Datalink then
+      site.trackFiles[trackName]["Datalink"] = true
+    end
+  end
+end
+
 function IADS:EWRTrackFileBuild()
   for _, EWR in pairs(EWRSites) do
     local detections = EWR.EWRGroup:getController():getDetectedTargets(Controller.Detection.RADAR)
     for j, targets in pairs(detections) do
-      if targets.object and targets.object:inAir() then
+      if targets.object:isExist() and targets.object:inAir() then
         local trackName = targets.object.id_
-        EWR.trackFiles[trackName] = {}
-        EWR.trackFiles[trackName]["Name"] = trackName
-        EWR.trackFiles[trackName]["Object"] = targets.object
-        EWR.trackFiles[trackName]["LastDetected"] = timer.getAbsTime()
+        self:addTrackFile(EWR, targets)
+        TrackFiles["EWR"][trackName] = EWR.trackFiles[trackName]
         if targets.object:getCategory() == 2 and targets.object:getDesc().guidance == 5 and IADSEWRARMDetection and not self:prevDetected(EWR, targets.object) then
           EWR.ARMDetected[targets.object:getName()] = targets.object
           for _, SAM in pairs(EWR.SAMsControlled) do
@@ -201,19 +239,6 @@ function IADS:EWRTrackFileBuild()
             end
           end
         end
-        if targets.distance then
-          EWR.trackFiles[trackName]["Position"] = targets.object:getPosition()
-          EWR.trackFiles[trackName]["Velocity"] = targets.object:getVelocity()
-        end
-        if targets.type then
-          EWR.trackFiles[trackName]["Category"] = targets.object:getCategory()
-          EWR.trackFiles[trackName]["Type"] = targets.object:getTypeName()
-
-        end
-        if EWR.Datalink then
-          EWR.trackFiles[trackName]["Datalink"] = true
-        end
-        TrackFiles["EWR"][trackName] = EWR.trackFiles[trackName]
       end
     end
   end
@@ -224,30 +249,16 @@ function IADS:SAMTrackFileBuild()
   for _, SAM in pairs(SAMSites) do
     local detections = SAM.SAMGroup:getController():getDetectedTargets(Controller.Detection.RADAR)
     for _, targets in pairs(detections) do
-      if targets.object and targets.object:inAir() then
+      if targets.object:isExist() and targets.object:inAir() then
         local trackName = targets.object.id_
-        SAM.trackFiles[trackName] = {}
-        SAM.trackFiles[trackName]["Name"] = trackName
-        SAM.trackFiles[trackName]["Object"] = targets.object
-        SAM.trackFiles[trackName]["LastDetected"] = timer.getAbsTime()
+        self:addTrackFile(SAM, targets)
+        TrackFiles["SAM"][trackName] = SAM.trackFiles[trackName]        
         if targets.object:getCategory() == 2 and targets.object:getDesc().guidance == 5 and IADSSAMARMDetection and not self:prevDetected(SAM, targets.object) then
           SAM.ARMDetected[targets.object:getName()] = targets.object
           if math.random(1,100) < SAMARMShutdownChance then
             self:magnumHide(SAM)
           end
         end
-        if targets.distance then
-          SAM.trackFiles[trackName]["Position"] = targets.object:getPosition()
-          SAM.trackFiles[trackName]["Velocity"] = targets.object:getVelocity()
-        end
-        if targets.type then
-          SAM.trackFiles[trackName]["Category"] = targets.object:getCategory()
-          SAM.trackFiles[trackName]["Type"] = targets.object:getTypeName()
-        end
-        if SAM.Datalink then
-          SAM.trackFiles[trackName]["Datalink"] = true
-        end
-        TrackFiles["SAM"][trackName] = SAM.trackFiles[trackName]
       end
     end
   end
@@ -258,23 +269,9 @@ function IADS:AWACSTrackFileBuild()
   for _, AWACS in pairs(AWACSAircraft) do
     local detections = AWACS.AWACSGroup:getController():getDetectedTargets(Controller.Detection.RADAR)
     for _, targets in pairs(detections) do
-      if targets.object and targets.object:inAir() then
+      if targets.object:isExist() and targets.object:inAir() then
         local trackName = targets.object.id_
-        AWACS.trackFiles[trackName] = {}
-        AWACS.trackFiles[trackName]["Name"] = trackName
-        AWACS.trackFiles[trackName]["Object"] = targets.object
-        AWACS.trackFiles[trackName]["LastDetected"] = timer.getAbsTime()
-        if targets.distance then
-          AWACS.trackFiles[trackName]["Position"] = targets.object:getPosition()
-          AWACS.trackFiles[trackName]["Velocity"] = targets.object:getVelocity()
-        end
-        if targets.type then
-          AWACS.trackFiles[trackName]["Category"] = targets.object:getCategory()
-          AWACS.trackFiles[trackName]["Type"] = targets.object:getTypeName()
-        end
-        if AWACS.Datalink then
-          AWACS.trackFiles[trackName]["Datalink"] = true
-        end
+        self:addTrackFile(AWACS, targets)
         TrackFiles["AWACS"][trackName] = AWACS.trackFiles[trackName]
       end
     end
@@ -288,7 +285,7 @@ function IADS:EWRSAMOnRequest()
       local viableTarget = false 
       for _, EWR in pairs(SAM.ControlledBy) do
         for _, target in pairs(EWR.trackFiles) do
-          if target.Position and self:getDistance(SAM.Location, target.Object:getPoint()) < SAM.EngageRange then
+          if target.Position and target.Object:isExist() and self:getDistance(SAM.Location, target.Object:getPoint()) < SAM.EngageRange then
             viableTarget = true
           end
         end 
@@ -334,6 +331,84 @@ function IADS:BlinkSAM()
   return 2
 end
 
+function IADS:checkGroupRole(gp)
+
+  local isEWR = false
+  local isSAM = false
+  local isAWACS = false
+  local hasDL = false
+  local samType
+  local numSAMRadars = 0
+  local numTrackRadars = 0
+  local numEWRRadars = 0
+  if gp:getCategory() == 2 then
+      for _, unt in pairs(gp:getUnits()) do
+        if unt:hasAttribute("EWR") then
+        isEWR = true
+        numEWRRadars = numEWRRadars + 1
+      elseif unt:hasAttribute("SAM TR") then
+        isSAM = true
+        samType = unt:getTypeName()
+        numSAMRadars = numSAMRadars + 1
+      end
+      if unt:hasAttribute("Datalink") then
+        hasDL = true
+      end
+    end
+    if isEWR then
+      EWRSites[gp:getName()] = {
+          ["Name"] = gp:getName(),
+          ["EWRGroup"] = gp,
+          ["SAMsControlled"] = {},
+          ["Location"] = gp:getUnit(1):getPoint(),
+          ["numEWRRadars"] = numEWRRadars,
+          ["ARMDetected"] = {},
+          ["Datalink"] = hasDL,
+          ["trackFiles"] = {},
+      }
+      return gp:getName()      
+    elseif isSAM and self:rangeOfSAM(gp) then
+      SAMSites[gp:getName()] = {
+          ["Name"] = gp:getName(),
+          ["SAMGroup"] = gp,
+          ["Type"] = samType,
+          ["Location"] = gp:getUnit(1):getPoint(),
+          ["numSAMRadars"] = numSAMRadars,
+          ["EngageRange"] = self:rangeOfSAM(gp),           
+          ["ControlledBy"] = {}, 
+          ["Enabled"] = true,
+          ["Hidden"] = false,
+          ["BlinkTimer"] = 0,
+          ["ARMDetected"] = {},
+          ["Datalink"] = hasDL, 
+          ["trackFiles"] = {},           
+      }
+      return gp:getName()      
+    end
+  elseif gp:getCategory() == 0 then
+    local numAWACS = 0
+    for _, unt in pairs(gp:getUnits()) do
+      if unt:hasAttribute("AWACS") then      
+        isAWACS = true
+        numAWACS = numAWACS+1
+      end
+      if unt:hasAttribute("Datalink") then
+        hasDL = true      
+      end  
+    end 
+    if isAWACS then 
+      AWACSAircraft[gp:getName()] = {
+        ["Name"] = gp:getName(),
+        ["AWACSGroup"] = gp,
+        ["numAWACS"] = numAWACS,
+        ["Datalink"] = hasDL,
+        ["trackFiles"] = {},   
+       }    
+    return gp:getName()
+    end
+  end
+end
+
 function IADS:onDeath(event)
   if event.initiator:getCategory() == Object.Category.UNIT and event.initiator:getGroup() then
     local eventUnit = event.initiator  
@@ -344,6 +419,7 @@ function IADS:onDeath(event)
           SAM.numSAMRadars = SAM.numSAMRadars - 1
         end  
         if SAM.numSAMRadars < 1 then
+          env.info("SAM :"..SAM.Name.." died")
           for _, EWR in pairs(EWRSites) do           
             for _, SAMControlled in pairs(EWR.SAMsControlled) do 
               if SAMControlled.Name == SAM.Name then
@@ -360,6 +436,7 @@ function IADS:onDeath(event)
         if eventUnit:hasAttribute("EWR") then
           EWR.numEWRRadars = EWR.numEWRRadars - 1
           if EWR.numEWRRadars < 1 then  
+            env.info("EWR :"..EWR.Name.." died")
             for _, SAM in pairs(SAMSites) do              
               for _, controllingEWR in pairs(SAM.ControlledBy) do              
                 if controllingEWR.Name == EWR.Name then 
@@ -376,6 +453,7 @@ function IADS:onDeath(event)
           if eventUnit:hasAttribute("AWACS") then
             AWACS.numAWACS = AWACS.numAWACS - 1
             if AWACS.numAWACS < 1 then  
+              env.info("AWACS :"..AWACS.Name.." died")
               AWACSAircraft[AWACS.Name] = nil              
             end
           end
@@ -404,87 +482,11 @@ function IADS:onShot(event)
 end
 
 function IADS:onBirth(event)
-  local isEWR = false
-  local isSAM = false
-  local isAWACS = false
-  local hasDL = false
-  local samType
-  local numSAMRadars = 0
-  local numTrackRadars = 0
-  local numEWRRadars = 0
   local gp = event.initiator:getGroup()
-  if gp:getCategory() == 2 then
-    for _, unt in pairs(gp:getUnits()) do
-      if unt:hasAttribute("EWR") then
-        isEWR = true
-        numEWRRadars = numEWRRadars + 1
-      elseif unt:hasAttribute("SAM TR") then
-        isSAM = true
-        samType = unt:getTypeName()
-        numSAMRadars = numSAMRadars + 1
-      end
-      if unt:hasAttribute("Datalink") then
-        hasDL = true
-      end
-    end
-    if isEWR then
-      EWRSites[gp:getName()] = {
-          ["Name"] = gp:getName(),
-          ["EWRGroup"] = gp,
-          ["SAMsControlled"] = {},
-          ["Location"] = gp:getUnit(1):getPoint(),
-          ["numEWRRadars"] = numEWRRadars,
-          ["ARMDetected"] = {},
-          ["Datalink"] = hasDL,
-          ["trackFiles"] = {},
-      }
-      isEWR = false 
-      isSAM = false
-      numEWRRadars = 0
-      numSAMRadars = 0
-    elseif isSAM and self:rangeOfSAM(gp) then
-      SAMSites[gp:getName()] = {
-          ["Name"] = gp:getName(),
-          ["SAMGroup"] = gp,
-          ["Type"] = samType,
-          ["Location"] = gp:getUnit(1):getPoint(),
-          ["numSAMRadars"] = numSAMRadars,
-          ["EngageRange"] = self:rangeOfSAM(gp),           
-          ["ControlledBy"] = {}, 
-          ["Enabled"] = true,
-          ["Hidden"] = false,
-          ["BlinkTimer"] = 0,
-          ["ARMDetected"] = {},
-          ["Datalink"] = hasDL, 
-          ["trackFiles"] = {},           
-      }
-      isEWR = false  
-      isSAM = false
-      numEWRRadars = 0
-      numSAMRadars = 0
-    end
-    self:associateSAMS() 
-  elseif gp:getCategory() == 0 then
-    local numAWACS = 0
-    for _, unt in pairs(gp:getUnits()) do
-      if unt:hasAttribute("AWACS") then      
-        isAWACS = true
-        numAWACS = numAWACS+1
-      end
-      if unt:hasAttribute("Datalink") then
-        hasDL = true      
-      end  
-    end 
-    if isAWACS then 
-      AWACSAircraft[gp:getName()] = {
-        ["Name"] = gp:getName(),
-        ["AWACSGroup"] = gp,
-        ["numAWACS"] = numAWACS,
-        ["Datalink"] = hasDL,
-        ["trackFiles"] = {},   
-       }    
-    end
-  end  
+  local n = self:checkGroupRole(gp)
+  self:associateSAMS()
+  --TO DO: make a fcn for each EWR and SAM individually for here
+  
 end
 
 function IADS:disableAllSAMs()
@@ -495,89 +497,10 @@ function IADS:disableAllSAMs()
 end
 
 function IADS:populateLists()
-  local isEWR = false
-  local isSAM = false
-  local isAWACS = false
-  local hasDL = false
-  local samType
-  local numSAMRadars = 0
-  local numTrackRadars = 0
-  local numEWRRadars = 0
   for _, gp in pairs(coalition.getGroups(1)) do
-    if gp:getCategory() == 2 then
-      for _, unt in pairs(gp:getUnits()) do
-        if unt:hasAttribute("EWR") then
-          isEWR = true
-          numEWRRadars = numEWRRadars + 1
-        elseif unt:hasAttribute("SAM TR") then
-
-          isSAM = true
-          samType = unt:getTypeName()
-          numSAMRadars = numSAMRadars + 1
-        end
-        if unt:hasAttribute("Datalink") then
-          hasDL = true
-        end
-      end
-      if isEWR then
-        EWRSites[gp:getName()] = {
-            ["Name"] = gp:getName(),
-            ["EWRGroup"] = gp,
-            ["SAMsControlled"] = {},
-            ["Location"] = gp:getUnit(1):getPoint(),
-            ["numEWRRadars"] = numEWRRadars,
-            ["ARMDetected"] = {},
-            ["Datalink"] = hasDL,
-            ["trackFiles"] = {},
-        }
-        isEWR = false
-        isSAM = false
-        numEWRRadars = 0
-        numSAMRadars = 0
-      elseif isSAM and self:rangeOfSAM(gp) then
-        SAMSites[gp:getName()] = {
-            ["Name"] = gp:getName(),
-            ["SAMGroup"] = gp,
-            ["Type"] = samType,
-            ["Location"] = gp:getUnit(1):getPoint(),
-            ["numSAMRadars"] = numSAMRadars,
-            ["EngageRange"] = self:rangeOfSAM(gp),
-            ["ControlledBy"] = {},
-            ["Enabled"] = true,
-            ["Hidden"] = false,
-            ["BlinkTimer"] = 0,
-            ["ARMDetected"] = {},
-            ["Datalink"] = hasDL,
-            ["trackFiles"] = {},
-        }
-        isEWR = false
-        isSAM = false
-        numEWRRadars = 0
-        numSAMRadars = 0
-      end
-      self:associateSAMS()
-    elseif gp:getCategory() == 0 then
-      local numAWACS = 0
-      for _, unt in pairs(gp:getUnits()) do
-        if unt:hasAttribute("AWACS") then
-          isAWACS = true
-          numAWACS = numAWACS+1
-        end
-        if unt:hasAttribute("Datalink") then
-          hasDL = true
-        end
-      end
-      if isAWACS then
-        AWACSAircraft[gp:getName()] = {
-          ["Name"] = gp:getName(),
-          ["AWACSGroup"] = gp,
-          ["numAWACS"] = numAWACS,
-          ["Datalink"] = hasDL,
-          ["trackFiles"] = {},
-         }
-      end
-    end
+    self:checkGroupRole(gp)
   end
+  self:associateSAMS()
 end
 
 function IADS:disableAllSAMs()
@@ -634,7 +557,6 @@ function IADS:sysIADSEventHandler(event)
   relevents[event.id](self, event)
 end
 
-
 function IADS:__init(theater)
   assert(theater ~= nil, "value error: theater must be a non-nil value")
   Logger:debug("init system.IADS event handler")
@@ -648,6 +570,7 @@ function IADS:__init(theater)
     theater:queueCommand(10, Command(self.monitorTracks, self))
     theater:queueCommand(10, Command(self.SAMCheckHidden, self))
     theater:queueCommand(10, Command(self.BlinkSAM, self))
+    theater:queueCommand(10, Command(self.EWRSAMOnRequest, self))
   end
 end
 

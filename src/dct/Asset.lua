@@ -43,11 +43,7 @@ end
 
 local function genLocationMethod()
 	local txt = {
-<<<<<<< HEAD
 		"Reconnaissance elements have located",
-=======
-		"reconnaissance elements have located",
->>>>>>> origin/master
 		"A recon flight earlier today discovered",
 		"We have reason to believe there is",
 		"Aerial photography shows that there is",
