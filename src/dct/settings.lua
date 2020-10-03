@@ -46,7 +46,6 @@ local function settings(missioncfg)
 			["A-10C"]         = dctutils.posfmt.MGRS,
 			["AJS37"]         = dctutils.posfmt.DMS,
 			["F-14B"]         = dctutils.posfmt.DMS,
-			["FA-18C_hornet"] = dctutils.posfmt.DDM,
 			["F-16C_50"] 	  = dctutils.posfmt.DDM,
 			["UH-1H"] 	  = dctutils.posfmt.DDM,
 			["Mi-8MT"]	  = dctutils.posfmt.DDM,

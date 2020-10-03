@@ -17,6 +17,8 @@ build:
 	sed -e "s:%VERSION%:$(VERSION):" $(SRCPATH)/entry.lua.tpl > \
 		$(BUILDPATH)/DCT/entry.lua
 	cp -a $(SRCPATH)/mission $(BUILDPATH)/DCT/
+	mkdir -p $(BUILDPATH)/HOOKS
+	cp -a $(SRCPATH)/hooks/* $(BUILDPATH)/HOOKS/
 	cp $(SRCPATH)/README.md $(BUILDPATH)/
 	mkdir -p $(BUILDPATH)/temp
 	(cd $(BUILDPATH)/temp; \
@@ -24,6 +26,6 @@ build:
 		unzip $(LUALIBSAR) >/dev/null; \
 		cp -a $(LUALIBSDIR)/src/libs* $(BUILDPATH)/DCT/lua)
 	(cd $(BUILDPATH); \
-		zip -r "DCT-$(VERSION).zip" DCT README.md; \
+		zip -r "DCT-$(VERSION).zip" HOOKS DCT README.md; \
 		mv DCT-$(VERSION).zip ../)
 	rm -rf $(BUILDPATH)

@@ -4,6 +4,7 @@
 
 .*
 !.gitignore
+!.gitattributes
 !.luacheckrc
 !.github
 

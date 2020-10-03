@@ -1,3 +1,29 @@
+commander
+ - list of missions indexed by id
+ - list of assigned group names <- why this? this is here to answer the
+          question if an asset has a mission, however, if the mission id
+          is contained in the asset definition then we should not need this.
+          We can just verify the the mission id in the asset still maps to
+          a real mission and ask the mission if the asset is a member.
+
+mission
+ - list of assigned group names
+
+asset
+ - assigned mission id
+
+
+
+many-to-one representation
+
+  commander ------+
+                  +----> mission
+                            |
+      asset <---------------+
+
+
+
+
 == World Representation
 
 === Strategic Properties (per Region)
@@ -77,9 +103,6 @@ obj:spawn {
 State() {
 	isDead()
 	addPrimary(name, healthgoal)
-	
-
-
 
 
 unit life states:
@@ -98,10 +121,6 @@ name = state {
 Unit state types:
 * health
 * fuel
-
-
-
-
 
 == Objective Life-cycle
 
@@ -155,42 +174,6 @@ The request should do:
   - queue up command to request a mission
   - notify player mission request was received
 
-==== Human Player Menu UI
-
-Player Menu:
-
-F10: Other
-   F1: C:Theater SITREP
-		-- shows the current situation for the side the player is currently on
-   F2: M:Request Mission
-       * FX: <available mission type>
-		-- generates a mission request
-          possible types are: cap, escort, sead/dead, strike, cas, transport, csar
-            - list mission types only approperate for the a/c requesting
-   F3: M:Assigned Mission
-       [
-        F1: None
-		-- prints a message to user saying no mission is assigned
-       ] or [
-        F1: Briefing
-		-- prints the mission breifing
-        F2: Get Status
-		-- prints the current status of mission
-        F3: Abort Mission
-		-- aborts the assigned mission
-        F4: Join Mission
-		-- other plyers in the group can join the mission
-        F5: Assigned Pilots
-		-- lists pilots assigned to mission
-        FX: <mission specific commands>
-       ]
-   F4: M:ATC
-       * FX: M:<ATC service list>
-            F1: Request Takeoff
-            F2: Request Marshal
-            F3: Request ATIS
-            FX: <??>
-
 === 2. Mission Generation and Assignment
 
   - periodic function notices the Human player request queue has a pending
@@ -236,3 +219,160 @@ Mission.getStatus(self)
 Mission.abort(self)
 Mission.join(self, requestor)
 Mission.getAssigned(self)
+
+
+# Path to Beta
+
+## Missing Items
+
+ - squadrons
+ - mission tasking
+ - mission joining
+ - player mission life-cycle
+
+## Steps to Accomplish
+
+ - [DONE] player slots treated as Asset objects
+   * store things like scratchpad, group info, menu info and other things
+     sprinkled around the code into this one object
+   * generate these Assets from reading the mission table (`env.mission`)
+ - mission states
+   * implement the newly agreed upon mission life-cycle and player UI changes
+   * states: "planning", "active", "complete"
+     - to support both AI and players we will need different sets of classes
+ - mission tasking
+   * allow a mission with different kinds of goals to be defined
+   * this tasking is checked by the active mission state to determine
+     if the mission's world state is met or no longer possible
+     - Example Strike mission:
+       * target assigned
+       * when target is dead, mission success
+
+     - Example CAS mission:
+       * assigned to a jtac to protect, uses the in-game JTAC/AFAC
+         functionality
+       * failure states (or'ed):
+         - target dead
+         - mission timeout
+       * success states:
+         - winchester
+       * mission goals:
+         - target alive - the target is the JTAC
+         - checkin true - lead was within X miles of position and checkin given
+
+      Example On Call CAS mission goals would be:
+        * isalive - the flight is alive
+        * target alive - in this case the target is the JTAC
+        * checkin true - lead was within X miles of position and checkin given
+        * on-station for X time - flight doesn't venture beyond Y miles of
+          target for X period of time
+
+      Example CAP mission goals would be:
+        * isalive - the flight is alive
+        * on-station for X time - flight doesn't venture beyond Y miles of
+          target for X period of time
+
+ - squadron
+   * template definition
+   * asset collection
+   * airbase interaction
+   * commander interaction
+ - tactial flyable assets
+   * used to represent airplane groups
+ - ignore template/asset attribute
+   * ignored assets will be excluded from being assigned by AI during mission
+     assignment and ignored assets will be excluded from strategic influence,
+     ignored assets are not ignored at the tactical level
+
+goal state
+1. mission timeout = not expired (false)
+2. vul time = expired (true)
+3. airspace protection = protected (true)
+
+starting
+1. not expired
+2. not expired
+3. protected
+
+goal
+1. false
+2. true
+3. true
+
+000 - failure
+001 - misison continues
+010 - f
+011 - success
+100 - f
+101 - f
+110 - f
+111 - f
+
+"Airspace protection" needs to be a compound state such that it is "protection
+for a period of time". This would simplify our test to:
+
+1. mission timeout
+2. protect area for time
+
+initial state:
+1. false
+2. false
+
+
+Mission States:
+ - scheduled
+ - idle
+ - move to
+ - do action
+
+initial state:
+ - inair = false
+ - mustrtb = false
+
+Example plans for following mission types:
+Goal State:
+ * inair = true
+
+CAP:
+ * additional state:
+   - protect airspace
+ * plan: takeoff -> protect airspace
+
+CAS:
+ * additional state:
+   - protect ground area
+ * plan: takeoff -> protect ground area
+
+STRIKE|BAI|SEAD|OCA|SEA:
+ * additional state:
+   - kill target
+ * plan: takeoff -> kill asset
+
+SAR|TRANSPORT:
+ * state:
+   - pickup
+   - dropoff
+ * plan: takeoff -> pickup -> dropoff
+
+RECON:
+ * additional state:
+   - recon
+   - mustrtb
+ * plan: takeoff -> recon -> rtb
+
+
+AI Plans:
+
+initial state:
+ - inair = false
+ - mustrtb = true
+
+AEW:
+ * additional state:
+   - search
+ * plan: takeoff -> search -> rtb
+
+AAR:
+ * additional state:
+   - tank
+ * plan: takeoff -> tank -> rtb

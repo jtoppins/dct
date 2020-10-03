@@ -29,6 +29,7 @@ local function main()
 			["AJS37"]         = dctutils.posfmt.DMS,
 			["F-14B"]         = dctutils.posfmt.DDM,
 			["FA-18C_hornet"] = dctutils.posfmt.DDM,
+			["F-16C_50"]      = dctutils.posfmt.DDM,
 		},
 		["schedfreq"] = 2,
 		["percentTimeAllowed"] = .3,
