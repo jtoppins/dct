@@ -27,7 +27,7 @@ local function main()
 			["M-2000C"]       = dctutils.posfmt.DDM,
 			["A-10C"]         = dctutils.posfmt.MGRS,
 			["AJS37"]         = dctutils.posfmt.DMS,
-			["F-14B"]         = dctutils.posfmt.DDM,
+			["F-14B"]         = dctutils.posfmt.DMS,
 			["FA-18C_hornet"] = dctutils.posfmt.DDM,
 			["F-16C_50"]      = dctutils.posfmt.DDM,
 			["UH-1H"]         = dctutils.posfmt.DDM,
