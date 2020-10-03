@@ -55,6 +55,7 @@ local function settings(missioncfg)
 			["SA342M"]	  = dctutils.posfmt.DDM,
 			["SA342L"]	  = dctutils.posfmt.DDM,
 			["A-10C_2"]	  = dctutils.posfmt.MGRS,
+			["KA-50"]	  = dctutils.posfmt.DDM,
 		},
 		["codenamedb"] = codenamedb,
 		["atorestrictions"] = {
