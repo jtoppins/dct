@@ -417,6 +417,10 @@ function DCTHooks:onPlayerTryChangeSlot(playerid, _, slotid)
 	local player = self.players[playerid]
 	local rc = false
 
+	if slot == nil then
+		return true
+	end
+
 	if special_unit_role_types[slot.role] ~= nil then
 		for _, list in ipairs({slot.role, "admin"}) do
 			if self.whitelists[list] ~= nil and
