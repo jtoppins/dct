@@ -331,6 +331,9 @@ end
 function DCTHooks:onPlayerChangeSlot(id)
 	log.write(facility, log.DEBUG, "player change slot, id: "..tostring(id))
 	self.players[id] = net.get_player_info(id)
+	if self.players[id].slot == '' then
+		self.players[id].slot = nil
+	end
 	self.info.players.dirty = true
 end
 
