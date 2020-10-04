@@ -144,6 +144,10 @@ local restrictedWeapons = {
 		["cost"]     = 10,
 		["category"] = weaponCategory.AG,
 	},
+	["AGM-65L"] = {
+		["cost"]     = 10,
+		["category"] = weaponCategory.AG,
+	},
 	["C-701T"] = {
 		["cost"]     = 10,
 		["category"] = weaponCategory.AG,
@@ -194,6 +198,18 @@ local restrictedWeapons = {
 	},
 	["AGM-84E SLAM"] = {
 		["cost"]     = 30,
+		["category"] = weaponCategory.AG,
+	},
+	["GBU-54(V)1/B"] 		 = {
+		["cost"]	 = 15,
+		["category"] = weaponCategory.AG,
+	},
+	["HYDRA-70 MPP APKWS"] 	 = {
+		["cost"]	 = 25/7,
+		["category"] = weaponCategory.AG,
+	},
+	["HYDRA-70 HE APKWS"] 	 = {
+		["cost"]	 = 25/7,
 		["category"] = weaponCategory.AG,
 	},
 }
