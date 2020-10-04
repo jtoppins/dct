@@ -101,7 +101,7 @@ function IADS:disableSAM(site)
     site.SAMGroup:getController():setOption(AI.Option.Ground.id.ALARM_STATE,1)
     site.Enabled = false
     env.info("SAM: "..site.Name.." disabled")
-    return
+    return nil
   end
 end
 
@@ -109,7 +109,7 @@ function IADS:hideSAM(site)
   site.SAMGroup:getController():setOption(AI.Option.Ground.id.ALARM_STATE,1)
   site.Enabled = false
   env.info("SAM: "..site.Name.." hidden")
-  return
+  return nil
 end
 
 local function ammoCheck(site)
