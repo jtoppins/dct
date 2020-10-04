@@ -101,6 +101,7 @@ function IADS:disableSAM(site)
     site.SAMGroup:getController():setOption(AI.Option.Ground.id.ALARM_STATE,1)
     site.Enabled = false
     env.info("SAM: "..site.Name.." disabled")
+    return
   end
 end
 
@@ -108,6 +109,7 @@ function IADS:hideSAM(site)
   site.SAMGroup:getController():setOption(AI.Option.Ground.id.ALARM_STATE,1)
   site.Enabled = false
   env.info("SAM: "..site.Name.." hidden")
+  return
 end
 
 local function ammoCheck(site)
@@ -419,7 +421,7 @@ function IADS:onDeath(event)
           SAM.numSAMRadars = SAM.numSAMRadars - 1
         end  
         if SAM.numSAMRadars < 1 then
-          env.info("SAM :"..SAM.Name.." died")
+          --env.info("SAM :"..SAM.Name.." died")
           for _, EWR in pairs(EWRSites) do           
             for _, SAMControlled in pairs(EWR.SAMsControlled) do 
               if SAMControlled.Name == SAM.Name then
@@ -436,7 +438,7 @@ function IADS:onDeath(event)
         if eventUnit:hasAttribute("EWR") then
           EWR.numEWRRadars = EWR.numEWRRadars - 1
           if EWR.numEWRRadars < 1 then  
-            env.info("EWR :"..EWR.Name.." died")
+            --env.info("EWR :"..EWR.Name.." died")
             for _, SAM in pairs(SAMSites) do              
               for _, controllingEWR in pairs(SAM.ControlledBy) do              
                 if controllingEWR.Name == EWR.Name then 
@@ -453,7 +455,7 @@ function IADS:onDeath(event)
           if eventUnit:hasAttribute("AWACS") then
             AWACS.numAWACS = AWACS.numAWACS - 1
             if AWACS.numAWACS < 1 then  
-              env.info("AWACS :"..AWACS.Name.." died")
+              --env.info("AWACS :"..AWACS.Name.." died")
               AWACSAircraft[AWACS.Name] = nil              
             end
           end

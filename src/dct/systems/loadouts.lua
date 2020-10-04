@@ -65,13 +65,25 @@ local restrictedWeapons = {
 		["category"] = weaponCategory.AG,
 	},
 	["GBU-31"] = {
-		["cost"]     = 15,
+		["cost"]     = 20,
 		["category"] = weaponCategory.AG,
 	},
+	["GBU-31(V)1/B"] = {
+	  ["cost"]     = 20,
+	  ["category"] = weaponCategory.AG,
+  },
 	["GBU-31(V)3/B"] = {
-		["cost"]     = 15,
+		["cost"]     = 20,
 		["category"] = weaponCategory.AG,
 	},
+	["GBU-54(V)1/B"] = {
+    ["cost"]     = 20,
+    ["category"] = weaponCategory.AG,
+  },
+  ["GBU-32(V)2/B"] = {
+    ["cost"]     = 15, 
+    ["category"] = weaponCategory.AG,
+  },
 	["AGM-62"] = {
 		["cost"]     = 10,
 		["category"] = weaponCategory.AG,
@@ -144,6 +156,10 @@ local restrictedWeapons = {
 		["cost"]     = 10,
 		["category"] = weaponCategory.AG,
 	},
+	["AGM-65L"] = {
+    ["cost"]     = 10,
+    ["category"] = weaponCategory.AG,
+  },
 	["C-701T"] = {
 		["cost"]     = 10,
 		["category"] = weaponCategory.AG,
@@ -196,6 +212,14 @@ local restrictedWeapons = {
 		["cost"]     = 30,
 		["category"] = weaponCategory.AG,
 	},
+  ["HYDRA-70 MPP APKWS"]  = {
+      ["cost"]     = 25/7,
+      ["category"] = weaponCategory.AG,
+  },
+  ["HYDRA-70 HE APKWS"] = {
+      ["cost"]     = 25/7,
+      ["category"] = weaponCategory.AG,
+  },
 }
 
 -- Define Maximum Allowed Values for all Airframes --
@@ -208,6 +232,10 @@ local restrictedAirframes = {
 		[weaponCategory.AA] = 20,
 		[weaponCategory.AG] = 80,
 	},
+	["A-10C_2"] =  {
+	  [weaponCategory.AA] = 20,
+    [weaponCategory.AG] = 80,
+  },
 }
 
 -- returns totals for all weapon types, returns nil if the group
