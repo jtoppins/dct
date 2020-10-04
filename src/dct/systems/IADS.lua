@@ -496,6 +496,7 @@ function IADS:disableAllSAMs()
     SAM.SAMGroup:getController():setOption(AI.Option.Ground.id.ALARM_STATE,1)
     SAM.Enabled = false
   end
+  return nil
 end
 
 function IADS:populateLists()
@@ -503,6 +504,7 @@ function IADS:populateLists()
     self:checkGroupRole(gp)
   end
   self:associateSAMS()
+  return nil
 end
 
 function IADS:disableAllSAMs()
@@ -573,6 +575,7 @@ function IADS:__init(theater)
     theater:queueCommand(10, Command(self.SAMCheckHidden, self))
     theater:queueCommand(10, Command(self.BlinkSAM, self))
     theater:queueCommand(10, Command(self.EWRSAMOnRequest, self))
+    theater:queueCommand(15, Command(self.disableAllSAMs, self))
   end
 end
 
