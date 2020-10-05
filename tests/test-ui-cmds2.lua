@@ -19,6 +19,7 @@ local unit1 = Unit({
 	["exists"] = true,
 	["desc"] = {
 		["typeName"] = "FA-18C_hornet",
+		["attributes"] = {},
 	},
 }, grp, "bobplayer")
 
