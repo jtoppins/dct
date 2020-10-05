@@ -95,14 +95,24 @@ function IADS:rangeOfSAM(gp)
 end
 
 function IADS:disableSAM(site)
-  if tablelength(site.trackFiles) > 0 then
-     self.theater:queueCommand(math.random(60,120), Command(self.disableSAM, self, site))
-  elseif site.Enabled then
-    site.SAMGroup:getController():setOption(AI.Option.Ground.id.ALARM_STATE,1)
-    site.Enabled = false
-    env.info("SAM: "..site.Name.." disabled")
-    return nil
+ if site.Enabled then
+    local inRange = false
+    if site.TrackFiles then
+      for _, track in pairs(site.TrackFiles) do  
+        if track.Position and self:getDistance(site.Location, track.Position) < (site.EngageRange * 1.15) then    
+          inRange = true    
+        end
+      end
+    end 
+    if inRange then     
+      self.theater:queueCommand(10, Command(self.disableSAM, self, site))
+    else
+      site.SAMGroup:getController():setOption(AI.Option.Ground.id.ALARM_STATE,1)
+      site.Enabled = false
+      env.info("SAM: "..site.Name.." disabled") 
+    end 
   end
+  return nil
 end
 
 function IADS:hideSAM(site)
@@ -130,7 +140,6 @@ function IADS:enableSAM(site)
   local hasAmmo = ammoCheck(site)
     if tablelength(site.ControlledBy) > 0 then
       if (controlledSAMNoAmmo and (not hasAmmo)) then
-        return
       else
         site.SAMGroup:getController():setOption(AI.Option.Ground.id.ALARM_STATE,2)
         site.Enabled = true
@@ -138,7 +147,6 @@ function IADS:enableSAM(site)
       end
     else
       if uncontrolledSAMNoAmmo and not hasAmmo  then
-        return
       else
         site.SAMGroup:getController():setOption(AI.Option.Ground.id.ALARM_STATE,2)
         site.Enabled = true
@@ -211,7 +219,7 @@ function IADS:addTrackFile(site, targets)
     site.trackFiles[trackName]["Object"] = targets.object
     site.trackFiles[trackName]["LastDetected"] = timer.getAbsTime()
     if targets.distance then
-      site.trackFiles[trackName]["Position"] = targets.object:getPosition()
+      site.trackFiles[trackName]["Position"] = targets.object:getPoint()
       site.trackFiles[trackName]["Velocity"] = targets.object:getVelocity()
     end
     if targets.type then
@@ -229,7 +237,7 @@ function IADS:EWRTrackFileBuild()
   for _, EWR in pairs(EWRSites) do
     local detections = EWR.EWRGroup:getController():getDetectedTargets(Controller.Detection.RADAR)
     for j, targets in pairs(detections) do
-      if targets.object:isExist() and targets.object:inAir() then
+      if targets.object and targets.object:isExist() and targets.object:inAir() then
         local trackName = targets.object.id_
         self:addTrackFile(EWR, targets)
         TrackFiles["EWR"][trackName] = EWR.trackFiles[trackName]
@@ -251,7 +259,7 @@ function IADS:SAMTrackFileBuild()
   for _, SAM in pairs(SAMSites) do
     local detections = SAM.SAMGroup:getController():getDetectedTargets(Controller.Detection.RADAR)
     for _, targets in pairs(detections) do
-      if targets.object:isExist() and targets.object:inAir() then
+      if targets.object and targets.object:isExist() and targets.object:inAir() then
         local trackName = targets.object.id_
         self:addTrackFile(SAM, targets)
         TrackFiles["SAM"][trackName] = SAM.trackFiles[trackName]        
@@ -271,7 +279,7 @@ function IADS:AWACSTrackFileBuild()
   for _, AWACS in pairs(AWACSAircraft) do
     local detections = AWACS.AWACSGroup:getController():getDetectedTargets(Controller.Detection.RADAR)
     for _, targets in pairs(detections) do
-      if targets.object:isExist() and targets.object:inAir() then
+      if targets.object and targets.object:isExist() and targets.object:inAir() then
         local trackName = targets.object.id_
         self:addTrackFile(AWACS, targets)
         TrackFiles["AWACS"][trackName] = AWACS.trackFiles[trackName]
@@ -287,7 +295,7 @@ function IADS:EWRSAMOnRequest()
       local viableTarget = false 
       for _, EWR in pairs(SAM.ControlledBy) do
         for _, target in pairs(EWR.trackFiles) do
-          if target.Position and target.Object:isExist() and self:getDistance(SAM.Location, target.Object:getPoint()) < SAM.EngageRange then
+          if target.Position and self:getDistance(SAM.Location, target.Position) < SAM.EngageRange then
             viableTarget = true
           end
         end 
@@ -317,11 +325,14 @@ end
 function IADS:BlinkSAM()
   for _, SAM in pairs(SAMSites) do
     if tablelength(SAM.ControlledBy) < 1 then
+      env.info("SAM: "..SAM.Name.." is uncontrolled")
       if SAM.BlinkTimer < 1  and (not SAM.Hidden) then
         if SAM.Enabled then
+          env.info("Blink Off")
           self:disableSAM(SAM)
           SAM.BlinkTimer = math.random(30,60)
         else
+          env.info("Blink On")
           self:enableSAM(SAM)
           SAM.BlinkTimer = math.random(30,60)
         end
@@ -507,15 +518,6 @@ function IADS:populateLists()
   return nil
 end
 
-function IADS:disableAllSAMs()
-
-  for _, SAM in pairs(SAMSites) do
-    local disableArray = {SAM.Name, nil, nil}
-    SAM.SAMGroup:getController():setOption(AI.Option.Ground.id.ALARM_STATE,1)
-    SAM.Enabled = false
-  end
-end
-
 function IADS:monitorTracks()
 
   for _, EWR in pairs(EWRSites) do  
@@ -545,6 +547,7 @@ function IADS:monitorTracks()
 --  if tablelength(TrackFiles) ~= 0 then
 --   env.info(table.tostring(TrackFiles))    
 --  end
+  return 2
 end
 
 function IADS:sysIADSEventHandler(event)
