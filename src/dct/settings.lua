@@ -77,7 +77,7 @@ local function validate_weapon_restrictions(cfgdata, tbl)
 	}
 	for _, wpndata in pairs(tbl) do
 		wpndata.path = path
-		dctutils.checkkeys(keys, wpndata)
+		utils.checkkeys(keys, wpndata)
 		wpndata.path = nil
 	end
 	return tbl

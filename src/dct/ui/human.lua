@@ -5,6 +5,7 @@
 --]]
 
 require("math")
+local utils    = require("libs.utils")
 local enum     = require("dct.enum")
 local dctutils = require("dct.utils")
 local settings = _G.dct.settings.ui
@@ -48,7 +49,7 @@ function human.threat(value)
 end
 
 function human.missiontype(mtype)
-	return assert(dctutils.getkey(enum.missionType, mtype),
+	return assert(utils.getkey(enum.missionType, mtype),
 		"no name found for mission type ("..mtype..")")
 end
 

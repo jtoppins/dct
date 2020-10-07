@@ -8,7 +8,6 @@ require("lfs")
 local class = require("libs.class")
 local utils = require("libs.utils")
 local enum  = require("dct.enum")
-local dctutils = require("dct.utils")
 local Goal  = require("dct.Goal")
 local STM   = require("dct.STM")
 
@@ -126,7 +125,7 @@ local function overrideGroupOptions(grp, idx, tpl)
 		tpl.hasDeathGoals = true
 	end
 	grp.data.name = tpl.regionname.."_"..tpl.name.." "..tpl.coalition.." "..
-		dctutils.getkey(Unit.Category, grp.category).." "..tostring(idx)
+		utils.getkey(Unit.Category, grp.category).." "..tostring(idx)
 
 	for i, unit in ipairs(grp.data.units or {}) do
 		overrideUnitOptions(unit, i, tpl, grp.data.name)
@@ -143,7 +142,7 @@ end
 
 local function checkobjtype(keydata, tbl)
 	if type(tbl[keydata.name]) == "number" and
-		dctutils.getkey(enum.assetType, tbl[keydata.name]) ~= nil then
+		utils.getkey(enum.assetType, tbl[keydata.name]) ~= nil then
 		return true
 	elseif type(tbl[keydata.name]) == "string" and
 		enum.assetType[string.upper(tbl[keydata.name])] ~= nil then
@@ -155,7 +154,7 @@ end
 
 local function checkside(keydata, tbl)
 	if type(tbl[keydata.name]) == "number" and
-		dctutils.getkey(coalition.side, tbl[keydata.name]) ~= nil then
+		utils.getkey(coalition.side, tbl[keydata.name]) ~= nil then
 		return true
 	elseif type(tbl[keydata.name]) == "string" and
 		coalition.side[string.upper(tbl[keydata.name])] ~= nil then
@@ -288,13 +287,13 @@ function Template:__init(data)
 end
 
 function Template:validate()
-	dctutils.checkkeys({ [1] = {
+	utils.checkkeys({ [1] = {
 		["name"]  = "objtype",
 		["type"]  = "string",
 		["check"] = checkobjtype,
 	},}, self)
 
-	dctutils.checkkeys(getkeys(self.objtype), self)
+	utils.checkkeys(getkeys(self.objtype), self)
 end
 
 -- PUBLIC INTERFACE
