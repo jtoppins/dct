@@ -10,6 +10,28 @@
 require("lfs")
 local utils = require("libs.utils")
 
+local function convert_lists(keydata, t)
+	local allowedkeys = {
+		["admin"]               = true,
+		["forward_observer"]    = true,
+		["instructor"]          = true,
+		["artillery_commander"] = true,
+		["observer"]            = true,
+	}
+	local newtbl = {}
+	for k, v in pairs(t[keydata.name]) do
+		if allowedkeys[k] == nil then
+			return false
+		end
+		newtbl[k] = {}
+		for _, ucid in ipairs(v) do
+			newtbl[k][ucid] = true
+		end
+	end
+	t[keydata.name] = newtbl
+	return true
+end
+
 local function validate_server_config(cfgdata, tbl)
 	if tbl == nil then
 		return {}
@@ -47,6 +69,23 @@ local function validate_server_config(cfgdata, tbl)
 			["name"] = "period",
 			["type"] = "number",
 			["default"] = cfgdata.default["period"],
+		}, {
+			["name"] = "whitelists",
+			["type"] = "table",
+			["check"] = convert_lists,
+			["default"] = cfgdata.default["whitelists"],
+		}, {
+			["name"] = "statServerHostname",
+			["type"] = "string",
+			["default"] = cfgdata.default["statServerHostname"],
+		}, {
+			["name"] = "statServerPort",
+			["type"] = "number",
+			["default"] = cfgdata.default["statServerPort"],
+		}, {
+			["name"] = "dctid",
+			["type"] = "string",
+			["default"] = cfgdata.default["dctid"],
 		},
 	}
 	tbl.path = cfgdata.file
@@ -74,8 +113,12 @@ local function servercfgs(config)
 				["schedfreq"] = 2, -- hertz
 				["tgtfps"] = 75,
 				["percentTimeAllowed"] = .3,
-				["period"] = 43200,
+				["period"] = -1, -- mission restart is disabled by default
 				["logger"] = {},
+				["whitelists"] = {},
+				["statServerHostname"] = "localhost",
+				["statServerPort"] = 8095,
+				["dctid"] = "changeme",
 			},
 		},}, config)
 	return config
