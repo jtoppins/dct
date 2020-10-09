@@ -96,6 +96,9 @@ local offsettbl = {
 
 function utils.zulutime(abstime)
 	local correction = offsettbl[env.mission.theatre]
+	if correction == nil then
+		correction = 0
+	end
 	return (utils.time(abstime) + correction)
 end
 
