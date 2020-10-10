@@ -132,10 +132,13 @@ local function main()
 			"'; expected: '"..v.expected.."'")
 	end
 	for _, v in ipairs(testcentroid) do
-		local centroid = utils.centroid(v.points)
+		local centroid, n
+		for _, pt in ipairs(v.points) do
+			centroid, n = utils.centroid(pt, centroid, n)
+		end
 		assert(centroid.x == v.expected.x and centroid.y == v.expected.y and
 			centroid.z == v.expected.z,
-			"utils.centroid unepected value; got: "..
+			"utils.centroid unexpected value; got: "..
 			json:encode_pretty(centroid).."; expected: "..
 			json:encode_pretty(v.expected))
 	end

@@ -19,7 +19,6 @@ local STM         = require("dct.templates.STM")
 local Template    = require("dct.templates.Template")
 local Region      = require("dct.templates.Region")
 local Asset       = require("dct.Asset")
-local AssetManager= require("dct.AssetManager")
 local Commander   = require("dct.ai.Commander")
 local Command     = require("dct.Command")
 local Logger      = require("dct.Logger").getByName("Theater")
@@ -55,7 +54,7 @@ function Theater:__init()
 	self.cmdq      = containers.PriorityQueue()
 	self.ctime     = timer.getTime()
 	self.ltime     = 0
-	self.assetmgr  = AssetManager(self)
+	self.assetmgr  = Asset.Manager(self)
 	self.cmdrs     = {}
 	self.scratchpad= {}
 	self.startdate = os.date("*t")
@@ -64,6 +63,7 @@ function Theater:__init()
 		self.cmdrs[val] = Commander(self, val)
 	end
 
+	-- TODO: remove spawning from generation of the theater
 	self:_loadGoals()
 	self:_loadRegions()
 	self:_loadOrGenerate()
@@ -185,13 +185,13 @@ function Theater:_loadPlayerSlots()
 			isPlayerGroup,
 			nil)
 		for _, grp in ipairs(grps) do
-			local asset = Asset(Template({
+			local asset = Asset.factory(Template({
 				["objtype"]   = "playergroup",
 				["name"]      = grp.data.name,
 				["regionname"]= "theater",
 				["coalition"] = coalition.getCountryCoalition(grp.countryid),
 				["desc"]      = "Player group",
-				["tpldata"]   = grp.data,
+				["tpldata"]   = grp,
 			}), {["name"] = "theater", ["priority"] = 1000,})
 			self:getAssetMgr():add(asset)
 			cnt = cnt + 1

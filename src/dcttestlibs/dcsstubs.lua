@@ -791,3 +791,17 @@ function trigger.action.markToGroup(
 	--[[id, title, pos, grpid, readonly, msg]])
 end
 _G.trigger = trigger
+
+local land = {}
+land.SurfaceType = {
+	["LAND"]          = 1,
+	["SHALLOW_WATER"] = 2,
+	["WATER"]         = 3,
+	["ROAD"]          = 4,
+	["RUNWAY"]        = 5,
+}
+
+function land.getHeight(_ --[[vec2]])
+	return 10
+end
+_G.land = land

@@ -95,7 +95,6 @@ enum.assetClass = {
 		[enum.assetType.CHECKPOINT]  = true,
 		[enum.assetType.FACTORY]     = true,
 		[enum.assetType.SHORAD]      = true,
-		[enum.assetType.AIRBASE]     = true,
 		[enum.assetType.SPECIALFORCES] = true,
 		[enum.assetType.FOB]           = true,
 	},

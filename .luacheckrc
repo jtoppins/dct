@@ -20,6 +20,7 @@ read_globals = {
 	"trigger",
 	"missionCommands",
 	"coord",
+	"land",
 
 	-- DCT specific
 	"dctsettings",

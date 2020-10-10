@@ -82,6 +82,7 @@ function utils.date(fmt, time)
 	return os.date(fmt, time)
 end
 
+--[[
 function utils.centroid(points)
 	local i = 0
 	local centroid = {
@@ -104,6 +105,44 @@ function utils.centroid(points)
 	centroid.z = centroid.z / i
 	return centroid
 end
+--]]
+
+function utils.createVec2(vec3)
+	if vec3.z then
+		return {["x"] = vec3.x, ["y"] = vec3.z}
+	end
+	return {["x"] = vec3.x, ["y"] = vec3.y}
+end
+
+function utils.createVec3(vec2, height)
+	if vec2.z then
+		return {["x"] = vec2.x, ["y"] = vec2.y, ["z"] = vec2.z}
+	end
+	local h = height or vec2.alt or 0
+	return {["x"] = vec2.x, ["y"] = h, ["z"] = vec2.y}
+end
+
+function utils.centroid(point, pcentroid, n)
+	if pcentroid == nil or n == nil then
+		return {["x"] = point.x, ["y"] = point.y, ["z"] = point.z,}, 1
+	end
+
+	local centroid = {}
+	local n1 = n + 1
+	local x = point.x or 0
+	local y = point.y or 0
+	local z = point.z or point.alt or 0
+	pcentroid = {
+		["x"] = pcentroid.x or 0,
+		["y"] = pcentroid.y or 0,
+		["z"] = pcentroid.z or 0,
+	}
+	centroid.x = (x + (n * pcentroid.x))/n1
+	centroid.y = (y + (n * pcentroid.y))/n1
+	centroid.z = (z + (n * pcentroid.z))/n1
+	return centroid, n1
+end
+
 
 utils.posfmt = {
 	["DD"]   = 1,
