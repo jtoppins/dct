@@ -11,7 +11,7 @@
 require("math")
 local class    = require("libs.class")
 local utils    = require("libs.utils")
-local Logger   = require("dct.Logger").getByName("Asset")
+local Logger   = dct.Logger.getByName("Asset")
 local dctutils = require("dct.utils")
 local Goal     = require("dct.Goal")
 local AssetBase= require("dct.assets.AssetBase")

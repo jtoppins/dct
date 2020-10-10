@@ -14,15 +14,15 @@ local json        = require("libs.json")
 local dctutils    = require("dct.utils")
 local uicmds      = require("dct.ui.cmds")
 local uiscratchpad= require("dct.ui.scratchpad")
-local Observable  = require("dct.Observable")
+local Observable  = require("dct.libs.Observable")
 local STM         = require("dct.templates.STM")
 local Template    = require("dct.templates.Template")
 local Region      = require("dct.templates.Region")
 local Asset       = require("dct.Asset")
 local Commander   = require("dct.ai.Commander")
 local Command     = require("dct.Command")
-local Logger      = require("dct.Logger").getByName("Theater")
-local Profiler    = require("dct.Profiler").getProfiler()
+local Logger      = dct.Logger.getByName("Theater")
+local Profiler    = require("dct.libs.Profiler").getProfiler()
 local settings    = _G.dct.settings.server
 
 --[[

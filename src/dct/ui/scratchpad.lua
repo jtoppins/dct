@@ -5,7 +5,7 @@
 -- addition of the F10 menu is handled outside this module.
 --]]
 
-local Logger  = require("dct.Logger").getByName("UI")
+local Logger  = dct.Logger.getByName("UI")
 
 local function sanatize(txt)
 	if type(txt) ~= "string" then

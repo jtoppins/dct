@@ -11,7 +11,7 @@ local enum     = require("dct.enum")
 local dctutils = require("dct.utils")
 local human    = require("dct.ui.human")
 local Command  = require("dct.Command")
-local Logger   = require("dct.Logger").getByName("UI")
+local Logger   = dct.Logger.getByName("UI")
 local loadout  = require("dct.systems.loadouts")
 
 local UICmd = class(Command)

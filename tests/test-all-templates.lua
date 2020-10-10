@@ -20,7 +20,7 @@ local function main()
 	end
 
 	local t = dct.Theater()
-	local Logger = require("dct.Logger").getByName("Tests")
+	local Logger = dct.Logger.getByName("Tests")
 	Logger:debug("Groups spawned:  "..dctcheck.spawngroups)
 	Logger:debug("Statics spawned: "..dctcheck.spawnstatics)
 	local tstart = os.clock()

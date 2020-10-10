@@ -8,6 +8,7 @@ local dct = {
 
 _G.dct = dct
 dct.settings  = require("dct.settings")()
+dct.Logger    = require("dct.libs.Logger")
 dct.init      = require("dct.init")
 dct.Theater   = require("dct.Theater")
 

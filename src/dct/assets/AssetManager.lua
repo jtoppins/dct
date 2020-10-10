@@ -8,7 +8,7 @@ local class    = require("libs.class")
 local utils    = require("libs.utils")
 local enum     = require("dct.enum")
 local dctutils = require("dct.utils")
-local Logger   = require("dct.Logger").getByName("AssetManager")
+local Logger   = dct.Logger.getByName("AssetManager")
 local Command  = require("dct.Command")
 
 local ASSET_CHECK_PERIOD = 12*60  -- seconds

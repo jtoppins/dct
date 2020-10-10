@@ -12,7 +12,7 @@ local dctenums   = require("dct.enum")
 local dctutils   = require("dct.utils")
 local Template   = require("dct.templates.Template")
 local Asset      = require("dct.Asset")
-local Logger     = require("dct.Logger").getByName("Region")
+local Logger     = dct.Logger.getByName("Region")
 
 local tplkind = {
 	["TEMPLATE"]  = 1,

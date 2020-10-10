@@ -12,7 +12,7 @@
 local class = require("libs.class")
 local AssetBase = require("dct.assets.AssetBase")
 local uimenu  = require("dct.ui.groupmenu")
-local Logger  = require("dct.Logger").getByName("Asset")
+local Logger  = dct.Logger.getByName("Asset")
 local loadout = require("dct.systems.loadouts")
 local settings = _G.dct.settings
 
