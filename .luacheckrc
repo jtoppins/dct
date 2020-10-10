@@ -23,7 +23,6 @@ read_globals = {
 	"land",
 
 	-- DCT specific
-	"dctsettings",
 	"dct",
 }
 
