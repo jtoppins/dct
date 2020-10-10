@@ -2,7 +2,7 @@
 
 require("dcttestlibs")
 require("dct")
-local Region = require("dct.Region")
+local Region = require("dct.templates.Region")
 
 local utils = require("libs.utils")
 

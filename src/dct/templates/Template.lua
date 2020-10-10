@@ -9,7 +9,7 @@ local class = require("libs.class")
 local utils = require("libs.utils")
 local enum  = require("dct.enum")
 local Goal  = require("dct.Goal")
-local STM   = require("dct.STM")
+local STM   = require("dct.templates.STM")
 
 --[[
 -- represents the amount of damage that can be taken before

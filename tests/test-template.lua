@@ -4,8 +4,8 @@ require("dcttestlibs")
 require("dct")
 local utils = require("libs.utils")
 local enum = require("dct.enum")
-local STM = require("dct.STM")
-local Template = require("dct.Template")
+local STM = require("dct.templates.STM")
+local Template = require("dct.templates.Template")
 
 local sampletpls = {
 	[1] = {

@@ -10,7 +10,7 @@ local class      = require("libs.class")
 local utils      = require("libs.utils")
 local dctenums   = require("dct.enum")
 local dctutils   = require("dct.utils")
-local Template   = require("dct.Template")
+local Template   = require("dct.templates.Template")
 local Asset      = require("dct.Asset")
 local Logger     = require("dct.Logger").getByName("Region")
 
