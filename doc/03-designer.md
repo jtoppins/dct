@@ -24,6 +24,7 @@ The directory hierarchy is:
 	    - restrictedweapons.cfg
 	    - payloadlimits.cfg
 	    - codenamedb.cfg
+	    - ui.cfg
 	  + <Region 1>
 	    - region.def
 	    + <arbitrary-named-directory>
@@ -51,7 +52,7 @@ specific aspect of DCT on a theater wide level.
 
 ### Theater Level Configuration
 
-See [theater configuration](04-api/assets/theater.md) details to
+See [theater configuration](04-api/settings/theater.md) details to
 understand how to setup these configuration files.
 
 
