@@ -122,7 +122,7 @@ end
 --    }}}
 --]]
 
-function STM.transform(stmdata)
+function STM.transform(stmdata, file)
 	local template   = {}
 	local lookupname =  function(name)
 		assert(name and type(name) == "string",
@@ -139,10 +139,13 @@ function STM.transform(stmdata)
 		if template.coalition == nil then
 			template.coalition = side
 		end
-		assert(template.coalition == side,
-			"runtime error: invalid template STM; country("..cntryid..")"..
-			" does not belong to template.coalition("..template.coalition..
-			"), country belongs to "..side)
+		assert(template.coalition == side, string.format(
+			"runtime error: invalid STM; country(%s) does not belong "..
+			"to '%s' coalition, country belongs to '%s' coalition; file: %s",
+			country.name[cntryid],
+			utils.getkey(coalition.side, template.coalition),
+			utils.getkey(coalition.side, side),
+			file))
 		return true
 	end
 

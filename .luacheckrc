@@ -9,6 +9,7 @@ read_globals = {
 	"md5",
 
 	-- DCS specific globals
+	"country",
 	"env",
 	"Unit",
 	"Object",
