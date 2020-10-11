@@ -218,8 +218,12 @@ local function main()
 	}, playergrp, "bobplayer")
 
 	local theater = dct.Theater()
-	assert(dctcheck.spawngroups == 1, "group spawn broken")
-	assert(dctcheck.spawnstatics == 11, "static spawn broken")
+	assert(dctcheck.spawngroups == 1,
+		string.format("group spawn broken; expected(%d), got(%d)",
+		1, dctcheck.spawngroups))
+	assert(dctcheck.spawnstatics == 11,
+		string.format("static spawn broken; expected(%d), got(%d)",
+		11, dctcheck.spawnstatics))
 
 	--[[ TODO: test ATO once support is added for squadron
 	local restriction =
