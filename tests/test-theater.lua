@@ -226,6 +226,7 @@ local function main()
 	}, playergrp, "bobplayer")
 
 	local theater = dct.Theater()
+	_G.dct.theater = theater
 	theater:exec(50)
 	assert(dctcheck.spawngroups == 1,
 		string.format("group spawn broken; expected(%d), got(%d)",
@@ -258,6 +259,7 @@ local function main()
 	end
 
 	local newtheater = dct.Theater()
+	_G.dct.theater = newtheater
 	newtheater:exec(50)
 	local name = "Test region_1_Abu Musa Ammo Dump"
 	-- verify the units read in do not include the asset we killed off

@@ -58,8 +58,8 @@ function Player:getLocation()
 	return self._location
 end
 
-local function handleBirth(self, event, theater)
-	--local theater = _G.dct.theater
+local function handleBirth(self, event)
+	local theater = require("dct.Theater").singleton()
 	local grp = event.initiator:getGroup()
 	local id = grp:getID()
 	if self.groupId ~= id then
@@ -95,10 +95,10 @@ local handlers = {
 	[world.event.S_EVENT_TAKEOFF] = handleTakeoff,
 }
 
-function Player:onDCSEvent(event, theater)
+function Player:onDCSEvent(event)
 	local handler = handlers[event.id]
 	if handler ~= nil then
-		handler(self, event, theater)
+		handler(self, event)
 	end
 end
 

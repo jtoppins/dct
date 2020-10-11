@@ -45,12 +45,11 @@ local Commander = class()
 
 function Commander:__init(theater, side)
 	self.owner        = side
-	self.theater      = theater
 	self.missionstats = Stats(genstatids())
 	self.missions     = {}
 	self.aifreq       = 300 -- seconds
 
-	self.theater:queueCommand(self.aifreq, Command(self.update, self))
+	theater:queueCommand(self.aifreq, Command(self.update, self))
 end
 
 function Commander:update(time)
@@ -158,7 +157,8 @@ function Commander:recommendMissionType(allowedmissions)
 		utils.mergetables(assetfilter, enum.missionTypeMap[v])
 	end
 
-	local pq = heapsort_tgtlist(self.theater:getAssetMgr(),
+	local pq = heapsort_tgtlist(
+		require("dct.Theater").singleton():getAssetMgr(),
 		self.owner, assetfilter)
 
 	local tgt = pq:pop()
@@ -185,7 +185,8 @@ end
 --   meets the mission criteria
 --]]
 function Commander:requestMission(grpname, missiontype)
-	local pq = heapsort_tgtlist(self.theater:getAssetMgr(),
+	local pq = heapsort_tgtlist(
+		require("dct.Theater").singleton():getAssetMgr(),
 		self.owner, enum.missionTypeMap[missiontype])
 
 	-- if no target, there is no mission to assign so return back
@@ -240,7 +241,7 @@ function Commander:getAssigned(asset)
 end
 
 function Commander:getAsset(name)
-	return self.theater:getAssetMgr():getAsset(name)
+	return require("dct.Theater").singleton():getAssetMgr():getAsset(name)
 end
 
 return Commander

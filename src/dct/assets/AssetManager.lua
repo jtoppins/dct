@@ -15,8 +15,6 @@ local ASSET_CHECK_PERIOD = 12*60  -- seconds
 
 local AssetManager = class()
 function AssetManager:__init(theater)
-	self._theater = theater
-
 	-- The master list of assets, regardless of side, indexed by name.
 	-- Means Asset names must be globally unique.
 	self._assetset = {}
@@ -43,8 +41,8 @@ function AssetManager:__init(theater)
 	-- of their DCS objects with 'something', this will be the something.
 	self._object2asset = {}
 
-	self._theater:registerHandler(self.onDCSEvent, self)
-	self._theater:queueCommand(ASSET_CHECK_PERIOD,
+	theater:registerHandler(self.onDCSEvent, self)
+	theater:queueCommand(ASSET_CHECK_PERIOD,
 		Command(self.checkAssets, self))
 end
 
@@ -222,7 +220,7 @@ function AssetManager:onDCSEvent(event)
 		handler(self, event)
 	end
 
-	asset:onDCSEvent(event, self._theater)
+	asset:onDCSEvent(event)
 end
 
 function AssetManager:marshal()
