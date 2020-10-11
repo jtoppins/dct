@@ -22,7 +22,6 @@ local Asset       = require("dct.Asset")
 local Commander   = require("dct.ai.Commander")
 local Command     = require("dct.Command")
 local Logger      = dct.Logger.getByName("Theater")
-local Profiler    = require("dct.libs.Profiler").getProfiler()
 local settings    = _G.dct.settings.server
 
 --[[
@@ -42,7 +41,6 @@ local settings    = _G.dct.settings.server
 local Theater = class(Observable)
 function Theater:__init()
 	Observable.__init(self)
-	Profiler:profileStart("Theater:init()")
 	self.savestatefreq = 7*60 -- seconds
 	self.cmdmindelay   = 2
 	self.uicmddelay    = self.cmdmindelay
@@ -66,11 +64,7 @@ function Theater:__init()
 	-- TODO: remove spawning from generation of the theater
 	self:_loadGoals()
 	self:_loadRegions()
-	self:_loadOrGenerate()
-	self:_loadPlayerSlots()
-	uiscratchpad(self)
-	self:queueCommand(100, Command(self.export, self))
-	Profiler:profileStop("Theater:init()")
+	self:queueCommand(20, Command(self._delayedInit, self))
 end
 
 function Theater.singleton()
@@ -79,6 +73,13 @@ function Theater.singleton()
 	end
 	_G.dct.theater = Theater()
 	return _G.dct.theater
+end
+
+function Theater:_delayedInit()
+	self:_loadOrGenerate()
+	self:_loadPlayerSlots()
+	uiscratchpad(self)
+	self:queueCommand(100, Command(self.export, self))
 end
 
 -- a description of the world state that signifies a particular side wins

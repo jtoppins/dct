@@ -74,6 +74,7 @@ local function main()
 		},
 	}, playergrp, "bobplayer")
 
+	t:exec(50)
 	t:getAssetMgr():checkAssets(2000)
 
 	for _, data in ipairs(testcases) do

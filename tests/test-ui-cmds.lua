@@ -127,6 +127,7 @@ local testcmds = {
 
 local function main()
 	local theater = dct.Theater()
+	theater:exec(50)
 	theater:onEvent({
 		["id"]        = world.event.S_EVENT_BIRTH,
 		["initiator"] = unit1,

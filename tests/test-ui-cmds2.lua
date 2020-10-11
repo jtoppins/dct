@@ -49,6 +49,7 @@ local testcmds = {
 
 local function main()
 	local theater = dct.Theater()
+	theater:exec(50)
 	-- We need to send a birth event to populate the Theater.playergps table
 	theater:onEvent({
 		["id"]        = world.event.S_EVENT_BIRTH,

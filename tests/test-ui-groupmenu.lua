@@ -38,6 +38,7 @@ local testcmds = {
 
 local function main()
 	local theater = dct.Theater()
+	theater:exec(50)
 	for _, data in ipairs(testcmds) do
 		trigger.action.setmsgbuffer(data.expect)
 		theater:onEvent(data.event)
