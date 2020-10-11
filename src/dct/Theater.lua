@@ -73,6 +73,14 @@ function Theater:__init()
 	Profiler:profileStop("Theater:init()")
 end
 
+function Theater.singleton()
+	if _G.dct.theater ~= nil then
+		return _G.dct.theater
+	end
+	_G.dct.theater = Theater()
+	return _G.dct.theater
+end
+
 -- a description of the world state that signifies a particular side wins
 -- TODO: create a common function that will read in a lua file like below
 -- verify it was read correctly, contains the token expected, returns the

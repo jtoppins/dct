@@ -2,14 +2,10 @@
 
 require("math")
 require("dcttestlibs")
-dctsettings = {
-	["profile"] = true,
-	["debug"]   = false,
-	["logger"]  = {
-	},
-	["theaterpath"] = os.getenv("DCT_TEMPLATE_PATH"),
-}
 require("dct")
+dct.settings.server.profile = true
+dct.settings.server.debug   = false
+dct.settings.server.theaterpath = os.getenv("DCT_TEMPLATE_PATH")
 
 local function main()
 	-- setup an initial seed, lets use the same one for now '12345'

@@ -2,9 +2,7 @@
 
 require("math")
 math.randomseed(50)
-
 require("dcttestlibs")
-
 require("dct")
 local enum   = require("dct.enum")
 local uicmds = require("dct.ui.cmds")

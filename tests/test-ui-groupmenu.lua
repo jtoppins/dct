@@ -1,6 +1,5 @@
 #!/usr/bin/lua
 
---[[
 require("dcttestlibs")
 require("dct")
 
@@ -31,8 +30,9 @@ local testcmds = {
 			["initiator"] = unit1,
 		},
 		["assert"] = true,
-		["expect"] = "Welcome. Use the F10 Menu to get a theater "..
-			"update and request a mission.",
+		["expect"] = "Please read the loadout limits in the briefing"..
+			" and use the F10 Menu to validate your loadout before"..
+			" departing.",
 	},
 }
 
@@ -45,6 +45,5 @@ local function main()
 	end
 	return 0
 end
---]]
 
-os.exit(0)
+os.exit(main())

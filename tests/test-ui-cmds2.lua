@@ -2,11 +2,9 @@
 
 require("math")
 math.randomseed(50)
-
 require("dcttestlibs")
-
 require("dct")
-local enum   = require("dct.enum")
+local enum = require("dct.enum")
 
 -- create a player group
 local grp = Group(4, {

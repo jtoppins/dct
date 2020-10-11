@@ -1,13 +1,9 @@
 #!/usr/bin/lua
 
 require("dcttestlibs")
-dctsettings = {
-	["profile"] = false,
-	["debug"]   = false,
-	["logger"]  = {
-	},
-}
 require("dct")
+dct.settings.server.profile = false
+dct.settings.server.debug   = false
 
 local testcases = {
 	[1] = {
