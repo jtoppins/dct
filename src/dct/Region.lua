@@ -63,7 +63,7 @@ local function loadMetadata(self, regiondefpath)
 
 	local region = utils.readlua(regiondefpath, "region")
 	region.defpath = regiondefpath
-	dctutils.checkkeys(keys, region)
+	utils.checkkeys(keys, region)
 	utils.mergetables(self, region)
 end
 

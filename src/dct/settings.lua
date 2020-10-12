@@ -6,169 +6,169 @@
 
 require("lfs")
 local utils      = require("libs.utils")
-local dctutils   = require("dct.utils")
 local enum       = require("dct.enum")
-local codenamedb = require("dct.data.codenamedb")
+local dctutils   = require("dct.utils")
+local servercfgs = require("dct.server-settings")
 local config     = nil
 
+
+local function validate_weapon_restrictions(cfgdata, tbl)
+	local path = cfgdata.file
+	local keys = {
+		[1] = {
+			["name"] = "cost",
+			["type"] = "number",
+		},
+		[2] = {
+			["name"] = "category",
+			["type"] = "string",
+			["check"] = function (keydata, t)
+		if enum.weaponCategory[string.upper(t[keydata.name])] ~= nil then
+			t[keydata.name] =
+				enum.weaponCategory[string.upper(t[keydata.name])]
+			return true
+		end
+		return false
+	end,
+		},
+	}
+	for _, wpndata in pairs(tbl) do
+		wpndata.path = path
+		utils.checkkeys(keys, wpndata)
+		wpndata.path = nil
+	end
+	return tbl
+end
+
+local function validate_payload_limits(cfgdata, tbl)
+	local newlimits = {}
+	for wpncat, val in pairs(tbl) do
+		local w = enum.weaponCategory[string.upper(wpncat)]
+		assert(w ~= nil,
+			string.format("invalid weapon category '%s'; file: %s",
+				wpncat, cfgdata.file))
+		newlimits[w] = val
+	end
+	return newlimits
+end
+
+local function validate_codenamedb(cfgdata, tbl)
+	local newtbl = {}
+	for key, list in pairs(tbl) do
+		local newkey
+		assert(type(key) == "string",
+			string.format("invalid codename category '%s'; file: %s",
+			key, cfgdata.file))
+
+		local k = enum.assetType[string.upper(key)]
+		if k ~= nil then
+			newkey = k
+		elseif key == "default" then
+			newkey = key
+		else
+			assert(nil,
+				string.format("invalid codename category '%s'; file: %s",
+				key, cfgdata.file))
+		end
+		assert(type(list) == "table",
+			string.format("invalid codename value for category "..
+				"'%s', must be a table; file: %s", key, cfgdata.file))
+		newtbl[newkey] = list
+	end
+	return newtbl
+end
+
+local function validate_ui(cfgdata, tbl)
+	local newtbl = {}
+	utils.mergetables(newtbl, cfgdata.default)
+	for k, v in pairs(tbl) do
+		utils.mergetables(newtbl[k], v)
+	end
+	return newtbl
+end
+
 --[[
--- We have 3 levels of config,
--- 	* mission defined configs
--- 	* server defined config file
+-- We have a few levels of configuration:
+-- 	* server defined config file; <dcs-saved-games>/Config/dct.cfg
+-- 	* theater defined configuration; <theater-path>/settings/<config-files>
 -- 	* default config values
--- simple algorithm; assign the defaults, then apply the server, then
--- any mission level configs
+-- simple algorithm; assign the defaults, then apply the server and
+-- theater configs
 --]]
-local function settings(missioncfg)
+local function settings()
 	if config ~= nil then
 		return config
 	end
 
-	local path = lfs.writedir()..utils.sep.."Config"..utils.sep.."dct.cfg"
-	local attr = lfs.attributes(path)
+	local defaultpayload = {}
+	for _,v in pairs(enum.weaponCategory) do
+		defaultpayload[v] = enum.WPNINFCOST - 1
+	end
 
-	config = {
-	-- ["luapath"] = lfs.writedir() .. "Scripts\\?.lua"
-	--[[
-	-- Note: Can't provide a server level package path as to require
-	-- dct would require the package path to already be set. Nor can
-	-- we provide a useful default because the package.path needs to
-	-- be set before we get here.
-	--]]
-		["theaterpath"] = lfs.tempdir() .. utils.sep .. "theater",
-		["debug"]       = false,
-		["profile"]     = false,
-		["statepath"]   = lfs.writedir()..utils.sep..env.mission.theatre..
-			"_"..env.getValueDictByKey(env.mission.sortie)..".state",
-		["acgridfmt"] = {
-			["Ka-50"]         = dctutils.posfmt.DDM,
-			["M-2000C"]       = dctutils.posfmt.DDM,
-			["A-10C"]         = dctutils.posfmt.MGRS,
-			["AJS37"]         = dctutils.posfmt.DMS,
-			["F-14B"]         = dctutils.posfmt.DMS,
-			["FA-18C_hornet"] = dctutils.posfmt.DDM,
-			["F-16C_50"]      = dctutils.posfmt.DDM,
-			["UH-1H"]         = dctutils.posfmt.DDM,
-			["Mi-8MT"]        = dctutils.posfmt.DDM,
-			["F-5E-3"]        = dctutils.posfmt.DDM,
-			["AV8BNA"]        = dctutils.posfmt.DDM,
-			["SA342M"]        = dctutils.posfmt.DDM,
-			["SA342L"]        = dctutils.posfmt.DDM,
-			["A-10C_2"]       = dctutils.posfmt.MGRS,
-		},
-		["codenamedb"] = codenamedb,
-		["atorestrictions"] = {
-			[coalition.side.RED]  = {},
-			[coalition.side.BLUE] = {
-				["A-10C"] = {
-					["CAS"]    = enum.missionType.CAS,
-					["BAI"]    = enum.missionType.BAI,
-					["STRIKE"] = enum.missionType.STRIKE,
-					["ARMEDRECON"] = enum.missionType.ARMEDRECON,
+	config = servercfgs({})
+	local theatercfgs = {
+		{
+			["name"] = "restrictedweapons",
+			["file"] = config.server.theaterpath..utils.sep.."settings"..
+				utils.sep.."restrictedweapons.cfg",
+			["cfgtblname"] = "restrictedweapons",
+			["validate"] = validate_weapon_restrictions,
+			["default"] = {
+				["RN-24"] = {
+					["cost"]     = enum.WPNINFCOST,
+					["category"] = enum.weaponCategory.AG,
 				},
-				["A-10C_2"] = {
-					["CAS"]    = enum.missionType.CAS,
-					["BAI"]    = enum.missionType.BAI,
-					["STRIKE"] = enum.missionType.STRIKE,
-					["ARMEDRECON"] = enum.missionType.ARMEDRECON,
-                                },
-				["A-10A"] = {
-					["CAS"]    = enum.missionType.CAS,
-					["BAI"]    = enum.missionType.BAI,
-					["STRIKE"] = enum.missionType.STRIKE,
-					["ARMEDRECON"] = enum.missionType.ARMEDRECON,
-				},
-				["F-15C"] = {
-					["CAP"] = enum.missionType.CAP,
-				},
-				["F-5E-3"] = {
-					["STRIKE"] = enum.missionType.STRIKE,
-					["BAI"]    = enum.missionType.BAI,
-					["CAS"]    = enum.missionType.CAS,
-					["OCA"]    = enum.missionType.OCA,
-					["ARMEDRECON"] = enum.missionType.ARMEDRECON,
-				},
-				["M-2000C"] = {
-					["STRIKE"] = enum.missionType.STRIKE,
-					["BAI"]    = enum.missionType.BAI,
-					["OCA"]    = enum.missionType.OCA,
-					["CAP"]    = enum.missionType.CAP,
-				},
-				["AV8BNA"] = {
-					["STRIKE"] = enum.missionType.STRIKE,
-					["BAI"]    = enum.missionType.BAI,
-					["OCA"]    = enum.missionType.OCA,
-					["SEAD"]   = enum.missionType.SEAD,
-					["CAS"]    = enum.missionType.CAS,
-					["ARMEDRECON"] = enum.missionType.ARMEDRECON,
-				},
-				["AJS37"] = {
-					["STRIKE"] = enum.missionType.STRIKE,
-					["OCA"]    = enum.missionType.OCA,
-					["ARMEDRECON"] = enum.missionType.ARMEDRECON,
-				},
-				["Ka-50"] = {
-					["STRIKE"] = enum.missionType.STRIKE,
-					["BAI"] = enum.missionType.BAI,
-					["CAS"] = enum.missionType.CAS,
-					["ARMEDRECON"] = enum.missionType.ARMEDRECON,
-				},
-				["UH-1H"] = {
-					["CAS"]        = enum.missionType.CAS,
-					["ARMEDRECON"] = enum.missionType.ARMEDRECON,
-				},
-				["Mi-8MT"] = {
-					["CAS"]        = enum.missionType.CAS,
-					["ARMEDRECON"] = enum.missionType.ARMEDRECON,
-				},
-				["SA342M"] = {
-					["CAS"]        = enum.missionType.CAS,
-					["ARMEDRECON"] = enum.missionType.ARMEDRECON,
-				},
-				["SA342L"] = {
-					["CAS"]        = enum.missionType.CAS,
-					["ARMEDRECON"] = enum.missionType.ARMEDRECON,
-				},
-				["Su-25T"] = {
-					["STRIKE"] = enum.missionType.STRIKE,
-					["BAI"]    = enum.missionType.BAI,
-					["OCA"]    = enum.missionType.OCA,
-					["SEAD"]   = enum.missionType.SEAD,
-					["CAS"]    = enum.missionType.CAS,
-					["ARMEDRECON"] = enum.missionType.ARMEDRECON,
-				},
-				["FA-18C_Hornet"] = {
-					["OCA"]    = enum.missionType.OCA,
-					["BAI"]    = enum.missionType.BAI,
-					["CAP"]    = enum.missionType.CAP,
-					["STRIKE"] = enum.missionType.STRIKE,
-					["SEAD"]   = enum.missionType.SEAD,
-					["CAS"]    = enum.missionType.CAS,
-				},
-				["F-16C_50"] = {
-					["OCA"]    = enum.missionType.OCA,
-					["BAI"]    = enum.missionType.BAI,
-					["CAP"]    = enum.missionType.CAP,
-					["STRIKE"] = enum.missionType.STRIKE,
-					["SEAD"]   = enum.missionType.SEAD,
-					["CAS"]    = enum.missionType.CAS,
+				["RN-28"] = {
+					["cost"]     = enum.WPNINFCOST,
+					["category"] = enum.weaponCategory.AG,
 				},
 			},
 		},
-		["schedfreq"] = 2, -- hertz
-		["tgtfps"] = 75,
-		["percentTimeAllowed"] = .3,
+		{
+			["name"] = "payloadlimits",
+			["file"] = config.server.theaterpath..utils.sep.."settings"..
+				utils.sep.."payloadlimits.cfg",
+			["cfgtblname"] = "payloadlimits",
+			["validate"] = validate_payload_limits,
+			["default"] = defaultpayload,
+		},
+		{
+			["name"] = "codenamedb",
+			["file"] = config.server.theaterpath..utils.sep.."settings"..
+				utils.sep.."codenamedb.cfg",
+			["cfgtblname"] = "codenamedb",
+			["validate"] = validate_codenamedb,
+			["default"] = require("dct.data.codenamedb"),
+		},
+		{
+			["name"] = "ui",
+			["file"] = config.server.theaterpath..utils.sep.."settings"..
+				utils.sep.."ui.cfg",
+			["cfgtblname"] = "dctui",
+			["validate"] = validate_ui,
+			["default"] = {
+				["gridfmt"] = {
+					-- default is DMS, no need to list
+					["Ka-50"]         = dctutils.posfmt.DDM,
+					["Mi-8MT"]        = dctutils.posfmt.DDM,
+					["SA342M"]        = dctutils.posfmt.DDM,
+					["SA342L"]        = dctutils.posfmt.DDM,
+					["UH-1H"]         = dctutils.posfmt.DDM,
+					["A-10A"]         = dctutils.posfmt.MGRS,
+					["A-10C"]         = dctutils.posfmt.MGRS,
+					["A-10C_2"]       = dctutils.posfmt.MGRS,
+					["AV8BNA"]        = dctutils.posfmt.DDM,
+					["F-5E-3"]        = dctutils.posfmt.DDM,
+					["F-16C_50"]      = dctutils.posfmt.DDM,
+					["FA-18C_hornet"] = dctutils.posfmt.DDM,
+					["M-2000C"]       = dctutils.posfmt.DDM,
+				},
+				["ato"] = {},
+			},
+		},
 	}
 
-	if attr ~= nil then
-		local rc = pcall(dofile, path)
-		assert(rc, "failed to parse: "..path)
-		assert(dctserverconfig ~= nil, "no dctserverconfig structure defined")
-		utils.mergetables(config, dctserverconfig)
-		dctserverconfig = nil
-	end
-
-	utils.mergetables(config, missioncfg)
+	utils.readconfigs(theatercfgs, config)
 	return config
 end
 

@@ -151,10 +151,8 @@ end
 -- unittype - (string) the type of unit making request requesting
 -- return: mission type value
 --]]
-function Commander:recommendMissionType(unittype)
+function Commander:recommendMissionType(allowedmissions)
 	local assetfilter = {}
-	local allowedmissions = self.theater:getATORestrictions(self.owner,
-		unittype)
 
 	for _, v in pairs(allowedmissions) do
 		utils.mergetables(assetfilter, enum.missionTypeMap[v])

@@ -5,9 +5,10 @@
 --]]
 
 require("math")
+local utils    = require("libs.utils")
 local enum     = require("dct.enum")
 local dctutils = require("dct.utils")
-local settings = _G.dct.settings
+local settings = _G.dct.settings.ui
 
 local human = {}
 
@@ -48,7 +49,7 @@ function human.threat(value)
 end
 
 function human.missiontype(mtype)
-	return assert(dctutils.getkey(enum.missionType, mtype),
+	return assert(utils.getkey(enum.missionType, mtype),
 		"no name found for mission type ("..mtype..")")
 end
 
@@ -62,7 +63,7 @@ function human.locationhdr(msntype)
 end
 
 function human.grid2actype(actype, location, precision)
-	local fmt = settings.acgridfmt[actype]
+	local fmt = settings.gridfmt[actype]
 	precision = precision or 3
 	if fmt == nil then
 		fmt = dctutils.posfmt.DMS

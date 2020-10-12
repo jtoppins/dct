@@ -60,7 +60,7 @@ function Mission:getID()
 end
 
 function Mission:isMember(name)
-	local i = dctutils.getkey(self.assigned, name)
+	local i = utils.getkey(self.assigned, name)
 	if i then
 		return true, i
 	end

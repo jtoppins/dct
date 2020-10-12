@@ -21,10 +21,6 @@
 
 local facility          = "[DCT-HOOKS]"
 local DEBUG_SCRIPT      = false
-local RECEIVER_HOSTNAME = "localhost"
-local RECEIVER_PORT     = 8095
-local SERVER_ID         = net.get_player_info(net.get_server_id(), 'ucid')
-local DEFAULT_PERIOD    = 21600 -- 6 hours; set to negative number to disable
 local loglevel = log.ALERT + log.ERROR + log.WARNING + log.INFO
 if DEBUG_SCRIPT then
 	loglevel = loglevel + log.DEBUG + log.TRACE
@@ -46,7 +42,6 @@ package.path = package.path..";"..modpath.."\\lua\\?.lua"
 local ok
 local socket
 local class
-local settings = { ["server"] = {},}
 
 require("os")
 require("math")
@@ -64,19 +59,14 @@ if not ok then
 	return
 end
 
---[[
--- TODO: uncomment this once DCT supports pulling in settings for only the
--- server config. This code will need to be seperated from other parts
--- of DCT because of the dependency on the mission environment.
 local settingsf
-ok, settingsf = pcall(require, "dct.settings")
+ok, settingsf = pcall(require, "dct.utils.server-settings")
 if not ok then
 	log.write(facility, log.ERROR,
-		string.format("unable to load settings library: %s", settingsf))
+		string.format("unable to load dct settings: %s", settingsf))
 	return
 end
-settings = settingsf()
---]]
+local settings = settingsf({})
 
 local PROTOCOL_VERSION = 1
 
@@ -143,12 +133,15 @@ end
 local DCTHooks = class()
 function DCTHooks:__init()
 	local errmsg
-	self.serverid   = settings.server.dctid or SERVER_ID
-	self.hostname   = settings.server.statServerHostname or RECEIVER_HOSTNAME
+	self.serverid   = settings.server.dctid
+	self.hostname   = settings.server.statServerHostname
 	self.ip, errmsg = socket.dns.toip(self.hostname)
-	assert(self.ip, "invalid hostname, must be an IP address or hostname;"..
-		" "..tostring(errmsg))
-	self.port       = settings.server.statServerPort or RECEIVER_PORT
+	if self.ip == nil then
+		log.write(facility, log.ALERT,
+			"invalid hostname, must be an IP address or hostname;"..
+			" "..tostring(errmsg))
+	end
+	self.port       = settings.server.statServerPort
 	self.started    = false
 	self.info       = {
 		["heartbeat"] = {
@@ -171,7 +164,7 @@ function DCTHooks:__init()
 	self.slotkickperiod = 5
 	self.mission_start_mt = 0
 	self.mission_start_rt = 0
-	self.mission_period = settings.server.period or DEFAULT_PERIOD
+	self.mission_period = settings.server.period
 	self.mission_time = 0
 	self.restartwarnings = {
 		[60*60] = {
@@ -194,9 +187,8 @@ function DCTHooks:__init()
 
 	self.players  = {}
 	self.slots    = {}
-	self.whitelists = {} -- various lists of UCIDs to allow players for
-	                     -- various slot types
-	self.whitelists.admin = settings.server.admins or {}
+	self.blockspecialslots = (next(settings.server.whitelists) ~= nil)
+	self.whitelists = settings.server.whitelists
 end
 
 function DCTHooks:start()
@@ -428,6 +420,11 @@ function DCTHooks:onPlayerTryChangeSlot(playerid, _, slotid)
 			   rc = true
 			   break
 		   end
+		end
+
+		-- do not block special slots if there are no whitelists defined
+		if self.blockspecialslots == false then
+			rc = true
 		end
 	else
 		rc = isSlotEnabled(slot)
