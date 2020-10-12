@@ -178,10 +178,18 @@ function Theater:_loadOrGenerate()
 end
 
 local function isPlayerGroup(grp, _, _)
+	local slotcnt = 0
 	for _, unit in ipairs(grp.units) do
 		if unit.skill == "Client" then
-			return true
+			slotcnt = slotcnt + 1
 		end
+	end
+	if slotcnt > 0 then
+		assert(slotcnt == 1,
+			string.format("DCT requires 1 slot groups. Group '%s' "..
+				" of type a/c (%s) has more than one player slot.",
+				grp.name, grp.units[1].type))
+		return true
 	end
 	return false
 end
