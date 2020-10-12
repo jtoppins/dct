@@ -11,7 +11,6 @@ local class       = require("libs.class")
 local utils       = require("libs.utils")
 local containers  = require("libs.containers")
 local json        = require("libs.json")
-local enum        = require("dct.enum")
 local dctutils    = require("dct.utils")
 local uicmds      = require("dct.ui.cmds")
 local uiscratchpad= require("dct.ui.scratchpad")
@@ -25,7 +24,7 @@ local Commander   = require("dct.ai.Commander")
 local Command     = require("dct.Command")
 local Logger      = require("dct.Logger").getByName("Theater")
 local Profiler    = require("dct.Profiler").getProfiler()
-local settings    = _G.dct.settings
+local settings    = _G.dct.settings.server
 
 --[[
 --  Theater class
@@ -264,15 +263,6 @@ function Theater:playerRequest(data)
 	local cmd = uicmds[data.type](self, data)
 	self:queueCommand(self.uicmddelay, cmd)
 	playerasset.cmdpending = true
-end
-
-function Theater:getATORestrictions(side, unittype)
-	local unitATO = settings.atorestrictions[side][unittype]
-
-	if unitATO == nil then
-		unitATO = enum.missionType
-	end
-	return unitATO
 end
 
 --[[

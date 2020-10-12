@@ -6,7 +6,7 @@ local md5 = require("md5")
 require("dcttestlibs")
 require("dct")
 local enum   = require("dct.enum")
-local settings = _G.dct.settings
+local settings = _G.dct.settings.server
 
 local events = {
 	{
@@ -221,12 +221,15 @@ local function main()
 	assert(dctcheck.spawngroups == 1, "group spawn broken")
 	assert(dctcheck.spawnstatics == 11, "static spawn broken")
 
+	--[[ TODO: test ATO once support is added for squadron
 	local restriction =
 		theater:getATORestrictions(coalition.side.BLUE, "A-10C")
-	local validtbl = { ["BAI"] = 5, ["CAS"] = 1, ["STRIKE"] = 3,}
+	local validtbl = { ["BAI"] = 5, ["CAS"] = 1, ["STRIKE"] = 3,
+		["ARMEDRECON"] = 7,}
 	for k, v in pairs(restriction) do
 		assert(validtbl[k] == v, "ATO Restriction error")
 	end
+	--]]
 
 	-- kill off some units
 	for _, eventdata in ipairs(events) do

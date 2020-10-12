@@ -6,7 +6,7 @@
 
 local class  = require("libs.class")
 
-local settings = _G.dct.settings
+local settings = _G.dct.settings.server
 local fmtstr   = "DCT|%s: %s"
 local loggers = {}
 local Logger = class()

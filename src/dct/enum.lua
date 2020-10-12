@@ -4,7 +4,9 @@
 -- Provides functions for handling templates.
 --]]
 
-local assetType = {
+local enum = {}
+
+enum.assetType = {
 	-- control zones
 	["KEEPOUT"]     = 1,
 
@@ -35,115 +37,119 @@ local assetType = {
 	["SHORAD"]      = 19,
 	["AIRBASE"]     = 20,
 	["PLAYERGROUP"] = 21,
+	["SPECIALFORCES"] = 22,
+	["FOB"]           = 23,
 }
 
 --[[
 -- We use a min-heap so priority is in reverse numerical order,
 -- a higher number is lower priority
 --]]
-local assetTypePriority = {
-	[assetType.AIRSPACE]    = 10,
-	[assetType.JTAC]        = 10,
-	[assetType.EWR]         = 20,
-	[assetType.SAM]         = 20,
-	[assetType.C2]          = 30,
-	[assetType.AMMODUMP]    = 40,
-	[assetType.FUELDUMP]    = 40,
-	[assetType.MISSILE]     = 50,
-	[assetType.SEA]         = 50,
-	[assetType.BASEDEFENSE] = 60,
-	[assetType.OCA]         = 70,
-	[assetType.PORT]        = 70,
-	[assetType.LOGISTICS]   = 70,
-	[assetType.AIRBASE]     = 70,
-	[assetType.SHORAD]      = 100,
-	[assetType.FACILITY]    = 100,
-	[assetType.BUNKER]      = 100,
-	[assetType.CHECKPOINT]  = 100,
-	[assetType.FACTORY]     = 100,
-	[assetType.KEEPOUT]     = 10000,
+enum.assetTypePriority = {
+	[enum.assetType.AIRSPACE]    = 10,
+	[enum.assetType.JTAC]        = 10,
+	[enum.assetType.EWR]         = 20,
+	[enum.assetType.SAM]         = 20,
+	[enum.assetType.C2]          = 30,
+	[enum.assetType.AMMODUMP]    = 40,
+	[enum.assetType.FUELDUMP]    = 40,
+	[enum.assetType.MISSILE]     = 50,
+	[enum.assetType.SEA]         = 50,
+	[enum.assetType.BASEDEFENSE] = 60,
+	[enum.assetType.OCA]         = 70,
+	[enum.assetType.PORT]        = 70,
+	[enum.assetType.LOGISTICS]   = 70,
+	[enum.assetType.AIRBASE]     = 70,
+	[enum.assetType.SHORAD]      = 100,
+	[enum.assetType.FACILITY]    = 100,
+	[enum.assetType.BUNKER]      = 100,
+	[enum.assetType.CHECKPOINT]  = 100,
+	[enum.assetType.SPECIALFORCES] = 100,
+	[enum.assetType.FOB]         = 100,
+	[enum.assetType.FACTORY]     = 100,
+	[enum.assetType.KEEPOUT]     = 10000,
 }
 
-local missionType = {
+enum.missionType = {
 	["CAS"]      = 1,
 	["CAP"]      = 2,
 	["STRIKE"]   = 3,
 	["SEAD"]     = 4,
 	["BAI"]      = 5,
 	["OCA"]      = 6,
+	["ARMEDRECON"] = 7,
 }
 
-local assetClass = {
+enum.assetClass = {
 	["STRATEGIC"] = {
-		[assetType.AMMODUMP]    = true,
-		[assetType.FUELDUMP]    = true,
-		[assetType.C2]          = true,
-		[assetType.EWR]         = true,
-		[assetType.MISSILE]     = true,
-		[assetType.OCA]         = true,
-		[assetType.PORT]        = true,
-		[assetType.SAM]         = true,
-		[assetType.FACILITY]    = true,
-		[assetType.BUNKER]      = true,
-		[assetType.CHECKPOINT]  = true,
-		[assetType.FACTORY]     = true,
-		[assetType.SHORAD]      = true,
-		[assetType.AIRBASE]     = true,
+		[enum.assetType.AMMODUMP]    = true,
+		[enum.assetType.FUELDUMP]    = true,
+		[enum.assetType.C2]          = true,
+		[enum.assetType.EWR]         = true,
+		[enum.assetType.MISSILE]     = true,
+		[enum.assetType.OCA]         = true,
+		[enum.assetType.PORT]        = true,
+		[enum.assetType.SAM]         = true,
+		[enum.assetType.FACILITY]    = true,
+		[enum.assetType.BUNKER]      = true,
+		[enum.assetType.CHECKPOINT]  = true,
+		[enum.assetType.FACTORY]     = true,
+		[enum.assetType.SHORAD]      = true,
+		[enum.assetType.AIRBASE]     = true,
+		[enum.assetType.SPECIALFORCES] = true,
+		[enum.assetType.FOB]           = true,
 	},
 	["BASES"] = {
-		[assetType.AIRBASE]     = true,
+		[enum.assetType.AIRBASE]     = true,
 	},
 	-- agents never get seralized to the state file
 	["AGENTS"] = {
-		[assetType.PLAYERGROUP] = true,
+		[enum.assetType.PLAYERGROUP] = true,
 	}
-	--[[
-	-- Means ground tactical units
-	["TACTICAL"] = {
-	},
-	["AIRBORNE"] = {
-	},
-	--]]
 }
 
-local missionTypeMap = {
-	[missionType.STRIKE] = {
-		[assetType.AMMODUMP]   = true,
-		[assetType.FUELDUMP]   = true,
-		[assetType.C2]         = true,
-		[assetType.MISSILE]    = true,
-		[assetType.PORT]       = true,
-		[assetType.FACILITY]   = true,
-		[assetType.BUNKER]     = true,
-		[assetType.CHECKPOINT] = true,
-		[assetType.FACTORY]    = true,
+enum.missionTypeMap = {
+	[enum.missionType.STRIKE] = {
+		[enum.assetType.AMMODUMP]   = true,
+		[enum.assetType.FUELDUMP]   = true,
+		[enum.assetType.C2]         = true,
+		[enum.assetType.MISSILE]    = true,
+		[enum.assetType.PORT]       = true,
+		[enum.assetType.FACILITY]   = true,
+		[enum.assetType.BUNKER]     = true,
+		[enum.assetType.CHECKPOINT] = true,
+		[enum.assetType.FACTORY]    = true,
 	},
-	[missionType.SEAD] = {
-		[assetType.EWR]        = true,
-		[assetType.SAM]        = true,
+	[enum.missionType.SEAD] = {
+		[enum.assetType.EWR]        = true,
+		[enum.assetType.SAM]        = true,
 	},
-	[missionType.OCA] = {
-		[assetType.OCA]        = true,
-		[assetType.AIRBASE]    = true,
+	[enum.missionType.OCA] = {
+		[enum.assetType.OCA]        = true,
+		[enum.assetType.AIRBASE]    = true,
 	},
-	[missionType.BAI] = {
-		[assetType.LOGISTICS]  = true,
+	[enum.missionType.BAI] = {
+		[enum.assetType.LOGISTICS]  = true,
 	},
-	[missionType.CAS] = {
-		[assetType.JTAC]       = true,
+	[enum.missionType.CAS] = {
+		[enum.assetType.JTAC]       = true,
 	},
-	[missionType.CAP] = {
-		[assetType.AIRSPACE]   = true,
+	[enum.missionType.CAP] = {
+		[enum.assetType.AIRSPACE]   = true,
+	},
+	[enum.missionType.ARMEDRECON] = {
+		[enum.assetType.SPECIALFORCES] = true,
+		[enum.assetType.FOB]           = true,
 	},
 }
 
-local missionAbortType = {
+enum.missionAbortType = {
 	["ABORT"]    = 0,
 	["COMPLETE"] = 1,
 	["TIMEOUT"]  = 2,
 }
 
-local uiRequestType = {
+enum.uiRequestType = {
 	["THEATERSTATUS"]   = 1,
 	["MISSIONREQUEST"]  = 2,
 	["MISSIONBRIEF"]    = 3,
@@ -158,14 +164,11 @@ local uiRequestType = {
 	["MISSIONJOIN"]     = 12,
 }
 
-local enum = {
-	["assetType"]         = assetType,
-	["assetTypePriority"] = assetTypePriority,
-	["assetClass"]        = assetClass,
-	["missionType"]       = missionType,
-	["missionTypeMap"]    = missionTypeMap,
-	["missionAbortType"]  = missionAbortType,
-	["uiRequestType"]     = uiRequestType,
+enum.weaponCategory = {
+	["AA"] = 1,
+	["AG"] = 2,
 }
+
+enum.WPNINFCOST = 5000
 
 return enum

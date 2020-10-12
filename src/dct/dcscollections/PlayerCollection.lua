@@ -27,6 +27,7 @@ local IDCSObjectCollection = require("dct.dcscollections.IDCSObjectCollection")
 local uimenu  = require("dct.ui.groupmenu")
 local Logger  = require("dct.Logger").getByName("Asset")
 local loadout = require("dct.systems.loadouts")
+local settings = _G.dct.settings
 
 local PlayerCollection = class(IDCSObjectCollection)
 function PlayerCollection:__init(asset, template, region)
@@ -40,6 +41,11 @@ function PlayerCollection:_completeinit(template, _)
 	self._asset.unittype   = template.tpldata.units[1].type
 	self._asset.cmdpending = false
 	self._asset.groupId    = template.tpldata.groupId
+	self._asset.ato        = settings.ui.ato[self._asset.unittype]
+	if self._asset.ato == nil then
+		self._asset.ato = require("dct.enum").missionType
+	end
+	self._asset.payloadlimits = settings.payloadlimits
 end
 
 function PlayerCollection:getObjectNames()

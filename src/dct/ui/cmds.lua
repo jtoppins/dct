@@ -6,12 +6,13 @@
 
 require("os")
 local class    = require("libs.class")
+local utils    = require("libs.utils")
 local enum     = require("dct.enum")
 local dctutils = require("dct.utils")
 local human    = require("dct.ui.human")
 local Command  = require("dct.Command")
 local Logger   = require("dct.Logger").getByName("UI")
-local loadout = require("dct.systems.loadouts")
+local loadout  = require("dct.systems.loadouts")
 
 local UICmd = class(Command)
 function UICmd:__init(theater, data)
@@ -109,8 +110,8 @@ function TheaterUpdateCmd:_execute(_, cmdr)
 		msg = msg .. "  No Active Missions\n"
 	end
 	msg = msg .. string.format("\nRecommended Mission Type: %s\n",
-		dctutils.getkey(enum.missionType,
-			cmdr:recommendMissionType(self.actype)) or "None")
+		utils.getkey(enum.missionType,
+			cmdr:recommendMissionType(self.asset.ato)) or "None")
 	return msg
 end
 
@@ -120,7 +121,8 @@ function CheckPayloadCmd:__init(theater, data)
 end
 
 function CheckPayloadCmd:_execute(_ --[[time]], _ --[[cmdr]])
-	local msg = loadout.check(Group.getByName(self.grpname))
+	local msg = loadout.check(Group.getByName(self.grpname),
+		self.asset.payloadlimits)
 	return msg
 end
 
