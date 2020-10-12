@@ -325,23 +325,23 @@ end
 function IADS:BlinkSAM()
   for _, SAM in pairs(SAMSites) do
     if tablelength(SAM.ControlledBy) < 1 then
-      env.info("SAM: "..SAM.Name.." is uncontrolled")
+      --env.info("SAM: "..SAM.Name.." is uncontrolled")
       if SAM.BlinkTimer < 1  and (not SAM.Hidden) then
         if SAM.Enabled then
-          env.info("Blink Off")
+          --env.info("Blink Off")
           self:disableSAM(SAM)
           SAM.BlinkTimer = math.random(30,60)
         else
-          env.info("Blink On")
+          --env.info("Blink On")
           self:enableSAM(SAM)
           SAM.BlinkTimer = math.random(30,60)
         end
       else
-      SAM.BlinkTimer = SAM.BlinkTimer - 2
+      SAM.BlinkTimer = SAM.BlinkTimer - 5
       end
     end
   end
-  return 2
+  return 5
 end
 
 function IADS:checkGroupRole(gp)
@@ -519,7 +519,9 @@ function IADS:populateLists()
 end
 
 function IADS:monitorTracks()
-
+  self.EWRTrackFileBuild()
+  self.SAMTrackFileBuild()
+  self.AWACSTrackFileBuild()
   for _, EWR in pairs(EWRSites) do  
     for _, track in pairs(EWR.trackFiles) do   
       if ((timer.getAbsTime() - track.LastDetected) > trackMemory or (not track.Object:isExist()) or (not track.Object:inAir())) then      
@@ -571,9 +573,9 @@ function IADS:__init(theater)
   theater:registerHandler(self.sysIADSEventHandler, self)
   if IADSEnable then
     theater:queueCommand(10, Command(self.populateLists, self))
-    theater:queueCommand(10, Command(self.EWRTrackFileBuild, self))
-    theater:queueCommand(10, Command(self.SAMTrackFileBuild, self))
-    theater:queueCommand(10, Command(self.AWACSTrackFileBuild, self))
+    --theater:queueCommand(10, Command(self.EWRTrackFileBuild, self))
+    --theater:queueCommand(10, Command(self.SAMTrackFileBuild, self))
+    --theater:queueCommand(10, Command(self.AWACSTrackFileBuild, self))
     theater:queueCommand(10, Command(self.monitorTracks, self))
     theater:queueCommand(10, Command(self.SAMCheckHidden, self))
     theater:queueCommand(10, Command(self.BlinkSAM, self))
