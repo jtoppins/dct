@@ -102,8 +102,15 @@ follows:
 	      },
 	}}
 
-See [tpldata details][tpldata_details] for more information on specification
-of death goals and naming criteria.
+`tpldata` is a LUA list where each list entry is as shown above; `category`,
+`countryid`, and `data`.
+
+ * `category` - is a value from the `Unit.Category`[\[1\]][1] table
+ * `countryid` - is the numerical id of the country[\[2\]][2] the
+   static/group belongs to
+ * `data` - is the actual static/group definition in a format that is
+   expected by `coalition.addGroup()`[\[3\]][3] and
+   `coalition.addStatic()`[\[4\]][4]
 
 ### `buildings`
 
@@ -170,7 +177,7 @@ targets must be destroyed.
 
 Defines the initial amount of 'intel' the opposing side knows about any assets
 generated from the template. The intel value is a direct representation to how
-many decimal places the location of the asset will be truncated to[\[2\]][2].
+many decimal places the location of the asset will be truncated to[\[5\]][5].
 
 ### `spawnalways`
 
@@ -215,7 +222,7 @@ Is the centroid where the airspace is located.
  * _required:_ yes
  * _value:_ table
 
-Is a DCS volume spec[\[3\]][3] defining the airspace being taken up.
+Is a DCS volume spec[\[6\]][6] defining the airspace being taken up.
 
 ### Airbase
 
@@ -257,7 +264,8 @@ Allowed fields inside `planedata`:
  * _value:_ list of strings
  * _default:_ all mission types allowed
 
-The allowed mission types the squadron can fly.
+The allowed mission types the squadron can fly. The list of mission types
+can be found in [src/dct/enum.lua](../../../src/dct/enum.lua).
 
 ##### `max`
 
@@ -332,17 +340,10 @@ there is no limit. The format of the table is as follows:
 				["aa"] = 10,
 			}
 
-##### `gridfmt`
-
- * _required:_ no
- * _value:_ string
- * _default:_ `dms`
-
-The grid format used when reporting coordinates to players, if empty an
-appropriate default will be used.
-
-## Template Data - DCS Object Definition
-
-[1]: https://wiki.hoggitworld.com/view/DCS_enum_coalition "Hoggit Wiki - Coalition Table"
-[2]: https://en.wikipedia.org/wiki/Decimal_degrees "Decimal degrees"
-[3]: https://wiki.hoggitworld.com/view/DCS_func_searchObjects "DCS Volume Spec"
+[1]: https://wiki.hoggitworld.com/view/DCS_Class_Unit
+[2]: https://wiki.hoggitworld.com/view/DCS_enum_country
+[3]: https://wiki.hoggitworld.com/view/DCS_func_addGroup
+[4]: https://wiki.hoggitworld.com/view/DCS_func_addStaticObject
+[5]: https://en.wikipedia.org/wiki/Decimal_degrees "Decimal degrees"
+[6]: https://wiki.hoggitworld.com/view/DCS_func_searchObjects "DCS Volume Spec"
+[7]: https://wiki.hoggitworld.com/view/DCS_enum_coalition "Hoggit Wiki - Coalition Table"
