@@ -32,7 +32,7 @@ fi
 
 for t in $tests; do
 	result="PASS"
-	./${t}
+	./$(basename ${t})
 	if test $? -ne 0; then
 		result="FAIL"
 		fail=1
