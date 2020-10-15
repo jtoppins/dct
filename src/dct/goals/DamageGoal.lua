@@ -32,6 +32,9 @@ function DamageGoal:_afterspawn()
 		self._maxlife = StaticObject.getByName(self.name):getLife()
 	elseif self.objtype == enums.objtype.GROUP then
 		self._maxlife = Group.getByName(self.groupname):getInitialSize()
+	elseif self.objtype == enums.objtype.SCENERY then                          ---added this---
+	 local obj = {id_ = self.name}
+	 self._maxlife = Object.getLife(self.name)
 	else
 		Logger:error("DamageGoal:_afterspawn() - invalid objtype")
 	end
@@ -60,6 +63,11 @@ function DamageGoal:checkComplete()
 		if obj ~= nil then
 			health = obj:getSize()
 		end
+	elseif self.objtype == enums.objtype.SCENERY then                  ---added this---
+	 local obj = {id_ = self.name}
+	 if obj ~= nil then
+	   health = Object.getLife(obj)
+   end
 	else
 		Logger:error("DamageGoal:checkComplete() - invalid objtype")
 		return false

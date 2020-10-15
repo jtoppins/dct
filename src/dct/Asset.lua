@@ -5,7 +5,6 @@
 -- An Asset is a group of objects in the game world
 -- that can be destroyed by the opposing side.
 --]]
-
 require("math")
 local class    = require("libs.class")
 local utils    = require("libs.utils")
@@ -141,6 +140,7 @@ function Asset:__init(template, region)
 				["asset"]  = template.priority,
 			}
 		end
+		self._sceneryObjs = template.buildings                            --BUILDINGS INFO ADDED TO ASSET--
 		self._collection = getcollection(self.type, self, template, region)
 		self._initcomplete = true
 	end

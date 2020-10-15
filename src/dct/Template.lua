@@ -72,6 +72,41 @@ local function goalFromName(name, objtype)
 	return goal
 end
 
+local function goalFromBldg(building)
+
+  local goal = {}
+  local goalvalid = false
+  local name = building.name
+  for k, v in pairs(Goal.priority) do
+    local index = string.find(name, k)
+    if index ~= nil then
+      goal.priority = v
+      goalvalid = true
+      break
+    end
+  end
+  for k, v in pairs(damage) do
+    local index = string.find(name, k)
+    if index ~= nil then
+      goal.value = v
+      goalvalid = true
+      break
+    end
+  end
+  if not goalvalid then
+    return nil
+  end
+  if goal.priority == nil then
+    goal.priority = Goal.priority.PRIMARY
+  end
+  if goal.value == nil then
+    goal.value = damage.DESTROYED
+  end
+  goal.objtype  = SCENERY
+  goal.goaltype = Goal.goaltype.DAMAGE
+  return goal
+end
+
 -- unique name counter, allows us to generate names that are always unique
 -- TODO: this value would need to be saved for mission persistance
 local namecntr = 1000
@@ -132,12 +167,32 @@ local function overrideGroupOptions(grp, idx, tpl)
 	end
 end
 
+local function setBldgOptions(bldg, idx, tpl)
+
+  bldg.data = {}
+  bldg.data.start_time = 0
+  bldg.data.dct_deathgoal = goalFromName(bldg.name, Goal.objtype.STRUCTURE)
+  if bldg.data.dct_deathgoal ~= nil then
+    tpl.hasDeathGoals = true
+  end
+  bldg.data.name = tpl.regionname.."_"..tpl.name.." "..tpl.coalition.." "..
+    "STRUCTURE "..tostring(idx)
+end
+
 local function checktpldata(_, tpl)
 	-- loop over all tpldata and process names and existence of deathgoals
 	for idx, grp in ipairs(tpl.tpldata) do
 		overrideGroupOptions(grp, idx, tpl)
 	end
 	return true
+end
+
+local function checkbldgdata(_,tpl)
+
+  for idx, bldg in ipairs(tpl.buildings) do
+    setBldgOptions(bldg, idx, tpl)  
+  end
+  return true
 end
 
 local function checkobjtype(keydata, tbl)
@@ -212,6 +267,10 @@ local function getkeys(objtype)
 			["name"]  = "tpldata",
 			["type"]  = "table",
 			["check"] = checktpldata,})
+		table.insert(keys, {
+		  ["name"]  = "buildings",
+		  ["type"]  = "table",
+		  ["check"] = checkbldgdata,})
 	end
 
 	if objtype == enum.assetType.AIRSPACE then
@@ -292,7 +351,7 @@ function Template:validate()
 		["type"]  = "string",
 		["check"] = checkobjtype,
 	},}, self)
-
+  
 	utils.checkkeys(getkeys(self.objtype), self)
 end
 
@@ -315,7 +374,7 @@ function Template.fromFile(regionname, dctfile, stmfile)
 	if stmfile ~= nil then
 		template = utils.mergetables(template,
 			STM.transform(utils.readlua(stmfile, "staticTemplate")))
-	end
+	end	
 	return Template(template)
 end
 

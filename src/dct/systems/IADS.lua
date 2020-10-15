@@ -379,7 +379,7 @@ function IADS:checkGroupRole(gp)
           ["Datalink"] = hasDL,
           ["trackFiles"] = {},
       }
-      return gp:getName()      
+      return gp:getName()
     elseif isSAM and self:rangeOfSAM(gp) then
       SAMSites[gp:getName()] = {
           ["Name"] = gp:getName(),
@@ -387,36 +387,36 @@ function IADS:checkGroupRole(gp)
           ["Type"] = samType,
           ["Location"] = gp:getUnit(1):getPoint(),
           ["numSAMRadars"] = numSAMRadars,
-          ["EngageRange"] = self:rangeOfSAM(gp),           
-          ["ControlledBy"] = {}, 
+          ["EngageRange"] = self:rangeOfSAM(gp),
+          ["ControlledBy"] = {},
           ["Enabled"] = true,
           ["Hidden"] = false,
           ["BlinkTimer"] = 0,
           ["ARMDetected"] = {},
-          ["Datalink"] = hasDL, 
-          ["trackFiles"] = {},           
+          ["Datalink"] = hasDL,
+          ["trackFiles"] = {},
       }
-      return gp:getName()      
+      return gp:getName()
     end
   elseif gp:getCategory() == 0 then
     local numAWACS = 0
     for _, unt in pairs(gp:getUnits()) do
-      if unt:hasAttribute("AWACS") then      
+      if unt:hasAttribute("AWACS") then
         isAWACS = true
         numAWACS = numAWACS+1
       end
       if unt:hasAttribute("Datalink") then
-        hasDL = true      
-      end  
-    end 
-    if isAWACS then 
+        hasDL = true
+      end
+    end
+    if isAWACS then
       AWACSAircraft[gp:getName()] = {
         ["Name"] = gp:getName(),
         ["AWACSGroup"] = gp,
         ["numAWACS"] = numAWACS,
         ["Datalink"] = hasDL,
-        ["trackFiles"] = {},   
-       }    
+        ["trackFiles"] = {},
+       }
     return gp:getName()
     end
   end
@@ -424,73 +424,73 @@ end
 
 function IADS:onDeath(event)
   if event.initiator:getCategory() == Object.Category.UNIT and event.initiator:getGroup() then
-    local eventUnit = event.initiator  
+    local eventUnit = event.initiator
     local eventGroup = event.initiator:getGroup()
-    for _, SAM in pairs(SAMSites) do     
+    for _, SAM in pairs(SAMSites) do
       if eventGroup:getName() == SAM.Name then
         if eventUnit:hasAttribute("SAM TR") then
           SAM.numSAMRadars = SAM.numSAMRadars - 1
-        end  
+        end
         if SAM.numSAMRadars < 1 then
           --env.info("SAM :"..SAM.Name.." died")
-          for _, EWR in pairs(EWRSites) do           
-            for _, SAMControlled in pairs(EWR.SAMsControlled) do 
+          for _, EWR in pairs(EWRSites) do
+            for _, SAMControlled in pairs(EWR.SAMsControlled) do
               if SAMControlled.Name == SAM.Name then
                 EWR.SAMsControlled[SAM.Name] = nil
-              end              
-            end          
+              end
+            end
           end
           SAMSites[SAM.Name] = nil
         end
       end
-    end 
-    for _, EWR in pairs(EWRSites) do    
+    end
+    for _, EWR in pairs(EWRSites) do
       if eventGroup:getName() == EWR.Name then
         if eventUnit:hasAttribute("EWR") then
           EWR.numEWRRadars = EWR.numEWRRadars - 1
-          if EWR.numEWRRadars < 1 then  
+          if EWR.numEWRRadars < 1 then
             --env.info("EWR :"..EWR.Name.." died")
-            for _, SAM in pairs(SAMSites) do              
-              for _, controllingEWR in pairs(SAM.ControlledBy) do              
+            for _, SAM in pairs(SAMSites) do
+              for _, controllingEWR in pairs(SAM.ControlledBy) do
                 if controllingEWR.Name == EWR.Name then 
                   SAM.ControlledBy[EWR.Name] = nil
-                end              
-              end            
+                end
+              end
             end
-            EWRSites[EWR.Name] = nil              
+            EWRSites[EWR.Name] = nil
           end
         end
       end
-      for _, AWACS in pairs(AWACSAircraft) do    
+      for _, AWACS in pairs(AWACSAircraft) do
         if eventGroup:getName() == EWR.Name then
           if eventUnit:hasAttribute("AWACS") then
             AWACS.numAWACS = AWACS.numAWACS - 1
-            if AWACS.numAWACS < 1 then  
+            if AWACS.numAWACS < 1 then
               --env.info("AWACS :"..AWACS.Name.." died")
-              AWACSAircraft[AWACS.Name] = nil              
+              AWACSAircraft[AWACS.Name] = nil
             end
           end
         end
       end
-    end   
+    end
   end   
 end
 
 function IADS:onShot(event)
   if IADSRadioDetection then
-    if event.weapon then    
+    if event.weapon then
       local ordnance = event.weapon
       local WeaponPoint = ordnance:getPoint()
       local WeaponDesc = ordnance:getDesc()
       local init = event.initiator
-      if WeaponDesc.guidance == 5 then      
-        for _, SAM in pairs(SAMSites) do        
-          if math.random(1,100) < IADSARMHidePctage and self:getDistance(SAM.Location, WeaponPoint) < IADSARMHideRangeRadio then          
-            self:magnumHide(SAM)            
-          end        
-        end      
+      if WeaponDesc.guidance == 5 then
+        for _, SAM in pairs(SAMSites) do
+          if math.random(1,100) < IADSARMHidePctage and self:getDistance(SAM.Location, WeaponPoint) < IADSARMHideRangeRadio then
+            self:magnumHide(SAM)
+          end
+        end
       end
-    end 
+    end
   end
 end
 
@@ -499,7 +499,7 @@ function IADS:onBirth(event)
   local n = self:checkGroupRole(gp)
   self:associateSAMS()
   --TO DO: make a fcn for each EWR and SAM individually for here
-  
+
 end
 
 function IADS:disableAllSAMs()
@@ -519,16 +519,16 @@ function IADS:populateLists()
 end
 
 function IADS:monitorTracks()
-  self.EWRTrackFileBuild()
-  self.SAMTrackFileBuild()
-  self.AWACSTrackFileBuild()
+  self:EWRTrackFileBuild()
+  self:SAMTrackFileBuild()
+  self:AWACSTrackFileBuild()
   for _, EWR in pairs(EWRSites) do  
     for _, track in pairs(EWR.trackFiles) do   
       if ((timer.getAbsTime() - track.LastDetected) > trackMemory or (not track.Object:isExist()) or (not track.Object:inAir())) then      
         EWR.trackFiles[track.Name] = nil 
         TrackFiles.EWR[track.Name] = nil     
       end   
-    end  
+    end
   end 
   for _, SAM in pairs(SAMSites) do  
     for _, track in pairs(SAM.trackFiles) do    

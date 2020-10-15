@@ -14,6 +14,7 @@ local objtype = {
 	["STATIC"]  = 2,
 	["GROUP"]   = 3,
 	["MAX"]     = 4,
+	["SCENERY"] = 5,               ---added this---
 }
 
 local priority = {

@@ -188,6 +188,7 @@ function AssetManager:onDCSEvent(event)
 	local objcat = {
 		[Object.Category.UNIT]   = true,
 		[Object.Category.STATIC] = true,
+		[Object.Category.SCENERY]= true,
 	}
 
 	if not relevents[event.id] then
