@@ -140,6 +140,24 @@ local function checktpldata(_, tpl)
 	return true
 end
 
+local function checkbldgdata(keydata, tpl)
+	for _, bldg in ipairs(tpl[keydata.name]) do
+		local bldgdata = {}
+		bldgdata.countryid = 0
+		bldgdata.category  = enum.UNIT_CAT_SCENERY
+		bldgdata.data = {
+			["dct_deathgoal"] = goalFromName(bldg.goal,
+				Goal.objtype.SCENERY),
+			["name"] = tostring(bldg.id),
+		}
+		table.insert(tpl.tpldata, bldgdata)
+		if bldgdata.data.dct_deathgoal ~= nil then
+			tpl.hasDeathGoals = true
+		end
+	end
+	return true
+end
+
 local function checkobjtype(keydata, tbl)
 	if type(tbl[keydata.name]) == "number" and
 		utils.getkey(enum.assetType, tbl[keydata.name]) ~= nil then
@@ -212,6 +230,11 @@ local function getkeys(objtype)
 			["name"]  = "tpldata",
 			["type"]  = "table",
 			["check"] = checktpldata,})
+		table.insert(keys, {
+			["name"]    = "buildings",
+			["type"]    = "table",
+			["default"] = {},
+			["check"] = checkbldgdata,})
 	end
 
 	if objtype == enum.assetType.AIRSPACE then

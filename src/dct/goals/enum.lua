@@ -13,6 +13,7 @@ local objtype = {
 	["UNIT"]    = 1,
 	["STATIC"]  = 2,
 	["GROUP"]   = 3,
+	["SCENERY"] = 4,
 	["MAX"]     = 4,
 }
 

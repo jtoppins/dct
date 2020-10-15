@@ -151,7 +151,7 @@ function AssetManager:checkAssets(_ --[[time]])
 end
 
 local function handleDead(self, event)
-	self._object2asset[event.initiator:getName()] = nil
+	self._object2asset[tostring(event.initiator:getName())] = nil
 end
 
 local handlers = {
@@ -159,7 +159,7 @@ local handlers = {
 }
 
 function AssetManager:doOneObject(obj, event)
-	local name = obj:getName()
+	local name = tostring(obj:getName())
 	if obj:getCategory() == Object.Category.UNIT then
 		name = obj:getGroup():getName()
 	end
