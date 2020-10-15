@@ -549,6 +549,19 @@ function Object:getID()
 end
 _G.Object = Object
 
+local SceneryObject = class(Object)
+function SceneryObject:__init(objdata)
+	objdata.category = Object.Category.SCENERY
+	Object.__init(self, objdata)
+	self.clife = self.desc.life or 1
+end
+
+function SceneryObject:getLife()
+	assert(type(self.id_) == "number", "id_ is not a number")
+	return 10
+end
+_G.SceneryObject = SceneryObject
+
 local Coalition = class(Object)
 function Coalition:__init(objdata)
 	Object.__init(self, objdata)

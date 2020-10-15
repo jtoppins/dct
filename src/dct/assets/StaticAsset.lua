@@ -102,7 +102,7 @@ end
 -- If no death goals have been defined a default of 90%
 -- damaged for all objects in the Asset is used.
 --]]
-function StaticAsset:_setupDeathGoal(grpdata, static)
+function StaticAsset:_setupDeathGoal(grpdata, category)
 	if self._hasDeathGoals then
 		if grpdata.dct_deathgoal ~= nil then
 			self:_addDeathGoal(grpdata.name, grpdata.dct_deathgoal)
@@ -113,7 +113,10 @@ function StaticAsset:_setupDeathGoal(grpdata, static)
 			end
 		end
 	else
-		self:_addDeathGoal(grpdata.name, AssetBase.defaultgoal(static))
+		self:_addDeathGoal(grpdata.name,
+			AssetBase.defaultgoal(
+				category == Unit.Category.STRUCTURE or
+				category == enum.UNIT_CAT_SCENERY))
 	end
 end
 
@@ -123,8 +126,7 @@ end
 --]]
 function StaticAsset:_setup()
 	for _, grp in ipairs(self._tpldata) do
-		self:_setupDeathGoal(grp.data,
-			grp.category == Unit.Category.STRUCTURE)
+		self:_setupDeathGoal(grp.data, grp.category)
 		self._assets[grp.data.name] = grp
 	end
 	assert(next(self._deathgoals) ~= nil,
@@ -178,7 +180,7 @@ function StaticAsset:handleDead(event)
 	local obj = event.initiator
 
 	-- mark the unit/group/static as dead in the template, dct_dead
-	local unitname = obj:getName()
+	local unitname = tostring(obj:getName())
 	if obj:getCategory() == Object.Category.UNIT then
 		local grpname = obj:getGroup():getName()
 		local grp = self._assets[grpname]
@@ -223,14 +225,20 @@ local function removeDCTKeys(grp)
 	return g
 end
 
+local function __spawn(grp)
+	if grp.category == enum.UNIT_CAT_SCENERY then
+		return
+	end
+	if grp.category == Unit.Category.STRUCTURE then
+		coalition.addStaticObject(grp.countryid, grp.data)
+	else
+		coalition.addGroup(grp.countryid, grp.category, grp.data)
+	end
+end
+
 function StaticAsset:_spawn()
 	for _, grp in ipairs(self._tpldata) do
-		local gcpy = removeDCTKeys(grp)
-		if gcpy.category == Unit.Category.STRUCTURE then
-			coalition.addStaticObject(gcpy.countryid, gcpy.data)
-		else
-			coalition.addGroup(gcpy.countryid, gcpy.category, gcpy.data)
-		end
+		__spawn(removeDCTKeys(grp))
 	end
 
 	self._spawned = true

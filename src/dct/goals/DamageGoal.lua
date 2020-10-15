@@ -32,6 +32,8 @@ function DamageGoal:_afterspawn()
 		self._maxlife = StaticObject.getByName(self.name):getLife()
 	elseif self.objtype == enums.objtype.GROUP then
 		self._maxlife = Group.getByName(self.groupname):getInitialSize()
+	elseif self.objtype == enums.objtype.SCENERY then
+		self._maxlife = 2500
 	else
 		Logger:error("DamageGoal:_afterspawn() - invalid objtype")
 	end
@@ -60,6 +62,9 @@ function DamageGoal:checkComplete()
 		if obj ~= nil then
 			health = obj:getSize()
 		end
+	elseif self.objtype == enums.objtype.SCENERY then
+		local obj = { id_ = tonumber(self.name) }
+		health = SceneryObject.getLife(obj)
 	else
 		Logger:error("DamageGoal:checkComplete() - invalid objtype")
 		return false

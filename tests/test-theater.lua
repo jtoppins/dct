@@ -228,12 +228,14 @@ local function main()
 	local theater = dct.Theater()
 	_G.dct.theater = theater
 	theater:exec(50)
-	assert(dctcheck.spawngroups == 1,
+	local expected = 1
+	assert(dctcheck.spawngroups == expected,
 		string.format("group spawn broken; expected(%d), got(%d)",
-		1, dctcheck.spawngroups))
-	assert(dctcheck.spawnstatics == 11,
+		expected, dctcheck.spawngroups))
+	expected = 12
+	assert(dctcheck.spawnstatics == expected,
 		string.format("static spawn broken; expected(%d), got(%d)",
-		11, dctcheck.spawnstatics))
+		expected, dctcheck.spawnstatics))
 
 	--[[ TODO: test ATO once support is added for squadron
 	local restriction =
