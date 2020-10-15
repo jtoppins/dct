@@ -60,7 +60,7 @@ if not ok then
 end
 
 local settingsf
-ok, settingsf = pcall(require, "dct.utils.server-settings")
+ok, settingsf = pcall(require, "dct.settings.server")
 if not ok then
 	log.write(facility, log.ERROR,
 		string.format("unable to load dct settings: %s", settingsf))
@@ -186,6 +186,7 @@ function DCTHooks:__init()
 	}
 
 	self.players  = {}
+	self.grp2player = {}
 	self.slots    = {}
 	self.blockspecialslots = (next(settings.server.whitelists) ~= nil)
 	self.whitelists = settings.server.whitelists
@@ -320,12 +321,30 @@ function DCTHooks:onPlayerDisconnect(id, err_code)
 	self.info.players.dirty = true
 end
 
+function DCTHooks:addGrpEntry(id)
+	if self.players[id] == nil or self.players[id].slot == nil then
+		return
+	end
+	local grpname = self.slots[self.players[id].slot].groupName
+	self.grp2player[grpname] = id
+end
+
+function DCTHooks:removeGrpEntry(id)
+	if self.players[id] == nil or self.players[id].slot == nil then
+		return
+	end
+	local grpname = self.slots[self.players[id].slot].groupName
+	self.grp2player[grpname] = nil
+end
+
 function DCTHooks:onPlayerChangeSlot(id)
 	log.write(facility, log.DEBUG, "player change slot, id: "..tostring(id))
+	self:removeGrpEntry(id)
 	self.players[id] = net.get_player_info(id)
 	if self.players[id].slot == '' then
 		self.players[id].slot = nil
 	end
+	self:addGrpEntry(id)
 	self.info.players.dirty = true
 end
 
@@ -338,18 +357,25 @@ local function rpc_send_msg_to_all(msg, dtime, clear)
 	return cmd
 end
 
-local function rpc_get_flag(flagname)
+local function rpc_slot_enabled(grpname)
 	local cmd = [[
-		return trigger.misc.getUserFlag("]]..tostring(flagname)..[[);
+		local t = require("dct.Theater").singleton()
+		local asset = t:getAssetMgr():getAsset(]]..grpname..[[)
+		local v = asset:isSpawned()
+		if v == true then
+			v = 1
+		else
+			v = 0
+		end
+		return v
 	]]
 	return cmd
 end
 
-local function rpc_set_flag(flagname, value)
+local function rpc_get_kicklist()
 	local cmd = [[
-		trigger.misc.setUserFlag("]]..tostring(flagname)..
-			[[,]]..tostring(value)..[[);
-		return true;
+		local t = require("dct.Theater").singleton()
+		return t:getkicklist()
 	]]
 	return cmd
 end
@@ -364,8 +390,10 @@ local function do_rpc(ctx, cmd, valtype)
 	end
 
 	local val
-	if valtype == "number" or valtype == "boolean" then
+	if valtype == "number" then
 		val = tonumber(status)
+	elseif valtype == "boolean" then
+		val = (tonumber(status) ~= 0)
 	elseif valtype == "string" then
 		val = status
 	elseif valtype == "table" then
@@ -391,12 +419,13 @@ local function isSlotEnabled(slot)
 		return false
 	end
 
-	local flag = do_rpc("server", rpc_get_flag(slot.groupName), "number")
+	local flag = do_rpc("server", rpc_slot_enabled(slot.groupName),
+		"boolean")
 	log.write(facility, log.DEBUG, "flag: "..tostring(flag))
 	if flag == nil then
-		flag = 0
+		flag = true
 	end
-	return flag == 0
+	return flag
 end
 
 -- Returns: true - allows slot change, false - denies change
@@ -506,13 +535,17 @@ function DCTHooks:sendplayers()
 	self.info.players.dirty = false
 end
 
-function DCTHooks:kickPlayerFromSlot(p)
-	if p.slot == nil or isSlotEnabled(self.slots[p.slot]) then
-		return
+function DCTHooks:kickPlayerFromSlot(id)
+	net.force_player_slot(id, 0, '')
+	net.send_chat_to("*** you have been removed from slot ***", id)
+end
+
+function DCTHooks:getkicklist()
+	local t = do_rpc("server", rpc_get_kicklist(), "table")
+	if t == nil then
+		t = {}
 	end
-	net.force_player_slot(p.id, 0, '')
-	net.send_chat_to("*** you have been removed from slot ***", p.id)
-	do_rpc("server", rpc_set_flag(self.slots[p.slot].groupName, 0), "boolean")
+	return t
 end
 
 function DCTHooks:onSimulationFrame()
@@ -532,8 +565,8 @@ function DCTHooks:onSimulationFrame()
 	local modeltime = DCS.getModelTime()
 	if (modeltime - self.slotkicktimer) > self.slotkickperiod then
 		self.slotkicktimer = modeltime
-		for _, p in pairs(self.players) do
-			self:kickPlayerFromSlot(p)
+		for _, id in pairs(self:getkicklist()) do
+			self:kickPlayerFromSlot(id)
 		end
 	end
 

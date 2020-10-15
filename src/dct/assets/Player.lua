@@ -16,6 +16,18 @@ local Logger  = dct.Logger.getByName("Asset")
 local loadout = require("dct.systems.loadouts")
 local settings = _G.dct.settings
 
+--[[
+-- Player - represents a player slot in DCS
+--
+-- Slot Management
+--   Player objects cannot die however they can be spawned. Spawning
+--   is used as the signal for enabling/disabling the slot. The external
+--   hooks script will check if this object is spawned before allowing
+--   a player to enter the slot.
+--
+--   This covers disabling the other side is covering kicking a player
+--   from a slot.
+--]]
 local Player = class(AssetBase)
 function Player:__init(template, region)
 	self.__clsname = "Player"
@@ -86,6 +98,16 @@ end
 
 function Player:handleTakeoff(_ --[[event]])
 	loadout.kick(self)
+end
+
+--[[
+-- kick - cause the player to be removed from the slot
+--
+-- players are immediately removed from the slot, however, this
+-- action does not prevent another player from joing the slot
+--]]
+function Player:kick()
+	require("dct.Theater").singleton():queuekick(self)
 end
 
 return Player

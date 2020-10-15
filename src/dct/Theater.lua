@@ -55,6 +55,7 @@ function Theater:__init()
 	self.cmdrs     = {}
 	self.scratchpad= {}
 	self.startdate = os.date("*t")
+	self._kicklist  = {}
 
 	for _, val in pairs(coalition.side) do
 		self.cmdrs[val] = Commander(self, val)
@@ -192,6 +193,17 @@ local function isPlayerGroup(grp, _, _)
 	end
 	return false
 end
+
+function Theater:queuekick(playerasset)
+	self._kicklist[playerasset.name] = true
+end
+
+function Theater:getkicklist()
+	local kicklist = self._kicklist
+	self._kicklist = {}
+	return json:encode(kicklist)
+end
+
 
 function Theater:_loadPlayerSlots()
 	local cnt = 0
