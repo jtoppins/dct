@@ -14,7 +14,6 @@ local json        = require("libs.json")
 local dctutils    = require("dct.utils")
 local uicmds      = require("dct.ui.cmds")
 local uiscratchpad= require("dct.ui.scratchpad")
-local Observable  = require("dct.libs.Observable")
 local STM         = require("dct.templates.STM")
 local Template    = require("dct.templates.Template")
 local Region      = require("dct.templates.Region")
@@ -38,9 +37,9 @@ local settings    = _G.dct.settings.server
 --			<regionname> = Region(),
 --		},
 --]]
-local Theater = class(Observable)
+local Theater = class()
 function Theater:__init()
-	Observable.__init(self)
+	self._observers = {}
 	self.savestatefreq = 7*60 -- seconds
 	self.cmdmindelay   = 2
 	self.uicmddelay    = self.cmdmindelay
@@ -215,6 +214,35 @@ function Theater:_loadPlayerSlots()
 		end
 	end
 	Logger:info(string.format("_loadPlayerSlots(); found %d slots", cnt))
+end
+
+function Theater:registerHandler(func, ctx, name)
+	assert(type(func) == "function", "func must be a function")
+	-- ctx must be non-nil otherwise upon insertion the index which
+	-- is the function address will be deleted.
+	assert(ctx ~= nil, "ctx must be a non-nil value")
+	name = name or "unknown"
+
+	if self._observers[func] ~= nil then
+		Logger:error("func("..tostring(func)..") already set - skipping")
+		return
+	end
+	Logger:debug("adding handler("..name..")")
+	self._observers[func] = { ["ctx"] = ctx, ["name"] = name, }
+end
+
+function Theater:removeHandler(func)
+	assert(type(func) == "function", "func must be a function")
+	self._observers[func] = nil
+end
+
+-- DCS looks for this function in any table we register with the world
+-- event handler
+function Theater:onEvent(event)
+	for handler, val in pairs(self._observers) do
+		Logger:debug("executing handler: "..val.name)
+		handler(val.ctx, event)
+	end
 end
 
 function Theater:export(_)

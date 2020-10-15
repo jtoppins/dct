@@ -16,15 +16,13 @@ local Logger  = dct.Logger.getByName("Asset")
 local loadout = require("dct.systems.loadouts")
 local settings = _G.dct.settings
 
--- TODO: how to disable the player slot, we need to cover two cases:
---  * disabled: a player cannot enter the slot but if already occupied
---    the player is not removed from the slot
---  * kick: players are immediately removed from the slot and
---    new players are prevented from joining
-
 local Player = class(AssetBase)
 function Player:__init(template, region)
 	self.__clsname = "Player"
+	self._eventhandlers = {
+		[world.event.S_EVENT_BIRTH]   = self.handleBirth,
+		[world.event.S_EVENT_TAKEOFF] = self.handleTakeoff,
+	}
 	AssetBase.__init(self, template, region)
 	self:_addMarshalNames({
 		"unittype",
@@ -58,7 +56,7 @@ function Player:getLocation()
 	return self._location
 end
 
-local function handleBirth(self, event)
+function Player:handleBirth(event)
 	local theater = require("dct.Theater").singleton()
 	local grp = event.initiator:getGroup()
 	local id = grp:getID()
@@ -86,20 +84,8 @@ local function handleBirth(self, event)
 	loadout.notify(grp)
 end
 
-local function handleTakeoff(_, event)
+function Player:handleTakeoff(event)
 	loadout.kick(event.initiator:getGroup())
-end
-
-local handlers = {
-	[world.event.S_EVENT_BIRTH] = handleBirth,
-	[world.event.S_EVENT_TAKEOFF] = handleTakeoff,
-}
-
-function Player:onDCSEvent(event)
-	local handler = handlers[event.id]
-	if handler ~= nil then
-		handler(self, event)
-	end
 end
 
 return Player

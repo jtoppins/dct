@@ -23,6 +23,9 @@ function StaticAsset:__init(template, region)
 	self._curdeathgoals = 0
 	self._deathgoals    = {}
 	self._assets        = {}
+	self._eventhandlers = {
+		[world.event.S_EVENT_DEAD] = self.handleDead,
+	}
 	AssetBase.__init(self, template, region)
 	self:_addMarshalNames({
 		"_hasDeathGoals",
@@ -171,14 +174,7 @@ function StaticAsset:getObjectNames()
 	return keyset
 end
 
-function StaticAsset:onDCSEvent(event)
-	-- only handle DEAD events
-	if event.id ~= world.event.S_EVENT_DEAD then
-		Logger:debug(string.format("onDCSEvent() - StaticAsset(%s)"..
-		" not DEAD event, ignoring", self.name))
-		return
-	end
-
+function StaticAsset:handleDead(event)
 	local obj = event.initiator
 
 	-- mark the unit/group/static as dead in the template, dct_dead

@@ -41,7 +41,7 @@ function AssetManager:__init(theater)
 	-- of their DCS objects with 'something', this will be the something.
 	self._object2asset = {}
 
-	theater:registerHandler(self.onDCSEvent, self)
+	theater:registerHandler(self.onDCSEvent, self, "AssetManager handler")
 	theater:queueCommand(ASSET_CHECK_PERIOD,
 		Command(self.checkAssets, self))
 end
@@ -158,6 +158,26 @@ local handlers = {
 	[world.event.S_EVENT_DEAD] = handleDead,
 }
 
+function AssetManager:doOneObject(obj, event)
+	local name = obj:getName()
+	if obj:getCategory() == Object.Category.UNIT then
+		name = obj:getGroup():getName()
+	end
+
+	local assetname = self._object2asset[name]
+	if assetname == nil then
+		Logger:debug("onDCSEvent - not tracked object, obj name: "..name)
+		return
+	end
+	local asset = self:getAsset(assetname)
+	if asset == nil then
+		Logger:debug("onDCSEvent - asset doesn't exist, name: "..assetname)
+		self._object2asset[name] = nil
+		return
+	end
+	asset:onDCTEvent(event)
+end
+
 function AssetManager:onDCSEvent(event)
 	local relevents = {
 		[world.event.S_EVENT_BIRTH]           = true,
@@ -174,12 +194,10 @@ function AssetManager:onDCSEvent(event)
 		--[world.event.S_EVENT_UNIT_LOST]     = true,
 	}
 	local objmap = {
-		[world.event.S_EVENT_HIT]  = "target",
-		[world.event.S_EVENT_KILL] = "target",
-	}
-	local objcat = {
-		[Object.Category.UNIT]   = true,
-		[Object.Category.STATIC] = true,
+		[world.event.S_EVENT_HIT]  = "target", -- type: Object
+		[world.event.S_EVENT_KILL] = "target", -- type: Unit
+		[world.event.S_EVENT_LAND] = "place", -- type: Object
+		[world.event.S_EVENT_TAKEOFF] = "place", -- type: Object
 	}
 
 	if not relevents[event.id] then
@@ -188,39 +206,20 @@ function AssetManager:onDCSEvent(event)
 		return
 	end
 
-	local obj = event.initiator
+	local objs = { event.initiator }
 	if objmap[event.id] ~= nil then
-		obj = event[objmap[event.id]]
+		if event[objmap[event.id]] ~= nil then
+			table.insert(objs, event[objmap[event.id]])
+		end
 	end
 
-	if not obj or objcat[obj:getCategory()] == nil then
-		Logger:debug(string.format("onDCSEvent - bad object (%s) or"..
-			" category; event id: %d", tostring(obj), event.id))
-		return
+	for _, obj in ipairs(objs) do
+		self:doOneObject(obj, event)
 	end
-
-	local name = obj:getName()
-	if obj:getCategory() == Object.Category.UNIT then
-		name = obj:getGroup():getName()
-	end
-
-	local asset = self._object2asset[name]
-	if asset == nil then
-		Logger:debug("onDCSEvent - not tracked object, obj name: "..name)
-		return
-	end
-	asset = self:getAsset(asset)
-	if asset == nil then
-		Logger:debug("onDCSEvent - asset doesn't exist, name: "..name)
-		return
-	end
-
 	local handler = handlers[event.id]
 	if handler ~= nil then
 		handler(self, event)
 	end
-
-	asset:onDCSEvent(event)
 end
 
 function AssetManager:marshal()
