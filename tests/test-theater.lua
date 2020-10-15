@@ -7,6 +7,7 @@ require("dcttestlibs")
 require("dct")
 local enum   = require("dct.enum")
 local settings = _G.dct.settings.server
+local DEBUG = false
 
 local events = {
 	{
@@ -168,7 +169,14 @@ local events = {
 	},
 }
 
-
+local function copyfile(src, dest)
+	local json = require("libs.json")
+	local orig = io.open(src, "r")
+	local save = io.open(dest, "w")
+	save:write(json:encode_pretty(json:decode(orig:read("*a"))))
+	orig:close()
+	save:close()
+end
 
 local function createEvent(eventdata, player)
 	local event = {}
@@ -244,12 +252,15 @@ local function main()
 	local f = io.open(settings.statepath, "r")
 	local sumorig = md5.sum(f:read("*all"))
 	f:close()
+	if DEBUG == true then
+		copyfile(settings.statepath, settings.statepath..".orig")
+	end
 
 	local newtheater = dct.Theater()
 	local name = "Test region_1_Abu Musa Ammo Dump"
 	-- verify the units read in do not include the asset we killed off
 	assert(newtheater:getAssetMgr():getAsset(name) == nil,
-		"state saving has an issue")
+		"state saving has an issue, dead asset is alive: "..name)
 
 	-- attempt to get theater status
 	newtheater:onEvent({
@@ -278,6 +289,9 @@ local function main()
 	f = io.open(settings.statepath, "r")
 	local sumsave = md5.sum(f:read("*all"))
 	f:close()
+	if DEBUG == true then
+		copyfile(settings.statepath, settings.statepath..".new")
+	end
 	os.remove(settings.statepath)
 
 	assert(newtheater.statef == true and sumorig == sumsave,
