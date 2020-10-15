@@ -124,6 +124,8 @@ function Asset:__init(template, region)
 		self.owner    = template.coalition
 		self.rgnname  = region.name
 		self.tplname  = template.name
+		self.buildings = template.buildings                            --BUILDINGS INFO ADDED TO ASSET--
+    env.info("buildings: ".. table.tostring(template.buildings))
 		if self.type == dctenum.assetType.PLAYERGROUP then
 			self.name = self.tplname
 		else
@@ -140,7 +142,6 @@ function Asset:__init(template, region)
 				["asset"]  = template.priority,
 			}
 		end
-		self._sceneryObjs = template.buildings                            --BUILDINGS INFO ADDED TO ASSET--
 		self._collection = getcollection(self.type, self, template, region)
 		self._initcomplete = true
 	end

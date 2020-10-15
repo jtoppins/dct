@@ -171,7 +171,7 @@ local function setBldgOptions(bldg, idx, tpl)
 
   bldg.data = {}
   bldg.data.start_time = 0
-  bldg.data.dct_deathgoal = goalFromName(bldg.name, Goal.objtype.STRUCTURE)
+  bldg.data.dct_deathgoal = goalFromName(bldg.name, Goal.objtype.STATIC)
   if bldg.data.dct_deathgoal ~= nil then
     tpl.hasDeathGoals = true
   end
@@ -258,6 +258,11 @@ local function getkeys(objtype)
 			["name"]    = "spawnalways",
 			["type"]    = "boolean",
 			["default"] = false,
+		},
+		[9] = {
+		  ["name"]    = "buildings",
+		  ["type"]    = "table",
+		  ["default"] = {},
 		},
 	}
 

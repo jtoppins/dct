@@ -547,7 +547,6 @@ function IADS:monitorTracks()
     end  
   end       
 --  if tablelength(TrackFiles) ~= 0 then
---   env.info(table.tostring(TrackFiles))    
 --  end
   return 2
 end

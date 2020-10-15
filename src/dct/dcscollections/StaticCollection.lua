@@ -138,6 +138,11 @@ function StaticCollection:_setup()
 			grp.category == Unit.Category.STRUCTURE)
 		self._assets[grp.data.name] = grp.data
 	end
+	for _, bldg in ipairs(self._asset.buildings) do	
+	 self:_setupDeathGoal(bldg.data,
+	   bldg.category == Unit.Category.STRUCTURE)
+	 self._assets[bldg.data.name] = bldg.data	
+	end
 	assert(next(self._deathgoals) ~= nil,
 		"runtime error: StaticCollection must have a deathgoal: "..
 		self._asset.name)

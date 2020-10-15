@@ -40,7 +40,6 @@ function table.tostring( tbl )
   return "{" .. table.concat( result, "," ) .. "}"
 end
 
-
 require("lfs")
 require("math")
 local class      = require("libs.class")
