@@ -10,6 +10,7 @@ local utils = require("libs.utils")
 local enum  = require("dct.enum")
 local Goal  = require("dct.Goal")
 local STM   = require("dct.STM")
+local Logger     = require("dct.Logger").getByName("Template")
 
 --[[
 -- represents the amount of damage that can be taken before
@@ -70,41 +71,6 @@ local function goalFromName(name, objtype)
 	goal.objtype  = objtype
 	goal.goaltype = Goal.goaltype.DAMAGE
 	return goal
-end
-
-local function goalFromBldg(building)
-
-  local goal = {}
-  local goalvalid = false
-  local name = building.name
-  for k, v in pairs(Goal.priority) do
-    local index = string.find(name, k)
-    if index ~= nil then
-      goal.priority = v
-      goalvalid = true
-      break
-    end
-  end
-  for k, v in pairs(damage) do
-    local index = string.find(name, k)
-    if index ~= nil then
-      goal.value = v
-      goalvalid = true
-      break
-    end
-  end
-  if not goalvalid then
-    return nil
-  end
-  if goal.priority == nil then
-    goal.priority = Goal.priority.PRIMARY
-  end
-  if goal.value == nil then
-    goal.value = damage.DESTROYED
-  end
-  goal.objtype  = SCENERY
-  goal.goaltype = Goal.goaltype.DAMAGE
-  return goal
 end
 
 -- unique name counter, allows us to generate names that are always unique
@@ -171,7 +137,10 @@ local function setBldgOptions(bldg, idx, tpl)
 
   bldg.data = {}
   bldg.data.start_time = 0
-  bldg.data.dct_deathgoal = goalFromName(bldg.name, Goal.objtype.STATIC)
+  Logger:debug("bldg: "..require("libs.json"):encode_pretty(bldg))
+  bldg.data.dct_deathgoal = goalFromName(bldg.goal, Goal.objtype.SCENERY)
+  bldg.data.dct_deathgoal.buildingID = bldg.name
+  Logger:debug("deathgoal: "..require("libs.json"):encode_pretty(bldg.data.dct_deathgoal))
   if bldg.data.dct_deathgoal ~= nil then
     tpl.hasDeathGoals = true
   end

@@ -17,11 +17,15 @@ function DamageGoal:__init(data)
 		"value error: data.value must be between 0 and 100")
 	BaseGoal.__init(self, data)
 	self._tgtdamage = data.value
+	if self.objtype == enums.objtype.SCENERY then
+	 self._buildingID = data.buildingID
+	end
 end
 
 function DamageGoal:_afterspawn()
 	self._maxlife = 1
 	if self.objtype == enums.objtype.UNIT then
+	  Logger:debug("Unit self: "..require("libs.json"):encode_pretty(self))                         ---added this---
 		self._maxlife = Unit.getByName(self.name):getLife0()
 		if self._maxlife == 0 then
 			self._maxlife = Unit.getByName(self.name):getLife()
@@ -29,12 +33,14 @@ function DamageGoal:_afterspawn()
 				" as 0 using life: "..self._maxlife)
 		end
 	elseif self.objtype == enums.objtype.STATIC then
+	  Logger:debug("Static self: "..require("libs.json"):encode_pretty(self))                         ---added this---
 		self._maxlife = StaticObject.getByName(self.name):getLife()
 	elseif self.objtype == enums.objtype.GROUP then
 		self._maxlife = Group.getByName(self.groupname):getInitialSize()
-	elseif self.objtype == enums.objtype.SCENERY then                          ---added this---
-	 local obj = {id_ = self.name}
-	 self._maxlife = Object.getLife(self.name)
+	elseif self.objtype == enums.objtype.SCENERY then 
+  local obj = {id_ = 109937143}
+   Logger:debug("Scenery obj: "..require("libs.json"):encode_pretty(obj))                         ---added this---
+	 self._maxlife = SceneryObject.getLife(obj)
 	else
 		Logger:error("DamageGoal:_afterspawn() - invalid objtype")
 	end
@@ -64,10 +70,8 @@ function DamageGoal:checkComplete()
 			health = obj:getSize()
 		end
 	elseif self.objtype == enums.objtype.SCENERY then                  ---added this---
-	 local obj = {id_ = self.name}
-	 if obj ~= nil then
-	   health = Object.getLife(obj)
-   end
+	 local obj = {id_ = self._buildingID}
+	   health = SceneryObject.getLife(obj)
 	else
 		Logger:error("DamageGoal:checkComplete() - invalid objtype")
 		return false

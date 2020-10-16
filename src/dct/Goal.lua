@@ -35,6 +35,7 @@ function Goal.factory(name, data)
 
 	data.name = name
 	if data.goaltype == goalenums.goaltype.DAMAGE then
+	  Logger:error("Goalfactory data:\n"..require("libs.json"):encode_pretty(data))
 		goal = DamageGoal(data)
 	else
 		if debug and type(debug.traceback) == 'function' then

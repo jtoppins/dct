@@ -125,7 +125,6 @@ function Asset:__init(template, region)
 		self.rgnname  = region.name
 		self.tplname  = template.name
 		self.buildings = template.buildings                            --BUILDINGS INFO ADDED TO ASSET--
-    env.info("buildings: ".. table.tostring(template.buildings))
 		if self.type == dctenum.assetType.PLAYERGROUP then
 			self.name = self.tplname
 		else
