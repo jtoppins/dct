@@ -25,7 +25,8 @@ local addmenu = missionCommands.addSubMenuForGroup
 local addcmd  = missionCommands.addCommandForGroup
 
 local menus = {}
-function menus.createMenu(theater, asset)
+function menus.createMenu(asset)
+	local theater = require("dct.Theater").singleton()
 	local gid  = asset.groupId
 	local name = asset.name
 

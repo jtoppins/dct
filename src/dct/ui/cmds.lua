@@ -121,8 +121,7 @@ function CheckPayloadCmd:__init(theater, data)
 end
 
 function CheckPayloadCmd:_execute(_ --[[time]], _ --[[cmdr]])
-	local msg = loadout.check(Group.getByName(self.grpname),
-		self.asset.payloadlimits)
+	local msg = loadout.check(self.asset)
 	return msg
 end
 

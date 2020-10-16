@@ -66,26 +66,26 @@ function Player:handleBirth(event)
 				self.name, self.groupId, id))
 	end
 	self.groupId = id
-	uimenu.createMenu(theater, self)
+	uimenu.createMenu(self)
 	local cmdr = theater:getCommander(grp:getCoalition())
 	local msn  = cmdr:getAssigned(self)
 
 	if msn then
-		trigger.action.outTextForGroup(grp:getID(),
+		trigger.action.outTextForGroup(self.groupId,
 			"Welcome. A mission is already assigned to this slot, "..
 			"use the F10 menu to get the briefing or find another.",
 			20, false)
 	else
-		trigger.action.outTextForGroup(grp:getID(),
+		trigger.action.outTextForGroup(self.groupId,
 			"Welcome. Use the F10 Menu to get a theater update and "..
 			"request a mission.",
 			20, false)
 	end
-	loadout.notify(grp)
+	loadout.notify(self)
 end
 
-function Player:handleTakeoff(event)
-	loadout.kick(event.initiator:getGroup())
+function Player:handleTakeoff(_ --[[event]])
+	loadout.kick(self)
 end
 
 return Player
