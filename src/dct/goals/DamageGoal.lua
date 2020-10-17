@@ -7,7 +7,7 @@
 local class    = require("libs.class")
 local enums    = require("dct.goals.enum")
 local BaseGoal = require("dct.goals.BaseGoal")
-local Logger   = require("dct.Logger").getByName("Goal")
+local Logger   = dct.Logger.getByName("Goal")
 
 local DamageGoal = class(BaseGoal)
 function DamageGoal:__init(data)

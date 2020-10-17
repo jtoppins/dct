@@ -1,21 +1,15 @@
 --[[
 -- SPDX-License-Identifier: LGPL-3.0
 --
--- Provides functions to define and manage goals.
+-- Provides functions to define and manage Assets.
 --]]
-
--- TODO: Idea, a "TRANSPORT" asset could represent a helo transport
---   mission such as delivering special forces to a location where
---   they then act as a JTAC.
---
 
 local class    = require("libs.class")
 local utils    = require("libs.utils")
 local enum     = require("dct.enum")
 local dctutils = require("dct.utils")
-local Logger   = require("dct.Logger").getByName("AssetManager")
+local Logger   = dct.Logger.getByName("AssetManager")
 local Command  = require("dct.Command")
-local Asset    = require("dct.Asset")
 
 local ASSET_CHECK_PERIOD = 12*60  -- seconds
 
@@ -148,8 +142,8 @@ function AssetManager:checkAssets(_ --[[time]])
 
 	for _, asset in pairs(self._assetset) do
 		cnt = cnt + 1
-		asset:checkDead()
-		if asset:isDead() then
+		if asset:isSpawned() and asset:checkDead() and
+		   asset:isDead() then
 			self:remove(asset)
 		end
 	end
@@ -250,7 +244,18 @@ end
 
 function AssetManager:unmarshal(data)
 	for _, assettbl in pairs(data.assets) do
-		local asset = Asset()
+		local asset = nil
+		local assettype = assettbl.type
+		if assettype == enum.assetType.AIRSPACE then
+			asset = require("dct.assets.Airspace")()
+		elseif enum.assetClass.STRATEGIC[assettype] or
+		       assettype == enum.assetType.BASEDEFENSE then
+			asset = require("dct.assets.StaticAsset")()
+		elseif assettype == enum.assetType.PLAYERGROUP then
+			asset = require("dct.assets.Player")()
+		else
+			assert(false, "unsupported asset type: "..assettype)
+		end
 		asset:unmarshal(assettbl)
 		self:add(asset)
 	end

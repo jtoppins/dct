@@ -10,9 +10,9 @@ local class      = require("libs.class")
 local utils      = require("libs.utils")
 local dctenums   = require("dct.enum")
 local dctutils   = require("dct.utils")
-local Template   = require("dct.Template")
+local Template   = require("dct.templates.Template")
 local Asset      = require("dct.Asset")
-local Logger     = require("dct.Logger").getByName("Region")
+local Logger     = dct.Logger.getByName("Region")
 
 local tplkind = {
 	["TEMPLATE"]  = 1,
@@ -131,7 +131,8 @@ local function registerType(self, kind, ttype, name)
 	table.insert(self._tpltypes[ttype], entry)
 end
 
-local function addAndSpawnAsset(self, name, assetmgr, centroids)
+local function addAndSpawnAsset(self, name, assetmgr, centroid)
+	centroid = centroid or {}
 	if name == nil then
 		return nil
 	end
@@ -141,13 +142,12 @@ local function addAndSpawnAsset(self, name, assetmgr, centroids)
 		return nil
 	end
 
-	local asset = Asset(tpl, self)
+	local asset = Asset.factory(tpl, self)
 	assetmgr:add(asset)
 	asset:spawn()
 	asset:generate(assetmgr, self)
-	if centroids then
-		table.insert(centroids, asset:getLocation())
-	end
+	centroid.point, centroid.n = dctutils.centroid(asset:getLocation(),
+		centroid.point, centroid.n)
 	return asset
 end
 
@@ -225,7 +225,7 @@ function Region:getTemplateByName(name)
 	return self._templates[name]
 end
 
-function Region:_generate(assetmgr, objtype, names, centroids)
+function Region:_generate(assetmgr, objtype, names, centroid)
 	local limits = {
 		["min"]     = #names,
 		["max"]     = #names,
@@ -242,7 +242,7 @@ function Region:_generate(assetmgr, objtype, names, centroids)
 	for i, tpl in ipairs(names) do
 		if tpl.kind ~= tplkind.EXCLUSION and
 			self._templates[tpl.name].spawnalways == true then
-			addAndSpawnAsset(self, tpl.name, assetmgr, centroids)
+			addAndSpawnAsset(self, tpl.name, assetmgr, centroid)
 			table.remove(names, i)
 			limits.current = 1 + limits.current
 		end
@@ -255,7 +255,7 @@ function Region:_generate(assetmgr, objtype, names, centroids)
 			local i = math.random(1, #self._exclusions[name].names)
 			name = self._exclusions[name]["names"][i]
 		end
-		addAndSpawnAsset(self, name, assetmgr, centroids)
+		addAndSpawnAsset(self, name, assetmgr, centroid)
 		table.remove(names, idx)
 		limits.current = 1 + limits.current
 	end
@@ -268,12 +268,12 @@ end
 -- be limited to mission startup.
 function Region:generate(assetmgr)
 	local tpltypes = utils.deepcopy(self._tpltypes)
-	local centroidpoints = {}
+	local centroid = {}
 
 	for objtype, _ in pairs(dctenums.assetClass["STRATEGIC"]) do
 		local names = tpltypes[objtype]
 		if names ~= nil then
-			self:_generate(assetmgr, objtype, names, centroidpoints)
+			self:_generate(assetmgr, objtype, names, centroid)
 		end
 	end
 
@@ -283,7 +283,10 @@ function Region:generate(assetmgr)
 	end
 
 	-- create airspace asset based on the centroid of this region
-	self.location = dctutils.centroid(centroidpoints)
+	if centroid.point == nil then
+		centroid.point = { ["x"] = 0, ["y"] = 0, ["z"] = 0, }
+	end
+	self.location = centroid.point
 	local airspacetpl = Template({
 		["objtype"]    = "airspace",
 		["name"]       = "airspace",

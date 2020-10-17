@@ -19,7 +19,7 @@
 --]]
 
 local enum    = require("dct.enum")
-local Logger  = require("dct.Logger").getByName("UI")
+local Logger  = dct.Logger.getByName("UI")
 local loadout = require("dct.systems.loadouts")
 local addmenu = missionCommands.addSubMenuForGroup
 local addcmd  = missionCommands.addCommandForGroup

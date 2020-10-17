@@ -1,51 +1,37 @@
 --[[
 -- SPDX-License-Identifier: LGPL-3.0
 --
--- Provides functions for handling StaticCollections.
--- An BaseAsset is a group of objects in the game world
--- that can be destroyed by the opposing side.
+-- Static asset, represents assets that do not move.
+--
+-- StaticAsset<AssetBase>:
+--   has associated DCS objects, has death goals related to the
+--   state of the DCS objects, the asset does not move
 --]]
 
 require("math")
 local class    = require("libs.class")
 local utils    = require("libs.utils")
-local Logger   = require("dct.Logger").getByName("Asset")
+local Logger   = dct.Logger.getByName("Asset")
 local dctutils = require("dct.utils")
 local Goal     = require("dct.Goal")
-local IDCSObjectCollection = require("dct.dcscollections.IDCSObjectCollection")
+local AssetBase= require("dct.assets.AssetBase")
 
---[[
-StaticCollection<IDCSObjectCollection>:
-	attributes(private):
-	- _tpldata
-	- _dead
-	- _deathgoals
-
-	methods(private):
-
--- StaticAsset
---    represents assets that do not move
---  difference from BaseAsset
-	* DCS-objects, has associated DCS objects
-		* objects do not move
-		* has death goals due to having DCS objects
---]]
-
-local StaticCollection = class(IDCSObjectCollection)
-function StaticCollection:__init(asset, template, region)
-	self._marshalnames = {
-		"_dead", "_spawned", "_hasDeathGoals", "_maxdeathgoals",
-	}
-	self._spawned       = false
-	self._dead          = false
+local StaticAsset = class(AssetBase)
+function StaticAsset:__init(template, region)
+	self.__clsname = "StaticAsset"
 	self._maxdeathgoals = 0
 	self._curdeathgoals = 0
 	self._deathgoals    = {}
 	self._assets        = {}
-	IDCSObjectCollection.__init(self, asset, template, region)
+	AssetBase.__init(self, template, region)
+	self:_addMarshalNames({
+		"_hasDeathGoals",
+		"_maxdeathgoals",
+	})
 end
 
-function StaticCollection:_completeinit(template, _ --[[region]])
+function StaticAsset:_completeinit(template, region)
+	AssetBase._completeinit(self, template, region)
 	self._hasDeathGoals = template.hasDeathGoals
 	self._tpldata       = template:copyData()
 end
@@ -54,7 +40,7 @@ end
 -- ignore all but primary targets when it comes to determining
 -- if we are "dead"
 --]]
-function StaticCollection:_addDeathGoal(name, goalspec)
+function StaticAsset:_addDeathGoal(name, goalspec)
 	assert(name ~= nil and type(name) == "string",
 		"value error: name must be provided")
 	assert(goalspec ~= nil, "value error: goalspec must be provided")
@@ -75,19 +61,20 @@ end
 --   remove deathgoal entry
 --   upon no more deathgoals set dead
 --]]
-function StaticCollection:_removeDeathGoal(name, goal)
+function StaticAsset:_removeDeathGoal(name, goal)
 	assert(name ~= nil and type(name) == "string",
 		"value error: name must be provided")
 	assert(goal ~= nil, "value error: goal must be provided")
 
-	Logger:debug("_removeDeathGoal() - obj name: "..name)
+	Logger:debug(string.format("%s:_removeDeathGoal() - obj name: %s",
+		self.__clsname, name))
 	if self:isDead() then
-		Logger:error("_removeDeathGoal() called and StaticCollection("..
-			self._asset.name..") marked as dead")
+		Logger:error(string.format("%s:_removeDeathGoal() called "..
+			"'%s' marked as dead", self.__clsname, self.name))
 		return
 	end
 
-	local grpdata = self._assets[goal:getGroupName()]
+	local grpdata = self._assets[goal:getGroupName()].data
 	if grpdata.name == name then
 		grpdata.dct_dead = true
 	else
@@ -108,11 +95,11 @@ function StaticCollection:_removeDeathGoal(name, goal)
 end
 
 --[[
--- Adds a death goal, which determines when the Collection is determined
--- to be dead. If no death goals have been defined a default of 90%
--- damaged for all objects in the Collection is used.
+-- Adds a death goal, which determines when the Asset is dead.
+-- If no death goals have been defined a default of 90%
+-- damaged for all objects in the Asset is used.
 --]]
-function StaticCollection:_setupDeathGoal(grpdata, static)
+function StaticAsset:_setupDeathGoal(grpdata, static)
 	if self._hasDeathGoals then
 		if grpdata.dct_deathgoal ~= nil then
 			self:_addDeathGoal(grpdata.name, grpdata.dct_deathgoal)
@@ -123,8 +110,7 @@ function StaticCollection:_setupDeathGoal(grpdata, static)
 			end
 		end
 	else
-		self:_addDeathGoal(grpdata.name,
-			IDCSObjectCollection.defaultgoal(static))
+		self:_addDeathGoal(grpdata.name, AssetBase.defaultgoal(static))
 	end
 end
 
@@ -132,48 +118,36 @@ end
 -- Adds an object (group or static) to the monitored list for this
 -- asset. This list will be needed later to save state.
 --]]
-function StaticCollection:_setup()
+function StaticAsset:_setup()
 	for _, grp in ipairs(self._tpldata) do
 		self:_setupDeathGoal(grp.data,
 			grp.category == Unit.Category.STRUCTURE)
-		self._assets[grp.data.name] = grp.data
+		self._assets[grp.data.name] = grp
 	end
 	assert(next(self._deathgoals) ~= nil,
-		"runtime error: StaticCollection must have a deathgoal: "..
-		self._asset.name)
+		string.format("runtime error: %s must have a deathgoal: %s",
+			self.__clsname, self.name))
 end
 
-function StaticCollection:getLocation()
+function StaticAsset:getLocation()
 	if self._location == nil then
-		local points = {}
-		for k,v in pairs(self._assets) do
-			points[k] = {
-				["x"] = v.x, ["y"] = 0, ["z"] = v.y,
-			}
+		local vec2
+		for _, grp in pairs(self._assets) do
+			vec2 = dctutils.centroid(grp.data, vec2)
 		end
-
-		self._location = dctutils.centroid(points)
+		self._location = dctutils.createVec3(vec2, land.getHeight(vec2))
 	end
 	return self._location
 end
 
---[[
--- getStatus - percentage remaining of the asset from 0 - 100
---]]
-function StaticCollection:getStatus()
+function StaticAsset:getStatus()
 	return math.floor((1 - (self._curdeathgoals / self._maxdeathgoals)) * 100)
 end
 
-function StaticCollection:setDead(val)
-	self._dead = val
-end
-
-function StaticCollection:isDead()
-	return self._dead
-end
-
-function StaticCollection:checkDead()
-	assert(self:isSpawned() == true, "runtime error: asset must be spawned")
+function StaticAsset:checkDead()
+	assert(self:isSpawned() == true,
+		string.format("runtime error: Asset(%s) must be spawned",
+			self.name))
 
 	local cnt = 0
 	for name, goal in pairs(self._deathgoals) do
@@ -183,13 +157,11 @@ function StaticCollection:checkDead()
 		end
 	end
 	Logger:debug(string.format("checkDead(%s) - max goals: %d; "..
-		"cur goals: %d; checked: %d", self._asset.name,
+		"cur goals: %d; checked: %d", self.name,
 		self._maxdeathgoals, self._curdeathgoals, cnt))
 end
 
--- Get the names of all DCS objects associated with this
--- Asset class.
-function StaticCollection:getObjectNames()
+function StaticAsset:getObjectNames()
 	local keyset = {}
 	local n      = 0
 	for k,_ in pairs(self._assets) do
@@ -199,11 +171,11 @@ function StaticCollection:getObjectNames()
 	return keyset
 end
 
-function StaticCollection:onDCSEvent(event)
+function StaticAsset:onDCSEvent(event)
 	-- only handle DEAD events
 	if event.id ~= world.event.S_EVENT_DEAD then
-		Logger:debug(string.format("onDCSEvent() - StaticCollection(%s)"..
-		" not DEAD event, ignoring", self._asset.name))
+		Logger:debug(string.format("onDCSEvent() - StaticAsset(%s)"..
+		" not DEAD event, ignoring", self.name))
 		return
 	end
 
@@ -214,14 +186,14 @@ function StaticCollection:onDCSEvent(event)
 	if obj:getCategory() == Object.Category.UNIT then
 		local grpname = obj:getGroup():getName()
 		local grp = self._assets[grpname]
-		for _, unit in pairs(grp.units) do
+		for _, unit in pairs(grp.data.units) do
 			if unit.name == unitname then
 				unit.dct_dead = true
 				break
 			end
 		end
 	else
-		self._assets[unitname].dct_dead = true
+		self._assets[unitname].data.dct_dead = true
 	end
 
 	-- delete any deathgoal related to the unit notified as dead,
@@ -255,7 +227,7 @@ local function removeDCTKeys(grp)
 	return g
 end
 
-function StaticCollection:_spawn()
+function StaticAsset:_spawn()
 	for _, grp in ipairs(self._tpldata) do
 		local gcpy = removeDCTKeys(grp)
 		if gcpy.category == Unit.Category.STRUCTURE then
@@ -271,27 +243,28 @@ function StaticCollection:_spawn()
 	end
 end
 
-function StaticCollection:spawn(ignore)
+function StaticAsset:spawn(ignore)
 	if not ignore and self:isSpawned() then
-		Logger:error("runtime bug - asset already spawned")
+		Logger:error(string.format("runtime bug - %s(%s) already spawned",
+			self.__clsname, self.name))
 		return
 	end
 	self:_spawn()
 end
 
-function StaticCollection:isSpawned()
-	return self._spawned
-end
-
-function StaticCollection:destroy()
-	-- TODO: need some way of determining the difference between a
-	-- unit group and static
-	for name, _ in pairs(self._assets) do
-		local object = Group.getByName(name)
+function StaticAsset:despawn()
+	for name, grp in pairs(self._assets) do
+		local object
+		if grp.category == Unit.Category.STRUCTURE then
+			object = StaticObject.getByName(name)
+		else
+			object = Group.getByName(name)
+		end
 		if object then
 			object:destroy()
 		end
 	end
+	self._spawned = false
 end
 
 local function filterDeadObjects(tbl, grp)
@@ -329,7 +302,7 @@ local function filterTemplateData(tpldata)
 	return cpytbl
 end
 
-function StaticCollection:marshal()
+function StaticAsset:marshal()
 	if self:isDead() then
 		return nil
 	end
@@ -338,7 +311,7 @@ function StaticCollection:marshal()
 	if tbl._tpldata == nil then
 		return nil
 	end
-	return utils.mergetables(tbl, IDCSObjectCollection.marshal(self))
+	return utils.mergetables(AssetBase.marshal(self), tbl)
 end
 
-return StaticCollection
+return StaticAsset

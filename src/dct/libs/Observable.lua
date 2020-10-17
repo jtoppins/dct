@@ -5,7 +5,7 @@
 --]]
 
 local class  = require("libs.class")
-local Logger = require("dct.Logger").getByName("Observable")
+local Logger = dct.Logger.getByName("Observable")
 
 local Observable = class()
 function Observable:__init()
