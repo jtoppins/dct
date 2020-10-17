@@ -28,7 +28,7 @@ local Logger     = require("dct.Logger").getByName("Goal")
 local Goal = {}
 function Goal.factory(name, data)
 	-- TODO: validate all fields either here or in BaseGoal.__init()
-	assert(type(name) == 'string', "value error, name")
+--	assert(type(name) == 'string', "value error, name")
 	assert(type(data) == 'table', "value error, data")
 
 	local goal = nil

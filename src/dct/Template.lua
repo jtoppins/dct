@@ -101,6 +101,7 @@ local function overrideUnitOptions(unit, key, tpl, basename)
 		tpl.hasDeathGoals = true
 	end
 	unit.name = basename.."-"..key
+	env.info("OverrideUnitOptions unit name: "..unit.name)
 end
 
 local function overrideGroupOptions(grp, idx, tpl)
@@ -127,7 +128,7 @@ local function overrideGroupOptions(grp, idx, tpl)
 	end
 	grp.data.name = tpl.regionname.."_"..tpl.name.." "..tpl.coalition.." "..
 		utils.getkey(Unit.Category, grp.category).." "..tostring(idx)
-
+  env.info("OverrideGroupOptions grp name: "..grp.data.name)
 	for i, unit in ipairs(grp.data.units or {}) do
 		overrideUnitOptions(unit, i, tpl, grp.data.name)
 	end
@@ -144,8 +145,8 @@ local function setBldgOptions(bldg, idx, tpl)
   if bldg.data.dct_deathgoal ~= nil then
     tpl.hasDeathGoals = true
   end
-  bldg.data.name = tpl.regionname.."_"..tpl.name.." "..tpl.coalition.." "..
-    "STRUCTURE "..tostring(idx)
+  bldg.data.name = bldg.name
+  env.info("SetBldgOptions bldgname: "..bldg.data.name)
 end
 
 local function checktpldata(_, tpl)

@@ -85,9 +85,13 @@ function AssetManager:add(asset)
 		else
 			self._sideassets[asset.owner].assets[asset.name] = asset.type
 		end
-
 		-- read Asset's object names and setup object to asset mapping
 		-- to be used in handling DCS events and other uses
+		if asset.buildings ~= nil then
+		
+		  env.info("asset has buildings")
+		
+		end
 		for _, objname in pairs(asset:getObjectNames()) do
 			self._object2asset[objname] = asset.name
 		end
@@ -211,8 +215,10 @@ function AssetManager:onDCSEvent(event)
 	local name = obj:getName()
 	if obj:getCategory() == Object.Category.UNIT then
 		name = obj:getGroup():getName()
+		env.info("Asset manager event handler unit name: " ..name)
+  elseif obj:getCategory() == Object.Category.SCENERY then
+    env.info("in elseif assetmanager DCS event")
 	end
-
 	local asset = self._object2asset[name]
 	if asset == nil then
 		Logger:debug("onDCSEvent - not tracked object, obj name: "..name)

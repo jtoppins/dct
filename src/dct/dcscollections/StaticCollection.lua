@@ -55,14 +55,14 @@ end
 -- if we are "dead"
 --]]
 function StaticCollection:_addDeathGoal(name, goalspec)
-	assert(name ~= nil and type(name) == "string",
-		"value error: name must be provided")
+--	assert(name ~= nil and type(name) == "string",
+--		"value error: name must be provided")
 	assert(goalspec ~= nil, "value error: goalspec must be provided")
 
 	if goalspec.priority ~= Goal.priority.PRIMARY then
 		return
 	end
-
+	env.info("_deathgoals name: "..name)
 	self._deathgoals[name] = Goal.factory(name, goalspec)
 	self._curdeathgoals = self._curdeathgoals + 1
 	self._maxdeathgoals = math.max(self._curdeathgoals, self._maxdeathgoals)
@@ -76,8 +76,8 @@ end
 --   upon no more deathgoals set dead
 --]]
 function StaticCollection:_removeDeathGoal(name, goal)
-	assert(name ~= nil and type(name) == "string",
-		"value error: name must be provided")
+--	assert(name ~= nil and type(name) == "string",
+--		"value error: name must be provided")
 	assert(goal ~= nil, "value error: goal must be provided")
 
 	Logger:debug("_removeDeathGoal() - obj name: "..name)
@@ -198,6 +198,7 @@ function StaticCollection:getObjectNames()
 	local keyset = {}
 	local n      = 0
 	for k,_ in pairs(self._assets) do
+	  env.info("getObjectNames k: "..k)
 		n = n+1
 		keyset[n] = k
 	end
@@ -228,7 +229,7 @@ function StaticCollection:onDCSEvent(event)
 	else
 		self._assets[unitname].dct_dead = true
 	end
-
+  env.info("Static Collection event unitname: "..unitname)
 	-- delete any deathgoal related to the unit notified as dead,
 	-- this may work around any bug in DCS where the object is still
 	-- kept and its health reports a non-zero value

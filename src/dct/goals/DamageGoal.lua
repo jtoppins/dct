@@ -25,7 +25,6 @@ end
 function DamageGoal:_afterspawn()
 	self._maxlife = 1
 	if self.objtype == enums.objtype.UNIT then
-	  Logger:debug("Unit self: "..require("libs.json"):encode_pretty(self))                         ---added this---
 		self._maxlife = Unit.getByName(self.name):getLife0()
 		if self._maxlife == 0 then
 			self._maxlife = Unit.getByName(self.name):getLife()
@@ -33,14 +32,11 @@ function DamageGoal:_afterspawn()
 				" as 0 using life: "..self._maxlife)
 		end
 	elseif self.objtype == enums.objtype.STATIC then
-	  Logger:debug("Static self: "..require("libs.json"):encode_pretty(self))                         ---added this---
 		self._maxlife = StaticObject.getByName(self.name):getLife()
 	elseif self.objtype == enums.objtype.GROUP then
 		self._maxlife = Group.getByName(self.groupname):getInitialSize()
-	elseif self.objtype == enums.objtype.SCENERY then 
-  local obj = {id_ = 109937143}
-   Logger:debug("Scenery obj: "..require("libs.json"):encode_pretty(obj))                         ---added this---
-	 self._maxlife = SceneryObject.getLife(obj)
+	elseif self.objtype == enums.objtype.SCENERY then
+	  self._maxlife = 2500	
 	else
 		Logger:error("DamageGoal:_afterspawn() - invalid objtype")
 	end
