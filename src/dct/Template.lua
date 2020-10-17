@@ -138,7 +138,6 @@ local function setBldgOptions(bldg, idx, tpl)
 
   bldg.data = {}
   bldg.data.start_time = 0
-  Logger:debug("bldg: "..require("libs.json"):encode_pretty(bldg))
   bldg.data.dct_deathgoal = goalFromName(bldg.goal, Goal.objtype.SCENERY)
   bldg.data.dct_deathgoal.buildingID = bldg.name
   Logger:debug("deathgoal: "..require("libs.json"):encode_pretty(bldg.data.dct_deathgoal))

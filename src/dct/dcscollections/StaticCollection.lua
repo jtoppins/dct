@@ -75,12 +75,10 @@ end
 --   remove deathgoal entry
 --   upon no more deathgoals set dead
 --]]
-function StaticCollection:_removeDeathGoal(name, goal)
+	function StaticCollection:_removeDeathGoal(name, goal)
 --	assert(name ~= nil and type(name) == "string",
 --		"value error: name must be provided")
 	assert(goal ~= nil, "value error: goal must be provided")
-
-	Logger:debug("_removeDeathGoal() - obj name: "..name)
 	if self:isDead() then
 		Logger:error("_removeDeathGoal() called and StaticCollection("..
 			self._asset.name..") marked as dead")
@@ -138,10 +136,12 @@ function StaticCollection:_setup()
 			grp.category == Unit.Category.STRUCTURE)
 		self._assets[grp.data.name] = grp.data
 	end
-	for _, bldg in ipairs(self._asset.buildings) do	
-	 self:_setupDeathGoal(bldg.data,
-	   bldg.category == Unit.Category.STRUCTURE)
-	 self._assets[bldg.data.name] = bldg.data	
+	if self._asset.buildings then
+  	for _, bldg in ipairs(self._asset.buildings) do	
+  	 self:_setupDeathGoal(bldg.data,
+  	   bldg.category == Unit.Category.STRUCTURE)
+  	 self._assets[bldg.data.name] = bldg.data	
+  	end
 	end
 	assert(next(self._deathgoals) ~= nil,
 		"runtime error: StaticCollection must have a deathgoal: "..

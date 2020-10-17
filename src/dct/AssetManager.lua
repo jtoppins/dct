@@ -87,11 +87,6 @@ function AssetManager:add(asset)
 		end
 		-- read Asset's object names and setup object to asset mapping
 		-- to be used in handling DCS events and other uses
-		if asset.buildings ~= nil then
-		
-		  env.info("asset has buildings")
-		
-		end
 		for _, objname in pairs(asset:getObjectNames()) do
 			self._object2asset[objname] = asset.name
 		end
