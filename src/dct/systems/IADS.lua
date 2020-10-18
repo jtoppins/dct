@@ -519,9 +519,9 @@ function IADS:populateLists()
 end
 
 function IADS:monitorTracks()
-  self.EWRTrackFileBuild()
-  self.SAMTrackFileBuild()
-  self.AWACSTrackFileBuild()
+  self:EWRTrackFileBuild()
+  self:SAMTrackFileBuild()
+  self:AWACSTrackFileBuild()
   for _, EWR in pairs(EWRSites) do  
     for _, track in pairs(EWR.trackFiles) do   
       if ((timer.getAbsTime() - track.LastDetected) > trackMemory or (not track.Object:isExist()) or (not track.Object:inAir())) then      
