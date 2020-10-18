@@ -16,15 +16,25 @@ local Logger  = dct.Logger.getByName("Asset")
 local loadout = require("dct.systems.loadouts")
 local settings = _G.dct.settings
 
--- TODO: how to disable the player slot, we need to cover two cases:
---  * disabled: a player cannot enter the slot but if already occupied
---    the player is not removed from the slot
---  * kick: players are immediately removed from the slot and
---    new players are prevented from joining
-
+--[[
+-- Player - represents a player slot in DCS
+--
+-- Slot Management
+--   Player objects cannot die however they can be spawned. Spawning
+--   is used as the signal for enabling/disabling the slot. The external
+--   hooks script will check if this object is spawned before allowing
+--   a player to enter the slot.
+--
+--   This covers disabling the other side is covering kicking a player
+--   from a slot.
+--]]
 local Player = class(AssetBase)
 function Player:__init(template, region)
 	self.__clsname = "Player"
+	self._eventhandlers = {
+		[world.event.S_EVENT_BIRTH]   = self.handleBirth,
+		[world.event.S_EVENT_TAKEOFF] = self.handleTakeoff,
+	}
 	AssetBase.__init(self, template, region)
 	self:_addMarshalNames({
 		"unittype",
@@ -58,8 +68,8 @@ function Player:getLocation()
 	return self._location
 end
 
-local function handleBirth(self, event, theater)
-	--local theater = _G.dct.theater
+function Player:handleBirth(event)
+	local theater = require("dct.Theater").singleton()
 	local grp = event.initiator:getGroup()
 	local id = grp:getID()
 	if self.groupId ~= id then
@@ -68,38 +78,36 @@ local function handleBirth(self, event, theater)
 				self.name, self.groupId, id))
 	end
 	self.groupId = id
-	uimenu.createMenu(theater, self)
+	uimenu.createMenu(self)
 	local cmdr = theater:getCommander(grp:getCoalition())
 	local msn  = cmdr:getAssigned(self)
 
 	if msn then
-		trigger.action.outTextForGroup(grp:getID(),
+		trigger.action.outTextForGroup(self.groupId,
 			"Welcome. A mission is already assigned to this slot, "..
 			"use the F10 menu to get the briefing or find another.",
 			20, false)
 	else
-		trigger.action.outTextForGroup(grp:getID(),
+		trigger.action.outTextForGroup(self.groupId,
 			"Welcome. Use the F10 Menu to get a theater update and "..
 			"request a mission.",
 			20, false)
 	end
-	loadout.notify(grp)
+	loadout.notify(self)
 end
 
-local function handleTakeoff(_, event)
-	loadout.kick(event.initiator:getGroup())
+function Player:handleTakeoff(_ --[[event]])
+	loadout.kick(self)
 end
 
-local handlers = {
-	[world.event.S_EVENT_BIRTH] = handleBirth,
-	[world.event.S_EVENT_TAKEOFF] = handleTakeoff,
-}
-
-function Player:onDCSEvent(event, theater)
-	local handler = handlers[event.id]
-	if handler ~= nil then
-		handler(self, event, theater)
-	end
+--[[
+-- kick - cause the player to be removed from the slot
+--
+-- players are immediately removed from the slot, however, this
+-- action does not prevent another player from joing the slot
+--]]
+function Player:kick()
+	require("dct.Theater").singleton():queuekick(self)
 end
 
 return Player

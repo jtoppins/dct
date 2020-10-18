@@ -9,6 +9,7 @@ read_globals = {
 	"md5",
 
 	-- DCS specific globals
+	"country",
 	"env",
 	"Unit",
 	"Object",
@@ -43,5 +44,5 @@ files["tests/test-0001-data.lua"] = {
 	globals = {"staticTemplate", "metadata",}
 }
 files["tests/*"] = {
-	globals = {"dctsettings", "dctcheck", },
+	globals = {"dctcheck", "dct"},
 }

@@ -23,6 +23,7 @@ local dctenum  = require("dct.enum")
 local dctutils = require("dct.utils")
 local Goal     = require("dct.Goal")
 local Marshallable = require("dct.libs.Marshallable")
+local Logger   = dct.Logger.getByName("Asset")
 local settings = _G.dct.settings
 
 local norenametype = {
@@ -74,6 +75,9 @@ local AssetBase = class(Marshallable)
 function AssetBase:__init(template, region)
 	if not self.__clsname then
 		self.__clsname = "AssetBase"
+	end
+	if not self._eventhandlers then
+		self._eventhandlers = {}
 	end
 	Marshallable.__init(self)
 	self:_addMarshalNames({
@@ -302,7 +306,14 @@ end
 -- Process a DCS event associated w/ this asset.
 -- Returns: none
 --]]
-function AssetBase:onDCSEvent(_ --[[event]])
+function AssetBase:onDCTEvent(event)
+	local handler = self._eventhandlers[event.id]
+	Logger:debug(string.format(
+		"AssetBase:onDCTEvent(%s); event.id: %d, handler: %s",
+		self.__clsname, event.id, tostring(handler)))
+	if handler ~= nil then
+		handler(self, event)
+	end
 end
 
 --[[

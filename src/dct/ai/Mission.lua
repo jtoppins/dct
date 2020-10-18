@@ -143,8 +143,8 @@ function Mission:update(_)
 			}
 			-- We have to use theater:queueCommand() to bypass the
 			-- limiting of players sending too many commands
-			self.cmdr.theater:queueCommand(10,
-				uicmds[request.type](self.cmdr.theater, request))
+			local theater = require("dct.Theater").singleton()
+			theater:queueCommand(10, uicmds[request.type](theater, request))
 		end
 	end
 	return

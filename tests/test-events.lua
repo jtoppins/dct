@@ -1,13 +1,9 @@
 #!/usr/bin/lua
 
 require("dcttestlibs")
-dctsettings = {
-	["profile"] = false,
-	["debug"]   = false,
-	["logger"]  = {
-	},
-}
 require("dct")
+dct.settings.server.profile = false
+dct.settings.server.debug   = false
 
 local testcases = {
 	[1] = {
@@ -78,6 +74,7 @@ local function main()
 		},
 	}, playergrp, "bobplayer")
 
+	t:exec(50)
 	t:getAssetMgr():checkAssets(2000)
 
 	for _, data in ipairs(testcases) do

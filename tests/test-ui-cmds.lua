@@ -2,9 +2,7 @@
 
 require("math")
 math.randomseed(50)
-
 require("dcttestlibs")
-
 require("dct")
 local enum   = require("dct.enum")
 local uicmds = require("dct.ui.cmds")
@@ -129,6 +127,8 @@ local testcmds = {
 
 local function main()
 	local theater = dct.Theater()
+	_G.dct.theater = theater
+	theater:exec(50)
 	theater:onEvent({
 		["id"]        = world.event.S_EVENT_BIRTH,
 		["initiator"] = unit1,

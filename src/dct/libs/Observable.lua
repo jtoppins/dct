@@ -10,33 +10,38 @@ local Logger = dct.Logger.getByName("Observable")
 local Observable = class()
 function Observable:__init()
 	self._observers = {}
-	-- TODO: might need to implement a __mode metatable
-	-- to implement weak key & value references
 end
 
-function Observable:registerHandler(func, ctx)
-	assert(type(func) == "function", "func must be a function")
-	-- ctx must be non-nil otherwise upon insertion the index which
-	-- is the function address will be deleted.
-	assert(ctx ~= nil, "ctx must be a non-nil value")
-
-	if self._observers[func] ~= nil then
-		Logger:error("func("..tostring(func)..") already set - skipping")
+function Observable:addObserver(asset)
+	assert(asset, "value error: 'asset' must not be nil")
+	if type(asset.onDCTEvent) ~= "function" then
+		Logger:error(
+			string.format("asset(%s) does not implement 'onDCTEvent'",
+				asset.name))
 		return
 	end
-	Logger:debug("adding handler("..tostring(func)..")")
-	self._observers[func] = ctx
+	Logger:debug("adding observer("..asset.name..")")
+	self._observers[asset.name] = true
 end
 
-function Observable:removeHandler(func)
-	assert(type(func) == "function", "func must be a function")
-	self._observers[func] = nil
+function Observable:removeObserver(name)
+	assert(type(name) == "string", "value error: 'name' must be a string")
+	self._observers[name] = nil
 end
 
-function Observable:onEvent(event)
-	for observer, ctx in pairs(self._observers) do
-		Logger:debug("executing handler: "..tostring(observer))
-		observer(ctx, event)
+function Observable:onNotify(event)
+	for observer, _ in pairs(self._observers) do
+		local asset = require("dct.Theater").singleton():
+			getAssetMgr():getAsset(observer)
+		if asset == nil then
+			Logger:debug(string.format(
+				"asset(%s) appears to not exist removing observer",
+				observer))
+			self:removeObserver(observer)
+		else
+			Logger:debug("executing observer: "..observer)
+			asset:onDCTEvent(event)
+		end
 	end
 end
 

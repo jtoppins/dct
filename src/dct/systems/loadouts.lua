@@ -59,27 +59,30 @@ local notifymsg =
 	"use the F10 Menu to validate your loadout before departing."
 local loadout = {}
 
-function loadout.notify(grp)
-	trigger.action.outTextForGroup(grp:getID(), notifymsg, 20, false)
+function loadout.notify(player)
+	trigger.action.outTextForGroup(player.groupId, notifymsg, 20, false)
 end
 
-function loadout.kick(grp, limits)
-	local ok = validatePayload(grp, limits)
+function loadout.kick(player)
+	local ok = validatePayload(Group.getByName(player.name),
+		player.payloadlimits)
 	if ok then
 		return
 	end
 
-	trigger.action.outTextForGroup(grp:getID(),
+	trigger.action.outTextForGroup(player.groupId,
 		"You have been removed to spectator for flying with an "..
 		"invalid loadout. "..notifymsg,
 		20, true)
-	trigger.action.setUserFlag(grp:getName(), 100)
+	trigger.action.setUserFlag(player.name, 100)
+	player:kick()
 	return ok
 end
 
-function loadout.check(grp, limits)
+function loadout.check(player)
 	local msg
-	local ok, costs = validatePayload(grp, limits)
+	local ok, costs = validatePayload(Group.getByName(player.name),
+		player.payloadlimits)
 	if ok then
 		msg = "Valid loadout, you may depart. Good luck!"
 	else

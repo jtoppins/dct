@@ -1,6 +1,5 @@
 #!/usr/bin/lua
 
---[[
 require("dcttestlibs")
 require("dct")
 
@@ -31,13 +30,16 @@ local testcmds = {
 			["initiator"] = unit1,
 		},
 		["assert"] = true,
-		["expect"] = "Welcome. Use the F10 Menu to get a theater "..
-			"update and request a mission.",
+		["expect"] = "Please read the loadout limits in the briefing"..
+			" and use the F10 Menu to validate your loadout before"..
+			" departing.",
 	},
 }
 
 local function main()
 	local theater = dct.Theater()
+	_G.dct.theater = theater
+	theater:exec(50)
 	for _, data in ipairs(testcmds) do
 		trigger.action.setmsgbuffer(data.expect)
 		theater:onEvent(data.event)
@@ -45,6 +47,5 @@ local function main()
 	end
 	return 0
 end
---]]
 
-os.exit(0)
+os.exit(main())

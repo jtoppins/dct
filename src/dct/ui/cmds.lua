@@ -24,12 +24,8 @@ function UICmd:__init(theater, data)
 	self.theater      = theater
 	self.asset        = asset
 	self.type         = data.type
-	self.grpid        = asset.groupId
-	self.grpname      = data.name
-	self.side         = asset.owner
 	self.displaytime  = 30
 	self.displayclear = true
-	self.actype       = asset.unittype
 end
 
 function UICmd:isAlive()
@@ -47,11 +43,11 @@ function UICmd:execute(time)
 		return nil
 	end
 
-	local cmdr = self.theater:getCommander(self.side)
+	local cmdr = self.theater:getCommander(self.asset.owner)
 	local msg  = self:_execute(time, cmdr)
 	assert(msg ~= nil and type(msg) == "string", "msg must be a string")
-	trigger.action.outTextForGroup(self.grpid, msg, self.displaytime,
-		self.displayclear)
+	trigger.action.outTextForGroup(self.asset.groupId, msg,
+		self.displaytime, self.displayclear)
 	self.asset.cmdpending = false
 	return nil
 end
@@ -74,12 +70,12 @@ end
 
 function ScratchPadSet:_execute(_, _)
 	local mrkid = human.getMarkID()
-	local pos   = Group.getByName(self.grpname):getUnit(1):getPoint()
-	local title = "SCRATCHPAD "..tostring(self.grpid)
+	local pos   = Group.getByName(self.asset.name):getUnit(1):getPoint()
+	local title = "SCRATCHPAD "..tostring(self.asset.groupId)
 
-	self.theater.scratchpad[mrkid] = self.grpname
-	trigger.action.markToGroup(mrkid, title, pos, self.grpid, false,
-		"edit me")
+	self.theater.scratchpad[mrkid] = self.asset.name
+	trigger.action.markToGroup(mrkid, title, pos, self.asset.groupId,
+		false, "edit me")
 	local msg = "Look on F10 MAP for user mark with title: "..
 		title.."\n"..
 		"Edit body with your scratchpad information. "..
@@ -121,8 +117,7 @@ function CheckPayloadCmd:__init(theater, data)
 end
 
 function CheckPayloadCmd:_execute(_ --[[time]], _ --[[cmdr]])
-	local msg = loadout.check(Group.getByName(self.grpname),
-		self.asset.payloadlimits)
+	local msg = loadout.check(self.asset)
 	return msg
 end
 
@@ -209,7 +204,7 @@ function MissionRqstCmd:_execute(_, cmdr)
 		return msg
 	end
 
-	msn = cmdr:requestMission(self.grpname, self.missiontype)
+	msn = cmdr:requestMission(self.asset.name, self.missiontype)
 	if msn == nil then
 		msg = string.format("No %s missions available.",
 			human.missiontype(self.missiontype))
@@ -217,7 +212,7 @@ function MissionRqstCmd:_execute(_, cmdr)
 		msg = string.format("Mission %s assigned, use F10 menu "..
 			"to see this briefing again\n", msn:getID())
 		msg = msg..briefingmsg(msn, self.asset)
-		human.drawTargetIntel(msn, self.grpid, false)
+		human.drawTargetIntel(msn, self.asset.groupId, false)
 	end
 	return msg
 end

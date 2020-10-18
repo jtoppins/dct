@@ -14,7 +14,6 @@ local json        = require("libs.json")
 local dctutils    = require("dct.utils")
 local uicmds      = require("dct.ui.cmds")
 local uiscratchpad= require("dct.ui.scratchpad")
-local Observable  = require("dct.libs.Observable")
 local STM         = require("dct.templates.STM")
 local Template    = require("dct.templates.Template")
 local Region      = require("dct.templates.Region")
@@ -22,7 +21,6 @@ local Asset       = require("dct.Asset")
 local Commander   = require("dct.ai.Commander")
 local Command     = require("dct.Command")
 local Logger      = dct.Logger.getByName("Theater")
-local Profiler    = require("dct.libs.Profiler").getProfiler()
 local settings    = _G.dct.settings.server
 
 --[[
@@ -39,10 +37,9 @@ local settings    = _G.dct.settings.server
 --			<regionname> = Region(),
 --		},
 --]]
-local Theater = class(Observable)
+local Theater = class()
 function Theater:__init()
-	Observable.__init(self)
-	Profiler:profileStart("Theater:init()")
+	self._observers = {}
 	self.savestatefreq = 7*60 -- seconds
 	self.cmdmindelay   = 2
 	self.uicmddelay    = self.cmdmindelay
@@ -58,6 +55,7 @@ function Theater:__init()
 	self.cmdrs     = {}
 	self.scratchpad= {}
 	self.startdate = os.date("*t")
+	self._kicklist  = {}
 
 	for _, val in pairs(coalition.side) do
 		self.cmdrs[val] = Commander(self, val)
@@ -66,11 +64,22 @@ function Theater:__init()
 	-- TODO: remove spawning from generation of the theater
 	self:_loadGoals()
 	self:_loadRegions()
+	self:queueCommand(20, Command(self._delayedInit, self))
+end
+
+function Theater.singleton()
+	if _G.dct.theater ~= nil then
+		return _G.dct.theater
+	end
+	_G.dct.theater = Theater()
+	return _G.dct.theater
+end
+
+function Theater:_delayedInit()
 	self:_loadOrGenerate()
 	self:_loadPlayerSlots()
 	uiscratchpad(self)
 	self:queueCommand(100, Command(self.export, self))
-	Profiler:profileStop("Theater:init()")
 end
 
 -- a description of the world state that signifies a particular side wins
@@ -169,13 +178,32 @@ function Theater:_loadOrGenerate()
 end
 
 local function isPlayerGroup(grp, _, _)
+	local slotcnt = 0
 	for _, unit in ipairs(grp.units) do
 		if unit.skill == "Client" then
-			return true
+			slotcnt = slotcnt + 1
 		end
+	end
+	if slotcnt > 0 then
+		assert(slotcnt == 1,
+			string.format("DCT requires 1 slot groups. Group '%s' "..
+				" of type a/c (%s) has more than one player slot.",
+				grp.name, grp.units[1].type))
+		return true
 	end
 	return false
 end
+
+function Theater:queuekick(playerasset)
+	self._kicklist[playerasset.name] = true
+end
+
+function Theater:getkicklist()
+	local kicklist = self._kicklist
+	self._kicklist = {}
+	return json:encode(kicklist)
+end
+
 
 function Theater:_loadPlayerSlots()
 	local cnt = 0
@@ -198,6 +226,35 @@ function Theater:_loadPlayerSlots()
 		end
 	end
 	Logger:info(string.format("_loadPlayerSlots(); found %d slots", cnt))
+end
+
+function Theater:registerHandler(func, ctx, name)
+	assert(type(func) == "function", "func must be a function")
+	-- ctx must be non-nil otherwise upon insertion the index which
+	-- is the function address will be deleted.
+	assert(ctx ~= nil, "ctx must be a non-nil value")
+	name = name or "unknown"
+
+	if self._observers[func] ~= nil then
+		Logger:error("func("..tostring(func)..") already set - skipping")
+		return
+	end
+	Logger:debug("adding handler("..name..")")
+	self._observers[func] = { ["ctx"] = ctx, ["name"] = name, }
+end
+
+function Theater:removeHandler(func)
+	assert(type(func) == "function", "func must be a function")
+	self._observers[func] = nil
+end
+
+-- DCS looks for this function in any table we register with the world
+-- event handler
+function Theater:onEvent(event)
+	for handler, val in pairs(self._observers) do
+		Logger:debug("executing handler: "..val.name)
+		handler(val.ctx, event)
+	end
 end
 
 function Theater:export(_)
