@@ -28,14 +28,13 @@ local Logger     = require("dct.Logger").getByName("Goal")
 local Goal = {}
 function Goal.factory(name, data)
 	-- TODO: validate all fields either here or in BaseGoal.__init()
---	assert(type(name) == 'string', "value error, name")
+	assert(type(name) == 'string', "value error, name")
 	assert(type(data) == 'table', "value error, data")
 
 	local goal = nil
 
 	data.name = name
 	if data.goaltype == goalenums.goaltype.DAMAGE then
-	  Logger:error("Goalfactory data:\n"..require("libs.json"):encode_pretty(data))
 		goal = DamageGoal(data)
 	else
 		if debug and type(debug.traceback) == 'function' then

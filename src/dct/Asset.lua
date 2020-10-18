@@ -5,6 +5,7 @@
 -- An Asset is a group of objects in the game world
 -- that can be destroyed by the opposing side.
 --]]
+
 require("math")
 local class    = require("libs.class")
 local utils    = require("libs.utils")
@@ -124,7 +125,6 @@ function Asset:__init(template, region)
 		self.owner    = template.coalition
 		self.rgnname  = region.name
 		self.tplname  = template.name
-		self.buildings = template.buildings                            --BUILDINGS INFO ADDED TO ASSET--
 		if self.type == dctenum.assetType.PLAYERGROUP then
 			self.name = self.tplname
 		else

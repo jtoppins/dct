@@ -55,14 +55,14 @@ end
 -- if we are "dead"
 --]]
 function StaticCollection:_addDeathGoal(name, goalspec)
---	assert(name ~= nil and type(name) == "string",
---		"value error: name must be provided")
+	assert(name ~= nil and type(name) == "string",
+		"value error: name must be provided")
 	assert(goalspec ~= nil, "value error: goalspec must be provided")
 
 	if goalspec.priority ~= Goal.priority.PRIMARY then
 		return
 	end
-	env.info("_deathgoals name: "..name)
+
 	self._deathgoals[name] = Goal.factory(name, goalspec)
 	self._curdeathgoals = self._curdeathgoals + 1
 	self._maxdeathgoals = math.max(self._curdeathgoals, self._maxdeathgoals)
@@ -75,10 +75,12 @@ end
 --   remove deathgoal entry
 --   upon no more deathgoals set dead
 --]]
-	function StaticCollection:_removeDeathGoal(name, goal)
---	assert(name ~= nil and type(name) == "string",
---		"value error: name must be provided")
+function StaticCollection:_removeDeathGoal(name, goal)
+	assert(name ~= nil and type(name) == "string",
+		"value error: name must be provided")
 	assert(goal ~= nil, "value error: goal must be provided")
+
+	Logger:debug("_removeDeathGoal() - obj name: "..name)
 	if self:isDead() then
 		Logger:error("_removeDeathGoal() called and StaticCollection("..
 			self._asset.name..") marked as dead")
@@ -110,7 +112,7 @@ end
 -- to be dead. If no death goals have been defined a default of 90%
 -- damaged for all objects in the Collection is used.
 --]]
-function StaticCollection:_setupDeathGoal(grpdata, static)
+function StaticCollection:_setupDeathGoal(grpdata, category)
 	if self._hasDeathGoals then
 		if grpdata.dct_deathgoal ~= nil then
 			self:_addDeathGoal(grpdata.name, grpdata.dct_deathgoal)
@@ -122,7 +124,10 @@ function StaticCollection:_setupDeathGoal(grpdata, static)
 		end
 	else
 		self:_addDeathGoal(grpdata.name,
-			IDCSObjectCollection.defaultgoal(static))
+			IDCSObjectCollection.defaultgoal(
+				category == Unit.Category.STRUCTURE or
+				category == Unit.Category.STRUCTURE + 1
+			))
 	end
 end
 
@@ -132,16 +137,8 @@ end
 --]]
 function StaticCollection:_setup()
 	for _, grp in ipairs(self._tpldata) do
-		self:_setupDeathGoal(grp.data,
-			grp.category == Unit.Category.STRUCTURE)
+		self:_setupDeathGoal(grp.data, grp.category)
 		self._assets[grp.data.name] = grp.data
-	end
-	if self._asset.buildings then
-  	for _, bldg in ipairs(self._asset.buildings) do	
-  	 self:_setupDeathGoal(bldg.data,
-  	   bldg.category == Unit.Category.STRUCTURE)
-  	 self._assets[bldg.data.name] = bldg.data	
-  	end
 	end
 	assert(next(self._deathgoals) ~= nil,
 		"runtime error: StaticCollection must have a deathgoal: "..
@@ -198,7 +195,6 @@ function StaticCollection:getObjectNames()
 	local keyset = {}
 	local n      = 0
 	for k,_ in pairs(self._assets) do
-	  env.info("getObjectNames k: "..k)
 		n = n+1
 		keyset[n] = k
 	end
@@ -216,7 +212,7 @@ function StaticCollection:onDCSEvent(event)
 	local obj = event.initiator
 
 	-- mark the unit/group/static as dead in the template, dct_dead
-	local unitname = obj:getName()
+	local unitname = tostring(obj:getName())
 	if obj:getCategory() == Object.Category.UNIT then
 		local grpname = obj:getGroup():getName()
 		local grp = self._assets[grpname]
@@ -229,7 +225,7 @@ function StaticCollection:onDCSEvent(event)
 	else
 		self._assets[unitname].dct_dead = true
 	end
-  env.info("Static Collection event unitname: "..unitname)
+
 	-- delete any deathgoal related to the unit notified as dead,
 	-- this may work around any bug in DCS where the object is still
 	-- kept and its health reports a non-zero value
@@ -261,14 +257,20 @@ local function removeDCTKeys(grp)
 	return g
 end
 
+local function __spawn(grp)
+	if grp.category == Unit.Category.STRUCTURE + 1 then
+		return
+	end
+	if grp.category == Unit.Category.STRUCTURE then
+		coalition.addStaticObject(grp.countryid, grp.data)
+	else
+		coalition.addGroup(grp.countryid, grp.category, grp.data)
+	end
+end
+
 function StaticCollection:_spawn()
 	for _, grp in ipairs(self._tpldata) do
-		local gcpy = removeDCTKeys(grp)
-		if gcpy.category == Unit.Category.STRUCTURE then
-			coalition.addStaticObject(gcpy.countryid, gcpy.data)
-		else
-			coalition.addGroup(gcpy.countryid, gcpy.category, gcpy.data)
-		end
+		__spawn(removeDCTKeys(grp))
 	end
 
 	self._spawned = true

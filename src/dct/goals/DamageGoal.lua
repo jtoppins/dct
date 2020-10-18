@@ -17,9 +17,6 @@ function DamageGoal:__init(data)
 		"value error: data.value must be between 0 and 100")
 	BaseGoal.__init(self, data)
 	self._tgtdamage = data.value
-	if self.objtype == enums.objtype.SCENERY then
-	 self._buildingID = data.buildingID
-	end
 end
 
 function DamageGoal:_afterspawn()
@@ -36,7 +33,7 @@ function DamageGoal:_afterspawn()
 	elseif self.objtype == enums.objtype.GROUP then
 		self._maxlife = Group.getByName(self.groupname):getInitialSize()
 	elseif self.objtype == enums.objtype.SCENERY then
-	  self._maxlife = 2500	
+		self._maxlife = 2500
 	else
 		Logger:error("DamageGoal:_afterspawn() - invalid objtype")
 	end
@@ -65,9 +62,9 @@ function DamageGoal:checkComplete()
 		if obj ~= nil then
 			health = obj:getSize()
 		end
-	elseif self.objtype == enums.objtype.SCENERY then                  ---added this---
-	 local obj = {id_ = self._buildingID}
-	   health = SceneryObject.getLife(obj)
+	elseif self.objtype == enums.objtype.SCENERY then
+		local obj = { id_ = tonumber(self.name) }
+		health = SceneryObject.getLife(obj)
 	else
 		Logger:error("DamageGoal:checkComplete() - invalid objtype")
 		return false

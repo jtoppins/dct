@@ -10,7 +10,6 @@ local utils = require("libs.utils")
 local enum  = require("dct.enum")
 local Goal  = require("dct.Goal")
 local STM   = require("dct.STM")
-local Logger     = require("dct.Logger").getByName("Template")
 
 --[[
 -- represents the amount of damage that can be taken before
@@ -101,7 +100,6 @@ local function overrideUnitOptions(unit, key, tpl, basename)
 		tpl.hasDeathGoals = true
 	end
 	unit.name = basename.."-"..key
-	env.info("OverrideUnitOptions unit name: "..unit.name)
 end
 
 local function overrideGroupOptions(grp, idx, tpl)
@@ -128,24 +126,10 @@ local function overrideGroupOptions(grp, idx, tpl)
 	end
 	grp.data.name = tpl.regionname.."_"..tpl.name.." "..tpl.coalition.." "..
 		utils.getkey(Unit.Category, grp.category).." "..tostring(idx)
-  env.info("OverrideGroupOptions grp name: "..grp.data.name)
+
 	for i, unit in ipairs(grp.data.units or {}) do
 		overrideUnitOptions(unit, i, tpl, grp.data.name)
 	end
-end
-
-local function setBldgOptions(bldg, idx, tpl)
-
-  bldg.data = {}
-  bldg.data.start_time = 0
-  bldg.data.dct_deathgoal = goalFromName(bldg.goal, Goal.objtype.SCENERY)
-  bldg.data.dct_deathgoal.buildingID = bldg.name
-  Logger:debug("deathgoal: "..require("libs.json"):encode_pretty(bldg.data.dct_deathgoal))
-  if bldg.data.dct_deathgoal ~= nil then
-    tpl.hasDeathGoals = true
-  end
-  bldg.data.name = bldg.name
-  env.info("SetBldgOptions bldgname: "..bldg.data.name)
 end
 
 local function checktpldata(_, tpl)
@@ -156,12 +140,22 @@ local function checktpldata(_, tpl)
 	return true
 end
 
-local function checkbldgdata(_,tpl)
-
-  for idx, bldg in ipairs(tpl.buildings) do
-    setBldgOptions(bldg, idx, tpl)  
-  end
-  return true
+local function checkbldgdata(keydata, tpl)
+	for idx, bldg in ipairs(tpl[keydata.name]) do
+		local bldgdata = {}
+		bldgdata.countryid = 0
+		bldgdata.category  = Unit.Category.STRUCTURE + 1
+		bldgdata.data = {
+			["dct_deathgoal"] = goalFromName(bldg.goal,
+				Goal.objtype.SCENERY),
+			["name"] = tostring(bldg.id),
+		}
+		table.insert(tpl.tpldata, bldgdata)
+		if bldgdata.data.dct_deathgoal ~= nil then
+			tpl.hasDeathGoals = true
+		end
+	end
+	return true
 end
 
 local function checkobjtype(keydata, tbl)
@@ -228,11 +222,6 @@ local function getkeys(objtype)
 			["type"]    = "boolean",
 			["default"] = false,
 		},
-		[9] = {
-		  ["name"]    = "buildings",
-		  ["type"]    = "table",
-		  ["default"] = {},
-		},
 	}
 
 	if objtype ~= enum.assetType.AIRSPACE and
@@ -242,9 +231,10 @@ local function getkeys(objtype)
 			["type"]  = "table",
 			["check"] = checktpldata,})
 		table.insert(keys, {
-		  ["name"]  = "buildings",
-		  ["type"]  = "table",
-		  ["check"] = checkbldgdata,})
+			["name"]    = "buildings",
+			["type"]    = "table",
+			["default"] = {},
+			["check"] = checkbldgdata,})
 	end
 
 	if objtype == enum.assetType.AIRSPACE then
@@ -325,7 +315,7 @@ function Template:validate()
 		["type"]  = "string",
 		["check"] = checkobjtype,
 	},}, self)
-  
+
 	utils.checkkeys(getkeys(self.objtype), self)
 end
 
@@ -348,7 +338,7 @@ function Template.fromFile(regionname, dctfile, stmfile)
 	if stmfile ~= nil then
 		template = utils.mergetables(template,
 			STM.transform(utils.readlua(stmfile, "staticTemplate")))
-	end	
+	end
 	return Template(template)
 end
 
