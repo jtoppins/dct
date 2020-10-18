@@ -23,6 +23,7 @@ local AssetManager= require("dct.AssetManager")
 local Commander   = require("dct.ai.Commander")
 local Command     = require("dct.Command")
 local Logger      = require("dct.Logger").getByName("Theater")
+local bldgPersist = require("dct.systems.bldgPersist")
 local Profiler    = require("dct.Profiler").getProfiler()
 local settings    = _G.dct.settings.server
 
@@ -59,6 +60,7 @@ function Theater:__init()
 	self.cmdrs     = {}
 	self.scratchpad= {}
 	self.startdate = os.date("*t")
+	self.bldgpersist = bldgPersist(self)
 
 	for _, val in pairs(coalition.side) do
 		self.cmdrs[val] = Commander(self, val)
@@ -148,6 +150,7 @@ function Theater:_initFromState()
 	self.statef = true
 	self.startdate = self.statetbl.startdate
 	self:getAssetMgr():unmarshal(self.statetbl.assetmgr)
+	self.bldgpersist:restoreState(self.statetbl.destroyedBldgs)
 end
 
 function Theater:_loadOrGenerate()
@@ -218,7 +221,8 @@ function Theater:export(_)
 		["theater"]  = env.mission.theatre,
 		["sortie"]   = env.getValueDictByKey(env.mission.sortie),
 		["assetmgr"] = self:getAssetMgr():marshal(),
-		["startdate"] = self.startdate
+		["startdate"] = self.startdate,
+		["destroyedBldgs"] = self.bldgpersist:returnList()
 	}
 
 	statefile:write(json:encode(exporttbl))
