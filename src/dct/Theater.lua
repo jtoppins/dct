@@ -104,7 +104,7 @@ end
 function Theater:_loadRegions()
 	for filename in lfs.dir(settings.theaterpath) do
 		if filename ~= "." and filename ~= ".." and
-			filename ~= ".git" then
+			filename ~= ".git" and filename ~= "settings" then
 			local fpath = settings.theaterpath..utils.sep..filename
 			local fattr = lfs.attributes(fpath)
 			if fattr.mode == "directory" then
