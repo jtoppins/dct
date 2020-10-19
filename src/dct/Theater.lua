@@ -14,6 +14,7 @@ local json        = require("libs.json")
 local dctutils    = require("dct.utils")
 local uicmds      = require("dct.ui.cmds")
 local uiscratchpad= require("dct.ui.scratchpad")
+local iads        = require("dct.systems.IADS")
 local STM         = require("dct.templates.STM")
 local Template    = require("dct.templates.Template")
 local Region      = require("dct.templates.Region")
@@ -78,6 +79,7 @@ end
 function Theater:_delayedInit()
 	self:_loadOrGenerate()
 	self:_loadPlayerSlots()
+	iads(self)
 	uiscratchpad(self)
 	self:queueCommand(100, Command(self.export, self))
 end
@@ -104,7 +106,7 @@ end
 function Theater:_loadRegions()
 	for filename in lfs.dir(settings.theaterpath) do
 		if filename ~= "." and filename ~= ".." and
-			filename ~= ".git" then
+			filename ~= ".git" and filename ~= "settings" then
 			local fpath = settings.theaterpath..utils.sep..filename
 			local fattr = lfs.attributes(fpath)
 			if fattr.mode == "directory" then
