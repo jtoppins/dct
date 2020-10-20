@@ -70,10 +70,8 @@ end
 
 function IADS:getDist(point1, point2)
   local x1 = point1.x
-  local y1 = point1.y
   local z1 = point1.z
   local x2 = point2.x
-  local y2 = point2.y
   local z2 = point2.z
   local dX = math.abs(x1-x2)
   local dZ = math.abs(z1-z2)
@@ -357,7 +355,6 @@ function IADS:checkGroupRole(gp)
   local hasDL = false
   local samType
   local numSAMRadars = 0
-  local numtrkRadars = 0
   local numEWRRadars = 0
   if gp:getCategory() == 2 then
       for _, unt in pairs(gp:getUnits()) do
@@ -485,7 +482,6 @@ function IADS:onShot(event)
       local ordnance = event.weapon
       local WepPt = ordnance:getPoint()
       local WepDesc = ordnance:getDesc()
-      local init = event.initiator
       if WepDesc.guidance == 5 then
         for _, SAM in pairs(SAMSites) do
           if math.random(1,100) < ARMHidePct and
