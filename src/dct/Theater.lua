@@ -14,6 +14,7 @@ local json        = require("libs.json")
 local dctutils    = require("dct.utils")
 local uicmds      = require("dct.ui.cmds")
 local uiscratchpad= require("dct.ui.scratchpad")
+local bldgPersist = require("dct.systems.bldgPersist")
 local STM         = require("dct.templates.STM")
 local Template    = require("dct.templates.Template")
 local Region      = require("dct.templates.Region")
@@ -56,6 +57,7 @@ function Theater:__init()
 	self.scratchpad= {}
 	self.startdate = os.date("*t")
 	self._kicklist  = {}
+	self.bldgPersist= bldgPersist(self)
 
 	for _, val in pairs(coalition.side) do
 		self.cmdrs[val] = Commander(self, val)
@@ -157,7 +159,9 @@ function Theater:_initFromState()
 	self.statef = true
 	self.startdate = self.statetbl.startdate
 	self:getAssetMgr():unmarshal(self.statetbl.assetmgr)
+	self.bldgPersist:restoreState(self.statetbl.bldgDest)
 end
+
 
 function Theater:_loadOrGenerate()
 	local statefile = io.open(settings.statepath)
@@ -275,6 +279,7 @@ function Theater:export(_)
 		["theater"]  = env.mission.theatre,
 		["sortie"]   = env.getValueDictByKey(env.mission.sortie),
 		["assetmgr"] = self:getAssetMgr():marshal(),
+		["bldgDest"]  = self.bldgPersist:returnList(),
 		["startdate"] = self.startdate
 	}
 
