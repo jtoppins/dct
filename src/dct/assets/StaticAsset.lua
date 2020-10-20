@@ -15,6 +15,7 @@ local Logger   = dct.Logger.getByName("Asset")
 local dctutils = require("dct.utils")
 local Goal     = require("dct.Goal")
 local AssetBase= require("dct.assets.AssetBase")
+local enum     = require("dct.enum")
 
 local StaticAsset = class(AssetBase)
 function StaticAsset:__init(template, region)
