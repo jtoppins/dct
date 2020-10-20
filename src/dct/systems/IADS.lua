@@ -76,7 +76,6 @@ function IADS:getDist(point1, point2)
   local y2 = point2.y
   local z2 = point2.z
   local dX = math.abs(x1-x2)
-  local dY = math.abs(y1-y2)
   local dZ = math.abs(z1-z2)
   local distance = math.sqrt(dX*dX + dZ*dZ)
   return distance
@@ -114,20 +113,20 @@ function IADS:disableSAM(site)
  if site.Enabled then
     local inRange = false
     if site.trkFiles then
-      for _, trk in pairs(site.trkFiles) do  
+      for _, trk in pairs(site.trkFiles) do
         if trk.Position and self:getDist(site.Location, trk.Position)
-           < (site.EngageRange * 1.15) then    
-          inRange = true    
+           < (site.EngageRange * 1.15) then
+          inRange = true
         end
       end
-    end 
-    if inRange then     
+    end
+    if inRange then
       self.theater:queueCommand(10, Command(self.disableSAM, self, site))
     else
       site.group:getController():setOption(AI.Option.Ground.id.ALARM_STATE,1)
       site.Enabled = false
-      env.info("SAM: "..site.Name.." disabled") 
-    end 
+      env.info("SAM: "..site.Name.." disabled")
+    end
   end
   return nil
 end
@@ -158,6 +157,7 @@ function IADS:enableSAM(site)
   local hasAmmo = ammoCheck(site)
     if tablelength(site.ControlledBy) > 0 then
       if (contSamAmmo and (not hasAmmo)) then
+        return
       else
         site.group:getController():setOption(AI.Option.Ground.id.ALARM_STATE,2)
         site.Enabled = true
@@ -165,6 +165,7 @@ function IADS:enableSAM(site)
       end
     else
       if uncontSamAmmo and not hasAmmo  then
+        return
       else
         site.group:getController():setOption(AI.Option.Ground.id.ALARM_STATE,2)
         site.Enabled = true
@@ -207,7 +208,6 @@ function IADS:prevDetected(Sys, ARM)
       prev = nil
     end
   end
-
 end
 
 function IADS:addtrkFile(site, targets)
@@ -224,7 +224,6 @@ function IADS:addtrkFile(site, targets)
     if targets.type then
       site.trkFiles[trkName]["Category"] = targets.object:getCategory()
       site.trkFiles[trkName]["Type"] = targets.object:getTypeName()
-  
     end
     if site.Datalink then
       site.trkFiles[trkName]["Datalink"] = true
@@ -235,13 +234,13 @@ end
 function IADS:EWRtrkFileBuild()
   for _, EWR in pairs(EWRSites) do
     local det = EWR.EWRGroup:getController():getDetectedTargets(Controller.Detection.RADAR)
-    for j, targets in pairs(det) do
-      if targets.object and targets.object:isExist() 
+    for _, targets in pairs(det) do
+      if targets.object and targets.object:isExist()
         and targets.object:inAir() then
         local trkName = targets.object.id_
         self:addtrkFile(EWR, targets)
         trkFiles["EWR"][trkName] = EWR.trkFiles[trkName]
-        if targets.object:getCategory() == 2 
+        if targets.object:getCategory() == 2
           and targets.object:getDesc().guidance == 5
           and EwrArmDetect and not self:prevDetected(EWR, targets.object) then
           EWR.ARMDetected[targets.object:getName()] = targets.object
@@ -261,7 +260,7 @@ function IADS:SAMtrkFileBuild()
   for _, SAM in pairs(SAMSites) do
     local det = SAM.group:getController():getDetectedTargets(Controller.Detection.RADAR)
     for _, targets in pairs(det) do
-      if targets.object and targets.object:isExist() 
+      if targets.object and targets.object:isExist()
         and targets.object:inAir() then
         local trkName = targets.object.id_
         self:addtrkFile(SAM, targets)
@@ -298,19 +297,19 @@ end
 function IADS:EWRSAMOnRequest()
   for _, SAM in pairs(SAMSites) do
     if(tablelength(SAM.ControlledBy) > 0) then
-      local viableTarget = false 
+      local viableTarget = false
       for _, EWR in pairs(SAM.ControlledBy) do
         for _, target in pairs(EWR.trkFiles) do
-          if target.Position and 
+          if target.Position and
             self:getDist(SAM.Location, target.Position) < SAM.EngageRange then
             viableTarget = true
           end
-        end 
+        end
       end
       if viableTarget then
         self:enableSAM(SAM)
       else
-        self:disableSAM(SAM)        
+        self:disableSAM(SAM)
       end
     end
   end
@@ -352,7 +351,6 @@ function IADS:BlinkSAM()
 end
 
 function IADS:checkGroupRole(gp)
-
   local isEWR = false
   local isSAM = false
   local isAWACS = false
@@ -386,7 +384,7 @@ function IADS:checkGroupRole(gp)
           ["Datalink"] = hasDL,
           ["trkFiles"] = {},
       }
-      return gp:getName()      
+      return gp:getName()
     elseif isSAM and self:rangeOfSAM(gp) then
       SAMSites[gp:getName()] = {
           ["Name"] = gp:getName(),
@@ -394,36 +392,36 @@ function IADS:checkGroupRole(gp)
           ["Type"] = samType,
           ["Location"] = gp:getUnit(1):getPoint(),
           ["numSAMRadars"] = numSAMRadars,
-          ["EngageRange"] = self:rangeOfSAM(gp),           
-          ["ControlledBy"] = {}, 
+          ["EngageRange"] = self:rangeOfSAM(gp),
+          ["ControlledBy"] = {},
           ["Enabled"] = true,
           ["Hidden"] = false,
           ["BlinkTimer"] = 0,
           ["ARMDetected"] = {},
-          ["Datalink"] = hasDL, 
-          ["trkFiles"] = {},           
+          ["Datalink"] = hasDL,
+          ["trkFiles"] = {},
       }
-      return gp:getName()      
+      return gp:getName()
     end
   elseif gp:getCategory() == 0 then
     local numAWACS = 0
     for _, unt in pairs(gp:getUnits()) do
-      if unt:hasAttribute("AWACS") then      
+      if unt:hasAttribute("AWACS") then
         isAWACS = true
         numAWACS = numAWACS+1
       end
       if unt:hasAttribute("Datalink") then
-        hasDL = true      
-      end  
-    end 
-    if isAWACS then 
+        hasDL = true
+      end
+    end
+    if isAWACS then
       AewAC[gp:getName()] = {
         ["Name"] = gp:getName(),
         ["AWACSGroup"] = gp,
         ["numAWACS"] = numAWACS,
         ["Datalink"] = hasDL,
-        ["trkFiles"] = {},   
-       }    
+        ["trkFiles"] = {},
+       }
     return gp:getName()
     end
   end
@@ -502,7 +500,7 @@ end
 
 function IADS:onBirth(event)
   local gp = event.initiator:getGroup()
-  local n = self:checkGroupRole(gp)
+  self.checkGroupRole(gp)
   self:associateSAMS()
 end
 
