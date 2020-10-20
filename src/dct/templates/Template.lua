@@ -141,7 +141,7 @@ local function checktpldata(_, tpl)
 end
 
 local function checkbldgdata(keydata, tpl)
-	for idx, bldg in ipairs(tpl[keydata.name]) do
+	for _, bldg in ipairs(tpl[keydata.name]) do
 		local bldgdata = {}
 		bldgdata.countryid = 0
 		bldgdata.category  = enum.UNIT_CAT_SCENERY
