@@ -169,5 +169,6 @@ enum.weaponCategory = {
 }
 
 enum.WPNINFCOST = 5000
+enum.UNIT_CAT_SCENERY = Unit.Category.STRUCTURE + 1
 
 return enum

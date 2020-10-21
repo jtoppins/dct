@@ -22,6 +22,7 @@ read_globals = {
 	"missionCommands",
 	"coord",
 	"land",
+	"SceneryObject",
 
 	-- DCT specific
 	"dct",

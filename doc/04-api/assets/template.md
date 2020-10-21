@@ -105,6 +105,32 @@ follows:
 See [tpldata details][tpldata_details] for more information on specification
 of death goals and naming criteria.
 
+### `buildings`
+
+ * _required:_ no
+ * _value:_ table
+ * _default:_ nil
+
+Allows the campaign designer to specify scenery objects as part of the
+template. The definition is a list of scenery objects that should
+be included as part of the template, an example from the Persian Gulf
+map;
+
+	...
+	["buildings"] = {
+		{
+			["name"] = "building 1",
+			["goal"] = "primary destroyed",
+			["id"]   = 109937143,
+		},
+	},
+	...
+
+Where `name` is the name of the scenery object (is arbitrary and only
+referenced in DCT for error reporting), `goal` conforms to the textual
+goalspec, and `id` is the map specific object id which can be obtained
+from the mission editor.
+
 ### `uniquenames`
 
  * _required:_ no
