@@ -290,13 +290,6 @@ end
 --      Optional Keys:
 --        * uniquenames - when a Template's data is copied the group and
 --              unit names a guaranteed to be unique if true
---        * priority - the relative importance of the template in relation
---              to other templates
---        * rank - determines if the template is a "primary", "secondary"
---              or "tertiary" target.
---        * base - [Required] only used if the 'objtype' represents some
---              sort of base object that needs to be associated with a
---              DCS base object, the name of the DCS base is put here.
 --
 --]]
 local Template = class()
@@ -305,7 +298,6 @@ function Template:__init(data)
 	self.hasDeathGoals = false
 	utils.mergetables(self, utils.deepcopy(data))
 	self:validate()
-
 	self.fromFile = nil
 end
 
