@@ -11,7 +11,6 @@ local utils      = require("libs.utils")
 local dctenums   = require("dct.enum")
 local dctutils   = require("dct.utils")
 local Template   = require("dct.templates.Template")
-local Asset      = require("dct.Asset")
 local Logger     = dct.Logger.getByName("Region")
 
 local tplkind = {
@@ -142,7 +141,8 @@ local function addAndSpawnAsset(self, name, assetmgr, centroid)
 		return nil
 	end
 
-	local asset = Asset.factory(tpl, self)
+	local mgr = dct.Theater.singleton():getAssetMgr()
+	local asset = mgr:factory(tpl.objtype)(tpl, self)
 	assetmgr:add(asset)
 	asset:spawn()
 	asset:generate(assetmgr, self)

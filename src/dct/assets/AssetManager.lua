@@ -45,6 +45,21 @@ function AssetManager:__init(theater)
 		Command(self.checkAssets, self))
 end
 
+function AssetManager:factory(assettype)
+	local asset = nil
+	if assettype == enum.assetType.AIRSPACE then
+		asset = require("dct.assets.Airspace")
+	elseif enum.assetClass.STRATEGIC[assettype] or
+	       assettype == enum.assetType.BASEDEFENSE then
+		asset = require("dct.assets.StaticAsset")
+	elseif assettype == enum.assetType.PLAYERGROUP then
+		asset = require("dct.assets.Player")
+	else
+		assert(false, "unsupported asset type: "..assettype)
+	end
+	return asset
+end
+
 function AssetManager:remove(asset)
 	assert(asset ~= nil, "value error: asset object must be provided")
 
@@ -236,18 +251,8 @@ end
 
 function AssetManager:unmarshal(data)
 	for _, assettbl in pairs(data.assets) do
-		local asset = nil
 		local assettype = assettbl.type
-		if assettype == enum.assetType.AIRSPACE then
-			asset = require("dct.assets.Airspace")()
-		elseif enum.assetClass.STRATEGIC[assettype] or
-		       assettype == enum.assetType.BASEDEFENSE then
-			asset = require("dct.assets.StaticAsset")()
-		elseif assettype == enum.assetType.PLAYERGROUP then
-			asset = require("dct.assets.Player")()
-		else
-			assert(false, "unsupported asset type: "..assettype)
-		end
+		local asset = self:factory(assettype)()
 		asset:unmarshal(assettbl)
 		self:add(asset)
 	end

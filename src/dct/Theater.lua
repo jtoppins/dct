@@ -11,6 +11,7 @@ local class       = require("libs.class")
 local utils       = require("libs.utils")
 local containers  = require("libs.containers")
 local json        = require("libs.json")
+local enum        = require("dct.enum")
 local dctutils    = require("dct.utils")
 local uicmds      = require("dct.ui.cmds")
 local uiscratchpad= require("dct.ui.scratchpad")
@@ -18,7 +19,7 @@ local bldgPersist = require("dct.systems.bldgPersist")
 local STM         = require("dct.templates.STM")
 local Template    = require("dct.templates.Template")
 local Region      = require("dct.templates.Region")
-local Asset       = require("dct.Asset")
+local AssetManager= require("dct.assets.AssetManager")
 local Commander   = require("dct.ai.Commander")
 local Command     = require("dct.Command")
 local Logger      = dct.Logger.getByName("Theater")
@@ -52,7 +53,7 @@ function Theater:__init()
 	self.cmdq      = containers.PriorityQueue()
 	self.ctime     = timer.getTime()
 	self.ltime     = 0
-	self.assetmgr  = Asset.Manager(self)
+	self.assetmgr  = AssetManager(self)
 	self.cmdrs     = {}
 	self.scratchpad= {}
 	self.startdate = os.date("!*t")
@@ -208,7 +209,8 @@ function Theater:_loadPlayerSlots()
 			isPlayerGroup,
 			nil)
 		for _, grp in ipairs(grps) do
-			local asset = Asset.factory(Template({
+			local asset =
+			self:getAssetMgr():factory(enum.assetType.PLAYERGROUP)(Template({
 				["objtype"]   = "playergroup",
 				["name"]      = grp.data.name,
 				["regionname"]= "theater",
