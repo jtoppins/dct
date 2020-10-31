@@ -360,7 +360,7 @@ end
 local function rpc_slot_enabled(grpname)
 	local cmd = [[
 		local t = require("dct.Theater").singleton()
-		local asset = t:getAssetMgr():getAsset(]]..grpname..[[)
+		local asset = t:getAssetMgr():getAsset("]]..tostring(grpname)..[[")
 		local v = asset:isSpawned()
 		if v == true then
 			v = 1
@@ -535,7 +535,8 @@ function DCTHooks:sendplayers()
 	self.info.players.dirty = false
 end
 
-function DCTHooks:kickPlayerFromSlot(id)
+function DCTHooks:kickPlayerFromSlot(name)
+	local id = self.grp2player[name]
 	net.force_player_slot(id, 0, '')
 	net.send_chat_to("*** you have been removed from slot ***", id)
 end
@@ -565,8 +566,8 @@ function DCTHooks:onSimulationFrame()
 	local modeltime = DCS.getModelTime()
 	if (modeltime - self.slotkicktimer) > self.slotkickperiod then
 		self.slotkicktimer = modeltime
-		for _, id in pairs(self:getkicklist()) do
-			self:kickPlayerFromSlot(id)
+		for name, _ in pairs(self:getkicklist()) do
+			self:kickPlayerFromSlot(name)
 		end
 	end
 
