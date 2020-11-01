@@ -9,7 +9,7 @@ local enums    = require("dct.goals.enum")
 local BaseGoal = require("dct.goals.BaseGoal")
 local Logger   = dct.Logger.getByName("Goal")
 
-local function getobject(objtype, name)
+local function getobject(objtype, name, init)
 	local switch = {
 		[enums.objtype.UNIT]   = Unit.getByName,
 		[enums.objtype.STATIC] = StaticObject.getByName,
@@ -19,10 +19,16 @@ local function getobject(objtype, name)
 				return { id_ = tonumber(n), }
 			end
 	}
-	local lifefncs = {
+	local lifestartfncs = {
 		[enums.objtype.UNIT]   = Unit.getLife0,
 		[enums.objtype.STATIC] = StaticObject.getLife,
 		[enums.objtype.GROUP]  = Group.getInitialSize,
+		[enums.objtype.SCENERY]= SceneryObject.getLife,
+	}
+	local getlifefncs = {
+		[enums.objtype.UNIT]   = Unit.getLife,
+		[enums.objtype.STATIC] = StaticObject.getLife,
+		[enums.objtype.GROUP]  = Group.getSize,
 		[enums.objtype.SCENERY]= SceneryObject.getLife,
 	}
 
@@ -30,7 +36,11 @@ local function getobject(objtype, name)
 	if switch[objtype] ~= nil then
 		obj = switch[objtype](name)
 	end
-	return obj, lifefncs[objtype]
+	local lifetbl = getlifefncs
+	if init then
+		lifetbl = lifestartfncs
+	end
+	return obj, lifetbl[objtype]
 end
 
 local DamageGoal = class(BaseGoal)
@@ -45,7 +55,7 @@ end
 
 function DamageGoal:_afterspawn()
 	self._maxlife = 1
-	local obj, getlife = getobject(self.objtype, self.name)
+	local obj, getlife = getobject(self.objtype, self.name, true)
 	if obj == nil then
 		Logger:error("DamageGoal:_afterspawn() - object doesn't exist")
 		self:_setComplete()
@@ -70,27 +80,9 @@ function DamageGoal:checkComplete()
 	if self:isComplete() then return true end
 
 	local health = 0
-	if self.objtype == enums.objtype.UNIT then
-		local obj = Unit.getByName(self.name)
-		if obj ~= nil then
-			health = obj:getLife()
-		end
-	elseif self.objtype == enums.objtype.STATIC then
-		local obj = StaticObject.getByName(self.name)
-		if obj ~= nil then
-			health = obj:getLife()
-		end
-	elseif self.objtype == enums.objtype.GROUP then
-		local obj = Group.getByName(self.groupname)
-		if obj ~= nil then
-			health = obj:getSize()
-		end
-	elseif self.objtype == enums.objtype.SCENERY then
-		local obj = { id_ = tonumber(self.name) }
-		health = SceneryObject.getLife(obj)
-	else
-		Logger:error("DamageGoal:checkComplete() - invalid objtype")
-		return false
+	local obj, getlife = getobject(self.objtype, self.name, false)
+	if obj ~= nil then
+		health = getlife(obj)
 	end
 
 	Logger:debug(string.format("DamageGoal:checkComplete() - "..
