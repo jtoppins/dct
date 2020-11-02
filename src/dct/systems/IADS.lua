@@ -189,8 +189,7 @@ function IADS:associateSAMS()
 end
 
 function IADS:magHide(site)
-	if site.Type == "Tor 9A331" then
-	elseif not site.Hidden then
+	if site.Type ~= "Tor 9A331" and not site.Hidden then
 		local randomTime = math.random(15,35)
 		self.theater:queueCommand(randomTime, Command(self.hideSAM, self, site))
 		site.HiddenTime = math.random(65,100)+randomTime
@@ -204,8 +203,6 @@ function IADS:prevDetected(Sys, ARM)
 			if ARM:getName() == prev:getName() then
 				return true
 			end
-		else
-			prev = nil
 		end
 	end
 end
