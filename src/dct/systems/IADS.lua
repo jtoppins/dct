@@ -123,7 +123,8 @@ function IADS:disableSAM(site)
 		if inRange then
 			self.theater:queueCommand(10, Command(self.disableSAM, self, site))
 		else
-			site.group:getController():setOption(AI.Option.Ground.id.ALARM_STATE,1)
+			site.group:getController():setOption(AI.Option.Ground.id.ALARM_STATE,
+				AI.Option.Ground.val.ALARM_STATE.GREEN)
 			site.Enabled = false
 			env.info("SAM: "..site.Name.." disabled")
 		end
@@ -132,7 +133,8 @@ function IADS:disableSAM(site)
 end
 
 function IADS:hideSAM(site)
-	site.group:getController():setOption(AI.Option.Ground.id.ALARM_STATE,1)
+	site.group:getController():setOption(AI.Option.Ground.id.ALARM_STATE,
+		AI.Option.Ground.val.ALARM_STATE.GREEN)
 	site.Enabled = false
 	env.info("SAM: "..site.Name.." hidden")
 	return nil
@@ -143,8 +145,8 @@ local function ammoCheck(site)
 		local ammo = unt:getAmmo()
 		if ammo then
 			for j=1, #ammo do
-				if ammo[j].count > 0 and ammo[j].desc.guidance == 3
-					or ammo[j].desc.guidance == 4 then
+				if ammo[j].count > 0 and ammo[j].desc.guidance == Weapon.GuidanceType.RADAR_ACTIVE
+					or ammo[j].desc.guidance == Weapon.GuidanceType.RADAR_SEMI_ACTIVE then
 					return true
 				end
 			end
@@ -159,7 +161,8 @@ function IADS:enableSAM(site)
 			if (contSamAmmo and (not hasAmmo)) then
 				return
 			else
-				site.group:getController():setOption(AI.Option.Ground.id.ALARM_STATE,2)
+				site.group:getController():setOption(AI.Option.Ground.id.ALARM_STATE,
+					AI.Option.Ground.val.ALARM_STATE.RED)
 				site.Enabled = true
 				env.info("SAM: "..site.Name.." enabled")
 			end
@@ -237,8 +240,8 @@ function IADS:EWRtrkFileBuild()
 				local trkName = targets.object.id_
 				self:addtrkFile(EWR, targets)
 				trkFiles["EWR"][trkName] = EWR.trkFiles[trkName]
-				if targets.object:getCategory() == 2
-					and targets.object:getDesc().guidance == 5
+				if targets.object:getCategory() == Object.Category.WEAPON
+					and targets.object:getDesc().guidance == Weapon.GuidanceType.RADAR_PASSIVE
 					and EwrArmDetect and not self:prevDetected(EWR, targets.object) then
 					EWR.ARMDetected[targets.object:getName()] = targets.object
 					for _, SAM in pairs(EWR.SAMsControlled) do
@@ -262,8 +265,8 @@ function IADS:SAMtrkFileBuild()
 				local trkName = targets.object.id_
 				self:addtrkFile(SAM, targets)
 				trkFiles["SAM"][trkName] = SAM.trkFiles[trkName]
-				if targets.object:getCategory() == 2
-					and targets.object:getDesc().guidance == 5
+				if targets.object:getCategory() == Object.Category.WEAPON
+					and targets.object:getDesc().guidance == Weapon.GuidanceType.RADAR_PASSIVE
 					and SamArmDetect and not self:prevDetected(SAM, targets.object) then
 					SAM.ARMDetected[targets.object:getName()] = targets.object
 					if math.random(1,100) < SamOffChance then
@@ -481,7 +484,7 @@ function IADS:onShot(event)
 			local ordnance = event.weapon
 			local WepPt = ordnance:getPoint()
 			local WepDesc = ordnance:getDesc()
-			if WepDesc.guidance == 5 then
+			if WepDesc.guidance == Weapon.GuidanceType.RADAR_PASSIVE then
 				for _, SAM in pairs(SAMSites) do
 					if math.random(1,100) < ARMHidePct and
 						self:getDist(SAM.Location, WepPt) < RadioHideRng then
@@ -501,7 +504,8 @@ end
 
 function IADS:disableAllSAMs()
 	for _, SAM in pairs(SAMSites) do
-		SAM.group:getController():setOption(AI.Option.Ground.id.ALARM_STATE,1)
+		SAM.group:getController():setOption(AI.Option.Ground.id.ALARM_STATE,
+			AI.Option.Ground.val.ALARM_STATE.GREEN)
 		SAM.Enabled = false
 	end
 	return nil
