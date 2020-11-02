@@ -498,7 +498,7 @@ end
 
 function IADS:onBirth(event)
 	local gp = event.initiator:getGroup()
-	self.checkGroupRole(gp)
+	self:checkGroupRole(gp)
 	self:associateSAMS()
 end
 
