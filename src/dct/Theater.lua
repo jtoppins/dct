@@ -188,14 +188,13 @@ local function isPlayerGroup(grp, _, _)
 			slotcnt = slotcnt + 1
 		end
 	end
-	if slotcnt > 0 then
-		assert(slotcnt == 1,
-			string.format("DCT requires 1 slot groups. Group '%s' "..
-				" of type a/c (%s) has more than one player slot.",
-				grp.name, grp.units[1].type))
-		return true
+	if slotcnt > 1 then
+		Logger:warn(string.format("DCT requires 1 slot groups. Group '%s'"..
+			" of type a/c (%s) has more than one player slot.",
+			grp.name, grp.units[1].type))
+		return false
 	end
-	return false
+	return true
 end
 
 function Theater:queuekick(playerasset)
