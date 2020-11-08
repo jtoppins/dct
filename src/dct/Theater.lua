@@ -55,7 +55,7 @@ function Theater:__init()
 	self.assetmgr  = Asset.Manager(self)
 	self.cmdrs     = {}
 	self.scratchpad= {}
-	self.startdate = os.date("*t")
+	self.startdate = os.date("!*t")
 	self._kicklist  = {}
 	self.bldgPersist= bldgPersist(self)
 
@@ -274,7 +274,7 @@ function Theater:export(_)
 
 	local exporttbl = {
 		["complete"] = self.complete,
-		["date"]     = dctutils.date("*t", dctutils.time(timer.getAbsTime())),
+		["date"]     = os.date("!*t", dctutils.zulutime(timer.getAbsTime())),
 		["theater"]  = env.mission.theatre,
 		["sortie"]   = env.getValueDictByKey(env.mission.sortie),
 		["assetmgr"] = self:getAssetMgr():marshal(),

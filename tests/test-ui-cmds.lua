@@ -30,7 +30,7 @@ local briefingtxt = "Package: #5720\n"..
 			"Reconnaissance elements have located"..
 			" an Iranian Ammo Dump 88°07.2'N 063°27.6'W."..
 			" Find and destroy the bunkers and the ordnance within.\n"..
-			"    Tot: 2001-06-22 12:02z\n    \n"..
+			"    Tot: 2001-06-23 00:02z\n    \n"..
 			"    Primary Objectives: Destroy the large, armoured bunker."..
 			" It is heavily fortified, so accuracy is key.\n    \n"..
 			"    Secondary Objectives: Destroy the two smaller, white"..
@@ -87,7 +87,7 @@ local testcmds = {
 		},
 		["assert"]     = true,
 		["expected"]   = "Package: 5720\nTimeout: "..
-			"2001-06-22 14:03z (in 297 mins)\nBDA: 0% complete\n",
+			"2001-06-23 02:03z (in 297 mins)\nBDA: 0% complete\n",
 	},
 	[6] = {
 		["data"] = {

@@ -54,32 +54,16 @@ function utils.time(dcsabstime)
 end
 
 local offsettbl = {
-	["Test Theater"] = -6*3600,
+	["Test Theater"] =  6*3600, -- simulate US Central TZ
 	["PersianGulf"]  = -4*3600,
 	["Nevada"]       =  8*3600,
 	["Caucuses"]     = -4*3600,
-	["Normandy"]     =  1*3600,
+	["Normandy"]     = -1*3600,
 }
 
 function utils.zulutime(abstime)
-	local correction = offsettbl[env.mission.theatre]
-	if correction == nil then
-		correction = 0
-	end
+	local correction = offsettbl[env.mission.theatre] or 0
 	return (utils.time(abstime) + correction)
-end
-
-local dst
-function utils.date(fmt, time)
-	if dst == nil then
-		local t = os.date("*t")
-		dst = t.isdst
-	end
-
-	if dst == true then
-		time = time - 3600
-	end
-	return os.date(fmt, time)
 end
 
 --[[

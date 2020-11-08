@@ -49,7 +49,7 @@ function Mission:_composeBriefing()
 	local tgt = self.cmdr:getAsset(self.target)
 	local briefing = tgt.briefing
 	local interptbl = {
-		["TOT"] = dctutils.date("%F %Rz",
+		["TOT"] = os.date("!%F %Rz",
 			dctutils.zulutime(self:getTimeout()*.6)),
 	}
 	return dctutils.interp(briefing, interptbl)
