@@ -56,6 +56,8 @@ function Player:_completeinit(template, region)
 		self.ato = require("dct.enum").missionType
 	end
 	self.payloadlimits = settings.payloadlimits
+	trigger.action.setUserFlag(self.name, false)
+	trigger.action.setUserFlag(self.name.."_kick", false)
 end
 
 function Player:getObjectNames()
@@ -100,6 +102,16 @@ function Player:handleTakeoff(_ --[[event]])
 	loadout.kick(self)
 end
 
+function Player:spawn()
+	AssetBase.spawn(self)
+	trigger.action.setUserFlag(self.name, true)
+end
+
+function Player:despawn()
+	AssetBase.despawn(self)
+	trigger.action.setUserFlag(self.name, false)
+end
+
 --[[
 -- kick - cause the player to be removed from the slot
 --
@@ -107,7 +119,10 @@ end
 -- action does not prevent another player from joing the slot
 --]]
 function Player:kick()
-	require("dct.Theater").singleton():queuekick(self)
+	trigger.action.setUserFlag(self.name.."_kick", true)
+	Logger:debug(
+		string.format("(%s) - requesting kick: %s",
+			self.name, self.name.."_kick"))
 end
 
 return Player

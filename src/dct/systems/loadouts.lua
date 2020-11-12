@@ -74,7 +74,6 @@ function loadout.kick(player)
 		"You have been removed to spectator for flying with an "..
 		"invalid loadout. "..notifymsg,
 		20, true)
-	trigger.action.setUserFlag(player.name, 100)
 	player:kick()
 	return ok
 end

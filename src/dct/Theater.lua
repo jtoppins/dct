@@ -56,7 +56,6 @@ function Theater:__init()
 	self.cmdrs     = {}
 	self.scratchpad= {}
 	self.startdate = os.date("!*t")
-	self._kicklist  = {}
 	self.bldgPersist= bldgPersist(self)
 
 	for _, val in pairs(coalition.side) do
@@ -197,17 +196,6 @@ local function isPlayerGroup(grp, _, _)
 	return true
 end
 
-function Theater:queuekick(playerasset)
-	self._kicklist[playerasset.name] = true
-end
-
-function Theater:getkicklist()
-	local kicklist = self._kicklist
-	self._kicklist = {}
-	return json:encode(kicklist)
-end
-
-
 function Theater:_loadPlayerSlots()
 	local cnt = 0
 	for _, coa_data in pairs(env.mission.coalition) do
@@ -225,6 +213,7 @@ function Theater:_loadPlayerSlots()
 				["tpldata"]   = grp,
 			}), {["name"] = "theater", ["priority"] = 1000,})
 			self:getAssetMgr():add(asset)
+			asset:spawn()
 			cnt = cnt + 1
 		end
 	end

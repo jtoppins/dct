@@ -766,6 +766,7 @@ function coord.LLtoMGRS(_, _)
 end
 _G.coord = coord
 
+local gblflagtbl = {}
 local trigger = {}
 trigger.action = {}
 
@@ -802,6 +803,16 @@ end
 function trigger.action.markToGroup(
 	_, _, _, _, _, _
 	--[[id, title, pos, grpid, readonly, msg]])
+end
+
+function trigger.action.setUserFlag(flagname, value)
+	gblflagtbl[flagname] = tonumber(value)
+end
+
+trigger.misc = {}
+function trigger.misc.getUserFlag(flagname)
+	local val = gblflagtbl[flagname] or 0
+	return val
 end
 _G.trigger = trigger
 
