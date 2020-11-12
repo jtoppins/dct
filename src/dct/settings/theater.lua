@@ -74,11 +74,27 @@ local function validate_codenamedb(cfgdata, tbl)
 	return newtbl
 end
 
+local function gridfmt_transform(tbl)
+	local ntbl = {}
+	for k, v in pairs(tbl) do
+		if type(v) == "number" then
+			ntbl[k] = v
+		else
+			ntbl[k] = dctutils.posfmt[string.upper(v)]
+			assert(ntbl[k] ~= nil, "invalid grid format for "..k)
+		end
+	end
+	return ntbl
+end
+
 local function validate_ui(cfgdata, tbl)
 	local newtbl = {}
 	utils.mergetables(newtbl, cfgdata.default)
 	for k, v in pairs(tbl) do
 		utils.mergetables(newtbl[k], v)
+		if k == "gridfmt" then
+			newtbl[k] = gridfmt_transform(newtbl[k])
+		end
 	end
 	return newtbl
 end
