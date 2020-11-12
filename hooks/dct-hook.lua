@@ -61,12 +61,19 @@ end
 
 local settingsf
 ok, settingsf = pcall(require, "dct.settings.server")
-if not ok then
+if not ok or type(settingsf) ~= "function" then
 	log.write(facility, log.ERROR,
-		string.format("unable to load dct settings: %s", settingsf))
+		string.format("unable to require server settings: %s", settingsf))
 	return
 end
-local settings = settingsf({})
+
+local settings
+ok, settings = pcall(settingsf, {})
+if not ok then
+	log.write(facility, log.ERROR,
+		string.format("unable to load server settings: %s", settings))
+	return
+end
 
 local PROTOCOL_VERSION = 1
 
@@ -397,11 +404,12 @@ local function do_rpc(ctx, cmd, valtype)
 	elseif valtype == "string" then
 		val = status
 	elseif valtype == "table" then
-		local result
-		status, result = pcall(net.json2lua, status)
-		if not status then
+		local rc, result = pcall(net.json2lua, status)
+		if not rc then
 			log.write(facility, log.ERROR,
 				"rpc json decode failed: "..tostring(result))
+			log.write(facility, log.DEBUG,
+				"rpc json decode input: "..tostring(status))
 			val = nil
 		else
 			val = result
