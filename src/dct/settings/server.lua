@@ -100,7 +100,6 @@ local function servercfgs(config)
 			["name"] = "server",
 			["file"] = lfs.writedir()..utils.sep.."Config"..
 				utils.sep.."dct.cfg",
-			["cfgtblname"] = "dctserverconfig",
 			["validate"] = validate_server_config,
 			["default"] = {
 				["debug"]       = false,

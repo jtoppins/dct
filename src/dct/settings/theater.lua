@@ -119,7 +119,6 @@ local function theatercfgs(config)
 			["name"] = "payloadlimits",
 			["file"] = config.server.theaterpath..utils.sep.."settings"..
 				utils.sep.."payloadlimits.cfg",
-			["cfgtblname"] = "payloadlimits",
 			["validate"] = validate_payload_limits,
 			["default"] = defaultpayload,
 		},
@@ -127,7 +126,6 @@ local function theatercfgs(config)
 			["name"] = "codenamedb",
 			["file"] = config.server.theaterpath..utils.sep.."settings"..
 				utils.sep.."codenamedb.cfg",
-			["cfgtblname"] = "codenamedb",
 			["validate"] = validate_codenamedb,
 			["default"] = require("dct.data.codenamedb"),
 		},
@@ -135,7 +133,6 @@ local function theatercfgs(config)
 			["name"] = "ui",
 			["file"] = config.server.theaterpath..utils.sep.."settings"..
 				utils.sep.."ui.cfg",
-			["cfgtblname"] = "dctui",
 			["validate"] = validate_ui,
 			["default"] = {
 				["gridfmt"] = {
