@@ -20,8 +20,8 @@ These identifiers are case insensitive.
 ## Payload Limits
 
 The payload limits configuration allows a campaign designer to define a
-default limit for each weapon category. This default if defined will be
-applied for all player aircraft regardless of side.
+default limit for each weapon category. This default, if defined, will
+be applied for all player aircraft regardless of side.
 
 A hardcoded default table is built into DCT which allows a limit of
 4999 per category. There is an infinite weapons cost hardcoded to
@@ -32,10 +32,8 @@ weapon in the mission.
 
 **file location:** `<theater-root>/settings/payloadlimits.cfg`
 
-	payloadlimits = {
-		["ag"] = 20,
-		["aa"] = 20,
-	}
+	ag = 20
+	aa = 20
 
 ### Internal API
 
@@ -97,10 +95,8 @@ and values equal to a name list.
 
 **file location:** `<theater-root>/settings/codenamedb.cfg`
 
-
-	codenamedb = {
-		[4] = {"FORD", "DODGE", "CHEVY",},
-	}
+	facility = {"FORD", "DODGE", "CHEVY",}
+	sam = {"alpha", "bravo", "charlie",}
 
 The above example will override the name list of "C2" assets with the
 list of possible names above.
@@ -110,3 +106,43 @@ list of possible names above.
 **table access:** `_G.dct.settings.codenamedb`
 
  - stores the codename database
+
+## User Interface(UI)
+
+Allows the mission designer to modify various defaults about the
+DCT UI.
+
+`gridfmt`:
+
+DCT formats user facing coordinates based on the type of aircraft
+they are flying. This table allows the mission designer to modify
+the coordinate format which the player will see. The default format
+is degrees minutes seconds(DMS), this means if the aircraft should
+see a coordinate in DMS then it does not need to be in the table.
+Also, DCT provides generally reasonable defaults for most flyable
+aircraft. This grid format setting applies to the aircraft specified
+regardless of side.
+
+`ato`:
+
+By default DCT allows all possible mission types to be requested
+by the player. If the mission designer chooses to limit the types
+of missions a specific airframe can fly this is where they do it.
+The designer must specify *all* mission types a given airframe is
+allowed to request. This per-airframe setting applies to all
+airframes of the type regardless of side.
+
+### Example
+
+**file location:** `<theater-root>/settings/ui.cfg`
+
+	gridfmt = {
+		["UH-1H"] = "ddm",
+	}
+	ato = {
+		["UH-1H"] = {"armedrecon", },
+	}
+
+### Internal API
+
+**table access:** `_G.dct.settings.ui`

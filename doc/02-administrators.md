@@ -47,6 +47,25 @@ _Note: if you have multiple dedicated server saved game folders (referred to
 a "write directory" in the DCS dedicated server documentation) you will need
 a dct.cfg in each instance._
 
+### Example Configuration File
+
+The below is a valid example of the `dct.cfg` configuration file. Where
+text in `<>` represent a variable instead of a constant.
+
+	debug = false
+	profile = false
+	--statepath = "<dcs-saved-games>/<theater-name>_<sortie-name>.state"
+	--theaterpath = "<dcs-temp-directory>/theater"
+	schedfreq = 2
+	tgtfps = 75
+	percentTimeAllowed = .3
+	period = -1
+	logger = {}
+	whitelists = {}
+	statServerHostname = "localhost"
+	statServerPort = 8095
+	dctid = "changeme"
+
 ### Options
 
 All DCT server configuration can be accessed via LUA's global table at:
