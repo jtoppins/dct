@@ -16,7 +16,8 @@ build:
 	cp -a $(SRCPATH)/src/dct.lua $(SRCPATH)/src/dct/ $(BUILDPATH)/DCT/lua
 	sed -e "s:%VERSION%:$(VERSION):" $(SRCPATH)/entry.lua.tpl > \
 		$(BUILDPATH)/DCT/entry.lua
-	sed -i -e "s:%VERSION%:$(VERSION):" $(SRCPATH)/src/dct.lua
+	sed -e "s:%VERSION%:$(VERSION):" $(SRCPATH)/src/dct.lua > \
+		$(BUILDPATH)/DCT/lua/dct.lua
 	cp -a $(SRCPATH)/mission $(BUILDPATH)/DCT/
 	mkdir -p $(BUILDPATH)/HOOKS
 	cp -a $(SRCPATH)/hooks/* $(BUILDPATH)/HOOKS/
