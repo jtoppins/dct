@@ -24,7 +24,7 @@ local function totalPayload(grp, limits)
 	end
 
 	-- tally restricted weapon cost
-	for _, wpn in ipairs(payload) do
+	for _, wpn in ipairs(payload or {}) do
 		local wpnname = wpn.desc.displayName
 		local wpncnt  = wpn.count
 		local restricted = restrictedWeapons[wpnname]
