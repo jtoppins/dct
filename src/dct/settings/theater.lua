@@ -87,6 +87,22 @@ local function gridfmt_transform(tbl)
 	return ntbl
 end
 
+local function ato_transform(tbl)
+	local ntbl = {}
+	for ac, mlist in pairs(tbl) do
+		ntbl[ac] = {}
+		for _, v in pairs(mlist) do
+			local mtype = string.upper(v)
+			local mval  = enum.missionType[mtype]
+			assert(mval ~= nil,
+				string.format("invalid mission type: %s for ac: %s",
+					v, ac))
+			ntbl[ac][mtype] = mval
+		end
+	end
+	return ntbl
+end
+
 local function validate_ui(cfgdata, tbl)
 	local newtbl = {}
 	utils.mergetables(newtbl, cfgdata.default)
@@ -94,6 +110,8 @@ local function validate_ui(cfgdata, tbl)
 		utils.mergetables(newtbl[k], v)
 		if k == "gridfmt" then
 			newtbl[k] = gridfmt_transform(newtbl[k])
+		elseif k == "ato" then
+			newtbl[k] = ato_transform(newtbl[k])
 		end
 	end
 	return newtbl
