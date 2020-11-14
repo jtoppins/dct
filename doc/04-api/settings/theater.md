@@ -123,6 +123,13 @@ Also, DCT provides generally reasonable defaults for most flyable
 aircraft. This grid format setting applies to the aircraft specified
 regardless of side.
 
+Valid Grid Formats (case insensitive):
+
+ * `dms` - degrees minutes seconds decimal (45° 32' 30.04")
+ * `mgrs` - military grid reference system (NY 1234567890)
+ * `dd` - degrees decimal (45.534°)
+ * `ddm` - degrees decimal minutes (45° 32.501')
+
 `ato`:
 
 By default DCT allows all possible mission types to be requested
@@ -131,6 +138,16 @@ of missions a specific airframe can fly this is where they do it.
 The designer must specify *all* mission types a given airframe is
 allowed to request. This per-airframe setting applies to all
 airframes of the type regardless of side.
+
+List of Valid Mission Types (case insensitive):
+
+ * `cap` - combat air patrol
+ * `cas` - close air support
+ * `strike` - strike mission
+ * `sead` - suppression of enemy air defense
+ * `bai` - battlefield air interdiction (currently not implemented)
+ * `oca` - offensive counter air
+ * `armedrecon` - armed reconnaissance
 
 ### Example
 
