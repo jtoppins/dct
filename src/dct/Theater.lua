@@ -147,7 +147,7 @@ local function isStateValid(state)
 	if state.sortie ~= env.getValueDictByKey(env.mission.sortie) then
 		Logger:warn(string.format("isStateValid(); wrong sortie; "..
 			"state: '%s'; mission: '%s'", state.sortie,
-			env.getCalueDictByKey(env.mission.sortie)))
+			env.getValueDictByKey(env.mission.sortie)))
 		return false
 	end
 
