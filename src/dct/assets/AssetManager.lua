@@ -156,8 +156,7 @@ function AssetManager:checkAssets(_ --[[time]])
 
 	for _, asset in pairs(self._assetset) do
 		cnt = cnt + 1
-		if asset:isSpawned() and asset:checkDead() and
-		   asset:isDead() then
+		if asset:isSpawned() and asset:isDead() then
 			self:remove(asset)
 		end
 	end

@@ -150,23 +150,6 @@ function StaticAsset:getStatus()
 	return math.floor((1 - (self._curdeathgoals / self._maxdeathgoals)) * 100)
 end
 
-function StaticAsset:checkDead()
-	assert(self:isSpawned() == true,
-		string.format("runtime error: Asset(%s) must be spawned",
-			self.name))
-
-	local cnt = 0
-	for name, goal in pairs(self._deathgoals) do
-		cnt = cnt + 1
-		if goal:checkComplete() then
-			self:_removeDeathGoal(name, goal)
-		end
-	end
-	Logger:debug(string.format("checkDead(%s) - max goals: %d; "..
-		"cur goals: %d; checked: %d", self.name,
-		self._maxdeathgoals, self._curdeathgoals, cnt))
-end
-
 function StaticAsset:getObjectNames()
 	local keyset = {}
 	local n      = 0
@@ -191,8 +174,16 @@ function StaticAsset:handleDead(event)
 				break
 			end
 		end
+		local goal = self._deathgoals[grpname]
+		if goal and goal:checkComplete() then
+			self:_removeDeathGoal(grpname, goal)
+		end
 	else
 		self._assets[unitname].data.dct_dead = true
+		local goal = self._deathgoals[unitname]
+		if goal and goal:checkComplete() then
+			self:_removeDeathGoal(unitname, goal)
+		end
 	end
 
 	-- delete any deathgoal related to the unit notified as dead,
@@ -308,15 +299,15 @@ local function filterTemplateData(tpldata)
 end
 
 function StaticAsset:marshal()
-	if self:isDead() then
+	local tbl = AssetBase.marshal(self)
+	if tbl == nil then
 		return nil
 	end
-	local tbl = {}
 	tbl._tpldata = filterTemplateData(self._tpldata)
 	if tbl._tpldata == nil then
 		return nil
 	end
-	return utils.mergetables(AssetBase.marshal(self), tbl)
+	return tbl
 end
 
 return StaticAsset

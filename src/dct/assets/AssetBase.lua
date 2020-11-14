@@ -177,6 +177,9 @@ end
 function AssetBase:marshal()
 	assert(self._initcomplete == true,
 		"runtime error: init not completed")
+	if self:isDead() then
+		return nil
+	end
 	return Marshallable.marshal(self)
 end
 
@@ -297,13 +300,6 @@ function AssetBase:setDead(val)
 			initiator = self,
 		})
 	end
-end
-
---[[
--- Check the asset death goals.
--- Returns: none
---]]
-function AssetBase:checkDead()
 end
 
 --[[

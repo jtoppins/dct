@@ -43,6 +43,9 @@ function Marshallable:marshal()
 			"value error: cannot marshal functions")
 		tbl[attribute] = self[attribute]
 	end
+	if next(tbl) == nil then
+		return nil
+	end
 	return tbl
 end
 
