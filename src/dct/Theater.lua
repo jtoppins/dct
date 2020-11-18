@@ -57,6 +57,7 @@ function Theater:__init()
 	self.scratchpad= {}
 	self.startdate = os.date("!*t")
 	self.bldgPersist= bldgPersist(self)
+	self.namecntr  = 1000
 
 	for _, val in pairs(coalition.side) do
 		self.cmdrs[val] = Commander(self, val)
@@ -157,6 +158,7 @@ end
 function Theater:_initFromState()
 	self.statef = true
 	self.startdate = self.statetbl.startdate
+	self.namecntr  = self.statetbl.namecntr
 	self:getAssetMgr():unmarshal(self.statetbl.assetmgr)
 	self.bldgPersist:restoreState(self.statetbl.bldgDest)
 end
@@ -270,7 +272,8 @@ function Theater:export(_)
 		["sortie"]   = env.getValueDictByKey(env.mission.sortie),
 		["assetmgr"] = self:getAssetMgr():marshal(),
 		["bldgDest"]  = self.bldgPersist:returnList(),
-		["startdate"] = self.startdate
+		["startdate"] = self.startdate,
+		["namecntr"]  = self.namecntr,
 	}
 
 	statefile:write(json:encode(exporttbl))
@@ -291,6 +294,11 @@ end
 
 function Theater:getCommander(side)
 	return self.cmdrs[side]
+end
+
+function Theater:getcntr()
+	self.namecntr = self.namecntr + 1
+	return self.namecntr
 end
 
 function Theater:playerRequest(data)

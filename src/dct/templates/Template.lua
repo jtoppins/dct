@@ -72,20 +72,12 @@ local function goalFromName(name, objtype)
 	return goal
 end
 
--- unique name counter, allows us to generate names that are always unique
--- TODO: this value would need to be saved for mission persistance
-local namecntr = 1000
-
-local function getcntr()
-	namecntr = namecntr + 1
-	return namecntr
-end
-
 local function makeNamesUnique(data)
 	for _, grp in ipairs(data) do
-		grp.data.name = grp.data.name .. " #" .. getcntr()
+		grp.data.name = grp.data.name.." #"..
+			dct.Theater.singleton():getcntr()
 		for _, v in ipairs(grp.data.units or {}) do
-			v.name = v.name .. " #" .. getcntr()
+			v.name = v.name.." #"..dct.Theater.singleton():getcntr()
 		end
 	end
 end

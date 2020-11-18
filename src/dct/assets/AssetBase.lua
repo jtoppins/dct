@@ -130,6 +130,10 @@ function AssetBase:_completeinit(template, region)
 		self.name = self.tplname
 	else
 		self.name = region.name.."_"..self.owner.."_"..template.name
+		if template.uniquenames == true then
+			self.name = self.name.." #"..
+				dct.Theater.singleton():getcntr()
+		end
 	end
 	self.codename = generateCodename(self.type)
 
