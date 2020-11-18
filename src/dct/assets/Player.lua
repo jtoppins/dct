@@ -36,12 +36,8 @@ function Player:__init(template, region)
 		[world.event.S_EVENT_TAKEOFF] = self.handleTakeoff,
 	}
 	AssetBase.__init(self, template, region)
-	self:_addMarshalNames({
-		"unittype",
-		"groupId",
-		"airbase",
-		"parking",
-	})
+	self.marshal   = nil
+	self.unmarshal = nil
 end
 
 function Player:_completeinit(template, region)

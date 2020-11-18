@@ -5,7 +5,6 @@
 --]]
 
 local class    = require("libs.class")
-local utils    = require("libs.utils")
 local enum     = require("dct.enum")
 local dctutils = require("dct.utils")
 local Logger   = dct.Logger.getByName("AssetManager")
@@ -226,13 +225,9 @@ function AssetManager:marshal()
 	local tbl = {
 		["assets"] = {},
 	}
-	local shouldmarshal = utils.shallowclone(enum.assetClass.STRATEGIC)
-	shouldmarshal[enum.assetType.AIRSPACE] = true
-	shouldmarshal[enum.assetType.AIRBASE]  = true
-
 
 	for name, asset in pairs(self._assetset) do
-		if shouldmarshal[asset.type] ~= nil then
+		if asset.marshal ~= nil then
 			tbl.assets[name] = asset:marshal()
 		end
 	end
