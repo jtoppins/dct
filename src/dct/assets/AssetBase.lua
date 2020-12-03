@@ -289,7 +289,14 @@ end
 --]]
 function AssetBase:setDead(val)
 	assert(type(val) == "boolean", "value error: val must be of type bool")
+	local prev = self._dead
 	self._dead = val
+	if self._dead and prev ~= self._dead then
+		self:notify({
+			id = dctenum.event.DCT_EVENT_DEAD,
+			initiator = self,
+		})
+	end
 end
 
 --[[

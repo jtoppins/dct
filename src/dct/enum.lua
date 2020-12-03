@@ -171,4 +171,9 @@ enum.weaponCategory = {
 enum.WPNINFCOST = 5000
 enum.UNIT_CAT_SCENERY = Unit.Category.STRUCTURE + 1
 
+local eventbase = world.event.S_EVENT_MAX + 2000
+enum.event = {
+	["DCT_EVENT_DEAD"] = eventbase + 1,
+}
+
 return enum

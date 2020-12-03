@@ -63,6 +63,7 @@ end
 function AssetManager:remove(asset)
 	assert(asset ~= nil, "value error: asset object must be provided")
 
+	asset:removeObserver(self.onDCSEvent)
 	self._assetset[asset.name] = nil
 
 	-- remove asset name from per-side asset list
@@ -81,6 +82,7 @@ function AssetManager:add(asset)
 	assert(self._assetset[asset.name] == nil, "asset name ('"..
 		asset.name.."') already exists")
 	self._assetset[asset.name] = asset
+	asset:addObserver(self.onDCSEvent, self, "AssetManager.onDCSEvent")
 
 	-- add asset to approperate side lists
 	if not asset:isDead() then
@@ -168,11 +170,21 @@ local function handleDead(self, event)
 	self._object2asset[tostring(event.initiator:getName())] = nil
 end
 
+local function handleAssetDeath(self, event)
+	local asset = event.initiator
+	self:remove(asset)
+end
+
 local handlers = {
 	[world.event.S_EVENT_DEAD] = handleDead,
+	[enum.event.DCT_EVENT_DEAD] = handleAssetDeath,
 }
 
 function AssetManager:doOneObject(obj, event)
+	if event.id > world.event.S_EVENT_MAX then
+		return
+	end
+
 	local name = tostring(obj:getName())
 	if obj:getCategory() == Object.Category.UNIT then
 		name = obj:getGroup():getName()
@@ -205,6 +217,7 @@ function AssetManager:onDCSEvent(event)
 		[world.event.S_EVENT_EJECTION]        = true,
 		[world.event.S_EVENT_HIT]             = true,
 		[world.event.S_EVENT_DEAD]            = true,
+		[enum.event.DCT_EVENT_DEAD]           = true,
 		--[world.event.S_EVENT_UNIT_LOST]     = true,
 	}
 	local objmap = {
