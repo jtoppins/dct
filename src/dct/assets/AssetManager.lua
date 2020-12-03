@@ -8,9 +8,6 @@ local class    = require("libs.class")
 local enum     = require("dct.enum")
 local dctutils = require("dct.utils")
 local Logger   = dct.Logger.getByName("AssetManager")
-local Command  = require("dct.Command")
-
-local ASSET_CHECK_PERIOD = 12*60  -- seconds
 
 local AssetManager = class()
 function AssetManager:__init(theater)
@@ -41,8 +38,6 @@ function AssetManager:__init(theater)
 	self._object2asset = {}
 
 	theater:registerHandler(self.onDCSEvent, self, "AssetManager handler")
-	theater:queueCommand(ASSET_CHECK_PERIOD,
-		Command(self.checkAssets, self))
 end
 
 function AssetManager:factory(assettype)
@@ -142,27 +137,6 @@ function AssetManager:getTargets(requestingside, assettypelist)
 		end
 	end
 	return tgtlist
-end
-
---[[
--- Check all assets to see if their death goal has been met.
---
--- *Note:* We just do the simple thing, check all assets.
--- Nothing complicated for now.
---]]
-function AssetManager:checkAssets(_ --[[time]])
-	local perftime_s = os.clock()
-	local cnt = 0
-
-	for _, asset in pairs(self._assetset) do
-		cnt = cnt + 1
-		if asset:isSpawned() and asset:isDead() then
-			self:remove(asset)
-		end
-	end
-	Logger:debug(string.format("checkAssets() - runtime: %4.3f ms, "..
-		"assets checked: %d", (os.clock()-perftime_s)*1000, cnt))
-	return ASSET_CHECK_PERIOD
 end
 
 local function handleDead(self, event)
