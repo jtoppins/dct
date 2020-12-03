@@ -23,6 +23,7 @@ local dctenum  = require("dct.enum")
 local dctutils = require("dct.utils")
 local Goal     = require("dct.Goal")
 local Marshallable = require("dct.libs.Marshallable")
+local Observable   = require("dct.libs.Observable")
 local Logger   = dct.Logger.getByName("Asset")
 local settings = _G.dct.settings
 
@@ -71,7 +72,7 @@ AssetBase:
 	             briefings to players
 --]]
 
-local AssetBase = class(Marshallable)
+local AssetBase = class(Marshallable, Observable)
 function AssetBase:__init(template, region)
 	if not self.__clsname then
 		self.__clsname = "AssetBase"
@@ -80,6 +81,7 @@ function AssetBase:__init(template, region)
 		self._eventhandlers = {}
 	end
 	Marshallable.__init(self)
+	Observable.__init(self)
 	self:_addMarshalNames({
 		"_spawned",
 		"_dead",

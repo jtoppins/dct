@@ -10,38 +10,33 @@ local Logger = dct.Logger.getByName("Observable")
 local Observable = class()
 function Observable:__init()
 	self._observers = {}
+	setmetatable(self._observers, { __mode = "k", })
 end
 
-function Observable:addObserver(asset)
-	assert(asset, "value error: 'asset' must not be nil")
-	if type(asset.onDCTEvent) ~= "function" then
-		Logger:error(
-			string.format("asset(%s) does not implement 'onDCTEvent'",
-				asset.name))
+function Observable:addObserver(func, ctx, name)
+	assert(type(func) == "function", "func must be a function")
+	-- ctx must be non-nil otherwise upon insertion the index which
+	-- is the function address will be deleted.
+	assert(ctx ~= nil, "ctx must be a non-nil value")
+	name = name or "unknown"
+
+	if self._observers[func] ~= nil then
+		Logger:error("func("..tostring(func)..") already set - skipping")
 		return
 	end
-	Logger:debug("adding observer("..asset.name..")")
-	self._observers[asset.name] = true
+	Logger:debug("adding handler("..name..")")
+	self._observers[func] = { ["ctx"] = ctx, ["name"] = name, }
 end
 
-function Observable:removeObserver(name)
-	assert(type(name) == "string", "value error: 'name' must be a string")
-	self._observers[name] = nil
+function Observable:removeObserver(func)
+	assert(type(func) == "function", "func must be a function")
+	self._observers[func] = nil
 end
 
-function Observable:onNotify(event)
-	for observer, _ in pairs(self._observers) do
-		local asset = require("dct.Theater").singleton():
-			getAssetMgr():getAsset(observer)
-		if asset == nil then
-			Logger:debug(string.format(
-				"asset(%s) appears to not exist removing observer",
-				observer))
-			self:removeObserver(observer)
-		else
-			Logger:debug("executing observer: "..observer)
-			asset:onDCTEvent(event)
-		end
+function Observable:notify(event)
+	for handler, val in pairs(self._observers) do
+		Logger:debug("executing handler: "..val.name)
+		handler(val.ctx, event)
 	end
 end
 
