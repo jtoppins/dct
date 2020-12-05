@@ -103,12 +103,6 @@ end
 function Mission:abort(asset)
 	self:removeAssigned(asset)
 	if next(self.assigned) == nil then
-		--[[
-		for _, grpname in ipairs(self.assigned) do
-			local a = self.cmdr:getAsset(grpname)
-			self:removeAssigned(a)
-		end
-		--]]
 		self.cmdr:removeMission(self.id)
 		local tgt = self.cmdr:getAsset(self.target)
 		if tgt then
