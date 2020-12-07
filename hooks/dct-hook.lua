@@ -19,6 +19,7 @@
 
 -- luacheck: read_globals log DCS net
 
+local dctflag           = "DCTFLAG"
 local facility          = "[DCT-HOOKS]"
 local DEBUG_SCRIPT      = false
 local loglevel = log.ALERT + log.ERROR + log.WARNING + log.INFO
@@ -431,9 +432,14 @@ local function isSlotEnabled(slot)
 	return flag
 end
 
+function DCTHooks:isEnabled()
+	local dctenabled = do_rpc("server", rpc_get_flag(dctflag), "boolean")
+	return self.started and dctenabled
+end
+
 -- Returns: true - allows slot change, false - denies change
 function DCTHooks:onPlayerTryChangeSlot(playerid, _, slotid)
-	if not self.started then
+	if not self:isEnabled() then
 		return
 	end
 
@@ -554,7 +560,7 @@ function DCTHooks:kickPlayerFromSlot(player)
 end
 
 function DCTHooks:onSimulationFrame()
-	if not self.started then
+	if not self:isEnabled() then
 		return
 	end
 
