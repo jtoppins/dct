@@ -14,6 +14,7 @@ local function init()
 	local t = Theater.singleton()
 	world.addEventHandler(t)
 	timer.scheduleFunction(t.exec, t, timer.getTime() + 20)
+	trigger.action.setUserFlag("DCTFLAG", true)
 	runonce = true
 end
 
