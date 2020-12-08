@@ -35,6 +35,7 @@
 require("math")
 local class = require("libs.class")
 local AssetBase = require("dct.assets.AssetBase")
+local dctutils= require("dct.utils")
 local uimenu  = require("dct.ui.groupmenu")
 local Logger  = dct.Logger.getByName("Asset")
 local loadout = require("dct.systems.loadouts")
@@ -226,6 +227,8 @@ function Player:_completeinit(template, region)
 		self.ato = require("dct.enum").missionType
 	end
 	self.payloadlimits = settings.payloadlimits
+	self.gridfmt    = settings.ui.gridfmt[self.unittype] or
+		dctutils.posfmt.DMS
 end
 
 function Player:_setup()

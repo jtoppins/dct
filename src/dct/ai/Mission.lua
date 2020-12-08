@@ -210,15 +210,16 @@ function Mission:checkout(time)
 	return self.station.total
 end
 
-function Mission:getDescription(actype)
+function Mission:getDescription(fmt)
 	local tgt = self.cmdr:getAsset(self.target)
 	if tgt == nil then
 		return "Target destroyed abort mission"
 	end
 	local interptbl = {
-		["LOCATION"] = uihuman.grid2actype(actype,
+		["LOCATION"] = dctutils.fmtposition(
 			tgt:getLocation(),
-			tgt:getIntel(self.cmdr.owner))
+			tgt:getIntel(self.cmdr.owner),
+			fmt)
 	}
 	return dctutils.interp(self.briefing, interptbl)
 end

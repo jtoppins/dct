@@ -62,15 +62,6 @@ function human.locationhdr(msntype)
 	return hdr
 end
 
-function human.grid2actype(actype, location, precision)
-	local fmt = settings.gridfmt[actype]
-	precision = precision or 3
-	if fmt == nil then
-		fmt = dctutils.posfmt.DMS
-	end
-	return dctutils.fmtposition(location, precision, fmt)
-end
-
 function human.drawTargetIntel(msn, grpid, readonly)
 	local tgtinfo = msn:getTargetInfo()
 	local degpos = dctutils.degrade_position(tgtinfo.location,
