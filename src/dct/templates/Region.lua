@@ -144,8 +144,8 @@ local function addAndSpawnAsset(self, name, assetmgr, centroid)
 	local mgr = dct.Theater.singleton():getAssetMgr()
 	local asset = mgr:factory(tpl.objtype)(tpl, self)
 	assetmgr:add(asset)
-	asset:spawn()
 	asset:generate(assetmgr, self)
+	asset:spawn()
 	centroid.point, centroid.n = dctutils.centroid(asset:getLocation(),
 		centroid.point, centroid.n)
 	return asset
