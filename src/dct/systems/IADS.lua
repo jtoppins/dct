@@ -21,7 +21,7 @@ local rangeTbl = {
 	["HQ-7_STR_SP"] = 10000,
 }
 -- If true IADS script is active
-local IADSEnable = true
+--local IADSEnable = true
 -- 1 = radio detection of ARM launch on, 0 = radio detection of ARM launch off
 local RadioDetect = true
 -- 1 = EWR detection of ARMs on, 0 = EWR detection of ARMs off
@@ -45,54 +45,35 @@ local contSamAmmo = true
 -- Have uncontrolled SAMs stay off if no ammo remaining
 local uncontSamAmmo = false
 
-local SAMSites = {}
-local EWRSites = {}
-local AewAC = {}
-local trkFiles = {
-	["SAM"] = {},
-	["EWR"] = {},
-	["AWACS"] = {},
-}
+local function getDist(point1, point2)
+	local dX = point1.x - point2.x
+	local dZ = point1.z - point2.z
+	return math.sqrt(dX*dX + dZ*dZ)
+end
+
+local function getDist3D(point1, point2)
+	local dX = point1.x - point2.x
+	local dY = point1.y - point2.y
+	local dZ = point1.z - point2.z
+	return math.sqrt(dX*dX + dZ*dZ + dY*dY)
+end
 
 local IADS = class()
+function IADS:__init(cmdr)
+	assert(cmdr, "value error: cmdr must be a non-nil value")
+	self.owner    = cmdr.owner
+	self.SAMSites = {}
+	self.EWRSites = {}
+	self.AewAC    = {}
 
-
-local function tablelength(T)
-	if T == nil then
-		return 0
-	end
-	local count = 0
-	for _, item in pairs(T) do
-		if item~=nil then
-			count = count + 1
-		end
-	end
-	return count
-end
-
-function IADS:getDist(point1, point2)
-	local x1 = point1.x
-	local z1 = point1.z
-	local x2 = point2.x
-	local z2 = point2.z
-	local dX = math.abs(x1-x2)
-	local dZ = math.abs(z1-z2)
-	local distance = math.sqrt(dX*dX + dZ*dZ)
-	return distance
-end
-
-function IADS:getDist3D(point1, point2)
-	local x1 = point1.x
-	local y1 = point1.y
-	local z1 = point1.z
-	local x2 = point2.x
-	local y2 = point2.y
-	local z2 = point2.z
-	local dX = math.abs(x1-x2)
-	local dY = math.abs(y1-y2)
-	local dZ = math.abs(z1-z2)
-	local distance = math.sqrt(dX*dX + dZ*dZ + dY*dY)
-	return distance
+	local theater = require("dct.Theater").singleton()
+	theater:registerHandler(self.sysIADSEventHandler, self)
+	theater:queueCommand(10, Command(self.populateLists, self))
+	theater:queueCommand(10, Command(self.monitortrks, self))
+	theater:queueCommand(10, Command(self.SAMCheckHidden, self))
+	theater:queueCommand(10, Command(self.BlinkSAM, self))
+	theater:queueCommand(10, Command(self.EWRSAMOnRequest, self))
+	theater:queueCommand(15, Command(self.disableAllSAMs, self))
 end
 
 function IADS:rangeOfSAM(gp)
@@ -110,30 +91,37 @@ function IADS:rangeOfSAM(gp)
 end
 
 function IADS:disableSAM(site)
-	if site.Enabled then
-		local inRange = false
-		if site.trkFiles then
-			for _, trk in pairs(site.trkFiles) do
-				if trk.Position and self:getDist(site.Location, trk.Position)
-					< (site.EngageRange * 1.15) then
-					inRange = true
-				end
+	if not site.Enabled then
+		return nil
+	end
+
+	local inRange = false
+	if site.trkFiles then
+		for _, trk in pairs(site.trkFiles) do
+			if trk.Position and getDist(site.Location, trk.Position)
+				< (site.EngageRange * 1.15) then
+				inRange = true
 			end
 		end
-		if inRange then
-			self.theater:queueCommand(10, Command(self.disableSAM, self, site))
-		else
-			site.group:getController():setOption(AI.Option.Ground.id.ALARM_STATE,
-				AI.Option.Ground.val.ALARM_STATE.GREEN)
-			site.Enabled = false
-			env.info("SAM: "..site.Name.." disabled")
-		end
+	end
+
+	if inRange then
+		-- This looks wrong
+		require("dct.Theater").singleton():queueCommand(10,
+			Command(self.disableSAM, self, site))
+	else
+		site.group:getController():setOption(
+			AI.Option.Ground.id.ALARM_STATE,
+			AI.Option.Ground.val.ALARM_STATE.GREEN)
+		site.Enabled = false
+		env.info("SAM: "..site.Name.." disabled")
 	end
 	return nil
 end
 
 function IADS:hideSAM(site)
-	site.group:getController():setOption(AI.Option.Ground.id.ALARM_STATE,
+	site.group:getController():setOption(
+		AI.Option.Ground.id.ALARM_STATE,
 		AI.Option.Ground.val.ALARM_STATE.GREEN)
 	site.Enabled = false
 	env.info("SAM: "..site.Name.." hidden")
@@ -141,49 +129,52 @@ function IADS:hideSAM(site)
 end
 
 local function ammoCheck(site)
+	local wpns = {
+		[Weapon.GuidanceType.RADAR_ACTIVE]      = true,
+		[Weapon.GuidanceType.RADAR_SEMI_ACTIVE] = true,
+	}
+
 	for _, unt in pairs(site.group:getUnits()) do
-		local ammo = unt:getAmmo()
-		if ammo then
-			for j=1, #ammo do
-				if ammo[j].count > 0 and ammo[j].desc.guidance == Weapon.GuidanceType.RADAR_ACTIVE
-					or ammo[j].desc.guidance == Weapon.GuidanceType.RADAR_SEMI_ACTIVE then
-					return true
-				end
+		local ammo = unt:getAmmo() or {}
+		for j=1, #ammo do
+			if wpns[ammo[j].desc.guidance] == true and
+			   ammo[j].count > 0 then
+				return true
 			end
 		end
 	end
+	return false
 end
 
 function IADS:enableSAM(site)
-	if (not site.Hidden) and (not site.Enabled) then
-		local hasAmmo = ammoCheck(site)
-		if tablelength(site.ControlledBy) > 0 then
-			if (contSamAmmo and (not hasAmmo)) then
-				return
-			else
-				site.group:getController():setOption(AI.Option.Ground.id.ALARM_STATE,
-					AI.Option.Ground.val.ALARM_STATE.RED)
-				site.Enabled = true
-				env.info("SAM: "..site.Name.." enabled")
-			end
-		else
-			if uncontSamAmmo and not hasAmmo  then
-				return
-			else
-				site.group:getController():setOption(AI.Option.Ground.id.ALARM_STATE,2)
-				site.Enabled = true
-				env.info("SAM: "..site.Name.." enabled")
-			end
+	if site.Hidden or site.Enabled then
+		return
+	end
+
+	local hasAmmo = ammoCheck(site)
+	if next(site.ControlledBy) ~= nil then
+		if contSamAmmo and not hasAmmo then
+			return
+		end
+	else
+		if uncontSamAmmo and not hasAmmo then
+			return
 		end
 	end
+
+	site.group:getController():setOption(
+		AI.Option.Ground.id.ALARM_STATE,
+		AI.Option.Ground.val.ALARM_STATE.RED)
+	site.Enabled = true
+	env.info("SAM: "..site.Name.." enabled")
 end
 
 function IADS:associateSAMS()
-	for _, EWR in pairs(EWRSites) do
+	for _, EWR in pairs(self.EWRSites) do
 		EWR.SAMsControlled = {}
-		for _, SAM in pairs(SAMSites) do
+		for _, SAM in pairs(self.SAMSites) do
 			if SAM.group:getCoalition() == EWR.EWRGroup:getCoalition()
-				and self:getDist3D(SAM.Location, EWR.Location) < EWRAssocRng then
+				and getDist3D(SAM.Location, EWR.Location) < EWRAssocRng then
 				EWR.SAMsControlled[SAM.Name] = SAM
 				SAM.ControlledBy[EWR.Name] = EWR
 			end
@@ -194,7 +185,8 @@ end
 function IADS:magHide(site)
 	if site.Type ~= "Tor 9A331" and not site.Hidden then
 		local randomTime = math.random(15,35)
-		self.theater:queueCommand(randomTime, Command(self.hideSAM, self, site))
+		require("dct.Theater").singleton():queueCommand(randomTime,
+			Command(self.hideSAM, self, site))
 		site.HiddenTime = math.random(65,100)+randomTime
 		site.Hidden = true
 	end
@@ -232,7 +224,7 @@ function IADS:addtrkFile(site, targets)
 end
 
 function IADS:EWRtrkFileBuild()
-	for _, EWR in pairs(EWRSites) do
+	for _, EWR in pairs(self.EWRSites) do
 		local det = EWR.EWRGroup:getController():getDetectedTargets(Controller.Detection.RADAR)
 		for _, targets in pairs(det) do
 			if targets.object and targets.object:isExist()
@@ -257,7 +249,7 @@ function IADS:EWRtrkFileBuild()
 end
 
 function IADS:SAMtrkFileBuild()
-	for _, SAM in pairs(SAMSites) do
+	for _, SAM in pairs(self.SAMSites) do
 		local det = SAM.group:getController():getDetectedTargets(Controller.Detection.RADAR)
 		for _, targets in pairs(det) do
 			if targets.object and targets.object:isExist()
@@ -280,7 +272,7 @@ function IADS:SAMtrkFileBuild()
 end
 
 function IADS:AWACStrkFileBuild()
-	for _, AWACS in pairs(AewAC) do
+	for _, AWACS in pairs(self.AewAC) do
 		local det = AWACS.AWACSGroup:getController():getDetectedTargets(Controller.Detection.RADAR)
 		for _, targets in pairs(det) do
 			if targets.object and targets.object:isExist()
@@ -295,13 +287,13 @@ function IADS:AWACStrkFileBuild()
 end
 
 function IADS:EWRSAMOnRequest()
-	for _, SAM in pairs(SAMSites) do
-		if(tablelength(SAM.ControlledBy) > 0) then
+	for _, SAM in pairs(self.SAMSites) do
+		if next(SAM.ControlledBy) ~= nil then
 			local viableTarget = false
 			for _, EWR in pairs(SAM.ControlledBy) do
 				for _, target in pairs(EWR.trkFiles) do
 					if target.Position and
-						self:getDist(SAM.Location, target.Position) < SAM.EngageRange then
+						getDist(SAM.Location, target.Position) < SAM.EngageRange then
 						viableTarget = true
 					end
 				end
@@ -317,7 +309,7 @@ function IADS:EWRSAMOnRequest()
 end
 
 function IADS:SAMCheckHidden()
-	for _, SAM in pairs(SAMSites) do
+	for _, SAM in pairs(self.SAMSites) do
 		if SAM.Hidden then
 			SAM.HiddenTime = SAM.HiddenTime - 2
 			if SAM.HiddenTime < 1 then
@@ -329,8 +321,8 @@ function IADS:SAMCheckHidden()
 end
 
 function IADS:BlinkSAM()
-	for _, SAM in pairs(SAMSites) do
-		if tablelength(SAM.ControlledBy) < 1 then
+	for _, SAM in pairs(self.SAMSites) do
+		if next(SAM.ControlledBy) == nil then
 			--env.info("SAM: "..SAM.Name.." is uncontrolled")
 			if SAM.BlinkTimer < 1  and (not SAM.Hidden) then
 				if SAM.Enabled then
@@ -373,7 +365,7 @@ function IADS:checkGroupRole(gp)
 			end
 		end
 		if isEWR then
-			EWRSites[gp:getName()] = {
+			self.EWRSites[gp:getName()] = {
 				["Name"] = gp:getName(),
 				["EWRGroup"] = gp,
 				["SAMsControlled"] = {},
@@ -385,7 +377,7 @@ function IADS:checkGroupRole(gp)
 			}
 			return gp:getName()
 		elseif isSAM and self:rangeOfSAM(gp) then
-			SAMSites[gp:getName()] = {
+			self.SAMSites[gp:getName()] = {
 				["Name"] = gp:getName(),
 				["group"] = gp,
 				["Type"] = samType,
@@ -414,7 +406,7 @@ function IADS:checkGroupRole(gp)
 			end
 		end
 		if isAWACS then
-			AewAC[gp:getName()] = {
+			self.AewAC[gp:getName()] = {
 				["Name"] = gp:getName(),
 				["AWACSGroup"] = gp,
 				["numAWACS"] = numAWACS,
@@ -431,45 +423,45 @@ function IADS:onDeath(event)
 		and event.initiator:getGroup() then
 		local eventUnit = event.initiator
 		local eventGroup = event.initiator:getGroup()
-		for _, SAM in pairs(SAMSites) do
+		for _, SAM in pairs(self.SAMSites) do
 			if eventGroup:getName() == SAM.Name then
 				if eventUnit:hasAttribute("SAM TR") then
 					SAM.numSAMRadars = SAM.numSAMRadars - 1
 				end
 				if SAM.numSAMRadars < 1 then
-					for _, EWR in pairs(EWRSites) do
+					for _, EWR in pairs(self.EWRSites) do
 						for _, SAMControlled in pairs(EWR.SAMsControlled) do
 							if SAMControlled.Name == SAM.Name then
 								EWR.SAMsControlled[SAM.Name] = nil
 							end
 						end
 					end
-					SAMSites[SAM.Name] = nil
+					self.SAMSites[SAM.Name] = nil
 				end
 			end
 		end
-		for _, EWR in pairs(EWRSites) do
+		for _, EWR in pairs(self.EWRSites) do
 			if eventGroup:getName() == EWR.Name then
 				if eventUnit:hasAttribute("EWR") then
 					EWR.numEWRRadars = EWR.numEWRRadars - 1
 					if EWR.numEWRRadars < 1 then
-						for _, SAM in pairs(SAMSites) do
+						for _, SAM in pairs(self.SAMSites) do
 							for _, controllingEWR in pairs(SAM.ControlledBy) do
 								if controllingEWR.Name == EWR.Name then
 									SAM.ControlledBy[EWR.Name] = nil
 								end
 							end
 						end
-						EWRSites[EWR.Name] = nil
+						self.EWRSites[EWR.Name] = nil
 					end
 				end
 			end
-			for _, AWACS in pairs(AewAC) do
+			for _, AWACS in pairs(self.AewAC) do
 				if eventGroup:getName() == EWR.Name then
 					if eventUnit:hasAttribute("AWACS") then
 						AWACS.numAWACS = AWACS.numAWACS - 1
 						if AWACS.numAWACS < 1 then
-							AewAC[AWACS.Name] = nil
+							self.AewAC[AWACS.Name] = nil
 						end
 					end
 				end
@@ -485,9 +477,9 @@ function IADS:onShot(event)
 			local WepPt = ordnance:getPoint()
 			local WepDesc = ordnance:getDesc()
 			if WepDesc.guidance == Weapon.GuidanceType.RADAR_PASSIVE then
-				for _, SAM in pairs(SAMSites) do
+				for _, SAM in pairs(self.SAMSites) do
 					if math.random(1,100) < ARMHidePct and
-						self:getDist(SAM.Location, WepPt) < RadioHideRng then
+						getDist(SAM.Location, WepPt) < RadioHideRng then
 						self:magHide(SAM)
 					end
 				end
@@ -503,7 +495,7 @@ function IADS:onBirth(event)
 end
 
 function IADS:disableAllSAMs()
-	for _, SAM in pairs(SAMSites) do
+	for _, SAM in pairs(self.SAMSites) do
 		SAM.group:getController():setOption(AI.Option.Ground.id.ALARM_STATE,
 			AI.Option.Ground.val.ALARM_STATE.GREEN)
 		SAM.Enabled = false
@@ -523,7 +515,7 @@ function IADS:monitortrks()
 	self:EWRtrkFileBuild()
 	self:SAMtrkFileBuild()
 	self:AWACStrkFileBuild()
-	for _, EWR in pairs(EWRSites) do
+	for _, EWR in pairs(self.EWRSites) do
 		for _, trk in pairs(EWR.trkFiles) do
 			if ((timer.getAbsTime() - trk.LastDetected) > trkMem or
 				(not trk.Object:isExist()) or (not trk.Object:inAir())) then
@@ -532,7 +524,7 @@ function IADS:monitortrks()
 			end
 		end
 	end
-	for _, SAM in pairs(SAMSites) do
+	for _, SAM in pairs(self.SAMSites) do
 		for _, trk in pairs(SAM.trkFiles) do
 			if ((timer.getAbsTime() - trk.LastDetected) > trkMem or
 				(not trk.Object:isExist()) or (not trk.Object:inAir())) then
@@ -541,7 +533,7 @@ function IADS:monitortrks()
 			end
 		end
 	end
-	for _, AWACS in pairs(AewAC) do
+	for _, AWACS in pairs(self.AewAC) do
 		for _, trk in pairs(AWACS.trkFiles) do
 			if ((timer.getAbsTime() - trk.LastDetected) > trkMem or
 				(not trk.Object:isExist()) or (not trk.Object:inAir())) then
@@ -565,21 +557,6 @@ function IADS:sysIADSEventHandler(event)
 		return
 	end
 	relevents[event.id](self, event)
-end
-
-function IADS:__init(theater)
-	assert(theater ~= nil, "value error: theater must be a non-nil value")
-	Logger:debug("init IADS system")
-	self.theater = theater
-	theater:registerHandler(self.sysIADSEventHandler, self)
-	if IADSEnable then
-		theater:queueCommand(10, Command(self.populateLists, self))
-		theater:queueCommand(10, Command(self.monitortrks, self))
-		theater:queueCommand(10, Command(self.SAMCheckHidden, self))
-		theater:queueCommand(10, Command(self.BlinkSAM, self))
-		theater:queueCommand(10, Command(self.EWRSAMOnRequest, self))
-		theater:queueCommand(15, Command(self.disableAllSAMs, self))
-	end
 end
 
 return IADS
