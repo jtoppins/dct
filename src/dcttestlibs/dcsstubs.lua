@@ -240,6 +240,7 @@ AI.Task = {
 	["TurnMethod"]       = {
 		["FLY_OVER_POINT"] = "Fly Over Point",
 		["FIN_POINT"]      = "Fin Point",
+		["TURNING_POINT"]  = "Turning Point",
 	},
 	["VehicleFormation"] = {
 		["VEE"]           = "Vee",
