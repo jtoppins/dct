@@ -171,6 +171,196 @@ local radio = {}
 radio.modulation = {AM = 0, FM = 1}
 _G.radio = radio
 
+local Weapon = {}
+Weapon.Category = {
+	["SHELL"]   = 0,
+	["MISSILE"] = 1,
+	["ROCKET"]  = 2,
+	["BOMB"]    = 3,
+	["TORPEDO"] = 4,
+}
+
+Weapon.GuidanceType = {
+	["INS"]               = 1,
+	["IR"]                = 2,
+	["RADAR_ACTIVE"]      = 3,
+	["RADAR_SEMI_ACTIVE"] = 4,
+	["RADAR_PASSIVE"]     = 5,
+	["TV"]                = 6,
+	["LASER"]             = 7,
+	["TELE"]              = 8,
+}
+
+Weapon.MissileCategory = {
+	["AAM"]       = 1,
+	["SAM"]       = 2,
+	["BM"]        = 3,
+	["ANTI_SHIP"] = 4,
+	["CRUISE"]    = 5,
+	["OTHER"]     = 6
+}
+
+Weapon.WarheadType = {
+	["AP"]            = 0,
+	["HE"]            = 1,
+	["SHAPED_CHARGE"] = 2,
+}
+_G.Weapon = Weapon
+
+local AI = {}
+AI.Task = {
+	["OrbitPattern"]     = {
+		["RACE_TRACK"] = "Race-Track",
+		["CIRCLE"]     = "Circle",
+	},
+	["Designation"]      = {
+		["NO"]         = "No",
+		["WP"]         = "WP",
+		["IR_POINTER"] = "IR-Pointer",
+		["LASER"]      = "Laser",
+		["AUTO"]       = "Auto",
+	},
+	["TurnMethod"]       = {
+		["FLY_OVER_POINT"] = "Fly Over Point",
+		["FIN_POINT"]      = "Fin Point",
+	},
+	["VehicleFormation"] = {
+		["VEE"]           = "Vee",
+		["ECHELON_RIGHT"] = "EchelonR",
+		["OFF_ROAD"]      = "Off Road",
+		["RANK"]          = "Rank",
+		["ECHELON_LEFT"]  = "EchelonL",
+		["ON_ROAD"]       = "On Road",
+		["CONE"]          = "Cone",
+		["DIAMON"]        = "Diamond",
+	},
+	["AltitudeType"]     = {
+		["RADIO"] = "RADIO",
+		["BARO"]  = "BARO",
+	},
+	["WaypointType"]     = {
+		["TAKEOFF"]             = "TakeOff",
+		["TAKEOFF_PARKING"]     = "TakeOffParking",
+		["TURNING_POINT"]       = "Turning Point",
+		["TAKEOFF_PARKING_HOT"] = "TakeOffParkingHot",
+		["LAND"]                = "Land",
+	},
+	["WeaponExpend"]     = {
+		["QUARTER"] = "Quarter",
+		["TWO"]     = "Two",
+		["ONE"]     = "One",
+		["FOUR"]    = "Four",
+		["HALF"]    = "Half",
+		["ALL"]     = "All",
+	},
+}
+
+AI.Skill = {
+	"PLAYER",
+	"CLIENT",
+	"AVERAGE",
+	"GOOD",
+	"HIGH",
+	"EXCELLENT",
+}
+
+AI.Option = {
+	["Air"] = {
+		["id"] = {
+			["ROE"]                     = 0,
+			["REACTION_ON_THREAT"]      = 1,
+			["RADAR_USING"]             = 3,
+			["FLARE_USING"]             = 4,
+			["FORMATION"]               = 5,
+			["RTB_ON_BINGO"]            = 6,
+			["SILENCE"]                 = 7,
+			["RTB_ON_OUT_OF_AMMO"]      = 10,
+			["ECM_USING"]               = 13,
+			["PROHIBIT_AA"]             = 14,
+			["PROHIBIT_JETT"]           = 15,
+			["PROHIBIT_AB"]             = 16,
+			["PROHIBIT_AG"]             = 17,
+			["MISSILE_ATTACK"]          = 18,
+			["PROHIBIT_WP_PASS_REPORT"] = 19,
+		},
+		["val"] = {
+			["ROE"] = {
+				["WEAPON_FREE"]           = 0,
+				["OPEN_FIRE_WEAPON_FREE"] = 1,
+				["OPEN_FIRE"]             = 2,
+				["RETURN_FIRE"]           = 3,
+				["WEAPON_HOLD"]           = 4,
+			},
+			["REACTION_ON_THREAT"] = {
+				["NO_REACTION"]         = 0,
+				["PASSIVE_DEFENCE"]     = 1,
+				["EVADE_FIRE"]          = 2,
+				["BYPASS_AND_ESCAPE"]   = 3,
+				["ALLOW_ABORT_MISSION"] = 4,
+			},
+			["RADAR_USING"] = {
+				["NEVER"]                  = 0,
+				["FOR_ATTACK_ONLY"]        = 1,
+				["FOR_SEARCH_IF_REQUIRED"] = 2,
+				["FOR_CONTINUOUS_SEARCH"]  = 3,
+			},
+			["FLARE_USING"] = {
+				["NEVER"]                    = 0,
+				["AGAINST_FIRED_MISSILE"]    = 1,
+				["WHEN_FLYING_IN_SAM_WEZ"]   = 2,
+				["WHEN_FLYING_NEAR_ENEMIES"] = 3,
+			},
+			["ECM_USING"] = {
+				["NEVER_USE"]                     = 0,
+				["USE_IF_ONLY_LOCK_BY_RADAR"]     = 1,
+				["USE_IF_DETECTED_LOCK_BY_RADAR"] = 2,
+				["ALWAYS_USE"]                    = 3,
+			},
+			["MISSILE_ATTACK"] = {
+				["MAX_RANGE"]         = 0,
+				["NEZ_RANGE"]         = 1,
+				["HALF_WAY_RMAX_NEZ"] = 2,
+				["TARGET_THREAT_EST"] = 3,
+				["RANDOM_RANGE"]      = 4,
+			},
+		},
+	},
+	["Ground"] = {
+		["id"] = {
+			["ROE"]                = 0,
+			["FORMATION"]          = 5,
+			["DISPERSE_ON_ATTACK"] = 8,
+			["ALARM_STATE"]        = 9,
+			["ENGAGE_AIR_WEAPONS"] = 20,
+		},
+		["val"] = {
+			["ALARM_STATE"] = {
+				["AUTO"]  = 0,
+				["GREEN"] = 1,
+				["RED"]   = 2,
+			},
+			["ROE"] = {
+				["OPEN_FIRE"]   = 2,
+				["RETURN_FIRE"] = 3,
+				["WEAPON_HOLD"] = 4,
+			},
+		},
+	},
+	["Naval"] = {
+		["id"] = {
+			["ROE"] = 0,
+		},
+		["val"] = {
+			["ROE"] = {
+				["OPEN_FIRE"]   = 2,
+				["RETURN_FIRE"] = 3,
+				["WEAPON_HOLD"] = 4,
+			},
+		},
+	},
+}
+_G.AI = AI
+
 local coalition = {}
 coalition.side = {}
 coalition.side.NEUTRAL = 0
@@ -479,6 +669,54 @@ for _,v in pairs(objectcat) do
 	objects[v] = {}
 end
 
+local Controller = class()
+function Controller:__init()
+end
+
+Controller.Detection = {
+	["VISUAL"] = 1,
+	["OPTIC"]  = 2,
+	["RADAR"]  = 4,
+	["IRST"]   = 8,
+	["RWR"]    = 16,
+	["DLINK"]  = 32,
+}
+
+function Controller:setTask(--[[task]])
+end
+
+function Controller:resetTask()
+end
+
+function Controller:pushTask(--[[task]])
+end
+
+function Controller:popTask()
+end
+
+function Controller:hasTask()
+	return true
+end
+
+function Controller:setCommand(--[[cmd]])
+end
+
+function Controller:setOption(--[[id, value]])
+end
+
+function Controller:setOnOff(--[[value]])
+end
+
+function Controller:knowTarget(--[[object, type, distance]])
+end
+
+function Controller:isTargetDetected(--[[object, ...<detection type>]])
+end
+
+function Controller:getDetectedTargets(--[[...<detection type>]])
+end
+_G.Controller = Controller
+
 local Object = class()
 
 function Object.printObjects()
@@ -521,7 +759,7 @@ function Object:getDesc()
 end
 
 function Object:hasAttribute(attribute)
-	return self.desc.attribute[attribute]
+	return self.desc.attributes[attribute]
 end
 
 function Object:getName()
@@ -627,6 +865,10 @@ end
 function Unit:getPlayerName()
 	return self.pname
 end
+
+function Unit:getController()
+	return Controller()
+end
 _G.Unit = Unit
 
 local StaticObject = class(Coalition)
@@ -711,6 +953,10 @@ end
 
 function Group:_addUnit(obj)
 	table.insert(self.units, obj)
+end
+
+function Group:getController()
+	return Controller()
 end
 _G.Group = Group
 

@@ -23,6 +23,10 @@ read_globals = {
 	"coord",
 	"land",
 	"SceneryObject",
+	"AI",
+	"Controller",
+	"radio",
+	"Weapon",
 
 	-- DCT specific
 	"dct",
