@@ -8,7 +8,6 @@ require("math")
 local utils    = require("libs.utils")
 local enum     = require("dct.enum")
 local dctutils = require("dct.utils")
-local settings = _G.dct.settings.ui
 
 local human = {}
 

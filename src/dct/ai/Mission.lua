@@ -12,7 +12,6 @@ local class    = require("libs.class")
 local utils    = require("libs.utils")
 local enum     = require("dct.enum")
 local dctutils = require("dct.utils")
-local uihuman  = require("dct.ui.human")
 local uicmds   = require("dct.ui.cmds")
 
 local MISSION_LIMIT = 60*60*3  -- 3 hours in seconds
