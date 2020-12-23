@@ -14,6 +14,7 @@ local utils    = require("libs.utils")
 local Logger   = dct.Logger.getByName("Asset")
 local enum     = require("dct.enum")
 local dctutils = require("dct.utils")
+local vector   = require("dct.libs.vector")
 local Goal     = require("dct.Goal")
 local AssetBase= require("dct.assets.AssetBase")
 
@@ -137,11 +138,11 @@ end
 
 function StaticAsset:getLocation()
 	if self._location == nil then
-		local vec2
+		local vec2, n
 		for _, grp in pairs(self._assets) do
-			vec2 = dctutils.centroid(grp.data, vec2)
+			vec2, n = dctutils.centroid(grp.data, vec2, n)
 		end
-		self._location = dctutils.createVec3(vec2, land.getHeight(vec2))
+		self._location = vector.Vector3D(vec2, land.getHeight(vec2))
 	end
 	return self._location
 end

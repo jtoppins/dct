@@ -66,46 +66,6 @@ function utils.zulutime(abstime)
 	return (utils.time(abstime) + correction)
 end
 
---[[
-function utils.centroid(points)
-	local i = 0
-	local centroid = {
-		["x"] = 0, ["y"] = 0, ["z"] = 0,
-	}
-	for _,v in pairs(points) do
-		if v.x then
-			centroid.x = centroid.x + v.x
-		end
-		if v.y then
-			centroid.y = centroid.y + v.y
-		end
-		if v.z then
-			centroid.z = centroid.z + v.z
-		end
-		i = i + 1
-	end
-	centroid.x = centroid.x / i
-	centroid.y = centroid.y / i
-	centroid.z = centroid.z / i
-	return centroid
-end
---]]
-
-function utils.createVec2(vec3)
-	if vec3.z then
-		return {["x"] = vec3.x, ["y"] = vec3.z}
-	end
-	return {["x"] = vec3.x, ["y"] = vec3.y}
-end
-
-function utils.createVec3(vec2, height)
-	if vec2.z then
-		return {["x"] = vec2.x, ["y"] = vec2.y, ["z"] = vec2.z}
-	end
-	local h = height or vec2.alt or 0
-	return {["x"] = vec2.x, ["y"] = h, ["z"] = vec2.y}
-end
-
 function utils.centroid(point, pcentroid, n)
 	if pcentroid == nil or n == nil then
 		return {["x"] = point.x, ["y"] = point.y, ["z"] = point.z,}, 1
