@@ -13,6 +13,7 @@ local containers  = require("libs.containers")
 local json        = require("libs.json")
 local enum        = require("dct.enum")
 local dctutils    = require("dct.utils")
+local Observable  = require("dct.libs.Observable")
 local uicmds      = require("dct.ui.cmds")
 local uiscratchpad= require("dct.ui.scratchpad")
 local bldgPersist = require("dct.systems.bldgPersist")
@@ -75,9 +76,9 @@ end
 --    and provides a base interface for manipulating data at a theater
 --    level.
 --]]
-local Theater = class()
+local Theater = class(Observable)
 function Theater:__init()
-	self._observers = {}
+	Observable.__init(self)
 	self.savestatefreq = 7*60 -- seconds
 	self.cmdmindelay   = 2
 	self.uicmddelay    = self.cmdmindelay
@@ -197,33 +198,10 @@ function Theater:delayedInit()
 	self:queueCommand(100, Command(self.export, self))
 end
 
-function Theater:registerHandler(func, ctx, name)
-	assert(type(func) == "function", "func must be a function")
-	-- ctx must be non-nil otherwise upon insertion the index which
-	-- is the function address will be deleted.
-	assert(ctx ~= nil, "ctx must be a non-nil value")
-	name = name or "unknown"
-
-	if self._observers[func] ~= nil then
-		Logger:error("func("..tostring(func)..") already set - skipping")
-		return
-	end
-	Logger:debug("adding handler("..name..")")
-	self._observers[func] = { ["ctx"] = ctx, ["name"] = name, }
-end
-
-function Theater:removeHandler(func)
-	assert(type(func) == "function", "func must be a function")
-	self._observers[func] = nil
-end
-
 -- DCS looks for this function in any table we register with the world
 -- event handler
 function Theater:onEvent(event)
-	for handler, val in pairs(self._observers) do
-		Logger:debug("executing handler: "..val.name)
-		handler(val.ctx, event)
-	end
+	self:notify(event)
 	if event.id == world.event.S_EVENT_MISSION_END then
 		local ok, err = os.remove(settings.statepath)
 		if not ok then
