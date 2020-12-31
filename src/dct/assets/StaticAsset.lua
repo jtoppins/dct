@@ -234,7 +234,7 @@ function StaticAsset:_spawn()
 		__spawn(removeDCTKeys(grp))
 	end
 
-	self._spawned = true
+	AssetBase.spawn(self)
 	for _, goal in pairs(self._deathgoals) do
 		goal:onSpawn()
 	end
@@ -261,7 +261,7 @@ function StaticAsset:despawn()
 			object:destroy()
 		end
 	end
-	self._spawned = false
+	AssetBase.despawn(self)
 end
 
 local function filterDeadObjects(tbl, grp)
