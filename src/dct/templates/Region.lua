@@ -145,7 +145,6 @@ local function addAndSpawnAsset(self, name, assetmgr, centroid)
 	local asset = mgr:factory(tpl.objtype)(tpl, self)
 	assetmgr:add(asset)
 	asset:generate(assetmgr, self)
-	asset:spawn()
 	centroid.point, centroid.n = dctutils.centroid(asset:getLocation(),
 		centroid.point, centroid.n)
 	return asset
