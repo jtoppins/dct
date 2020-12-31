@@ -191,9 +191,6 @@ function AssetBase:unmarshal(data)
 	Marshallable.unmarshal(self, data)
 	self:_setup()
 	self._initcomplete = true
-	if self:isSpawned() then
-		self:spawn(true)
-	end
 end
 
 --[[

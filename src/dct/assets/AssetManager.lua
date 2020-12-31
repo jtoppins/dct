@@ -240,11 +240,19 @@ function AssetManager:marshal()
 end
 
 function AssetManager:unmarshal(data)
+	local spawnq = {}
 	for _, assettbl in pairs(data.assets) do
 		local assettype = assettbl.type
 		local asset = self:factory(assettype)()
 		asset:unmarshal(assettbl)
 		self:add(asset)
+		if asset:isSpawned() then
+			spawnq[asset.name] = true
+		end
+	end
+
+	for assetname, _ in pairs(spawnq) do
+		self:getAsset(assetname):spawn(true)
 	end
 end
 
