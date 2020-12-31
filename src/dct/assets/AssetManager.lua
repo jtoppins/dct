@@ -5,6 +5,7 @@
 --]]
 
 local class    = require("libs.class")
+local checklib = require("libs.check")
 local enum     = require("dct.enum")
 local dctutils = require("dct.utils")
 local Logger   = dct.Logger.getByName("AssetManager")
@@ -99,6 +100,25 @@ end
 
 function AssetManager:getAsset(name)
 	return self._assetset[name]
+end
+
+--[[
+-- filterAssets - return all asset names matching `filter`
+-- filter(asset)
+--   returns true if the filter matches and the asset name should be kept
+-- Return: a table with asset names as keys. Will always returns a table,
+--   even if it is empty
+--]]
+function AssetManager:filterAssets(filter)
+	checklib.func(filter)
+
+	local list = {}
+	for name, asset in pairs(self._assetset) do
+		if filter(asset) then
+			list[name] = true
+		end
+	end
+	return list
 end
 
 --[[

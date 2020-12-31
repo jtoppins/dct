@@ -187,6 +187,17 @@ function Theater:loadOrGenerate()
 		for _, r in pairs(self.regions) do
 			r:generate(self.assetmgr)
 		end
+		-- TODO: temperary, spawn all generated assets
+		-- eventually we will want to spawn only a set of assets
+		local assetnames = self.assetmgr:filterAssets(function()
+			return true
+		end)
+		for name, _ in pairs(assetnames) do
+			local asset = self.assetmgr:getAsset(name)
+			if not asset:isSpawned() then
+				asset:spawn()
+			end
+		end
 	end
 	self.statetbl = nil
 end
