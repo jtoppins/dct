@@ -34,13 +34,15 @@ local function isPlayerGroup(grp, _, _)
 			slotcnt = slotcnt + 1
 		end
 	end
-	if slotcnt > 1 then
-		Logger:warn(string.format("DCT requires 1 slot groups. Group '%s'"..
-			" of type a/c (%s) has more than one player slot.",
-			grp.name, grp.units[1].type))
-		return false
+	if slotcnt > 0 then
+		if slotcnt > 1 then
+			Logger:warn(string.format("DCT requires 1 slot groups. Group "..
+				"'%s' of type a/c (%s) has more than one player slot.",
+				grp.name, grp.units[1].type))
+		end
+		return true
 	end
-	return true
+	return false
 end
 
 local function isStateValid(state)
