@@ -291,6 +291,14 @@ local function main()
 	local cmd = uicmds[status.data.type](newtheater, status.data)
 	cmd:execute(400)
 
+	local playercnt = 0
+	for _, asset in pairs(theater:getAssetMgr()._assetset) do
+		if asset.type == enum.assetType.PLAYERGROUP then
+			playercnt = playercnt + 1
+		end
+	end
+	assert(playercnt == 162, "Player asset creation broken")
+
 	newtheater:export()
 	f = io.open(settings.statepath, "r")
 	local sumsave = md5.sum(f:read("*all"))
