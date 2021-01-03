@@ -7,6 +7,8 @@
 
 local class = require("libs.class")
 local utils = require("libs.utils")
+local check = require("libs.check")
+local Logger= dct.Logger.getByName("Command")
 
 -- lower value is higher priority; total of 127 priority values
 local cmdpriority = {
@@ -16,9 +18,7 @@ local cmdpriority = {
 
 local Command = class()
 function Command:__init(func, ...)
-	assert(type(func) == "function",
-		"value error: the first argument must be a function")
-	self.func = func
+	self.func = check.func(func)
 	self.name = "Unnamed Command"
 	self.prio = cmdpriority.NORMAL
 	self.args = {select(1, ...)}
@@ -27,6 +27,7 @@ end
 
 function Command:execute(time)
 	local args = utils.shallowclone(self.args)
+	Logger:debug(string.format("executing: %s", self.name))
 	table.insert(args, time)
 	return self.func(unpack(args))
 end
@@ -34,20 +35,19 @@ Command.PRIORITY = cmdpriority
 
 local cmd = Command
 
-if _G.settings and _G.settings.server and
-   _G.settings.server.debug == true then
+if dct.settings and dct.settings.server and
+   dct.settings.server.debug == true then
 	require("os")
-	local TimmedCommand = class(Command)
-	function TimmedCommand:execute(time)
+	local TimedCommand = class(Command)
+	function TimedCommand:execute(time)
 		local tstart = os.clock()
 		local rc = Command.execute(self, time)
-		dct.Logger.getByName("Command"):info(
-			string.format("'%s' exec time: %f",
-			self.name, os.clock()-tstart))
+		Logger:info(string.format("'%s' exec time: %5.2fms",
+			self.name, (os.clock()-tstart)*1000))
 		return rc
 	end
-	TimmedCommand.PRIORITY = cmdpriority
-	cmd = TimmedCommand
+	TimedCommand.PRIORITY = cmdpriority
+	cmd = TimedCommand
 end
 
 return cmd
