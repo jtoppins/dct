@@ -2,6 +2,8 @@
 
 require("os")
 require("io")
+require("dcttestlibs")
+require("dct")
 local Command = require("dct.Command")
 
 local function f(a, b, c, time)
