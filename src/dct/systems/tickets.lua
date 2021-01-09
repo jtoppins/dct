@@ -110,7 +110,8 @@ function Tickets:__init(theater, filepath)
 		"timeout",
 		"complete"})
 	if self.timeout.enabled then
-		theater:queueCommand(self.timeout.period, Command(self.timer, self))
+		theater:queueCommand(self.timeout.period, Command(
+			"Tickets.timer", self.timer, self))
 	end
 end
 

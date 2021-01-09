@@ -48,7 +48,9 @@ function Commander:__init(theater, side)
 	self.missions     = {}
 	self.aifreq       = 300 -- seconds
 
-	theater:queueCommand(self.aifreq, Command(self.update, self))
+	theater:queueCommand(self.aifreq, Command(
+		"update:"..tostring(self.owner),
+		self.update, self))
 end
 
 function Commander:update(time)

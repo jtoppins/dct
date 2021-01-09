@@ -11,7 +11,7 @@ local function f(a, b, c, time)
 end
 
 local function main()
-    local cmd = Command(f, 1, 2, 3)
+    local cmd = Command("test cmd", f, 1, 2, 3)
     local r = cmd:execute(500)
     assert(r == 506, "Command class broken")
 end

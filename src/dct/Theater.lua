@@ -104,7 +104,7 @@ function Theater:__init()
 	end
 
 	self:loadRegions()
-	self:queueCommand(20, Command(self.delayedInit, self))
+	self:queueCommand(5, Command("delayedInit", self.delayedInit, self))
 end
 
 function Theater.singleton()
@@ -207,7 +207,7 @@ function Theater:delayedInit()
 	uiscratchpad(self)
 	self:loadPlayerSlots()
 	self:loadOrGenerate()
-	self:queueCommand(100, Command(self.export, self))
+	self:queueCommand(100, Command("Theater.export", self.export, self))
 end
 
 -- DCS looks for this function in any table we register with the world
