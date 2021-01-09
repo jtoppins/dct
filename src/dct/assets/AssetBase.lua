@@ -17,7 +17,7 @@ An AIAgent is an Asset that is movable.
 --]]
 
 require("math")
-local class    = require("libs.class")
+local namedclass = require("libs.namedclass")
 local utils    = require("libs.utils")
 local dctenum  = require("dct.enum")
 local dctutils = require("dct.utils")
@@ -72,11 +72,8 @@ AssetBase:
 	             briefings to players
 --]]
 
-local AssetBase = class(Marshallable, Observable)
+local AssetBase = namedclass("AssetBase", Marshallable, Observable)
 function AssetBase:__init(template, region)
-	if not self.__clsname then
-		self.__clsname = "AssetBase"
-	end
 	if not self._eventhandlers then
 		self._eventhandlers = {}
 	end

@@ -33,7 +33,7 @@
 --]]
 
 require("math")
-local class = require("libs.class")
+local class   = require("libs.namedclass")
 local AssetBase = require("dct.assets.AssetBase")
 local dctutils= require("dct.utils")
 local uimenu  = require("dct.ui.groupmenu")
@@ -47,8 +47,8 @@ local notifymsg =
 	"Please read the loadout limits in the briefing and "..
 	"use the F10 Menu to validate your loadout before departing."
 
-local OccupiedState = class(State)
-local EmptyState    = class(State)
+local OccupiedState = class("OccupiedState", State)
+local EmptyState    = class("EmptyState", State)
 function EmptyState:enter(asset)
 	asset:kick()
 end
@@ -204,9 +204,8 @@ end
 --[[
 -- Player - represents a player slot in DCS
 --]]
-local Player = class(AssetBase)
+local Player = class("Player", AssetBase)
 function Player:__init(template, region)
-	self.__clsname = "Player"
 	self.updateperiod = 90
 	AssetBase.__init(self, template, region)
 	trigger.action.setUserFlag(self.name, false)

@@ -5,7 +5,7 @@
 -- at a later time via the Command's execute function.
 --]]
 
-local class = require("libs.class")
+local class = require("libs.namedclass")
 local utils = require("libs.utils")
 local check = require("libs.check")
 local Logger= dct.Logger.getByName("Command")
@@ -16,7 +16,7 @@ local cmdpriority = {
 	["NORMAL"] = 64,
 }
 
-local Command = class()
+local Command = class("Command")
 function Command:__init(func, ...)
 	self.func = check.func(func)
 	self.name = "Unnamed Command"
@@ -36,13 +36,14 @@ Command.PRIORITY = cmdpriority
 local cmd = Command
 
 if dct.settings and dct.settings.server and
-   dct.settings.server.debug == true then
+   (dct.settings.server.debug == true or
+	dct.settings.server.profile == true) then
 	require("os")
-	local TimedCommand = class(Command)
+	local TimedCommand = class("TimedCommand", Command)
 	function TimedCommand:execute(time)
 		local tstart = os.clock()
 		local rc = Command.execute(self, time)
-		Logger:info(string.format("'%s' exec time: %5.2fms",
+		Logger:warn(string.format("'%s' exec time: %5.2fms",
 			self.name, (os.clock()-tstart)*1000))
 		return rc
 	end

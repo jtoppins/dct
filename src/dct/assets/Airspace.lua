@@ -6,12 +6,10 @@
 -- which side "controls" the space, and spawn nothing
 --]]
 
-local class = require("libs.class")
 local AssetBase = require("dct.assets.AssetBase")
 
-local Airspace = class(AssetBase)
+local Airspace = require("libs.namedclass")("Airspace", AssetBase)
 function Airspace:__init(template, region)
-	self.__clsname = "Airspace"
 	AssetBase.__init(self, template, region)
 	self:_addMarshalNames({
 		"_location",

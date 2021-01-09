@@ -7,7 +7,6 @@
 require("os")
 require("io")
 require("lfs")
-local class       = require("libs.class")
 local utils       = require("libs.utils")
 local containers  = require("libs.containers")
 local json        = require("libs.json")
@@ -78,7 +77,7 @@ end
 --    and provides a base interface for manipulating data at a theater
 --    level.
 --]]
-local Theater = class(Observable)
+local Theater = require("libs.namedclass")("Theater", Observable)
 function Theater:__init()
 	Observable.__init(self)
 	self.savestatefreq = 7*60 -- seconds

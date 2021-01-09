@@ -4,7 +4,6 @@
 -- Defines a side's strategic theater commander.
 --]]
 
-local class      = require("libs.class")
 local utils      = require("libs.utils")
 local containers = require("libs.containers")
 local enum       = require("dct.enum")
@@ -41,7 +40,7 @@ end
 --[[
 -- For now the commander is only concerned with flight missions
 --]]
-local Commander = class()
+local Commander = require("libs.namedclass")("Commander")
 
 function Commander:__init(theater, side)
 	self.owner        = side
