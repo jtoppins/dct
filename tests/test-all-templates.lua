@@ -16,6 +16,7 @@ local function main()
 	end
 
 	local t = dct.Theater()
+	dct.theater = t
 	t:exec(50)
 	local Logger = dct.Logger.getByName("Tests")
 	Logger:debug("Groups spawned:  "..dctcheck.spawngroups)

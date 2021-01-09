@@ -2,8 +2,6 @@
 
 require("dcttestlibs")
 require("dct")
-dct.settings.server.profile = false
-dct.settings.server.debug   = false
 
 local testcases = {
 	[1] = {
@@ -60,6 +58,7 @@ end
 
 local function main()
 	local t = dct.Theater()
+	dct.theater = t
 	local playergrp = Group(4, {
 		["id"] = 15,
 		["name"] = "Uzi 35",
