@@ -24,7 +24,7 @@ local dctutils = require("dct.utils")
 local Goal     = require("dct.Goal")
 local Marshallable = require("dct.libs.Marshallable")
 local Observable   = require("dct.libs.Observable")
-local Logger   = dct.Logger.getByName("Asset")
+local Logger   = require("dct.libs.Logger")
 local settings = _G.dct.settings
 
 local norenametype = {
@@ -58,6 +58,32 @@ local function genLocationMethod()
 	return txt[idx]
 end
 
+local AssetLogger = namedclass("AssetLogger", Logger)
+function AssetLogger:__init(name, cls)
+	Logger.__init(self, name)
+	self.cls = cls
+end
+
+function AssetLogger:error(msg)
+	local l = string.format("%s(%s) - ", self.cls.__clsname, self.cls.name)
+	Logger.error(self, l..msg)
+end
+
+function AssetLogger:warn(msg)
+	local l = string.format("%s(%s) - ", self.cls.__clsname, self.cls.name)
+	Logger.warn(self, l..msg)
+end
+
+function AssetLogger:info(msg)
+	local l = string.format("%s(%s) - ", self.cls.__clsname, self.cls.name)
+	Logger.info(self, l..msg)
+end
+
+function AssetLogger:debug(msg)
+	local l = string.format("%s(%s) - ", self.cls.__clsname, self.cls.name)
+	Logger.debug(self, l..msg)
+end
+
 --[[
 AssetBase:
 	attributes(public, read-only):
@@ -77,6 +103,7 @@ function AssetBase:__init(template, region)
 	if not self._eventhandlers then
 		self._eventhandlers = {}
 	end
+	self._logger = AssetLogger("Asset", self)
 	Marshallable.__init(self)
 	Observable.__init(self)
 	self:_addMarshalNames({
@@ -313,9 +340,9 @@ end
 --]]
 function AssetBase:onDCTEvent(event)
 	local handler = self._eventhandlers[event.id]
-	Logger:debug(string.format(
-		"AssetBase:onDCTEvent(%s); event.id: %d, handler: %s",
-		self.__clsname, event.id, tostring(handler)))
+	self._logger:debug(string.format(
+		"onDCTEvent(); event.id: %d, handler: %s",
+		event.id, tostring(handler)))
 	if handler ~= nil then
 		handler(self, event)
 	end

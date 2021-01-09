@@ -37,7 +37,6 @@ local class   = require("libs.namedclass")
 local AssetBase = require("dct.assets.AssetBase")
 local dctutils= require("dct.utils")
 local uimenu  = require("dct.ui.groupmenu")
-local Logger  = dct.Logger.getByName("Asset")
 local loadout = require("dct.systems.loadouts")
 local State   = require("dct.libs.State")
 local Command = require("dct.Command")
@@ -62,9 +61,9 @@ function EmptyState:onDCTEvent(asset, event)
 	local grp = event.initiator:getGroup()
 	local id = grp:getID()
 	if asset.groupId ~= id then
-		Logger:warn(
-			string.format("(%s) - asset.groupId(%d) != object:getID(%d)",
-				asset.name, asset.groupId, id))
+		asset._logger:warn(
+			string.format("asset.groupId(%d) != object:getID(%d)",
+				asset.groupId, id))
 	end
 	asset.groupId = id
 	uimenu.createMenu(asset)
@@ -160,7 +159,7 @@ end
 
 function OccupiedState:onDCTEvent(asset, event)
 	local handler = self._eventhandlers[event.id]
-	Logger:debug(string.format(
+	asset._logger:debug(string.format(
 		"OccupiedState:onDCTEvent; event.id: %d, handler: %s",
 		event.id, tostring(handler)))
 	local state
@@ -287,9 +286,8 @@ end
 --]]
 function Player:kick()
 	trigger.action.setUserFlag(self.name.."_kick", true)
-	Logger:debug(
-		string.format("(%s) - requesting kick: %s",
-			self.name, self.name.."_kick"))
+	self._logger:debug(
+		string.format("requesting kick: %s", self.name.."_kick"))
 end
 
 return Player

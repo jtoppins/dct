@@ -79,7 +79,7 @@ end
 --]]
 local Theater = require("libs.namedclass")("Theater", Observable)
 function Theater:__init()
-	Observable.__init(self)
+	Observable.__init(self, Logger)
 	self.savestatefreq = 7*60 -- seconds
 	self.cmdmindelay   = 2
 	self.uicmddelay    = self.cmdmindelay
@@ -316,7 +316,8 @@ function Theater:queueCommand(delay, cmd)
 		delay = self.cmdmindelay
 	end
 	self.cmdq:push(self.ctime + delay, cmd)
-	Logger:debug("queueCommand(); cmdq size: "..self.cmdq:size())
+	Logger:debug(string.format("queueCommand(); cmd(%s) cmdq size: %d",
+		cmd.name, self.cmdq:size()))
 end
 
 function Theater:_exec(time)
@@ -341,8 +342,9 @@ function Theater:_exec(time)
 
 		tdiff = os.clock() - tstart
 		if tdiff >= self.quanta then
-			Logger:debug("exec(); quanta reached, quanta: "..
-				tostring(self.quanta))
+			Logger:debug(
+				string.format("exec(); quanta reached, quanta: %5.2fms",
+					self.quanta*1000))
 			break
 		end
 	end
