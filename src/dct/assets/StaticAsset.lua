@@ -9,7 +9,6 @@
 --]]
 
 require("math")
-local class    = require("libs.class")
 local utils    = require("libs.utils")
 local Logger   = dct.Logger.getByName("Asset")
 local enum     = require("dct.enum")
@@ -18,9 +17,8 @@ local vector   = require("dct.libs.vector")
 local Goal     = require("dct.Goal")
 local AssetBase= require("dct.assets.AssetBase")
 
-local StaticAsset = class(AssetBase)
+local StaticAsset = require("libs.namedclass")("StaticAsset", AssetBase)
 function StaticAsset:__init(template, region)
-	self.__clsname = "StaticAsset"
 	self._maxdeathgoals = 0
 	self._curdeathgoals = 0
 	self._deathgoals    = {}

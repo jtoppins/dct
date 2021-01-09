@@ -8,7 +8,6 @@
 
 require("os")
 require("math")
-local class    = require("libs.class")
 local utils    = require("libs.utils")
 local enum     = require("dct.enum")
 local dctutils = require("dct.utils")
@@ -25,7 +24,7 @@ local function composeBriefing(msn, tgt)
 	return dctutils.interp(briefing, interptbl)
 end
 
-local Mission = class()
+local Mission = require("libs.namedclass")("Mission")
 function Mission:__init(cmdr, missiontype, grpname, tgtname)
 	self._complete = false
 	self.iffcodes  = cmdr:genMissionCodes(missiontype)

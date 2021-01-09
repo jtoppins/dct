@@ -4,13 +4,12 @@
 -- Provides functions to define and manage Assets.
 --]]
 
-local class    = require("libs.class")
 local checklib = require("libs.check")
 local enum     = require("dct.enum")
 local dctutils = require("dct.utils")
 local Logger   = dct.Logger.getByName("AssetManager")
 
-local AssetManager = class()
+local AssetManager = require("libs.namedclass")("AssetManager")
 function AssetManager:__init(theater)
 	-- The master list of assets, regardless of side, indexed by name.
 	-- Means Asset names must be globally unique.
