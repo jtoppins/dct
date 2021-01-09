@@ -35,7 +35,7 @@ end
 local function init(theater)
 	assert(theater ~= nil, "value error: theater must be a non-nil value")
 	Logger:debug("init Scratchpad event handler")
-	theater:addObserver(uiScratchPad, theater)
+	theater:addObserver(uiScratchPad, theater, "uiScratchPad")
 end
 
 return init

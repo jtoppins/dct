@@ -10,7 +10,6 @@
 
 require("math")
 local utils    = require("libs.utils")
-local Logger   = dct.Logger.getByName("Asset")
 local enum     = require("dct.enum")
 local dctutils = require("dct.utils")
 local vector   = require("dct.libs.vector")
@@ -69,11 +68,11 @@ function StaticAsset:_removeDeathGoal(name, goal)
 		"value error: name must be provided")
 	assert(goal ~= nil, "value error: goal must be provided")
 
-	Logger:debug(string.format("%s:_removeDeathGoal() - obj name: %s",
-		self.__clsname, name))
+	self._logger:debug(string.format("_removeDeathGoal() - obj name: %s",
+		name))
 	if self:isDead() then
-		Logger:error(string.format("%s:_removeDeathGoal() called "..
-			"'%s' marked as dead", self.__clsname, self.name))
+		self._logger:error(string.format("_removeDeathGoal() called "..
+			"'%s' marked as dead", self.name))
 		return
 	end
 
@@ -240,8 +239,7 @@ end
 
 function StaticAsset:spawn(ignore)
 	if not ignore and self:isSpawned() then
-		Logger:error(string.format("runtime bug - %s(%s) already spawned",
-			self.__clsname, self.name))
+		self._logger:error("runtime bug - already spawned")
 		return
 	end
 	self:_spawn()

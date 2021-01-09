@@ -46,7 +46,8 @@ function Mission:__init(cmdr, missiontype, grpname, tgtname)
 	-- known intel the pilots were given before departing
 	local tgt = self.cmdr:getAsset(tgtname)
 	self.briefing  = composeBriefing(self, tgt)
-	tgt:addObserver(self.onTgtEvent, self, "Mission.onDCTEvent")
+	tgt:addObserver(self.onTgtEvent, self,
+		"Mission("..tgtname..").onTgtEvent")
 	tgt:setTargeted(self.cmdr.owner, true)
 	self:addAssigned(self.cmdr:getAsset(grpname))
 

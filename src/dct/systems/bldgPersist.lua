@@ -12,7 +12,8 @@ local bldgPersist = class()
 function bldgPersist:__init(theater)
 	self.destroyedBldgs = {}
 	self._theater = theater
-	self._theater:addObserver(self.onDCSEvent, self)
+	self._theater:addObserver(self.onDCSEvent, self,
+		"bldgPersist.onDCSEvent")
 end
 
 function bldgPersist:blowBuildings()

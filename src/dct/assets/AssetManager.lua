@@ -37,7 +37,7 @@ function AssetManager:__init(theater)
 	-- of their DCS objects with 'something', this will be the something.
 	self._object2asset = {}
 
-	theater:addObserver(self.onDCSEvent, self, "AssetManager handler")
+	theater:addObserver(self.onDCSEvent, self, "AssetManager.onDCSEvent")
 end
 
 function AssetManager:factory(assettype)
