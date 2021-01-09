@@ -17,9 +17,9 @@ local cmdpriority = {
 }
 
 local Command = class("Command")
-function Command:__init(func, ...)
+function Command:__init(name, func, ...)
+	self.name = check.string(name)
 	self.func = check.func(func)
-	self.name = "Unnamed Command"
 	self.prio = cmdpriority.NORMAL
 	self.args = {select(1, ...)}
 	self.PRIORITY = nil

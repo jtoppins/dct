@@ -234,7 +234,7 @@ function Player:_setup()
 	self.state = EmptyState()
 	self.state:enter(self)
 	dct.Theater.singleton():queueCommand(self.updateperiod,
-		Command(self.update, self))
+		Command("update", self.update, self))
 end
 
 function Player:getObjectNames()
