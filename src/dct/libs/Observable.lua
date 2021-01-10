@@ -15,32 +15,32 @@ function Observable:__init(logger)
 	setmetatable(self._observers, { __mode = "k", })
 end
 
-function Observable:addObserver(func, ctx, name)
+function Observable:addObserver(func, obj, name)
 	assert(type(func) == "function", "func must be a function")
-	-- ctx must be non-nil otherwise upon insertion the index which
-	-- is the function address will be deleted.
-	assert(ctx ~= nil, "ctx must be a non-nil value")
+	-- obj must be a table otherwise upon insertion the index which
+	-- is obj will cause an access violation.
+	assert(type(obj) == "table", "obj must be a table value")
 	name = name or "unknown"
 
-	if self._observers[func] ~= nil then
-		self._logger:error("func("..tostring(func)..
-			") already set - skipping")
+	if self._observers[obj] ~= nil then
+		self._logger:error("'"..name.."' obj("..tostring(obj)..
+			") already set - skipping "..debug.traceback())
 		return
 	end
 	self._logger:debug(string.format("adding handler(%s)", name))
-	self._observers[func] = { ["ctx"] = ctx, ["name"] = name, }
+	self._observers[obj] = { ["func"] = func, ["name"] = name, }
 end
 
-function Observable:removeObserver(func)
-	assert(type(func) == "function", "func must be a function")
-	self._observers[func] = nil
+function Observable:removeObserver(obj)
+	assert(type(obj) == "table", "func must be a function")
+	self._observers[obj] = nil
 end
 
 function Observable:_notify(event)
 	self._logger:debug(string.format("notify; event.id: %d", event.id))
-	for handler, val in pairs(self._observers) do
+	for obj, val in pairs(self._observers) do
 		self._logger:debug("+ executing handler: "..val.name)
-		handler(val.ctx, event)
+		val.func(obj, event)
 	end
 end
 

@@ -58,7 +58,7 @@ end
 function AssetManager:remove(asset)
 	assert(asset ~= nil, "value error: asset object must be provided")
 
-	asset:removeObserver(self.onDCSEvent)
+	asset:removeObserver(self)
 	self._assetset[asset.name] = nil
 
 	-- remove asset name from per-side asset list
