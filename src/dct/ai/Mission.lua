@@ -134,7 +134,7 @@ function Mission:onTgtEvent(event)
 	local tgt = event.initiator
 	dct.Theater.singleton():getTickets():reward(self.cmdr.owner,
 		tgt.cost, true)
-	tgt:removeObserver(self.onTgtEvent)
+	tgt:removeObserver(self)
 	self:queueabort(enum.missionAbortType.COMPLETE)
 end
 
