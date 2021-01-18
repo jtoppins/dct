@@ -319,10 +319,7 @@ function AssetBase:setDead(val)
 	local prev = self._dead
 	self._dead = val
 	if self._dead and prev ~= self._dead then
-		self:notify({
-			id = dctenum.event.DCT_EVENT_DEAD,
-			initiator = self,
-		})
+		self:notify(dctutils.buildevent.dead(self))
 	end
 end
 

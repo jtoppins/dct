@@ -6,6 +6,7 @@
 
 require("os")
 require("math")
+local check = require("libs.check")
 local enum  = require("dct.enum")
 local utils = {}
 
@@ -208,5 +209,35 @@ function utils.fmtposition(position, precision, fmt)
 
 	return utils.LLtostring(lat, long, precision, fmt)
 end
+
+utils.buildevent = {}
+function utils.buildevent.dead(obj)
+	check.table(obj)
+	local event = {}
+	event.id = enum.event.DCT_EVENT_DEAD
+	event.initiator = obj
+	return event
+end
+
+function utils.buildevent.hit(point, weapon)
+	check.table(point)
+	check.table(weapon)
+	local event = {}
+	event.id = enum.event.DCT_EVENT_HIT
+	event.point = point
+	event.weapon = weapon
+	return event
+end
+
+function utils.buildevent.operational(base, state)
+	check.table(base)
+	check.bool(state)
+	local event = {}
+	event.id = enum.event.DCT_EVENT_OPERATIONAL
+	event.initiator = base
+	event.state = state
+	return event
+end
+
 
 return utils
