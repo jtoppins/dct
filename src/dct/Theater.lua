@@ -160,7 +160,6 @@ function Theater:loadPlayerSlots()
 				["tpldata"]   = grp,
 			}), {["name"] = "theater", ["priority"] = 1000,})
 			self:getAssetMgr():add(asset)
-			asset:spawn()
 			cnt = cnt + 1
 		end
 	end

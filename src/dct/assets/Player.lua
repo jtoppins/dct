@@ -4,8 +4,8 @@
 -- Represents a player asset.
 --
 -- Player<AssetBase>
--- A player asset doesn't die, is always spawned, never
--- reduces status, and is associated with a squadron.
+-- A player asset doesn't die (the assetmanager prevents this), never
+-- reduces status, and is always associated with a squadron.
 -- Optionally the player can be associated with an airbase.
 --
 -- ## Ticket Consumption
@@ -34,8 +34,9 @@
 
 require("math")
 local class   = require("libs.namedclass")
-local AssetBase = require("dct.assets.AssetBase")
+local dctenum = require("dct.enum")
 local dctutils= require("dct.utils")
+local AssetBase = require("dct.assets.AssetBase")
 local uimenu  = require("dct.ui.groupmenu")
 local loadout = require("dct.systems.loadouts")
 local State   = require("dct.libs.State")
@@ -44,6 +45,14 @@ local settings = _G.dct.settings
 local notifymsg =
 	"Please read the loadout limits in the briefing and "..
 	"use the F10 Menu to validate your loadout before departing."
+
+local function build_kick_flagname(name)
+	return name.."_kick"
+end
+
+local function build_oper_flagname(name)
+	return name.."_operational"
+end
 
 local OccupiedState = class("OccupiedState", State)
 local EmptyState    = class("EmptyState", State)
@@ -182,11 +191,24 @@ function OccupiedState:handleTakeoff(asset, _ --[[event]])
 	return nil
 end
 
-function OccupiedState:handleLand(--[[asset, event]])
-	-- TODO: if returned to an authorized airbase clear loseticket flag
-	-- for now if they land at all we are ok
-	self.loseticket = false
-	self.inair = false
+-- If returned to an authorized airbase clear loseticket flag.
+-- An authorized airbase is any base defined as an asset for
+-- the same side.
+function OccupiedState:handleLand(asset, event)
+	if event.place then
+		local assetmgr = dct.Theater.singleton():getAssetMgr()
+		local airbase = assetmgr:getAsset(event.place:getName())
+
+		if (airbase and airbase.owner == asset.owner) or
+			event.place:getName() == asset.airbase then
+			self.loseticket = false
+			self.inair = false
+			trigger.action.outTextForGroup(asset.groupId,
+				"Welcome home. You are able to safely disconnect"..
+				" without costing your side tickets.",
+				20, true)
+		end
+	end
 	return nil
 end
 
@@ -204,12 +226,31 @@ end
 --]]
 local Player = class("Player", AssetBase)
 function Player:__init(template, region)
-	self.updateperiod = 90
 	AssetBase.__init(self, template, region)
 	trigger.action.setUserFlag(self.name, false)
-	trigger.action.setUserFlag(self.name.."_kick", false)
+	trigger.action.setUserFlag(build_kick_flagname(self.name), false)
+	trigger.action.setUserFlag(build_oper_flagname(self.name), false)
 	self.marshal   = nil
 	self.unmarshal = nil
+end
+
+local function airbaseId(grp)
+	assert(grp, "value error: grp cannot be nil")
+	local name = "airdromeId"
+	if grp.category == Unit.Category.HELICOPTER then
+		name = "helipadId"
+	end
+	return grp.data.route.points[1][name]
+end
+
+local function airbaseParkingId(grp)
+	assert(grp, "value error: grp cannot be nil")
+	local wp = grp.data.route.points[1]
+	if wp.type == AI.Task.WaypointType.TAKEOFF_PARKING or
+	   wp.type == AI.Task.WaypointType.TAKEOFF_PARKING_HOT then
+		return grp.data.units[1].parking
+	end
+	return nil
 end
 
 function Player:_completeinit(template, region)
@@ -219,9 +260,11 @@ function Player:_completeinit(template, region)
 	self.unittype   = self._tpldata.data.units[1].type
 	self.cmdpending = false
 	self.groupId    = self._tpldata.data.groupId
+	self.airbase    = dctutils.airbaseId2Name(airbaseId(self._tpldata))
+	self.parking    = airbaseParkingId(self._tpldata)
 	self.ato        = settings.ui.ato[self.unittype]
 	if self.ato == nil then
-		self.ato = require("dct.enum").missionType
+		self.ato = dctenum.missionType
 	end
 	self.payloadlimits = settings.payloadlimits
 	self.gridfmt    = settings.ui.gridfmt[self.unittype] or
@@ -252,7 +295,24 @@ function Player:update()
 	end
 end
 
+function Player:handleBaseState(event)
+	if event.initiator.name == self.airbase then
+		local flagname = build_oper_flagname(self.name)
+		trigger.action.setUserFlag(flagname, event.state)
+		self._logger:debug(string.format("setting oper: %s(%s)",
+			flagname, tostring(event.state)))
+	else
+		self._logger:warn(string.format("received unknown event "..
+			"%s(%d) from initiator(%s)",
+			require("libs.utils").getkey(dctenum.event, event.id),
+			event.id, event.initiator.name))
+	end
+end
+
 function Player:onDCTEvent(event)
+	if event.id == dctenum.event.DCT_EVENT_OPERATIONAL then
+		self:handleBaseState(event)
+	end
 	local newstate = self.state:onDCTEvent(self, event)
 	if newstate ~= nil then
 		self.state:exit(self)
@@ -282,9 +342,9 @@ end
 -- another player to join the slot.
 --]]
 function Player:kick()
-	trigger.action.setUserFlag(self.name.."_kick", true)
-	self._logger:debug(
-		string.format("requesting kick: %s", self.name.."_kick"))
+	local flagname = build_kick_flagname(self.name)
+	trigger.action.setUserFlag(flagname, true)
+	self._logger:debug(string.format("requesting kick: %s", flagname))
 end
 
 return Player

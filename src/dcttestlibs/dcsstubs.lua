@@ -361,11 +361,77 @@ AI.Option = {
 }
 _G.AI = AI
 
+local objdefaults = {
+	["name"] = "obj1",
+	["exists"] = false,
+	["category"] = objectcat.UNIT,
+	["desc"] = {
+		["massEmpty"] = 34000,
+		["riverCrossing"] = true,
+		["maxSlopeAngle"] = 0.27000001072884,
+		["RCS"] = 5,
+		["box"] = {
+			["min"] = {
+				["y"] = 0.039917565882206,
+				["x"] = -4.5607042312622,
+				["z"] = -1.7571629285812,
+			},
+			["max"] = {
+				["y"] = 3.610570192337,
+				["x"] = 4.5179929733276,
+				["z"] = 1.7558742761612,
+			},
+		},
+		["speedMax"] = 18.055599212646,
+		["life"] = 3,
+		["attributes"] = {
+			["SAM TR"] = true,
+			["Vehicles"] = true,
+			["SAM elements"] = true,
+			["NonArmoredUnits"] = true,
+			["SAM SR"] = true,
+			["Air Defence"] = true,
+			["Ground vehicles"] = true,
+			["RADAR_BAND1_FOR_ARM"] = true,
+		},
+		["category"] = 2,
+		["speedMaxOffRoad"] = 18.055599212646,
+		["Kmax"] = 0.050000000745058,
+		["typeName"] = "Tor 9A331",
+		["displayName"] = "SAM SA-15 Tor 9A331",
+	},
+	["position"] = {
+		["p"] = {["x"] = 1, ["y"] = 1, ["z"] = 1},
+		["x"] = {["x"] = 1, ["y"] = 1, ["z"] = 1},
+		["y"] = {["x"] = 1, ["y"] = 1, ["z"] = 1},
+		["z"] = {["x"] = 1, ["y"] = 1, ["z"] = 1},
+	},
+	["vel"] = {["x"] = 1, ["y"] = 0, ["z"] = 1},
+	["inair"] = false,
+	["id"] = 123,
+}
+
+local objects = {}
+for _,v in pairs(objectcat) do
+	objects[v] = {}
+end
+
 local coalition = {}
 coalition.side = {}
 coalition.side.NEUTRAL = 0
 coalition.side.RED     = 1
 coalition.side.BLUE    = 2
+
+function coalition.getAirbases(side)
+	assert(side, "side must be provided")
+	local tbl = {}
+	for _, obj in pairs(objects[Object.Category.BASE]) do
+		if side == obj.coalition then
+			table.insert(tbl, obj)
+		end
+	end
+	return tbl
+end
 
 function coalition.addGroup(cntryid, groupcat, groupdata)
 	dctcheck.spawngroups = dctcheck.spawngroups + 1
@@ -609,65 +675,18 @@ world.event = {
 }
 function world.addEventHandler(_)
 end
+function world.getAirbases()
+	local tbl = {}
+	for _, obj in pairs(objects[Object.Category.BASE]) do
+		table.insert(tbl, obj)
+	end
+	return tbl
+end
+
 _G.world = world
 
 -- DCS Classes
 --
-
-local objdefaults = {
-	["name"] = "obj1",
-	["exists"] = false,
-	["category"] = objectcat.UNIT,
-	["desc"] = {
-		["massEmpty"] = 34000,
-		["riverCrossing"] = true,
-		["maxSlopeAngle"] = 0.27000001072884,
-		["RCS"] = 5,
-		["box"] = {
-			["min"] = {
-				["y"] = 0.039917565882206,
-				["x"] = -4.5607042312622,
-				["z"] = -1.7571629285812,
-			},
-			["max"] = {
-				["y"] = 3.610570192337,
-				["x"] = 4.5179929733276,
-				["z"] = 1.7558742761612,
-			},
-		},
-		["speedMax"] = 18.055599212646,
-		["life"] = 3,
-		["attributes"] = {
-			["SAM TR"] = true,
-			["Vehicles"] = true,
-			["SAM elements"] = true,
-			["NonArmoredUnits"] = true,
-			["SAM SR"] = true,
-			["Air Defence"] = true,
-			["Ground vehicles"] = true,
-			["RADAR_BAND1_FOR_ARM"] = true,
-		},
-		["category"] = 2,
-		["speedMaxOffRoad"] = 18.055599212646,
-		["Kmax"] = 0.050000000745058,
-		["typeName"] = "Tor 9A331",
-		["displayName"] = "SAM SA-15 Tor 9A331",
-	},
-	["position"] = {
-		["p"] = {["x"] = 1, ["y"] = 1, ["z"] = 1},
-		["x"] = {["x"] = 1, ["y"] = 1, ["z"] = 1},
-		["y"] = {["x"] = 1, ["y"] = 1, ["z"] = 1},
-		["z"] = {["x"] = 1, ["y"] = 1, ["z"] = 1},
-	},
-	["vel"] = {["x"] = 1, ["y"] = 0, ["z"] = 1},
-	["inair"] = false,
-	["id"] = 123,
-}
-
-local objects = {}
-for _,v in pairs(objectcat) do
-	objects[v] = {}
-end
 
 local Controller = class()
 function Controller:__init()
@@ -823,6 +842,49 @@ end
 _G.Coalition = Coalition
 
 
+local Airbase = class(Coalition)
+function Airbase:__init(objdata)
+	objdata.category = Object.Category.BASE
+	Coalition.__init(self, objdata)
+	self.group = nil
+	self.callsign = objdata.callsign
+	self.parking = objdata.parking
+	if self.desc.airbaseCategory == nil then
+		self.desc.airbaseCategory = Airbase.Category.AIRDROME
+	end
+end
+Airbase.Category = {
+	["AIRDROME"] = 0,
+	["HELIPAD"]  = 1,
+	["SHIP"]     = 2,
+}
+
+function Airbase.getByName(name)
+	return objects[Object.Category.BASE][name]
+end
+
+function Airbase:getParking(_ --[[available]])
+	return self.parking
+end
+
+function Airbase:getCallsign()
+	return self.callsign
+end
+
+function Airbase:getUnit(num)
+	if self.group == nil then
+		return nil
+	end
+	return self.group:getUnit(num)
+end
+
+function Airbase:_addGroup(obj)
+	assert(obj.isa(Group), "no a Group object")
+	self.group = obj
+end
+_G.Airbase = Airbase
+
+
 local Unit = class(Coalition)
 function Unit:__init(objdata, group, pname)
 	objdata.category = Object.Category.UNIT
@@ -868,6 +930,10 @@ end
 
 function Unit:getController()
 	return Controller()
+end
+
+function Unit:getCallsign()
+	return "foo"
 end
 _G.Unit = Unit
 

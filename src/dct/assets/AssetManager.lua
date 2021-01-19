@@ -48,6 +48,8 @@ function AssetManager:factory(assettype)
 	local asset = nil
 	if assettype == enum.assetType.AIRSPACE then
 		asset = require("dct.assets.Airspace")
+	elseif assettype == enum.assetType.AIRBASE then
+		asset = require("dct.assets.Airbase")
 	elseif enum.assetClass.STRATEGIC[assettype] or
 	       assettype == enum.assetType.BASEDEFENSE then
 		asset = require("dct.assets.StaticAsset")
@@ -93,9 +95,11 @@ function AssetManager:add(asset)
 			self._sideassets[asset.owner].assets[asset.name] = asset.type
 		end
 
+		Logger:debug("Adding object names for '"..asset.name.."'")
 		-- read Asset's object names and setup object to asset mapping
 		-- to be used in handling DCS events and other uses
 		for _, objname in pairs(asset:getObjectNames()) do
+			Logger:debug("    + "..objname)
 			self._object2asset[objname] = asset.name
 		end
 	end

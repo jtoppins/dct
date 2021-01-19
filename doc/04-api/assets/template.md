@@ -246,6 +246,36 @@ The distance opposing troops are allowed to come within before the
 airbase is considered contested and the ability to launch aircraft
 will be disabled.
 
+#### `takeofftype`
+
+ * _required:_ no
+ * _value:_ string
+ * _default:_ `inair`
+
+This allows the mission designer to specify how AI aircraft will
+depart the field. The possible options are:
+
+ * `inair` - aircraft will depart the field already in the air above the
+   field at 1500ft
+ * `runway` - aircraft will depart from the runway
+ * `parking` - aircraft will depart the airfield from parking cold
+
+#### `recoverytype`
+
+ * _required:_ no
+ * _value:_ string
+ * _default:_ `terminal`
+
+This allows the mission designer to specify how AI aircraft will
+recover at the field. The possible options are:
+
+ * `terminal` - aircraft will get within 10nm of the airbase before
+   despawning
+ * `land` - when the aircraft land event fires the plane will be
+   despawned
+ * `taxi` - the aircraft will be despawned after 5 minutes of the
+   land event firing
+
 ### Squadron
 
 #### `planedata`
