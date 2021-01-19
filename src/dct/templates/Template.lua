@@ -174,7 +174,44 @@ local function checkside(keydata, tbl)
 	return false
 end
 
+local function checktakeoff(keydata, tpl)
+	local allowed = {
+		["inair"]   = AI.Task.WaypointType.TURNING_POINT,
+		["runway"]  = AI.Task.WaypointType.TAKEOFF,
+		["parking"] = AI.Task.WaypointType.TAKEOFF_PARKING,
+	}
+
+	local val = allowed[tpl[keydata.name]]
+	if val then
+		tpl[keydata.name] = val
+		return true
+	end
+	return false
+end
+
+local function checkrecovery(keydata, tpl)
+	local allowed = {
+		["terminal"] = true,
+		["land"]     = true,
+		["taxi"]     = true,
+	}
+
+	if allowed[tpl[keydata.name]] then
+		return true
+	end
+	return false
+end
+
 local function getkeys(objtype)
+	local notpldata = {
+		[enum.assetType.AIRSPACE]       = true,
+		[enum.assetType.AIRBASE]        = true,
+	}
+	local defaultintel = 0
+	if objtype == enum.assetType.AIRBASE then
+		defaultintel = 5
+	end
+
 	local keys = {
 		{
 			["name"]  = "name",
@@ -197,7 +234,7 @@ local function getkeys(objtype)
 		}, {
 			["name"]    = "intel",
 			["type"]    = "number",
-			["default"] = 0,
+			["default"] = defaultintel,
 		}, {
 			["name"]    = "spawnalways",
 			["type"]    = "boolean",
@@ -209,8 +246,7 @@ local function getkeys(objtype)
 		}
 	}
 
-	if objtype ~= enum.assetType.AIRSPACE and
-		objtype ~= enum.assetType.AIRBASE then
+	if notpldata[objtype] == nil then
 		table.insert(keys, {
 			["name"]  = "tpldata",
 			["type"]  = "table",
@@ -233,8 +269,18 @@ local function getkeys(objtype)
 
 	if objtype == enum.assetType.AIRBASE then
 		table.insert(keys, {
-			["name"]  = "defenses",
-			["type"]  = "string", })
+			["name"]  = "subordinates",
+			["type"]  = "table", })
+		table.insert(keys, {
+			["name"]    = "takeofftype",
+			["type"]    = "string",
+			["default"] = "inair",
+			["check"]   = checktakeoff,})
+		table.insert(keys, {
+			["name"]    = "recoverytype",
+			["type"]    = "string",
+			["default"] = "terminal",
+			["check"]   = checkrecovery,})
 	end
 
 	return keys

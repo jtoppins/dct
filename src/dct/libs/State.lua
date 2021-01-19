@@ -23,4 +23,18 @@ function State:onDCTEvent(--[[asset, event]])
 	return nil
 end
 
+--[[
+-- factory - return an instance of a State class
+--
+--   typetbl - a table indexed by state id and value a reference to
+--     a State class that is callable
+--   id - the state type id specifying which specific State object
+--     should be created
+--]]
+function State.factory(typetbl, id)
+	local state = typetbl[id]
+	assert(state, "unknown state type")
+	return state()
+end
+
 return State

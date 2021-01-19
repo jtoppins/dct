@@ -27,6 +27,7 @@ read_globals = {
 	"Controller",
 	"radio",
 	"Weapon",
+	"Airbase",
 
 	-- DCT specific
 	"dct",

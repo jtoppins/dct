@@ -95,11 +95,9 @@ enum.assetClass = {
 		[enum.assetType.CHECKPOINT]  = true,
 		[enum.assetType.FACTORY]     = true,
 		[enum.assetType.SHORAD]      = true,
+		[enum.assetType.AIRBASE]     = true,
 		[enum.assetType.SPECIALFORCES] = true,
 		[enum.assetType.FOB]           = true,
-	},
-	["BASES"] = {
-		[enum.assetType.AIRBASE]     = true,
 	},
 	-- agents never get seralized to the state file
 	["AGENTS"] = {

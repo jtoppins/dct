@@ -61,7 +61,7 @@ local function main()
 	dct.theater = t
 	local playergrp = Group(4, {
 		["id"] = 15,
-		["name"] = "Uzi 35",
+		["name"] = "Uzi 34",
 		["coalition"] = coalition.side.BLUE,
 		["exists"] = true,
 	})
