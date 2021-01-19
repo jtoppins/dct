@@ -7,10 +7,12 @@
 local checklib = require("libs.check")
 local enum     = require("dct.enum")
 local dctutils = require("dct.utils")
+local Command  = require("dct.Command")
 local Logger   = dct.Logger.getByName("AssetManager")
 
 local AssetManager = require("libs.namedclass")("AssetManager")
 function AssetManager:__init(theater)
+	self.updaterate = 120
 	-- The master list of assets, regardless of side, indexed by name.
 	-- Means Asset names must be globally unique.
 	self._assetset = {}
@@ -38,6 +40,8 @@ function AssetManager:__init(theater)
 	self._object2asset = {}
 
 	theater:addObserver(self.onDCSEvent, self, "AssetManager.onDCSEvent")
+	theater:queueCommand(self.updaterate,
+		Command(self.__clsname..".update", self.update, self))
 end
 
 function AssetManager:factory(assettype)
@@ -156,6 +160,16 @@ function AssetManager:getTargets(requestingside, assettypelist)
 		end
 	end
 	return tgtlist
+end
+
+function AssetManager:update()
+	for _, asset in pairs(self._assetset) do
+		if asset:isSpawned() and not asset:isDead() and
+		   type(asset.update) == "function" then
+			asset:update()
+		end
+	end
+	return self.updaterate
 end
 
 local function handleDead(self, event)

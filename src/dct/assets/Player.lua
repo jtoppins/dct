@@ -39,7 +39,6 @@ local dctutils= require("dct.utils")
 local uimenu  = require("dct.ui.groupmenu")
 local loadout = require("dct.systems.loadouts")
 local State   = require("dct.libs.State")
-local Command = require("dct.Command")
 local settings = _G.dct.settings
 
 local notifymsg =
@@ -232,8 +231,6 @@ end
 function Player:_setup()
 	self.state = EmptyState()
 	self.state:enter(self)
-	dct.Theater.singleton():queueCommand(self.updateperiod,
-		Command("update", self.update, self))
 end
 
 function Player:getObjectNames()
