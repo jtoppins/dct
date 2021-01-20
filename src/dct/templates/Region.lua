@@ -60,7 +60,10 @@ local function loadMetadata(self, regiondefpath)
 		},
 	}
 
-	local region = utils.readlua(regiondefpath, "region")
+	local region = utils.readlua(regiondefpath)
+	if region.region then
+		region = region.region
+	end
 	region.defpath = regiondefpath
 	utils.checkkeys(keys, region)
 	utils.mergetables(self, region)

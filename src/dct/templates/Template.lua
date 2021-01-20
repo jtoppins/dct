@@ -355,7 +355,10 @@ function Template.fromFile(regionname, dctfile, stmfile)
 	assert(regionname ~= nil, "regionname is required")
 	assert(dctfile ~= nil, "dctfile is required")
 
-	local template = utils.readlua(dctfile, "metadata")
+	local template = utils.readlua(dctfile)
+	if template.metadata then
+		template = template.metadata
+	end
 	template.regionname = regionname
 	template.path = dctfile
 	if stmfile ~= nil then
