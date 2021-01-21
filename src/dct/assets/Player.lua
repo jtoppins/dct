@@ -66,6 +66,17 @@ function EmptyState:onDCTEvent(asset, event)
 	end
 
 	local theater = dct.Theater.singleton()
+	if asset.squadron then
+		asset._logger:debug("squadron set: "..asset.squadron)
+		local sqdn = theater:getAssetMgr():getAsset(asset.squadron)
+		if sqdn then
+			asset._logger:debug("squadron overriding ato and payload")
+			asset.ato = sqdn:getATO()
+			asset.payloadlimits = sqdn:getPayloadLimits()
+			asset._logger:debug("payloadlimits: "..require("libs.json"):encode_pretty(asset.payloadlimits))
+			asset._logger:debug("ato: "..require("libs.json"):encode_pretty(asset.ato))
+		end
+	end
 	local grp = event.initiator:getGroup()
 	local id = grp:getID()
 	if asset.groupId ~= id then
@@ -191,11 +202,24 @@ function OccupiedState:handleTakeoff(asset, _ --[[event]])
 	return nil
 end
 
-function OccupiedState:handleLand(--[[asset, event]])
-	-- TODO: if returned to an authorized airbase clear loseticket flag
-	-- for now if they land at all we are ok
-	self.loseticket = false
-	self.inair = false
+-- If returned to an authorized airbase clear loseticket flag.
+-- An authorized airbase is any base defined as an asset for
+-- the same side.
+function OccupiedState:handleLand(asset, event)
+	if event.place then
+		local assetmgr = dct.Theater.singleton():getAssetMgr()
+		local airbase = assetmgr:getAsset(event.place:getName())
+
+		if (airbase and airbase.owner == asset.owner) or
+			event.place:getName() == asset.airbase then
+			self.loseticket = false
+			self.inair = false
+			trigger.action.outTextForGroup(asset.groupId,
+				"Welcome home. You are able to safely disconnect"..
+				" without costing your side tickets.",
+				20, true)
+		end
+	end
 	return nil
 end
 
@@ -247,15 +271,16 @@ function Player:_completeinit(template, region)
 	self.unittype   = self._tpldata.data.units[1].type
 	self.cmdpending = false
 	self.groupId    = self._tpldata.data.groupId
+	self.squadron   = self.name:match("(%w+)(.+)")
 	self.airbase    = dctutils.airbaseId2Name(airbaseId(self._tpldata))
 	self.parking    = airbaseParkingId(self._tpldata)
-	self.ato        = settings.ui.ato[self.unittype]
-	if self.ato == nil then
-		self.ato = dctenum.missionType
-	end
+	self.ato        = settings.ui.ato[self.unittype] or
+		dctenum.missionType
 	self.payloadlimits = settings.payloadlimits
 	self.gridfmt    = settings.ui.gridfmt[self.unittype] or
 		dctutils.posfmt.DMS
+	self._logger:debug("payloadlimits: "..require("libs.json"):encode_pretty(self.payloadlimits))
+	self._logger:debug("ato: "..require("libs.json"):encode_pretty(self.ato))
 end
 
 function Player:_setup()

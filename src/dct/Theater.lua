@@ -315,7 +315,8 @@ function Theater:queueCommand(delay, cmd)
 		delay = self.cmdmindelay
 	end
 	self.cmdq:push(self.ctime + delay, cmd)
-	Logger:debug("queueCommand(); cmdq size: "..self.cmdq:size())
+	Logger:debug(string.format("queueCommand(); cmd(%s) cmdq size: %d",
+		cmd.name, self.cmdq:size()))
 end
 
 function Theater:_exec(time)

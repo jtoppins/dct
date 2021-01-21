@@ -28,7 +28,9 @@ local Logger   = require("dct.libs.Logger")
 local settings = _G.dct.settings
 
 local norenametype = {
+	[dctenum.assetType.SQUADRONPLAYER] = true,
 	[dctenum.assetType.PLAYERGROUP]    = true,
+	[dctenum.assetType.SQUADRONAI]     = true,
 	[dctenum.assetType.AIRBASE]        = true,
 }
 
@@ -118,7 +120,9 @@ function AssetBase:__init(template, region)
 		"tplname",
 		"name",
 		"codename",
-		"cost",})
+		"cost",
+		"ignore",
+	})
 	self._spawned    = false
 	self._dead       = false
 	self._targeted   = {}
@@ -151,6 +155,7 @@ function AssetBase:_completeinit(template, region)
 		print(string.format("Template(%s) has nil 'desc' field",
 			template.name))
 	end
+	self.ignore   = template.ignore
 	self.owner    = template.coalition
 	self.rgnname  = region.name
 	self.tplname  = template.name

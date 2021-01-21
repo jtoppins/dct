@@ -213,7 +213,7 @@ end
 local function main()
 	local playergrp = Group(4, {
 		["id"] = 15,
-		["name"] = "Uzi 41",
+		["name"] = "99thFS Uzi 41",
 		["coalition"] = coalition.side.BLUE,
 		["exists"] = true,
 	})

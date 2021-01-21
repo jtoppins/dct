@@ -55,6 +55,8 @@ function AssetManager:factory(assettype)
 		asset = require("dct.assets.StaticAsset")
 	elseif assettype == enum.assetType.PLAYERGROUP then
 		asset = require("dct.assets.Player")
+	elseif assettype == enum.assetType.SQUADRONPLAYER then
+		asset = require("dct.assets.Squadron")
 	else
 		assert(false, "unsupported asset type: "..assettype)
 	end

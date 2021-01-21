@@ -154,7 +154,9 @@ end
 
 function OperationalState:enter(asset)
 	asset:resetDamage()
-	asset:notify(dctutils.buildevent.operational(asset, true))
+	if asset:isSpawned() then
+		asset:notify(dctutils.buildevent.operational(asset, true))
+	end
 end
 
 function OperationalState:exit(asset)
@@ -185,7 +187,8 @@ function OperationalState:onDCTEvent(asset, event)
 end
 
 local allowedtpltypes = {
-	[dctenum.assetType.BASEDEFENSE] = true,
+	[dctenum.assetType.BASEDEFENSE]    = true,
+	[dctenum.assetType.SQUADRONPLAYER] = true,
 }
 
 local statemap = {
@@ -309,6 +312,12 @@ function AirbaseAsset:_doOneDeparture()
 	flight:spawn(false, wpt1)
 	self:addObserver(flight)
 end
+
+function AirbaseAsset:addFlight(flight, delay)
+	assert(flight, self.__clsname..":addFlight - flight required")
+	local delay = delay or 0
+	self._departures:push(timer.getAbsTime() + delay, flight.name)
+ end
 --]]
 
 function AirbaseAsset:update()
@@ -353,10 +362,12 @@ function AirbaseAsset:generate(assetmgr, region)
 			string.format("runtime error: airbase(%s) defines "..
 				"a subordinate template of name '%s' and type: %d ;"..
 				"not supported type", self.name, tplname, tpl.objtype))
-		tpl.airbase = self.name
-		local asset = assetmgr:factory(tpl.objtype)(tpl, region)
-		assetmgr:add(asset)
-		self:addSubordinate(asset)
+		if tpl.coalition == self.owner then
+			tpl.airbase = self.name
+			local asset = assetmgr:factory(tpl.objtype)(tpl, region)
+			assetmgr:add(asset)
+			self:addSubordinate(asset)
+		end
 	end
 	associate_slots(self)
 end

@@ -6,7 +6,7 @@ require("dct")
 -- create a player group
 local grp = Group(4, {
 	["id"] = 12,
-	["name"] = "Uzi 11",
+	["name"] = "99thFS Uzi 11",
 	["coalition"] = coalition.side.BLUE,
 	["exists"] = true,
 })
@@ -19,15 +19,40 @@ local unit1 = Unit({
 	},
 }, grp, "bobplayer")
 
+local grp2 = Group(1, {
+	["id"] = 20,
+	["name"] = "Uzi 42",
+	["coalition"] = coalition.side.BLUE,
+	["exists"] = true,
+})
+
+local unit2 = Unit({
+	["name"] = "pilot2",
+	["exists"] = true,
+	["desc"] = {
+		["typeName"] = "FA-18C_hornet",
+	},
+}, grp, "tomplayer")
+
+
 -- Since groupmenu is added by the Theater, we just get a Theater
 -- instance and then cook up an event to call the theater DCS
 -- event handler with.
 
 local testcmds = {
-	[1] = {
+	{
 		["event"] = {
 			["id"]        = world.event.S_EVENT_BIRTH,
 			["initiator"] = unit1,
+		},
+		["assert"] = true,
+		["expect"] = "Please read the loadout limits in the briefing"..
+			" and use the F10 Menu to validate your loadout before"..
+			" departing.",
+	}, {
+		["event"] = {
+			["id"]        = world.event.S_EVENT_BIRTH,
+			["initiator"] = unit2,
 		},
 		["assert"] = true,
 		["expect"] = "Please read the loadout limits in the briefing"..
@@ -45,6 +70,15 @@ local function main()
 		theater:onEvent(data.event)
 		trigger.action.chkmsgbuffer()
 	end
+
+	local uzi11 = theater:getAssetMgr():getAsset("99thFS Uzi 11")
+	local uzi42 = theater:getAssetMgr():getAsset("Uzi 42")
+
+	local enum = require("dct.enum")
+	assert(uzi11.payloadlimits[enum.weaponCategory.AG] == 20,
+		"uzi11 doesn't have the expected AG payload limit")
+	assert(uzi42.payloadlimits[enum.weaponCategory.AG] == 2000,
+		"uzi42 doesn't have the expected AG payload limit")
 	return 0
 end
 

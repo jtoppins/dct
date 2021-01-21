@@ -49,7 +49,7 @@ function Commander:__init(theater, side)
 	self.aifreq       = 300 -- seconds
 
 	theater:queueCommand(self.aifreq, Command(
-		"update:"..tostring(self.owner),
+		"Commander.update:"..tostring(self.owner),
 		self.update, self))
 end
 

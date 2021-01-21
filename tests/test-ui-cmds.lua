@@ -10,7 +10,7 @@ local uicmds = require("dct.ui.cmds")
 -- create a player group
 local grp = Group(4, {
 	["id"] = 12,
-	["name"] = "Uzi 11",
+	["name"] = "99thFS Uzi 11",
 	["coalition"] = coalition.side.BLUE,
 	["exists"] = true,
 })

@@ -202,10 +202,40 @@ local function checkrecovery(keydata, tpl)
 	return false
 end
 
+local function checkmsntype(keydata, tbl)
+	local msnlist = {}
+	for _, msntype in pairs(tbl[keydata.name]) do
+		local msnstr = string.upper(msntype)
+		if type(msntype) ~= "string" or
+		   enum.missionType[msnstr] == nil then
+			return false
+		end
+		msnlist[msnstr] = enum.missionType[msnstr]
+	end
+	tbl[keydata.name] = msnlist
+	return true
+end
+
+local function check_payload_limits(keydata, tbl)
+	local newlimits = {}
+	for wpncat, val in pairs(tbl[keydata.name]) do
+		local w = enum.weaponCategory[string.upper(wpncat)]
+		if w == nil then
+			return false
+		end
+		newlimits[w] = val
+	end
+	tbl[keydata.name] = newlimits
+	return true
+end
+
+
 local function getkeys(objtype)
 	local notpldata = {
 		[enum.assetType.AIRSPACE]       = true,
 		[enum.assetType.AIRBASE]        = true,
+		[enum.assetType.SQUADRONAI]     = true,
+		[enum.assetType.SQUADRONPLAYER] = true,
 	}
 	local defaultintel = 0
 	if objtype == enum.assetType.AIRBASE then
@@ -228,6 +258,10 @@ local function getkeys(objtype)
 			["type"]    = "boolean",
 			["default"] = false,
 		}, {
+			["name"]    = "ignore",
+			["type"]    = "boolean",
+			["default"] = false,
+		}, {
 			["name"]    = "priority",
 			["type"]    = "number",
 			["default"] = enum.assetTypePriority[objtype] or 1000,
@@ -243,7 +277,11 @@ local function getkeys(objtype)
 			["name"]    = "cost",
 			["type"]    = "number",
 			["default"] = 0,
-		}
+		}, {
+			["name"]    = "desc",
+			["type"]    = "string",
+			["default"] = "default template description",
+		},
 	}
 
 	if notpldata[objtype] == nil then
@@ -283,6 +321,57 @@ local function getkeys(objtype)
 			["check"]   = checkrecovery,})
 	end
 
+	if objtype == enum.assetType.SQUADRONAI or
+	   objtype == enum.assetType.SQUADRONPLAYER then
+		table.insert(keys, {
+			["name"]    = "ato",
+			["type"]    = "table",
+			["check"]   = checkmsntype,
+			["default"] = enum.missionType,
+		})
+	end
+
+	if objtype == enum.assetType.SQUADRONPLAYER then
+		table.insert(keys, {
+			["name"]    = "payloadlimits",
+			["type"]    = "table",
+			["check"]   = check_payload_limits,
+			["default"] = dct.settings.payloadlimits,
+		})
+	end
+
+	if objtype == enum.assetType.SQUADRONAI then
+		table.insert(keys, {
+			["name"]    = "current",
+			["type"]    = "number",
+			["default"] = -1,
+		})
+		table.insert(keys, {
+			["name"]    = "max",
+			["type"]    = "number",
+			["default"] = -1,
+		})
+		table.insert(keys, {
+			["name"]    = "flightsize",
+			["type"]    = "number",
+			["default"] = 1,
+		})
+		table.insert(keys, {
+			["name"]    = "experience",
+			["type"]    = "table",
+			["default"] = {2, 1},
+		})
+		table.insert(keys, {
+			["name"]    = "readytime",
+			["type"]    = "table",
+			["default"] = {300, 90},
+		})
+		table.insert(keys, {
+			["name"]    = "alerttime",
+			["type"]    = "table",
+			["default"] = {120, 45},
+		})
+	end
 	return keys
 end
 
