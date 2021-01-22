@@ -161,7 +161,8 @@ function AssetManager:getTargets(requestingside, assettypelist)
 	end
 
 	for tgtname, tgttype in pairs(self._sideassets[enemy].assets) do
-		if filterlist[tgttype] ~= nil then
+		if filterlist[tgttype] ~= nil and
+		   not self._assetset[tgtname].ignore then
 			tgtlist[tgtname] = tgttype
 		end
 	end
