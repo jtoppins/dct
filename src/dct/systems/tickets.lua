@@ -215,7 +215,7 @@ function Tickets:loss(side, cost, mod)
 		op = "modifier_loss"
 	end
 	self:_add(side, -math.abs(cost), op)
-	if not self:isComplete() and t.tickets < 0 then
+	if not self:isComplete() and t.tickets <= 0 then
 		local flag = self.tickets[winnermap[side]].flag
 		trigger.action.setUserFlag(flag, true)
 		self:setComplete()
