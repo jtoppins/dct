@@ -46,8 +46,10 @@ local testcmds = {
 			["type"]   = enum.uiRequestType.THEATERSTATUS,
 		},
 		["assert"]     = true,
-		["expected"]   = "== Theater Threat Status ==\n  Sea:    medium\n"..
+		["expected"]   = "== Theater Threat Status ==\n"..
+			"  Force Str: Nominal\n  Sea:    medium\n"..
 			"  Air:    parity\n  ELINT:  medium\n  SAM:    medium\n\n"..
+			"== Friendly Force Info ==\n  Force Str: Nominal\n\n"..
 			"== Current Active Air Missions ==\n  No Active Missions\n\n"..
 			"Recommended Mission Type: CAP\n",
 	},
@@ -67,8 +69,10 @@ local testcmds = {
 			["type"]   = enum.uiRequestType.THEATERSTATUS,
 		},
 		["assert"]     = true,
-		["expected"]   = "== Theater Threat Status ==\n  Sea:    medium\n"..
+		["expected"]   = "== Theater Threat Status ==\n"..
+			"  Force Str: Nominal\n  Sea:    medium\n"..
 			"  Air:    parity\n  ELINT:  medium\n  SAM:    medium\n\n"..
+			"== Friendly Force Info ==\n  Force Str: Nominal\n\n"..
 			"== Current Active Air Missions ==\n  STRIKE:   1\n\n"..
 			"Recommended Mission Type: CAP\n",
 	},

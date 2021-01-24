@@ -71,14 +71,20 @@ end
 --     - current active air mission types
 --]]
 function Commander:getTheaterUpdate()
-	--local enemystats = self.theater:getTargetStats(self.owner)
+	local theater = dct.Theater.singleton()
 	local theaterUpdate = {}
+	local tks, start
 
+	theaterUpdate.friendly = {}
+	tks, start = theater:getTickets():get(self.owner)
+	theaterUpdate.friendly.str = math.floor((tks / start)*100)
 	theaterUpdate.enemy = {}
 	theaterUpdate.enemy.sea = 50
 	theaterUpdate.enemy.air = 50
 	theaterUpdate.enemy.elint = 50
 	theaterUpdate.enemy.sam = 50
+	tks, start = theater:getTickets():get(dctutils.getenemy(self.owner))
+	theaterUpdate.enemy.str = math.floor((tks / start)*100)
 	theaterUpdate.missions = self.missionstats:getStats()
 	for k,v in pairs(theaterUpdate.missions) do
 		if v == 0 then

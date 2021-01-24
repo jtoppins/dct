@@ -99,10 +99,15 @@ function TheaterUpdateCmd:_execute(_, cmdr)
 	local update = cmdr:getTheaterUpdate()
 	local msg =
 		string.format("== Theater Threat Status ==\n") ..
+		string.format("  Force Str: %s\n",
+			human.strength(update.enemy.str))..
 		string.format("  Sea:    %s\n", human.threat(update.enemy.sea)) ..
 		string.format("  Air:    %s\n", human.airthreat(update.enemy.air)) ..
 		string.format("  ELINT:  %s\n", human.threat(update.enemy.elint))..
 		string.format("  SAM:    %s\n", human.threat(update.enemy.sam)) ..
+		string.format("\n== Friendly Force Info ==\n")..
+		string.format("  Force Str: %s\n",
+			human.strength(update.friendly.str))..
 		string.format("\n== Current Active Air Missions ==\n")
 	if next(update.missions) ~= nil then
 		for k,v in pairs(update.missions) do

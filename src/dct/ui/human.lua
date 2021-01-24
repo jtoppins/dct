@@ -47,6 +47,21 @@ function human.threat(value)
 	return "high"
 end
 
+function human.strength(value)
+	if value == nil then
+		return "Unknown"
+	end
+
+	if value < 25 then
+		return "Critical"
+	elseif value >= 25 and value < 75 then
+		return "Marginal"
+	elseif value >= 75 and value < 125 then
+		return "Nominal"
+	end
+	return "Excellent"
+end
+
 function human.missiontype(mtype)
 	return assert(utils.getkey(enum.missionType, mtype),
 		"no name found for mission type ("..mtype..")")
