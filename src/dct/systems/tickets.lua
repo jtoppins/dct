@@ -21,24 +21,24 @@ local function checkdifficulty(keydata, tbl)
 	local val = string.lower(tbl[keydata.name])
 	local settings = {
 		["easy"] = {
-			["player-cost"]     = 1.0,
-			["modifier-loss"]   = 0.5,
-			["modifier-reward"] = 1.5,
+			["player_cost"]     = 1.0,
+			["modifier_loss"]   = 0.5,
+			["modifier_reward"] = 1.5,
 		},
 		["normal"] = {
-			["player-cost"]     = 1.0,
-			["modifier-loss"]   = 1.0,
-			["modifier-reward"] = 1.0,
+			["player_cost"]     = 1.0,
+			["modifier_loss"]   = 1.0,
+			["modifier_reward"] = 1.0,
 		},
 		["hard"] = {
-			["player-cost"]     = 1.0,
-			["modifier-loss"]   = 1.5,
-			["modifier-reward"] = 0.5,
+			["player_cost"]     = 1.0,
+			["modifier_loss"]   = 1.5,
+			["modifier_reward"] = 0.5,
 		},
 		["realistic"] = {
-			["player-cost"]     = 1.0,
-			["modifier-loss"]   = 1.0,
-			["modifier-reward"] = 0,
+			["player_cost"]     = 1.0,
+			["modifier_loss"]   = 1.0,
+			["modifier_reward"] = 0,
 		},
 		["custom"] = {
 		},
@@ -60,17 +60,17 @@ local function checkside(keydata, tbl)
 			["type"]    = "number",
 			["check"]   = checkvalue,
 		}, {
-			["name"]    = "player-cost",
+			["name"]    = "player_cost",
 			["type"]    = "number",
 			["check"]   = checkvalue,
 			["default"] = 1,
 		}, {
-			["name"]    = "modifier-reward",
+			["name"]    = "modifier_reward",
 			["type"]    = "number",
 			["check"]   = checkvalue,
 			["default"] = 1,
 		}, {
-			["name"]    = "modifier-loss",
+			["name"]    = "modifier_loss",
 			["type"]    = "number",
 			["check"]   = checkvalue,
 			["default"] = 1,
@@ -175,7 +175,7 @@ end
 function Tickets:getPlayerCost(side)
 	assert(side == coalition.side.RED or side == coalition.side.BLUE,
 		string.format("value error: side(%d) is not red or blue", side))
-	return self.tickets[side]["player-cost"]
+	return self.tickets[side]["player_cost"]
 end
 
 function Tickets:_add(side, cost, mod)
@@ -192,7 +192,7 @@ end
 function Tickets:reward(side, cost, mod)
 	local op = nil
 	if mod == true then
-		op = "modifier-reward"
+		op = "modifier_reward"
 	end
 	self:_add(side, math.abs(cost), op)
 end
@@ -211,7 +211,7 @@ function Tickets:loss(side, cost, mod)
 
 	local op = nil
 	if mod == true then
-		op = "modifier-loss"
+		op = "modifier_loss"
 	end
 	self:_add(side, -math.abs(cost), op)
 	if not self:isComplete() and t.tickets < 0 then

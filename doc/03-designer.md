@@ -69,9 +69,9 @@ in many AAA FPS titles.
 	blue = {
 		flag            = 45,
 		tickets         = 100,
-		player-cost     = 1,
-		modifier-reward = 0.5,
-		modifier-loss   = 0.2,
+		player_cost     = 1,
+		modifier_reward = 0.5,
+		modifier_loss   = 0.2,
 	}
 
 	neutral = {
@@ -124,9 +124,9 @@ Ticket loss and reward:
 Tickets are lost by the owning side each time an asset dies. A side may
 gain tickets for completing missions. The calculations are as follows:
 
-	tickets-lost = asset.cost * owner.modifier-loss
+	tickets-lost = asset.cost * owner.modifier_loss
 
-	tickets-gained = tgtasset.cost * mission.owner.modifier-reward
+	tickets-gained = tgtasset.cost * mission.owner.modifier_reward
 
 An example; suppose a flight of two players (blue) attacked and destroyed
 a factory (red) which was part of their mission. During the mission one
@@ -136,20 +136,20 @@ Point values and modifiers:
 
  * factory worth 10 tickets
  * player cost worth 2 tickets
- * red modifiers; ticket = 50, modifier-reward = .5, modifier-loss = .5
- * blue modifiers; tickets = 30, modifier-reward = 1, modifier-loss = 1
+ * red modifiers; ticket = 50, modifier_reward = .5, modifier_loss = .5
+ * blue modifiers; tickets = 30, modifier_reward = 1, modifier_loss = 1
 
 Red Tickets:
 
-	red tickets = 50 - (factory.cost * red.modifier-loss)
+	red tickets = 50 - (factory.cost * red.modifier_loss)
 	            = 50 - (10 * .5)
 	            = 45
 
 Blue Tickets:
 
-	blue tickets = 30 - (player.cost * blue.modifier-loss) + mission success
+	blue tickets = 30 - (player.cost * blue.modifier_loss) + mission success
 	             = 30 - (2 * 1) + mission success
-	             = 28 + (factory.cost * blue.modifier-reward)
+	             = 28 + (factory.cost * blue.modifier_reward)
 	             = 28 + (10 * 1)
 	             = 38
 
@@ -163,44 +163,44 @@ assign costs to each asset, via their .dct file.
  * _value:_ limit set of strings (`easy`, `normal`, `hard`, `realistic`,
   `custom`)
 
-Defines some predefined settings for player-cost, modifier-reward, and
-modifier-loss. If this is set to anything other than `custom` any
-explicitly defined values for player-cost, etc will be overwritten.
+Defines some predefined settings for player_cost, modifier_reward, and
+modifier_loss. If this is set to anything other than `custom` any
+explicitly defined values for player_cost, etc will be overwritten.
 
 `easy`:
 
- * player-cost: 1
- * modifier-reward: .5
- * modifier-loss: 1.5
+ * player_cost: 1
+ * modifier_reward: .5
+ * modifier_loss: 1.5
 
 `normal`:
 
- * player-cost: 1
- * modifier-reward: 1
- * modifier-loss: 1
+ * player_cost: 1
+ * modifier_reward: 1
+ * modifier_loss: 1
 
 `hard`:
 
- * player-cost: 1
- * modifier-reward: 1.5
- * modifier-loss: .5
+ * player_cost: 1
+ * modifier_reward: 1.5
+ * modifier_loss: .5
 
 `realistic`:
 
- * player-cost: 1
- * modifier-reward: 1
- * modifier-loss: 0
+ * player_cost: 1
+ * modifier_reward: 1
+ * modifier_loss: 0
 
-###### `player-cost`
+###### `player_cost`
 
 Defines the cost of each player slot.
 
-###### `modifier-reward`
+###### `modifier_reward`
 
 Defines the multiplicative modifier that is applied to all rewards the
 given faction receives.
 
-###### `modifier-loss`
+###### `modifier_loss`
 
 Defines the multiplicative modifier that is applied to all losses the
 given faction takes.
