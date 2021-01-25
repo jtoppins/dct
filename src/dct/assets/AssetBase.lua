@@ -118,7 +118,9 @@ function AssetBase:__init(template, region)
 		"tplname",
 		"name",
 		"codename",
-		"cost",})
+		"cost",
+		"ignore",
+	})
 	self._spawned    = false
 	self._dead       = false
 	self._targeted   = {}
@@ -151,6 +153,7 @@ function AssetBase:_completeinit(template, region)
 		print(string.format("Template(%s) has nil 'desc' field",
 			template.name))
 	end
+	self.ignore   = template.ignore
 	self.owner    = template.coalition
 	self.rgnname  = region.name
 	self.tplname  = template.name

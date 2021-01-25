@@ -191,6 +191,10 @@ local function getkeys(objtype)
 			["type"]    = "boolean",
 			["default"] = false,
 		}, {
+			["name"]    = "ignore",
+			["type"]    = "boolean",
+			["default"] = false,
+		}, {
 			["name"]    = "priority",
 			["type"]    = "number",
 			["default"] = enum.assetTypePriority[objtype] or 1000,
