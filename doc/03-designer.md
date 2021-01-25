@@ -47,13 +47,11 @@ The directory hierarchy is:
 	      - template5.dct
 	      - template5.stm
 
-Theater level configuration consist of various files that manipulate a
-specific aspect of DCT on a theater wide level.
-
 ### Theater Level Configuration
 
 Theater level configuration consist of various files that manipulate a
-specific aspect of DCT on a theater wide level.
+specific aspect of DCT on a theater wide level. The various theater
+wide settings are described in the subsections below.
 
 ### Theater Goals
 
@@ -417,16 +415,18 @@ is higher) the earlier assets/targets in that region will be scheduled.
  * _default:_ empty table
 
 If not defined all templates will be spawned. If the limits table is defined
-it consists of keys that are the names of asset types\[[1][1]\] with the
+it consists of keys that are the names of `assetType`\[[1][1]\] with the
 value being a table describing the min and max number of templates of that
 type that will be spawned.
 
-	["limits"] = {
+	...
+	limits = {
 		["ammodump"] = {
 			["min"] = 2,
 			["max"] = 4,
 		},
 	}
+	...
 
 The spawning algorithm, from the sample above, will select at random a
 number between 2 and 4 inclusive as the maximum number(X) of ammodumps
@@ -490,6 +490,10 @@ file.
 
 	objtype = "ammodump"
 	intel = 2
+	cost = 20
+
+_Note:_ This example assumes an associated STM file that will define the
+DCS game objects that make up an "ammo dump".
 
 ### Attributes - General
 
@@ -502,8 +506,7 @@ template must define the attribute.
  * _value:_ string
 
 Defines the type of game object (Asset) that will be created from the
-template. Allowed values can be found in
-[src/dct/enum.lua](../src/dct/enum.lua) in the `assetType` table.
+template. Allowed values can be found in `assetType`\[[1][1]\] table.
 
 ### `name`
 
@@ -581,8 +584,50 @@ For templates that are not associated with an STM file the format of
  * `countryid` - is the numerical id of the country[\[4\]][4] the
    static/group belongs to
  * `data` - is the actual static/group definition in a format that is
-   expected by `coalition.addGroup()`[\[3\]][3] and
-   `coalition.addStatic()`[\[4\]][4]
+   expected by `coalition.addGroup()`[\[5\]][5] and
+   `coalition.addStatic()`[\[6\]][6]
+
+#### Death Goal Specification (goalspec)
+
+A template can consist of an arbitrary number of statics and groups
+that make up the "asset", however some of these groups/statics may
+be there to provide atmosphere to the overall objective and or a
+supporting role such as local AAA coverage. With goal specification
+the designer has direct control over specifying which specific statics
+and/or groups need to be damaged or destroyed to determine when the
+overall Asset is dead according to DCT.
+
+Lets take for example our ammo dump [_TODO: add link to stm_] template. It
+consists of a few ammo bunker statics and some supporting AAA units
+for local security. But we as the designer do not care if all the AAA
+units are hit we only care if the bunkers are hit or destroyed. In the
+mission editor we can modify the bunker name to include the
+following key words, this will cause DCT to create a "death goal" for the
+template instead of using the default death goal which is 90% of all
+objects must be destroyed.
+
+Keywords:
+
+ * `PRIMARY` - statics/groups that contain this text in their name will
+   be tracked and contribute to the Assets overall death goal
+ * `UNDAMAGED` - static/group must have less than 10% damage or the object
+    is considered dead
+ * `DAMAGED` - static/group must have less than 45% damage or the object
+    is considered dead
+ * `INCAPACITATED` - static/group must have less than 75% damage or the
+    object is considered dead
+ * `DESTROYED` - static/group must have less than 90% damage or the object
+    is considered dead
+
+Using the keywords above in our ammo dump example we would name the
+ammo bunker static object in the static template the following;
+  `PRIMARY DESTROYED bunker 1`
+
+This would require a player or AI to do 90% damage to "bunker 1", and no
+other objects before DCT would consider the overall ammo dump dead. This
+means a player could hammer all the AAA and progress toward killing the
+overall ammo dump would be zero percent. This gives the template designer
+a lot of flexibility and ability to create "decoy" portions of a template.
 
 ### `buildings`
 
@@ -596,19 +641,19 @@ be included as part of the template, an example from the Persian Gulf
 map;
 
 	...
-	["buildings"] = {
+	buildings = {
 		{
 			["name"] = "building 1",
 			["goal"] = "primary destroyed",
 			["id"]   = 109937143,
 		},
-	},
+	}
 	...
 
 Where `name` is the name of the scenery object (is arbitrary and only
 referenced in DCT for error reporting), `goal` conforms to the textual
-goalspec, and `id` is the map specific object id which can be obtained
-from the mission editor.
+[goalspec](#death-goal-specification-goalspec), and `id` is the map
+specific object id which can be obtained from the mission editor.
 
 ### `uniquenames`
 
@@ -631,16 +676,6 @@ they have the same name.
 This field defines the relative priority to other templates/assets within
 the region. A lower non-negative number means higher priority.
 
-### `primary`
-
- * _required:_ no
- * _value:_ `true` or `false`
- * _default:_ `false`
-
-Defines if an Asset created from this template is considered a 'primary'.
-Depending on the overall theater goals all or a percentage of all primary
-targets must be destroyed.
-
 ### `intel`
 
  * _required:_ no
@@ -650,7 +685,7 @@ targets must be destroyed.
 Defines the initial amount of 'intel' the opposing side knows about any
 assets generated from the template. The intel value is a direct
 representation to how many decimal places the location of the asset will
-be truncated to[\[5\]][5].
+be truncated to[\[7\]][7].
 
 ### `spawnalways`
 
@@ -677,7 +712,10 @@ of the group will be ignored.
  * _value:_ string
  * _default:_ nil
 
-Specifies which airbase the asset is associated with.
+Specifies which airbase the asset is associated with. Normally not needed
+to be specified by the campaign designer. The value must be a string
+that when passed to `Airbase.getByName(<name>)` returns a DCS Airbase
+object.
 
 ### `ignore`
 
@@ -698,6 +736,17 @@ by the asset to be ignored by the DCS AI.
 
 Forces an asset on state reload to reset its `tpldata` to the original
 state when the asset was created.
+
+### `cost`
+
+ * _required:_ no
+ * _value:_ number
+ * _default:_ 0
+
+The amount of tickets an asset generated from this template is worth.
+With the ticket system each side has a given amount of tickets they can
+lose. An asset with a cost value will deduct against this per-side ticket
+pool. See the [tickets](#tickets) section for more information.
 
 ### Attributes - Type Specific
 
@@ -777,8 +826,9 @@ recover at the field. The possible options are:
  * _value:_ list of strings
  * _default:_ all mission types allowed
 
-The allowed mission types the squadron can fly.  See the "User Interface"
-section for details on how this attribute is defined.
+The allowed mission types the squadron can fly.  See the
+[User Interface](#user-interfaceui) section for details on how this
+attribute is defined.
 
 **Player Squadron:**
 
@@ -796,7 +846,13 @@ there is no limit. The format of the table is as follows:
 				["aa"] = 10,
 			}
 
-See "Payload Limits" section for further details.
+See [Payload Limits](#payload-limits) section for further details.
+
+### Asset Types
+
+_TODO: describe what each asset type means in the context of DCT and how
+losing an asset of a given type would manipulate the overall battlespace.
+This could be combined with the specific asset examples below._
 
 ### Template and Asset Examples
 
@@ -814,4 +870,3 @@ See "Payload Limits" section for further details.
 [7]: https://en.wikipedia.org/wiki/Decimal_degrees "Decimal degrees"
 [8]: https://wiki.hoggitworld.com/view/DCS_func_searchObjects "DCS Volume Spec"
 [9]: https://wiki.hoggitworld.com/view/DCS_enum_coalition "Hoggit Wiki - Coalition Table"
-
