@@ -66,6 +66,19 @@ function EmptyState:onDCTEvent(asset, event)
 	end
 
 	local theater = dct.Theater.singleton()
+	if asset.squadron then
+		asset._logger:debug("squadron set: "..asset.squadron)
+		local sqdn = theater:getAssetMgr():getAsset(asset.squadron)
+		if sqdn then
+			asset._logger:debug("squadron overriding ato and payload")
+			asset.ato = sqdn:getATO()
+			asset.payloadlimits = sqdn:getPayloadLimits()
+			asset._logger:debug("payloadlimits: "..
+				require("libs.json"):encode_pretty(asset.payloadlimits))
+			asset._logger:debug("ato: "..
+				require("libs.json"):encode_pretty(asset.ato))
+		end
+	end
 	local grp = event.initiator:getGroup()
 	local id = grp:getID()
 	if asset.groupId ~= id then
@@ -260,15 +273,18 @@ function Player:_completeinit(template, region)
 	self.unittype   = self._tpldata.data.units[1].type
 	self.cmdpending = false
 	self.groupId    = self._tpldata.data.groupId
+	self.squadron   = self.name:match("(%w+)(.+)")
 	self.airbase    = dctutils.airbaseId2Name(airbaseId(self._tpldata))
 	self.parking    = airbaseParkingId(self._tpldata)
-	self.ato        = settings.ui.ato[self.unittype]
-	if self.ato == nil then
-		self.ato = dctenum.missionType
-	end
+	self.ato        = settings.ui.ato[self.unittype] or
+		dctenum.missionType
 	self.payloadlimits = settings.payloadlimits
 	self.gridfmt    = settings.ui.gridfmt[self.unittype] or
 		dctutils.posfmt.DMS
+	self._logger:debug("payloadlimits: "..
+		require("libs.json"):encode_pretty(self.payloadlimits))
+	self._logger:debug("ato: "..
+		require("libs.json"):encode_pretty(self.ato))
 end
 
 function Player:_setup()

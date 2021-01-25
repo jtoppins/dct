@@ -1,8 +1,8 @@
 objtype = "airbase"
-name = "Bandar-e-jask airfield"
-coalition = 1
+name = "AlDafra airfield"
+coalition = 2
 subordinates = {
-	"Bandar E Jask Airbase Defence",
+	"99thFS",
 }
 ignore = true
 desc = "this is an airbase"

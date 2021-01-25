@@ -1,0 +1,9 @@
+objtype = "squadronplayer"
+name = "99thFS"
+coalition = 2
+intel = 2
+ato = {"CAP", "cas"}
+payloadlimits = {
+	["ag"] = 20,
+	["aa"] = 5,
+}

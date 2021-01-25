@@ -187,7 +187,8 @@ function OperationalState:onDCTEvent(asset, event)
 end
 
 local allowedtpltypes = {
-	[dctenum.assetType.BASEDEFENSE] = true,
+	[dctenum.assetType.BASEDEFENSE]    = true,
+	[dctenum.assetType.SQUADRONPLAYER] = true,
 }
 
 local statemap = {

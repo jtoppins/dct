@@ -28,6 +28,7 @@ local Logger   = require("dct.libs.Logger")
 local settings = _G.dct.settings
 
 local norenametype = {
+	[dctenum.assetType.SQUADRONPLAYER] = true,
 	[dctenum.assetType.PLAYERGROUP]    = true,
 	[dctenum.assetType.AIRBASE]        = true,
 }
