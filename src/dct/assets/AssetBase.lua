@@ -121,6 +121,7 @@ function AssetBase:__init(template, region)
 		"codename",
 		"cost",
 		"ignore",
+		"regenerate",
 	})
 	self._spawned    = false
 	self._dead       = false
@@ -154,6 +155,7 @@ function AssetBase:_completeinit(template, region)
 		print(string.format("Template(%s) has nil 'desc' field",
 			template.name))
 	end
+	self.regenerate = template.regenerate
 	self.ignore   = template.ignore
 	self.owner    = template.coalition
 	self.rgnname  = region.name

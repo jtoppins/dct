@@ -300,7 +300,11 @@ function StaticAsset:marshal()
 	if tbl == nil then
 		return nil
 	end
-	tbl._tpldata = filterTemplateData(self._tpldata)
+	if self.regenerate then
+		tbl._tpldata = self._tpldata
+	else
+		tbl._tpldata = filterTemplateData(self._tpldata)
+	end
 	if tbl._tpldata == nil then
 		return nil
 	end

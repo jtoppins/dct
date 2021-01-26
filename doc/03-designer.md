@@ -690,6 +690,15 @@ ignored by the DCT AI. This includes scheduling the asset to be assigned
 as a target to a player. [TODO] This will also make any units spawned
 by the asset to be ignored by the DCS AI.
 
+### `regenerate`
+
+ * _required:_ no
+ * _value:_ boolean
+ * _default:_ false
+
+Forces an asset on state reload to reset its `tpldata` to the original
+state when the asset was created.
+
 ### Attributes - Type Specific
 
 #### Airspace
