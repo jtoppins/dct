@@ -138,7 +138,6 @@ function Vector3D:__init(obj, height)
 		self.z = obj.y
 	end
 	override_ops(self, mt3d)
-	self.distance = nil
 end
 
 function Vector3D.create(x, y, height)
@@ -166,6 +165,20 @@ end
 
 function vmath.unitvec(vec)
 	return vec / vec:magnitude()
+end
+
+function vmath.dot(U, V)
+	assert((U:isa(Vector2D) and V:isa(Vector2D)) or
+		   (U:isa(Vector3D) and V:isa(Vector3D)),
+		   "vectors are not of the same order")
+	local sum = 0
+
+	for _, n in ipairs({'x', 'y', 'z'}) do
+		if U[n] and V[n] then
+			sum = sum + (U[n] * V[n])
+		end
+	end
+	return sum
 end
 
 return vmath
