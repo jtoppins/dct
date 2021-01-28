@@ -5,6 +5,9 @@ local class       = require("libs.class")
 -- Ranges at which SAM sites are
 -- considered close enough to activate in m
 
+-- luacheck: max_cyclomatic_complexity 21, ignore 241
+local trkFiles = {}
+
 local rangeTbl = {
 	["Kub 1S91 str"] = 52000,
 	["S-300PS 40B6M tr"] =  100000,
@@ -67,13 +70,20 @@ function IADS:__init(cmdr)
 	self.AewAC    = {}
 
 	local theater = require("dct.Theater").singleton()
-	theater:registerHandler(self.sysIADSEventHandler, self)
-	theater:queueCommand(10, Command(self.populateLists, self))
-	theater:queueCommand(10, Command(self.monitortrks, self))
-	theater:queueCommand(10, Command(self.SAMCheckHidden, self))
-	theater:queueCommand(10, Command(self.BlinkSAM, self))
-	theater:queueCommand(10, Command(self.EWRSAMOnRequest, self))
-	theater:queueCommand(15, Command(self.disableAllSAMs, self))
+	theater:addObserver(self.sysIADSEventHandler, self,
+		"iads.eventhandler")
+	theater:queueCommand(10, Command("iads.populateLists",
+		self.populateLists, self))
+	theater:queueCommand(10, Command("iads.monitortrks",
+		self.monitortrks, self))
+	theater:queueCommand(10, Command("iads.SAMCheckHidden",
+		self.SAMCheckHidden, self))
+	theater:queueCommand(10, Command("iads.BlinkSAM",
+		self.BlinkSAM, self))
+	theater:queueCommand(10, Command("iads.EWRSAMOnRequest",
+		self.EWRSAMOnRequest, self))
+	theater:queueCommand(15, Command("iads.disableAllSAMs",
+		self.disableAllSAMs, self))
 end
 
 function IADS:rangeOfSAM(gp)
