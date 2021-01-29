@@ -50,10 +50,6 @@ local function build_kick_flagname(name)
 	return name.."_kick"
 end
 
-local function build_oper_flagname(name)
-	return name.."_operational"
-end
-
 local function on_birth(asset, event)
 	local grp = event.initiator:getGroup()
 	local id = grp:getID()
@@ -249,9 +245,9 @@ end
 local Player = class("Player", AssetBase)
 function Player:__init(template, region)
 	AssetBase.__init(self, template, region)
+	self._operstate = false
 	trigger.action.setUserFlag(self.name, false)
 	trigger.action.setUserFlag(build_kick_flagname(self.name), false)
-	trigger.action.setUserFlag(build_oper_flagname(self.name), false)
 	self.marshal   = nil
 	self.unmarshal = nil
 end
@@ -315,7 +311,18 @@ function Player:getLocation()
 	return self._location
 end
 
+function Player:isEnabled()
+	return self:isSpawned() and self._operstate
+end
+
+function Player:doEnable()
+	trigger.action.setUserFlag(self.name, self:isEnabled())
+	self._logger:debug(string.format("setting enable flag: %s",
+		tostring(self:isEnabled())))
+end
+
 function Player:update()
+	self:doEnable()
 	local newstate = self.state:update(self)
 	if newstate ~= nil then
 		self.state:exit(self)
@@ -326,10 +333,10 @@ end
 
 function Player:handleBaseState(event)
 	if event.initiator.name == self.airbase then
-		local flagname = build_oper_flagname(self.name)
-		trigger.action.setUserFlag(flagname, event.state)
-		self._logger:debug(string.format("setting oper: %s(%s)",
-			flagname, tostring(event.state)))
+		self._operstate = event.state
+		self._logger:debug(string.format("setting operstate: %s",
+			tostring(event.state)))
+		self:doEnable()
 	else
 		self._logger:warn(string.format("received unknown event "..
 			"%s(%d) from initiator(%s)",
@@ -352,12 +359,12 @@ end
 
 function Player:spawn()
 	AssetBase.spawn(self)
-	trigger.action.setUserFlag(self.name, true)
+	self:doEnable()
 end
 
 function Player:despawn()
 	AssetBase.despawn(self)
-	trigger.action.setUserFlag(self.name, false)
+	self:doEnable()
 end
 
 --[[
