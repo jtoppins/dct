@@ -364,7 +364,11 @@ end
 
 function DCTHooks:onSimulationResume()
 	log.write(facility, log.DEBUG, "onSimulationResume")
-	if not DCS.isServer() then
+	local dctenabled = do_rpc("server", rpc_get_flag(dctflag), "number")
+	if not DCS.isServer() or not dctenabled then
+		log.write(facility, log.DEBUG,
+			string.format("not DCT enabled; server(%s), enabled(%s)",
+				tostring(DCS.isServer()), tostring(dctenabled)))
 		return
 	end
 	self:start()
@@ -450,8 +454,7 @@ function DCTHooks:onPlayerChangeSlot(id)
 end
 
 function DCTHooks:isEnabled()
-	local dctenabled = do_rpc("server", rpc_get_flag(dctflag), "number")
-	return self.started and dctenabled
+	return self.started
 end
 
 -- Returns: true - allows slot change, false - denies change
