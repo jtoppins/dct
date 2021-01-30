@@ -214,9 +214,14 @@ end
 function Theater:onEvent(event)
 	self:notify(event)
 	if event.id == world.event.S_EVENT_MISSION_END then
-		local ok, err = os.remove(settings.statepath)
-		if not ok then
-			Logger:error("unable to remove statepath; "..err)
+		-- Only delete the state if there is an end mission event
+		-- and tickets are complete, otherwise when a server is
+		-- shutdown gracefully the state will be deleted.
+		if self.tickets:isComplete() then
+			local ok, err = os.remove(settings.statepath)
+			if not ok then
+				Logger:error("unable to remove statepath; "..err)
+			end
 		end
 	end
 end
