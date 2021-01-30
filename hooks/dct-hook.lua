@@ -363,7 +363,9 @@ end
 
 local function rpc_get_flag(flagname)
 	local cmd = [[
-		return tostring(trigger.misc.getUserFlag("]]..tostring(flagname)..[["))
+		local flag = trigger.misc.getUserFlag("]]..
+			tostring(flagname)..[[") or 0
+		return tostring(flag)
 	]]
 	return cmd
 end
@@ -433,7 +435,7 @@ local function isSlotEnabled(slot)
 end
 
 function DCTHooks:isEnabled()
-	local dctenabled = do_rpc("server", rpc_get_flag(dctflag), "boolean")
+	local dctenabled = do_rpc("server", rpc_get_flag(dctflag), "number")
 	return self.started and dctenabled
 end
 

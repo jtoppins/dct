@@ -194,7 +194,8 @@ function Theater:loadOrGenerate()
 		end)
 		for name, _ in pairs(assetnames) do
 			local asset = self.assetmgr:getAsset(name)
-			if not asset:isSpawned() then
+			if asset.type ~= enum.assetType.PLAYERGROUP and
+			   not asset:isSpawned() then
 				asset:spawn()
 			end
 		end
