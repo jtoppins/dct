@@ -69,38 +69,28 @@ local function loadMetadata(self, regiondefpath)
 	utils.mergetables(self, region)
 end
 
-local function getTemplates(self, dirname, basepath)
-	local tplpath = basepath .. "/" .. dirname
-	Logger:debug("=> tplpath: "..tplpath)
+local function getTemplates(self, basepath)
+	local ignorepaths = {
+		["."] = true,
+		[".."] = true,
+		["region.def"] = true,
+	}
 
-	for filename in lfs.dir(tplpath) do
-		if filename ~= "." and filename ~= ".." then
-			local fpath = tplpath .. "/" .. filename
+	Logger:debug("=> basepath: "..basepath)
+	for filename in lfs.dir(basepath) do
+		if ignorepaths[filename] == nil then
+			local fpath = basepath..utils.sep..filename
 			local fattr = lfs.attributes(fpath)
 			if fattr.mode == "directory" then
-				getTemplates(self, filename, tplpath)
-			else
-				if string.find(fpath, ".dct", -4, true) ~= nil then
-					Logger:debug("=> process template: "..fpath)
-					local stmpath = string.gsub(fpath, "[.]dct", ".stm")
-					if lfs.attributes(stmpath) == nil then
-						stmpath = nil
-					end
-					self:addTemplate(
-						Template.fromFile(self.name, fpath, stmpath))
+				getTemplates(self, basepath..utils.sep..filename)
+			elseif string.find(fpath, ".dct", -4, true) ~= nil then
+				Logger:debug("=> process template: "..fpath)
+				local stmpath = string.gsub(fpath, "[.]dct", ".stm")
+				if lfs.attributes(stmpath) == nil then
+					stmpath = nil
 				end
-			end
-		end
-	end
-end
-
-local function loadTemplates(self)
-	for filename in lfs.dir(self.path) do
-		if filename ~= "." and filename ~= ".." then
-			local fpath = self.path.."/"..filename
-			local fattr = lfs.attributes(fpath)
-			if fattr.mode == "directory" then
-				getTemplates(self, filename, self.path)
+				self:addTemplate(
+					Template.fromFile(self.name, fpath, stmpath))
 			end
 		end
 	end
@@ -207,12 +197,14 @@ function Region:__init(regionpath)
 	self._exclusions   = {}
 	Logger:debug("=> regionpath: "..regionpath)
 	loadMetadata(self, regionpath..utils.sep.."region.def")
-	loadTemplates(self)
+	getTemplates(self, self.path)
+	Logger:debug("'"..self.name.."' Loaded")
 end
 
 function Region:addTemplate(tpl)
 	assert(self._templates[tpl.name] == nil,
 		"duplicate template '"..tpl.name.."' defined; "..tostring(tpl.path))
+	Logger:debug("  + add template: "..tpl.name)
 	self._templates[tpl.name] = tpl
 	if tpl.exclusion ~= nil then
 		if self._exclusions[tpl.exclusion] == nil then
