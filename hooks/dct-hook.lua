@@ -289,7 +289,11 @@ function DCTHooks:onMissionLoadEnd()
 	log.write(facility, log.DEBUG, "mission_period: "..
 		tostring(self.mission_period))
 	for _, data in pairs(self.restartwarnings) do
-		data.sent = false
+		if settings.server.period < 0 then
+			data.sent = true
+		else
+			data.sent = false
+		end
 	end
 	self.info.mission.dirty = true
 end
