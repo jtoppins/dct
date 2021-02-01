@@ -249,11 +249,14 @@ end
 
 local function airbaseId(grp)
 	assert(grp, "value error: grp cannot be nil")
-	local name = "airdromeId"
-	if grp.category == Unit.Category.HELICOPTER then
-		name = "helipadId"
+	local id = nil
+	for _, name in ipairs({"airdromeId", "helipadId", "linkUnit"}) do
+		id = grp.data.route.points[1][name]
+		if id ~= nil then
+			return id
+		end
 	end
-	return grp.data.route.points[1][name]
+	return id
 end
 
 local function airbaseParkingId(grp)
