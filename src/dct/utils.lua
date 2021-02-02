@@ -49,7 +49,7 @@ function utils.airbaseId2Name(id)
 	if airbase_id2name_map == nil then
 		airbase_id2name_map = {}
 		for _, ab in pairs(world.getAirbases()) do
-			airbase_id2name_map[ab:getID()] = ab:getName()
+			airbase_id2name_map[tonumber(ab:getID())] = ab:getName()
 		end
 	end
 	return airbase_id2name_map[id]

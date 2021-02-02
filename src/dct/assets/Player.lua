@@ -284,6 +284,7 @@ function Player:_completeinit(template, region)
 	self.payloadlimits = settings.payloadlimits
 	self.gridfmt    = settings.ui.gridfmt[self.unittype] or
 		dctutils.posfmt.DMS
+	self._logger:debug("airbase: "..tostring(self.airbase))
 	self._logger:debug("payloadlimits: "..
 		require("libs.json"):encode_pretty(self.payloadlimits))
 	self._logger:debug("ato: "..
