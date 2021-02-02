@@ -554,8 +554,15 @@ function DCTHooks:kickPlayerFromSlot(player)
 	if player.slot == nil then
 		return
 	end
+	local slot = self.slots[player.slot]
+	if not slot or special_unit_role_types[slot.role] ~= nil then
+		return
+	end
 
-	local grpname = self.slots[player.slot].groupName
+	local grpname = slot.groupName
+	if not grpname then
+		return
+	end
 	local kick = do_rpc("server", rpc_get_flag(grpname.."_kick"), "number")
 	if kick ~= 1 then
 		return
