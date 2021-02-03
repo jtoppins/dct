@@ -222,6 +222,7 @@ local function main()
 		["exists"] = true,
 		["desc"] = {
 			["typeName"] = "FA-18C_hornet",
+			["attributes"] = {},
 		},
 	}, playergrp, "bobplayer")
 

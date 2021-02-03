@@ -16,6 +16,9 @@ local unit1 = Unit({
 	["exists"] = true,
 	["desc"] = {
 		["typeName"] = "FA-18C_hornet",
+		["attributes"] = {
+			["Airplane"] = true,
+		},
 	},
 }, grp, "bobplayer")
 
@@ -31,6 +34,9 @@ local unit2 = Unit({
 	["exists"] = true,
 	["desc"] = {
 		["typeName"] = "FA-18C_hornet",
+		["attributes"] = {
+			["Airplane"] = true,
+		},
 	},
 }, grp2, "tomplayer")
 
