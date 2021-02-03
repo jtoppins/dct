@@ -462,12 +462,14 @@ function DCTHooks:onPlayerTryChangeSlot(playerid, _, slotid)
 	local slot   = self.slots[slotid]
 	local player = self.players[playerid]
 	local rc = false
+	local reason
 
 	if slot == nil then
 		return true
 	end
 
 	if special_unit_role_types[slot.role] ~= nil then
+		reason = "not allowed in special role slot"
 		for _, list in ipairs({slot.role, "admin"}) do
 			if self.whitelists[list] ~= nil and
 			   self.whitelists[list][player.ucid] ~= nil then
@@ -481,6 +483,7 @@ function DCTHooks:onPlayerTryChangeSlot(playerid, _, slotid)
 			rc = true
 		end
 	else
+		reason = "plane slot is disabled"
 		rc = isSlotEnabled(slot)
 	end
 
@@ -488,6 +491,8 @@ function DCTHooks:onPlayerTryChangeSlot(playerid, _, slotid)
 		net.send_chat_to(
 			string.format("***slot(%s) permission denied, choose another***",
 				tostring(slot.unitId)),
+			playerid, net.get_server_id())
+		net.send_chat_to(string.format("  reason: %s", reason),
 			playerid, net.get_server_id())
 	end
 	return rc
