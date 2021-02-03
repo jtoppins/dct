@@ -353,6 +353,9 @@ function IADS:BlinkSAM()
 end
 
 function IADS:checkGroupRole(gp)
+	if gp == nil then
+		return
+	end
 	local isEWR = false
 	local isSAM = false
 	local isAWACS = false
