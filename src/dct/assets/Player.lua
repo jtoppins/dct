@@ -230,7 +230,8 @@ function OccupiedState:handleLoseTicket(--[[asset, event]])
 	return EmptyState()
 end
 
-function OccupiedState:handleSwitchEmpty(--[[asset, event]])
+function OccupiedState:handleSwitchEmpty(asset --[[event]])
+	asset._logger:warn("player left slot")
 	return EmptyState()
 end
 

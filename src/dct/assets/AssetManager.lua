@@ -171,8 +171,7 @@ end
 
 function AssetManager:update()
 	for _, asset in pairs(self._assetset) do
-		if asset:isSpawned() and not asset:isDead() and
-		   type(asset.update) == "function" then
+		if type(asset.update) == "function" then
 			asset:update()
 		end
 	end

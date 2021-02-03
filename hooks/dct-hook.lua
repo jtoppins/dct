@@ -124,6 +124,14 @@ local special_unit_role_types = {
 	["observer"]            = true,
 }
 
+local function get_player_info(id)
+	local player = net.get_player_info(id)
+	if player and player.slot == '' then
+		player.slot = nil
+	end
+	return player
+end
+
 -- returns a JSON string conforming to the application format
 local function build_message(serverid, msgtype, value)
 	local msg = {
@@ -193,10 +201,12 @@ function DCTHooks:__init()
 		},
 	}
 
-	self.players  = {}
-	self.slots    = {}
+	self.players  = {} -- indexed by player id
+	self.slots    = {} -- indexed by unitId
 	self.blockspecialslots = (next(settings.server.whitelists) ~= nil)
 	self.whitelists = settings.server.whitelists
+	self.slot2player = {}  -- indexed by slotid (player.slot / slot.unitId)
+	                       -- pointing to player id; [unitId] = playerid
 end
 
 function DCTHooks:start()
@@ -300,10 +310,7 @@ end
 
 function DCTHooks:onPlayerConnect(id)
 	log.write(facility, log.DEBUG, "player connect, id: "..tostring(id))
-	local player = net.get_player_info(id)
-	if player.slot == '' then
-		player.slot = nil
-	end
+	local player = get_player_info(id)
 	if self.players[id] ~= nil then
 		log.write(facility, log.WARNING,
 			string.format("player id(%s) already assigned, overwriting", id))
@@ -321,23 +328,26 @@ function DCTHooks:onPlayerDisconnect(id, err_code)
 	log.write(facility, log.DEBUG,
 		string.format("player disconnect; id(%s), code(%s)",
 			tostring(id), tostring(err_code)))
-	local player = self.players[id]
-	if player == nil then
-		log.write(facility, log.WARNING,
-			string.format(
-				"received disconnect for non-existent player id(%s)", id))
-		return
+	-- clean up tables from last cached player data
+	if self.players[id] and self.players[id].slot then
+		self.slot2player[self.players[id].slot] = nil
 	end
+	-- delete player entry
 	self.players[id] = nil
 	self.info.players.dirty = true
 end
 
 function DCTHooks:onPlayerChangeSlot(id)
 	log.write(facility, log.DEBUG, "player change slot, id: "..tostring(id))
-	self.players[id] = net.get_player_info(id)
-	if self.players[id] ~= nil and self.players[id].slot == '' then
-		self.players[id].slot = nil
+	local prev_player = self.players[id]
+	local new_player  = get_player_info(id)
+	if prev_player and prev_player.slot then
+		self.slot2player[prev_player.slot] = nil
 	end
+	if new_player and new_player.slot then
+		self.slot2player[new_player.slot] = id
+	end
+	self.players[id] = new_player
 	self.info.players.dirty = true
 end
 
@@ -550,25 +560,22 @@ function DCTHooks:sendplayers()
 	self.info.players.dirty = false
 end
 
-function DCTHooks:kickPlayerFromSlot(player)
-	if player.slot == nil then
-		return
-	end
-	local slot = self.slots[player.slot]
-	if not slot or special_unit_role_types[slot.role] ~= nil then
+function DCTHooks:kickPlayerFromSlot(slot)
+	if not slot or special_unit_role_types[slot.role] ~= nil or
+	   not slot.groupName then
 		return
 	end
 
 	local grpname = slot.groupName
-	if not grpname then
-		return
-	end
+	local pid = self.slot2player[slot.unitId]
 	local kick = do_rpc("server", rpc_get_flag(grpname.."_kick"), "number")
-	if kick ~= 1 then
-		return
+	if kick == 1 and pid ~= nil then
+		net.force_player_slot(pid, 0, '')
+		net.send_chat_to(string.format(
+				"*** you have been kicked from slot(%s) ***\n"..
+				"  reason: kick requested by flag", slot.unitId),
+			pid, net.get_server_id())
 	end
-	net.force_player_slot(player.id, 0, '')
-	net.send_chat_to("*** you have been removed from slot ***", player.id)
 	do_rpc("server", rpc_set_flag(grpname.."_kick", false), "boolean")
 end
 
@@ -589,8 +596,8 @@ function DCTHooks:onSimulationFrame()
 	local modeltime = DCS.getModelTime()
 	if (modeltime - self.slotkicktimer) > self.slotkickperiod then
 		self.slotkicktimer = modeltime
-		for _, p in pairs(self.players) do
-			self:kickPlayerFromSlot(p)
+		for _, slot in pairs(self.slots) do
+			self:kickPlayerFromSlot(slot)
 		end
 	end
 
