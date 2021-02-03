@@ -54,17 +54,18 @@ local function build_oper_flagname(name)
 	return name.."_operational"
 end
 
-local OccupiedState = class("OccupiedState", State)
-local EmptyState    = class("EmptyState", State)
-function EmptyState:enter(asset)
-	asset:kick()
+local function on_birth(asset, event)
+	local grp = event.initiator:getGroup()
+	local id = grp:getID()
+	if asset.groupId ~= id then
+		asset._logger:warn(
+			string.format("asset.groupId(%d) != object:getID(%d)",
+				asset.groupId, id))
+	end
+	asset.groupId = id
 end
 
-function EmptyState:onDCTEvent(asset, event)
-	if world.event.S_EVENT_BIRTH ~= event.id then
-		return nil
-	end
-
+local function reset_slot(asset)
 	local theater = dct.Theater.singleton()
 	if asset.squadron then
 		asset._logger:debug("squadron set: "..asset.squadron)
@@ -79,16 +80,8 @@ function EmptyState:onDCTEvent(asset, event)
 				require("libs.json"):encode_pretty(asset.ato))
 		end
 	end
-	local grp = event.initiator:getGroup()
-	local id = grp:getID()
-	if asset.groupId ~= id then
-		asset._logger:warn(
-			string.format("asset.groupId(%d) != object:getID(%d)",
-				asset.groupId, id))
-	end
-	asset.groupId = id
 	uimenu.createMenu(asset)
-	local cmdr = theater:getCommander(grp:getCoalition())
+	local cmdr = theater:getCommander(asset.owner)
 	local msn  = cmdr:getAssigned(asset)
 
 	if msn then
@@ -103,6 +96,19 @@ function EmptyState:onDCTEvent(asset, event)
 			20, false)
 	end
 	trigger.action.outTextForGroup(asset.groupId, notifymsg, 20, false)
+end
+
+local OccupiedState = class("OccupiedState", State)
+local EmptyState    = class("EmptyState", State)
+function EmptyState:enter(asset)
+	asset:kick()
+end
+
+function EmptyState:onDCTEvent(asset, event)
+	if world.event.S_EVENT_BIRTH ~= event.id then
+		return nil
+	end
+	on_birth(asset, event)
 	return OccupiedState(event.initiator:inAir())
 end
 
@@ -113,18 +119,19 @@ function OccupiedState:__init(inair)
 	self.bleedperiod = 5
 	self.bleedwarn = false
 	self._eventhandlers = {
+		[world.event.S_EVENT_BIRTH]             = self.handleSwitchOccupied,
 		[world.event.S_EVENT_TAKEOFF]           = self.handleTakeoff,
 		[world.event.S_EVENT_EJECTION]          = self.handleLoseTicket,
 		[world.event.S_EVENT_DEAD]              = self.handleLoseTicket,
 		[world.event.S_EVENT_PILOT_DEAD]        = self.handleLoseTicket,
 		[world.event.S_EVENT_CRASH]             = self.handleLoseTicket,
-		[world.event.S_EVENT_PLAYER_LEAVE_UNIT] = self.handleSwitchEmpty,
 		[world.event.S_EVENT_LAND]              = self.handleLand,
 	}
 end
 
 function OccupiedState:enter(asset)
 	asset:setDead(false)
+	reset_slot(asset)
 end
 
 function OccupiedState:exit(asset)
@@ -230,9 +237,10 @@ function OccupiedState:handleLoseTicket(--[[asset, event]])
 	return EmptyState()
 end
 
-function OccupiedState:handleSwitchEmpty(asset --[[event]])
-	asset._logger:warn("player left slot")
-	return EmptyState()
+function OccupiedState:handleSwitchOccupied(asset, event)
+	asset._logger:warn("player left slot, resetting state for birth event")
+	on_birth(asset, event)
+	return OccupiedState()
 end
 
 --[[
