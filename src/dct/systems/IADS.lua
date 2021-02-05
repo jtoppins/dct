@@ -118,7 +118,7 @@ function IADS:disableSAM(site)
 	if inRange then
 		-- This looks wrong
 		require("dct.Theater").singleton():queueCommand(10,
-			Command(self.disableSAM, self, site))
+			Command("iads.disableSAM", self.disableSAM, self, site))
 	else
 		site.group:getController():setOption(
 			AI.Option.Ground.id.ALARM_STATE,
@@ -196,7 +196,7 @@ function IADS:magHide(site)
 	if site.Type ~= "Tor 9A331" and not site.Hidden then
 		local randomTime = math.random(15,35)
 		require("dct.Theater").singleton():queueCommand(randomTime,
-			Command(self.hideSAM, self, site))
+			Command("iads.hideSAM", self.hideSAM, self, site))
 		site.HiddenTime = math.random(65,100)+randomTime
 		site.Hidden = true
 	end
@@ -502,6 +502,9 @@ function IADS:onShot(event)
 end
 
 function IADS:onBirth(event)
+	if event.initiator.getGroup == nil then
+		return
+	end
 	local gp = event.initiator:getGroup()
 	self:checkGroupRole(gp)
 	self:associateSAMS()
