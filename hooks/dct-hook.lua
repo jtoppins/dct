@@ -612,16 +612,6 @@ function DCTHooks:onSimulationFrame()
 		end
 		log.write(facility, log.DEBUG, "kick check - complete")
 	end
-
-	-- This is where we could process commands received
-	-- TODO: a better approach would be to do a select type thing between
-	--   sending data
-	--   receiving data
-	--   and processing commands
-	-- an even further simplification would be to turn this into a generic
-	-- command processor like the Theater class. Then everything just
-	-- becomes about processing commands from a command queue. The limitation
-	-- with that is what happens when the server is paused?
 end
 
 local function dct_call_hook(hook, ...)
@@ -676,8 +666,3 @@ local status, errmsg = pcall(dct_load, DCTHooks())
 if not status then
 	log.write(facility, log.ERROR, "Load Error: "..tostring(errmsg))
 end
-
---[[
--- set the name of the server player
-net.set_name(net.get_server_id(), "ServerBOT")
---]]
