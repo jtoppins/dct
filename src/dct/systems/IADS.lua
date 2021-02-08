@@ -3,10 +3,14 @@ local Command     = require("dct.Command")
 local class       = require("libs.class")
 
 -- Ranges at which SAM sites are
--- considered close enough to activate in m
+-- considered close enough to activate in meters
 
 -- luacheck: max_cyclomatic_complexity 21, ignore 241
-local trkFiles = {}
+local trkFiles = {
+	["SAM"] = {},
+	["EWR"] = {},
+	["AWACS"] = {},
+}
 
 local rangeTbl = {
 	["Kub 1S91 str"] = 52000,
@@ -208,6 +212,8 @@ function IADS:prevDetected(Sys, ARM)
 			if ARM:getName() == prev:getName() then
 				return true
 			end
+		else
+			prev = nil
 		end
 	end
 end
