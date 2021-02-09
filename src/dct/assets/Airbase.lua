@@ -219,10 +219,10 @@ end
 
 local AirbaseAsset = class("Airbase", AssetBase, Subordinates)
 function AirbaseAsset:__init(template, region)
-	AssetBase.__init(self, template, region)
 	Subordinates.__init(self)
 	self._departures = PriorityQueue()
 	self._parking_occupied = {}
+	AssetBase.__init(self, template, region)
 	self:_addMarshalNames({
 		"_tplnames",
 		"_subordinates",
@@ -240,6 +240,7 @@ function AirbaseAsset:_completeinit(template, region)
 	self._tpldata = self._tpldata or {}
 	self.state = OperationalState()
 	self.state:enter(self)
+	associate_slots(self)
 end
 
 function AirbaseAsset:_setup()
@@ -370,7 +371,6 @@ function AirbaseAsset:generate(assetmgr, region)
 			self:addSubordinate(asset)
 		end
 	end
-	associate_slots(self)
 end
 
 function AirbaseAsset:spawn(ignore)
