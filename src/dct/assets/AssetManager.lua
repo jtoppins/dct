@@ -80,30 +80,33 @@ end
 
 function AssetManager:add(asset)
 	assert(asset ~= nil, "value error: asset object must be provided")
-
-	-- add asset to master list
 	assert(self._assetset[asset.name] == nil, "asset name ('"..
 		asset.name.."') already exists")
+
+	if asset:isDead() then
+		Logger:debug("AssetManager:add - not adding dead asset:"..
+			asset.name)
+		return
+	end
+
 	self._assetset[asset.name] = asset
 	asset:addObserver(self.onDCSEvent, self, "AssetManager.onDCSEvent")
 
 	-- add asset to approperate side lists
-	if not asset:isDead() then
-		if asset.type == enum.assetType.AIRSPACE then
-			for _, side in pairs(coalition.side) do
-				self._sideassets[side].assets[asset.name] = asset.type
-			end
-		else
-			self._sideassets[asset.owner].assets[asset.name] = asset.type
+	if asset.type == enum.assetType.AIRSPACE then
+		for _, side in pairs(coalition.side) do
+			self._sideassets[side].assets[asset.name] = asset.type
 		end
+	else
+		self._sideassets[asset.owner].assets[asset.name] = asset.type
+	end
 
-		Logger:debug("Adding object names for '"..asset.name.."'")
-		-- read Asset's object names and setup object to asset mapping
-		-- to be used in handling DCS events and other uses
-		for _, objname in pairs(asset:getObjectNames()) do
-			Logger:debug("    + "..objname)
-			self._object2asset[objname] = asset.name
-		end
+	Logger:debug("Adding object names for '"..asset.name.."'")
+	-- read Asset's object names and setup object to asset mapping
+	-- to be used in handling DCS events and other uses
+	for _, objname in pairs(asset:getObjectNames()) do
+		Logger:debug("    + "..objname)
+		self._object2asset[objname] = asset.name
 	end
 end
 
@@ -271,7 +274,7 @@ function AssetManager:marshal()
 	}
 
 	for name, asset in pairs(self._assetset) do
-		if asset.marshal ~= nil then
+		if type(asset.marshal) == "function" and not asset:isDead() then
 			tbl.assets[name] = asset:marshal()
 		end
 	end
