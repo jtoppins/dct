@@ -48,9 +48,16 @@ function Commander:__init(theater, side)
 	self.missions     = {}
 	self.aifreq       = 300 -- seconds
 
+	theater:queueCommand(120, Command(
+		"Commander.startIADS:"..tostring(self.owner),
+		self.startIADS, self))
 	theater:queueCommand(self.aifreq, Command(
 		"Commander.update:"..tostring(self.owner),
 		self.update, self))
+end
+
+function Commander:startIADS()
+	self.IADS = require("dct.systems.IADS")(self)
 end
 
 function Commander:update(time)

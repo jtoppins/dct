@@ -2,9 +2,6 @@ local Logger      = require("dct.libs.Logger").getByName("IADS")
 local Command     = require("dct.Command")
 local class       = require("libs.class")
 
--- Ranges at which SAM sites are
--- considered close enough to activate in meters
-
 -- luacheck: max_cyclomatic_complexity 21, ignore 241
 -- luacheck: ignore 311
 local trkFiles = {
@@ -13,6 +10,8 @@ local trkFiles = {
 	["AWACS"] = {},
 }
 
+-- Ranges at which SAM sites are
+-- considered close enough to activate in meters
 local rangeTbl = {
 	["Kub 1S91 str"] = 52000,
 	["S-300PS 40B6M tr"] =  100000,
@@ -527,7 +526,7 @@ function IADS:disableAllSAMs()
 end
 
 function IADS:populateLists()
-	for _, gp in pairs(coalition.getGroups(1)) do
+	for _, gp in pairs(coalition.getGroups(self.owner)) do
 		self:checkGroupRole(gp)
 	end
 	self:associateSAMS()
