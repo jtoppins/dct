@@ -300,6 +300,8 @@ function DCTHooks:__init()
 
 	self.players  = {} -- indexed by player id
 	self.slots    = {} -- indexed by unitId
+	self.groups   = {} -- maps group names to slot ids, indexed by
+	                   -- slot.groupName - a 1-to-many relation
 	self.blockspecialslots = (next(settings.server.whitelists) ~= nil)
 	self.whitelists = settings.server.whitelists
 	self.slot2player = {}  -- indexed by slotid (player.slot / slot.unitId)
@@ -324,6 +326,7 @@ end
 -- load the mission's available player slots
 function DCTHooks:getslots()
 	self.slots = {}
+	self.groups = {}
 
 	for coa, _ in pairs(DCS.getAvailableCoalitions()) do
 		for _, slot in ipairs(DCS.getAvailableSlots(coa)) do
@@ -332,6 +335,12 @@ function DCTHooks:getslots()
 					"multiple units with unitId: "..tostring(slot.unitId))
 			end
 			self.slots[slot.unitId] = slot
+			if slot.groupName then
+				if self.groups[slot.groupName] == nil then
+					self.groups[slot.groupName] = {}
+				end
+				self.groups[slot.groupName][slot.unitId] = true
+			end
 		end
 	end
 end
@@ -569,21 +578,19 @@ function DCTHooks:sendplayers()
 	self.info.players.dirty = false
 end
 
-function DCTHooks:kickPlayerFromSlot(slot)
-	if not slot or special_unit_role_types[slot.role] ~= nil or
-	   not slot.groupName then
-		return
-	end
-
-	local grpname = slot.groupName
-	local pid = self.slot2player[slot.unitId]
+function DCTHooks:kickPlayersInGroup(grpname, slots)
 	local kick = do_rpc("server", rpc_get_flag(grpname.."_kick"), "number")
-	if kick == 1 and pid ~= nil then
-		net.force_player_slot(pid, 0, '')
-		net.send_chat_to(string.format(
-				"*** you have been kicked from slot(%s) ***\n"..
-				"  reason: kick requested by flag", slot.unitId),
-			pid, net.get_server_id())
+	if kick == 1 then
+		for slotid, _ in pairs(slots) do
+			local pid = self.slot2player[slotid]
+			if pid then
+				net.force_player_slot(pid, 0, '')
+				net.send_chat_to(string.format(
+						"*** you have been kicked from slot(%s) ***\n"..
+						"  reason: kick requested by flag", slotid),
+					pid, net.get_server_id())
+			end
+		end
 	end
 	do_rpc("server", rpc_set_flag(grpname.."_kick", false), "boolean")
 end
@@ -610,8 +617,8 @@ function DCTHooks:onSimulationFrame()
 	if math.abs(modeltime - self.slotkicktimer) > self.slotkickperiod then
 		log.write(facility, log.DEBUG, "kick check - starting")
 		self.slotkicktimer = modeltime
-		for _, slot in pairs(self.slots) do
-			self:kickPlayerFromSlot(slot)
+		for grpname, slots in pairs(self.groups) do
+			self:kickPlayersInGroup(grpname, slots)
 		end
 		log.write(facility, log.DEBUG, "kick check - complete")
 	end
