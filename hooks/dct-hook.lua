@@ -288,6 +288,7 @@ function DCTHooks:onMissionLoadEnd()
 		["sec"]   = 0,
 		["isdst"] = false,
 	}) + mission.start_time
+	self.slotkicktimer = 0
 	self.mission_start_mt = DCS.getModelTime()
 	self.mission_start_rt = DCS.getRealTime()
 	log.write(facility, log.DEBUG, string.format("mission_time: %f, %s",
@@ -598,8 +599,8 @@ function DCTHooks:onSimulationFrame()
 		end
 	end
 
-	local modeltime = DCS.getModelTime()
-	if (modeltime - self.slotkicktimer) > self.slotkickperiod then
+	local modeltime = os.clock()
+	if math.abs(modeltime - self.slotkicktimer) > self.slotkickperiod then
 		self.slotkicktimer = modeltime
 		for _, slot in pairs(self.slots) do
 			self:kickPlayerFromSlot(slot)
