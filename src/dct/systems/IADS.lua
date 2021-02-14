@@ -6,6 +6,7 @@ local class       = require("libs.class")
 -- considered close enough to activate in meters
 
 -- luacheck: max_cyclomatic_complexity 21, ignore 241
+-- luacheck: ignore 311
 local trkFiles = {
 	["SAM"] = {},
 	["EWR"] = {},
