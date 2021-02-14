@@ -593,18 +593,24 @@ function DCTHooks:onSimulationFrame()
 	local realtime = DCS.getRealTime()
 	for t, info in pairs(self.info) do
 		if info.dirty and realtime - info.lastsent > info.period then
+			log.write(facility, log.DEBUG, "time check - starting")
 			self.info[t].lastsent = realtime
 			self["send"..t](self)
+			log.write(facility, log.DEBUG,
+				string.format("Model time is: %f", DCS.getModelTime()))
+			log.write(facility, log.DEBUG, "time check - complete")
 			break
 		end
 	end
 
 	local modeltime = os.clock()
 	if math.abs(modeltime - self.slotkicktimer) > self.slotkickperiod then
+		log.write(facility, log.DEBUG, "kick check - starting")
 		self.slotkicktimer = modeltime
 		for _, slot in pairs(self.slots) do
 			self:kickPlayerFromSlot(slot)
 		end
+		log.write(facility, log.DEBUG, "kick check - complete")
 	end
 
 	-- This is where we could process commands received
