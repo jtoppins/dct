@@ -227,6 +227,13 @@ enum.event = {
 		--   initiator = DCTWeapon class causing the impact
 		--   point = impact point
 		--]]
+	["DCT_EVENT_ADD_ASSET"] = eventbase + 6,
+		--[[
+		-- ADD_ASSET definition:
+		--  A new asset was added to the asset manager.
+		--   id = id of this event
+		--   initiator = asset being added
+		--]]
 }
 
 enum.kickCode = require("dct.libs.kickinfo").kickCode

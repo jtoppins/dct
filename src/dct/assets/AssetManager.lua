@@ -9,7 +9,7 @@ local utils    = require("libs.utils")
 local enum     = require("dct.enum")
 local dctutils = require("dct.utils")
 local Command  = require("dct.Command")
-local Logger   = dct.Logger.getByName("AssetManager")
+local Observable = require("dct.libs.Observable")
 
 local assetpaths = {
 	"dct.assets.Airbase",
@@ -19,8 +19,11 @@ local assetpaths = {
 	"dct.assets.StaticAsset",
 }
 
-local AssetManager = require("libs.namedclass")("AssetManager")
+local AssetManager = require("libs.namedclass")("AssetManager",
+	Observable)
 function AssetManager:__init(theater)
+	Observable.__init(self,
+		require("dct.libs.Logger").getByName("AssetManager"))
 	self.updaterate = 120
 	-- The master list of assets, regardless of side, indexed by name.
 	-- Means Asset names must be globally unique.
@@ -94,7 +97,7 @@ function AssetManager:add(asset)
 		asset.name.."') already exists")
 
 	if asset:isDead() then
-		Logger:debug("AssetManager:add - not adding dead asset:"..
+		self._logger:debug("AssetManager:add - not adding dead asset:"..
 			asset.name)
 		return
 	end
@@ -111,13 +114,15 @@ function AssetManager:add(asset)
 		self._sideassets[asset.owner].assets[asset.name] = asset.type
 	end
 
-	Logger:debug("Adding object names for '"..asset.name.."'")
+	self._logger:debug("Adding object names for '"..asset.name.."'")
 	-- read Asset's object names and setup object to asset mapping
 	-- to be used in handling DCS events and other uses
 	for _, objname in pairs(asset:getObjectNames()) do
-		Logger:debug("    + "..objname)
+		self._logger:debug("    + "..objname)
 		self._object2asset[objname] = asset.name
 	end
+
+	self:notify(dctutils.buildevent.addasset(asset))
 end
 
 function AssetManager:getAsset(name)
@@ -235,7 +240,7 @@ function AssetManager:doOneObject(obj, event)
 
 	local asset = self:getAssetByDCSObject(name)
 	if asset == nil then
-		Logger:debug("onDCSEvent - asset doesn't exist, name: "..name)
+		self._logger:debug("onDCSEvent - asset doesn't exist, name: "..name)
 		self._object2asset[name] = nil
 		return
 	end
@@ -266,7 +271,7 @@ function AssetManager:onDCSEvent(event)
 	}
 
 	if not relevents[event.id] then
-		Logger:debug("onDCSEvent - not relevent event: "..
+		self._logger:debug("onDCSEvent - not relevent event: "..
 			tostring(event.id))
 		return
 	end

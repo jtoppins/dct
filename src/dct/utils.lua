@@ -272,4 +272,12 @@ function utils.buildevent.impact(wpn)
 	return event
 end
 
+function utils.buildevent.addasset(asset)
+	check.table(asset)
+	local event = {}
+	event.id = enum.event.DCT_EVENT_ADD_ASSET
+	event.initiator = asset
+	return event
+end
+
 return utils
