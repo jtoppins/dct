@@ -23,6 +23,16 @@ function utils.getenemy(side)
 	return enemymap[side]
 end
 
+function utils.isenemy(side1, side2)
+	if side1 == side2 then
+		return false
+	end
+	if utils.getenemy(side1) ~= side2 then
+		return false
+	end
+	return true
+end
+
 function utils.isalive(grpname)
 	local grp = Group.getByName(grpname)
 	return (grp and grp:isExist() and grp:getSize() > 0)

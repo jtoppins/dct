@@ -13,16 +13,40 @@ local Stats      = require("dct.libs.Stats")
 local Command    = require("dct.Command")
 local Logger     = dct.Logger.getByName("Commander")
 
-local function heapsort_tgtlist(assetmgr, owner, filterlist)
-	local tgtlist = assetmgr:getTargets(owner, filterlist)
+local function add_target(pq, tgt, owner, filterlist)
+	if tgt == nil then
+		return
+	end
+
+	if tgt.ignore or filterlist[tgt.type] == nil then
+		return
+	end
+
+	if tgt:isDead() or tgt:isTargeted(owner) then
+		return
+	end
+
+	pq:push(tgt:getPriority(owner), tgt)
+end
+
+local function heapsort_tgtlist(tgtlist, filterlist, owner)
 	local pq = containers.PriorityQueue()
+	local assetmgr = dct.Theater.singleton():getAssetMgr()
+
+	if type(filterlist) == "table" then
+		filterlist = filterlist
+	elseif type(filterlist) == "number" then
+		local typenum = filterlist
+		filterlist = {}
+		filterlist[typenum] = true
+	else
+		assert(false, "value error: filterlist must be a number or table")
+	end
 
 	-- priority sort target list
 	for tgtname, _ in pairs(tgtlist) do
 		local tgt = assetmgr:getAsset(tgtname)
-		if tgt ~= nil and not tgt:isDead() and not tgt:isTargeted(owner) then
-			pq:push(tgt:getPriority(owner), tgt)
-		end
+		add_target(pq, tgt, owner, filterlist)
 	end
 
 	return pq
@@ -41,19 +65,46 @@ end
 -- For now the commander is only concerned with flight missions
 --]]
 local Commander = require("libs.namedclass")("Commander")
-
 function Commander:__init(theater, side)
 	self.owner        = side
 	self.missionstats = Stats(genstatids())
 	self.missions     = {}
+	self.tgtlist      = {}
 	self.aifreq       = 2*60 -- 2 minutes in seconds
 
 	theater:queueCommand(120, Command(
-		"Commander.startIADS:"..tostring(self.owner),
+		"Commander("..tostring(self.owner)..").startIADS",
 		self.startIADS, self))
 	theater:queueCommand(self.aifreq, Command(
-		"Commander.update:"..tostring(self.owner),
+		"Commander("..tostring(self.owner)..").update",
 		self.update, self))
+	theater:getAssetMgr():addObserver(self.assethandler, self,
+		"Commander("..tostring(self.owner)..").assethandler")
+end
+
+local function handle_asset_dead(cmdr, event)
+	cmdr.tgtlist[event.initiator.name] = nil
+end
+
+local function handle_asset_add(cmdr, event)
+	local asset = event.initiator
+
+	if dctutils.isenemy(cmdr.owner, asset.owner) and
+	   enum.assetClass.STRATEGIC[asset.type] ~= nil then
+		cmdr.tgtlist[asset.name] = asset.type
+	end
+end
+
+function Commander:assethandler(event)
+	local handlers = {
+		[enum.event.DCT_EVENT_DEAD] = handle_asset_dead,
+		[enum.event.DCT_EVENT_ADD_ASSET] = handle_asset_add,
+	}
+
+	local handler = handlers[event.id]
+	if handler ~= nil then
+		handler(self, event)
+	end
 end
 
 function Commander:startIADS()
@@ -146,9 +197,7 @@ function Commander:recommendMissionType(allowedmissions)
 		utils.mergetables(assetfilter, enum.missionTypeMap[v])
 	end
 
-	local pq = heapsort_tgtlist(
-		require("dct.Theater").singleton():getAssetMgr(),
-		self.owner, assetfilter)
+	local pq = heapsort_tgtlist(self.tgtlist, assetfilter, self.owner)
 
 	local tgt = pq:pop()
 	if tgt == nil then
@@ -175,8 +224,8 @@ end
 --]]
 function Commander:requestMission(grpname, missiontype)
 	local assetmgr = require("dct.Theater").singleton():getAssetMgr()
-	local pq = heapsort_tgtlist(assetmgr, self.owner,
-		enum.missionTypeMap[missiontype])
+	local pq = heapsort_tgtlist(self.tgtlist,
+		enum.missionTypeMap[missiontype], self.owner)
 
 	-- if no target, there is no mission to assign so return back
 	-- a nil object
@@ -234,10 +283,6 @@ function Commander:getAssigned(asset)
 		return nil
 	end
 	return msn
-end
-
-function Commander:getAsset(name)
-	return require("dct.Theater").singleton():getAssetMgr():getAsset(name)
 end
 
 return Commander
