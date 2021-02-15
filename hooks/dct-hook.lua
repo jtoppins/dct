@@ -146,6 +146,103 @@ local function build_message(serverid, msgtype, value)
 	return j
 end
 
+local function rpc_send_msg_to_all(msg, dtime, clear)
+	local cmd = [[
+		trigger.action.outText("]]..tostring(msg)..
+			[[", ]]..tostring(dtime)..[[, ]]..tostring(clear)..[[);
+		return "true"
+	]]
+	return cmd
+end
+
+local function rpc_slot_enabled(grpname)
+	local cmd = [[
+		local name = "]]..tostring(grpname)..[["
+		local en = trigger.misc.getUserFlag(name)
+		local kick = trigger.misc.getUserFlag(name.."_kick")
+		local result = (en == 1 and kick ~= 1)
+		env.info(string.format(
+			"DCT slot(%s) check - slot: %s; kick: %s; result: %s",
+			tostring(name), tostring(en), tostring(kick),
+			tostring(result)), false)
+		return tostring(result)
+	]]
+	return cmd
+end
+
+local function rpc_get_flag(flagname)
+	local cmd = [[
+		local flag = trigger.misc.getUserFlag("]]..
+			tostring(flagname)..[[") or 0
+		return tostring(flag)
+	]]
+	return cmd
+end
+
+local function rpc_set_flag(flagname, value)
+	local cmd = [[
+		trigger.action.setUserFlag("]]..tostring(flagname)..
+			[[",]]..tostring(value)..[[);
+		return "true"
+	]]
+	return cmd
+end
+
+-- Returns: nil on error otherwise data in the requested type
+local function do_rpc(ctx, cmd, valtype)
+	local status, errmsg = net.dostring_in(ctx, cmd)
+	if not status then
+		log.write(facility, log.ERROR,
+			string.format("rpc failed in context(%s): %s", ctx, errmsg))
+		return
+	end
+
+	local val
+	if valtype == "number" then
+		val = tonumber(status)
+	elseif valtype == "boolean" then
+		local t = {
+			["true"] = true,
+			["false"] = false,
+		}
+		val = t[string.lower(status)]
+	elseif valtype == "string" then
+		val = status
+	elseif valtype == "table" then
+		local rc, result = pcall(net.json2lua, status)
+		if not rc then
+			log.write(facility, log.ERROR,
+				"rpc json decode failed: "..tostring(result))
+			log.write(facility, log.DEBUG,
+				"rpc json decode input: "..tostring(status))
+			val = nil
+		else
+			val = result
+		end
+	else
+		log.write(facility, log.ERROR,
+			string.format("rpc unsupported type(%s)", valtype))
+		val = nil
+	end
+	return val
+end
+
+local function isSlotEnabled(slot)
+	if slot == nil then
+		return false
+	end
+
+	local flag = do_rpc("server", rpc_slot_enabled(slot.groupName),
+		"boolean")
+	log.write(facility, log.DEBUG,
+		string.format("slot(%s) enabled: %s",
+			slot.groupName, tostring(flag)))
+	if flag == nil then
+		flag = true
+	end
+	return flag
+end
+
 local DCTHooks = class()
 function DCTHooks:__init()
 	local errmsg
@@ -350,103 +447,6 @@ function DCTHooks:onPlayerChangeSlot(id)
 	end
 	self.players[id] = new_player
 	self.info.players.dirty = true
-end
-
-local function rpc_send_msg_to_all(msg, dtime, clear)
-	local cmd = [[
-		trigger.action.outText("]]..tostring(msg)..
-			[[", ]]..tostring(dtime)..[[, ]]..tostring(clear)..[[);
-		return "true"
-	]]
-	return cmd
-end
-
-local function rpc_slot_enabled(grpname)
-	local cmd = [[
-		local name = "]]..tostring(grpname)..[["
-		local en = trigger.misc.getUserFlag(name)
-		local kick = trigger.misc.getUserFlag(name.."_kick")
-		local result = (en == 1 and kick ~= 1)
-		env.info(string.format(
-			"DCT slot(%s) check - slot: %s; kick: %s; result: %s",
-			tostring(name), tostring(en), tostring(kick),
-			tostring(result)), false)
-		return tostring(result)
-	]]
-	return cmd
-end
-
-local function rpc_get_flag(flagname)
-	local cmd = [[
-		local flag = trigger.misc.getUserFlag("]]..
-			tostring(flagname)..[[") or 0
-		return tostring(flag)
-	]]
-	return cmd
-end
-
-local function rpc_set_flag(flagname, value)
-	local cmd = [[
-		trigger.action.setUserFlag("]]..tostring(flagname)..
-			[[",]]..tostring(value)..[[);
-		return "true"
-	]]
-	return cmd
-end
-
--- Returns: nil on error otherwise data in the requested type
-local function do_rpc(ctx, cmd, valtype)
-	local status, errmsg = net.dostring_in(ctx, cmd)
-	if not status then
-		log.write(facility, log.ERROR,
-			string.format("rpc failed in context(%s): %s", ctx, errmsg))
-		return
-	end
-
-	local val
-	if valtype == "number" then
-		val = tonumber(status)
-	elseif valtype == "boolean" then
-		local t = {
-			["true"] = true,
-			["false"] = false,
-		}
-		val = t[string.lower(status)]
-	elseif valtype == "string" then
-		val = status
-	elseif valtype == "table" then
-		local rc, result = pcall(net.json2lua, status)
-		if not rc then
-			log.write(facility, log.ERROR,
-				"rpc json decode failed: "..tostring(result))
-			log.write(facility, log.DEBUG,
-				"rpc json decode input: "..tostring(status))
-			val = nil
-		else
-			val = result
-		end
-	else
-		log.write(facility, log.ERROR,
-			string.format("rpc unsupported type(%s)", valtype))
-		val = nil
-	end
-	return val
-end
-
-local function isSlotEnabled(slot)
-	if slot == nil then
-		return false
-	end
-
-	local flag = do_rpc("server", rpc_slot_enabled(slot.groupName),
-		"boolean")
-	log.write(facility, log.DEBUG,
-		string.format("slot(%s) enabled: %s",
-			slot.groupName, tostring(flag)))
-	if flag == nil then
-		flag = true
-	end
-	return flag
 end
 
 function DCTHooks:isEnabled()
