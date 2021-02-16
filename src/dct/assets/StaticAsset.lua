@@ -139,7 +139,8 @@ function StaticAsset:getLocation()
 		for _, grp in pairs(self._assets) do
 			vec2, n = dctutils.centroid(grp.data, vec2, n)
 		end
-		self._location = vector.Vector3D(vec2, land.getHeight(vec2))
+		vec2.z = nil
+		self._location = vector.Vector3D(vec2, land.getHeight(vec2)):raw()
 	end
 	return self._location
 end

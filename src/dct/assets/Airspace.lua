@@ -6,6 +6,7 @@
 -- which side "controls" the space, and spawn nothing
 --]]
 
+local vector = require("dct.libs.vector")
 local AssetBase = require("dct.assets.AssetBase")
 
 local Airspace = require("libs.namedclass")("Airspace", AssetBase)
@@ -21,7 +22,7 @@ function Airspace:_completeinit(template, region)
 	AssetBase._completeinit(self, template, region)
 	assert(template.location ~= nil,
 		"runtime error: Airspace requires template to define a location")
-	self._location = template.location
+	self._location = vector.Vector3D(template.location):raw()
 	assert(template.volume ~= nil,
 		"runtime error: Airspace requires template to define a volume")
 	self._volume = template.volume
