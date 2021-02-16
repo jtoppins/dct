@@ -159,8 +159,8 @@ local vmath = {}
 vmath.Vector2D = Vector2D
 vmath.Vector3D = Vector3D
 function vmath.distance(vec1, vec2)
-	local v = vec1 - vec2
-	return math.sqrt(v:magnitude())
+	local v = vec2 - vec1
+	return v:magnitude()
 end
 
 function vmath.unitvec(vec)
