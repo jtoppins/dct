@@ -173,10 +173,17 @@ function AssetManager:getTargets(requestingside, assettypelist)
 end
 
 function AssetManager:update()
+	local deletionq = {}
 	for _, asset in pairs(self._assetset) do
 		if type(asset.update) == "function" then
 			asset:update()
 		end
+		if asset:isDead() then
+			deletionq[asset.name] = true
+		end
+	end
+	for name, _ in pairs(deletionq) do
+		self:remove(self:getAsset(name))
 	end
 	return self.updaterate
 end
