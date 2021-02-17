@@ -128,9 +128,10 @@ function StaticAsset:_setup()
 		self:_setupDeathGoal(grp.data, grp.category)
 		self._assets[grp.data.name] = grp
 	end
-	assert(next(self._deathgoals) ~= nil,
-		string.format("runtime error: %s must have a deathgoal: %s",
-			self.__clsname, self.name))
+	if next(self._deathgoals) == nil then
+		self._logger:error("runtime error: must have a deathgoal, deleting")
+		self:setDead(true)
+	end
 end
 
 function StaticAsset:getLocation()
