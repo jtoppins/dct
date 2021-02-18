@@ -146,212 +146,6 @@ local function build_message(serverid, msgtype, value)
 	return j
 end
 
-local DCTHooks = class()
-function DCTHooks:__init()
-	local errmsg
-	self.serverid   = settings.server.dctid
-	self.hostname   = settings.server.statServerHostname
-	self.ip, errmsg = socket.dns.toip(self.hostname)
-	if self.ip == nil then
-		log.write(facility, log.ALERT,
-			"invalid hostname, must be an IP address or hostname;"..
-			" "..tostring(errmsg))
-	end
-	self.port       = settings.server.statServerPort
-	self.started    = false
-	self.info       = {
-		["heartbeat"] = {
-			["dirty"]    = true,
-			["lastsent"] = 0,
-			["period"]   = 60,
-		},
-		["mission"]   = {
-			["dirty"]    = true,
-			["lastsent"] = 0,
-			["period"]   = 50,
-		},
-		["players"]   = {
-			["dirty"]    = true,
-			["lastsent"] = 0,
-			["period"]   = 120,
-		},
-	}
-	self.slotkicktimer = 0
-	self.slotkickperiod = 5
-	self.mission_start_mt = 0
-	self.mission_start_rt = 0
-	self.mission_period = settings.server.period
-	self.mission_time = 0
-	self.restartwarnings = {
-		[60*60] = {
-			["message"] = "server will restart in 1 hour",
-			["sent"]    = false,
-		},
-		[60*30] = {
-			["message"] = "server will restart in 30 minutes",
-			["sent"]    = false,
-		},
-		[60*15] = {
-			["message"] = "server will restart in 15 minutes",
-			["sent"]    = false,
-		},
-		[60*5] = {
-			["message"] = "server will restart in 5 minutes",
-			["sent"]    = false,
-		},
-	}
-
-	self.players  = {} -- indexed by player id
-	self.slots    = {} -- indexed by unitId
-	self.blockspecialslots = (next(settings.server.whitelists) ~= nil)
-	self.whitelists = settings.server.whitelists
-	self.slot2player = {}  -- indexed by slotid (player.slot / slot.unitId)
-	                       -- pointing to player id; [unitId] = playerid
-end
-
-function DCTHooks:start()
-	self.socket = assert(socket.udp())
-	log.write(facility, log.DEBUG,
-		string.format("binding UDP socket to peer; %s:%d",
-			self.ip, self.port))
-	self.socket:setpeername(self.ip, self.port)
-	self.started = true
-end
-
-function DCTHooks:stop()
-	self.socket:close()
-	self.socket = nil
-	self.started = false
-end
-
--- load the mission's available player slots
-function DCTHooks:getslots()
-	self.slots = {}
-
-	for coa, _ in pairs(DCS.getAvailableCoalitions()) do
-		for _, slot in ipairs(DCS.getAvailableSlots(coa)) do
-			if self.slots[slot.unitId] then
-				log.write(facility, log.ERROR,
-					"multiple units with unitId: "..tostring(slot.unitId))
-			end
-			self.slots[slot.unitId] = slot
-		end
-	end
-end
-
-function DCTHooks:onSimulationStart()
-	log.write(facility, log.DEBUG, "onSimulationStart")
-end
-
-function DCTHooks:onSimulationStop()
-	log.write(facility, log.DEBUG, "onSimulationStop")
-	if not self.started then
-		return
-	end
-	local msg = build_message(self.serverid, msgtypes.STATE,
-		serverstates.STOP)
-	self.socket:send(msg)
-	self:stop()
-end
-
-function DCTHooks:onSimulationPause()
-	log.write(facility, log.DEBUG, "onSimulationPause")
-	if not self.started then
-		return
-	end
-	local msg = build_message(self.serverid, msgtypes.STATE,
-		serverstates.PAUSE)
-	self.socket:send(msg)
-	self:stop()
-end
-
-function DCTHooks:onSimulationResume()
-	log.write(facility, log.DEBUG, "onSimulationResume")
-	if not DCS.isServer() then
-		return
-	end
-	self:start()
-	local msg = build_message(self.serverid, msgtypes.STATE,
-		serverstates.START)
-	self.socket:send(msg)
-end
-
-function DCTHooks:onMissionLoadEnd()
-	log.write(facility, log.DEBUG, "onMissionLoadEnd")
-	local mission = DCS.getCurrentMission().mission
-	self.mission_time = os.time({
-		["year"]  = mission.date.Year,
-		["month"] = mission.date.Month,
-		["day"]   = mission.date.Day,
-		["hour"]  = 0,
-		["min"]   = 0,
-		["sec"]   = 0,
-		["isdst"] = false,
-	}) + mission.start_time
-	self.slotkicktimer = 0
-	self.mission_start_mt = DCS.getModelTime()
-	self.mission_start_rt = DCS.getRealTime()
-	log.write(facility, log.DEBUG, string.format("mission_time: %f, %s",
-		tostring(self.mission_time), os.date("!%F %R", self.mission_time)))
-	log.write(facility, log.DEBUG, "mission_start_mt: "..
-		tostring(self.mission_start_mt))
-	log.write(facility, log.DEBUG, "mission_start_rt: "..
-		tostring(self.mission_start_rt))
-	log.write(facility, log.DEBUG, "mission_period: "..
-		tostring(self.mission_period))
-	for _, data in pairs(self.restartwarnings) do
-		if settings.server.period < 0 then
-			data.sent = true
-		else
-			data.sent = false
-		end
-	end
-	self.info.mission.dirty = true
-end
-
-function DCTHooks:onPlayerConnect(id)
-	log.write(facility, log.DEBUG, "player connect, id: "..tostring(id))
-	local player = get_player_info(id)
-	if self.players[id] ~= nil then
-		log.write(facility, log.WARNING,
-			string.format("player id(%s) already assigned, overwriting", id))
-	end
-	self.players[id] = player
-	if player == nil then
-		log.write(facility, log.WARNING,
-			string.format("player id(%s) not found", id))
-		return
-	end
-	self.info.players.dirty = true
-end
-
-function DCTHooks:onPlayerDisconnect(id, err_code)
-	log.write(facility, log.DEBUG,
-		string.format("player disconnect; id(%s), code(%s)",
-			tostring(id), tostring(err_code)))
-	-- clean up tables from last cached player data
-	if self.players[id] and self.players[id].slot then
-		self.slot2player[self.players[id].slot] = nil
-	end
-	-- delete player entry
-	self.players[id] = nil
-	self.info.players.dirty = true
-end
-
-function DCTHooks:onPlayerChangeSlot(id)
-	log.write(facility, log.DEBUG, "player change slot, id: "..tostring(id))
-	local prev_player = self.players[id]
-	local new_player  = get_player_info(id)
-	if prev_player and prev_player.slot then
-		self.slot2player[prev_player.slot] = nil
-	end
-	if new_player and new_player.slot then
-		self.slot2player[new_player.slot] = id
-	end
-	self.players[id] = new_player
-	self.info.players.dirty = true
-end
-
 local function rpc_send_msg_to_all(msg, dtime, clear)
 	local cmd = [[
 		trigger.action.outText("]]..tostring(msg)..
@@ -449,9 +243,227 @@ local function isSlotEnabled(slot)
 	return flag
 end
 
-function DCTHooks:isEnabled()
+local DCTHooks = class()
+function DCTHooks:__init()
+	local errmsg
+	self.serverid   = settings.server.dctid
+	self.hostname   = settings.server.statServerHostname
+	self.ip, errmsg = socket.dns.toip(self.hostname)
+	if self.ip == nil then
+		log.write(facility, log.ALERT,
+			"invalid hostname, must be an IP address or hostname;"..
+			" "..tostring(errmsg))
+	end
+	self.port       = settings.server.statServerPort
+	self.started    = false
+	self.info       = {
+		["heartbeat"] = {
+			["dirty"]    = true,
+			["lastsent"] = 0,
+			["period"]   = 60,
+		},
+		["mission"]   = {
+			["dirty"]    = true,
+			["lastsent"] = 0,
+			["period"]   = 50,
+		},
+		["players"]   = {
+			["dirty"]    = true,
+			["lastsent"] = 0,
+			["period"]   = 120,
+		},
+	}
+	self.slotkicktimer = 0
+	self.slotkickperiod = 5
+	self.mission_start_mt = 0
+	self.mission_start_rt = 0
+	self.mission_period = settings.server.period
+	self.mission_time = 0
+	self.restartwarnings = {
+		[60*60] = {
+			["message"] = "server will restart in 1 hour",
+			["sent"]    = false,
+		},
+		[60*30] = {
+			["message"] = "server will restart in 30 minutes",
+			["sent"]    = false,
+		},
+		[60*15] = {
+			["message"] = "server will restart in 15 minutes",
+			["sent"]    = false,
+		},
+		[60*5] = {
+			["message"] = "server will restart in 5 minutes",
+			["sent"]    = false,
+		},
+	}
+
+	self.players  = {} -- indexed by player id
+	self.slots    = {} -- indexed by unitId
+	self.groups   = {} -- maps group names to slot ids, indexed by
+	                   -- slot.groupName - a 1-to-many relation
+	self.blockspecialslots = (next(settings.server.whitelists) ~= nil)
+	self.whitelists = settings.server.whitelists
+	self.slot2player = {}  -- indexed by slotid (player.slot / slot.unitId)
+	                       -- pointing to player id; [unitId] = playerid
+end
+
+function DCTHooks:start()
+	self.socket = assert(socket.udp())
+	log.write(facility, log.DEBUG,
+		string.format("binding UDP socket to peer; %s:%d",
+			self.ip, self.port))
+	self.socket:setpeername(self.ip, self.port)
+	self.started = true
+end
+
+function DCTHooks:stop()
+	self.socket:close()
+	self.socket = nil
+	self.started = false
+end
+
+-- load the mission's available player slots
+function DCTHooks:getslots()
+	self.slots = {}
+	self.groups = {}
+
+	for coa, _ in pairs(DCS.getAvailableCoalitions()) do
+		for _, slot in ipairs(DCS.getAvailableSlots(coa)) do
+			if self.slots[slot.unitId] then
+				log.write(facility, log.ERROR,
+					"multiple units with unitId: "..tostring(slot.unitId))
+			end
+			self.slots[slot.unitId] = slot
+			if slot.groupName then
+				if self.groups[slot.groupName] == nil then
+					self.groups[slot.groupName] = {}
+				end
+				self.groups[slot.groupName][slot.unitId] = true
+			end
+		end
+	end
+end
+
+function DCTHooks:onSimulationStart()
+	log.write(facility, log.DEBUG, "onSimulationStart")
+end
+
+function DCTHooks:onSimulationStop()
+	log.write(facility, log.DEBUG, "onSimulationStop")
+	if not self.started then
+		return
+	end
+	local msg = build_message(self.serverid, msgtypes.STATE,
+		serverstates.STOP)
+	self.socket:send(msg)
+	self:stop()
+end
+
+function DCTHooks:onSimulationPause()
+	log.write(facility, log.DEBUG, "onSimulationPause")
+	if not self.started then
+		return
+	end
+	local msg = build_message(self.serverid, msgtypes.STATE,
+		serverstates.PAUSE)
+	self.socket:send(msg)
+	self:stop()
+end
+
+function DCTHooks:onSimulationResume()
+	log.write(facility, log.DEBUG, "onSimulationResume")
 	local dctenabled = do_rpc("server", rpc_get_flag(dctflag), "number")
-	return self.started and dctenabled
+	if not DCS.isServer() or not dctenabled then
+		log.write(facility, log.DEBUG,
+			string.format("not DCT enabled; server(%s), enabled(%s)",
+				tostring(DCS.isServer()), tostring(dctenabled)))
+		return
+	end
+	self:start()
+	local msg = build_message(self.serverid, msgtypes.STATE,
+		serverstates.START)
+	self.socket:send(msg)
+end
+
+function DCTHooks:onMissionLoadEnd()
+	log.write(facility, log.DEBUG, "onMissionLoadEnd")
+	local mission = DCS.getCurrentMission().mission
+	self.mission_time = os.time({
+		["year"]  = mission.date.Year,
+		["month"] = mission.date.Month,
+		["day"]   = mission.date.Day,
+		["hour"]  = 0,
+		["min"]   = 0,
+		["sec"]   = 0,
+		["isdst"] = false,
+	}) + mission.start_time
+	self.slotkicktimer = 0
+	self.mission_start_mt = DCS.getModelTime()
+	self.mission_start_rt = DCS.getRealTime()
+	log.write(facility, log.DEBUG, string.format("mission_time: %f, %s",
+		tostring(self.mission_time), os.date("!%F %R", self.mission_time)))
+	log.write(facility, log.DEBUG, "mission_start_mt: "..
+		tostring(self.mission_start_mt))
+	log.write(facility, log.DEBUG, "mission_start_rt: "..
+		tostring(self.mission_start_rt))
+	log.write(facility, log.DEBUG, "mission_period: "..
+		tostring(self.mission_period))
+	for _, data in pairs(self.restartwarnings) do
+		if settings.server.period < 0 then
+			data.sent = true
+		else
+			data.sent = false
+		end
+	end
+	self.info.mission.dirty = true
+end
+
+function DCTHooks:onPlayerConnect(id)
+	log.write(facility, log.DEBUG, "player connect, id: "..tostring(id))
+	local player = get_player_info(id)
+	if self.players[id] ~= nil then
+		log.write(facility, log.WARNING,
+			string.format("player id(%s) already assigned, overwriting", id))
+	end
+	self.players[id] = player
+	if player == nil then
+		log.write(facility, log.WARNING,
+			string.format("player id(%s) not found", id))
+		return
+	end
+	self.info.players.dirty = true
+end
+
+function DCTHooks:onPlayerDisconnect(id, err_code)
+	log.write(facility, log.DEBUG,
+		string.format("player disconnect; id(%s), code(%s)",
+			tostring(id), tostring(err_code)))
+	-- clean up tables from last cached player data
+	if self.players[id] and self.players[id].slot then
+		self.slot2player[self.players[id].slot] = nil
+	end
+	-- delete player entry
+	self.players[id] = nil
+	self.info.players.dirty = true
+end
+
+function DCTHooks:onPlayerChangeSlot(id)
+	log.write(facility, log.DEBUG, "player change slot, id: "..tostring(id))
+	local prev_player = self.players[id]
+	local new_player  = get_player_info(id)
+	if prev_player and prev_player.slot then
+		self.slot2player[prev_player.slot] = nil
+	end
+	if new_player and new_player.slot then
+		self.slot2player[new_player.slot] = id
+	end
+	self.players[id] = new_player
+	self.info.players.dirty = true
+end
+
+function DCTHooks:isEnabled()
+	return self.started
 end
 
 -- Returns: true - allows slot change, false - denies change
@@ -566,21 +578,19 @@ function DCTHooks:sendplayers()
 	self.info.players.dirty = false
 end
 
-function DCTHooks:kickPlayerFromSlot(slot)
-	if not slot or special_unit_role_types[slot.role] ~= nil or
-	   not slot.groupName then
-		return
-	end
-
-	local grpname = slot.groupName
-	local pid = self.slot2player[slot.unitId]
+function DCTHooks:kickPlayersInGroup(grpname, slots)
 	local kick = do_rpc("server", rpc_get_flag(grpname.."_kick"), "number")
-	if kick == 1 and pid ~= nil then
-		net.force_player_slot(pid, 0, '')
-		net.send_chat_to(string.format(
-				"*** you have been kicked from slot(%s) ***\n"..
-				"  reason: kick requested by flag", slot.unitId),
-			pid, net.get_server_id())
+	if kick == 1 then
+		for slotid, _ in pairs(slots) do
+			local pid = self.slot2player[slotid]
+			if pid then
+				net.force_player_slot(pid, 0, '')
+				net.send_chat_to(string.format(
+						"*** you have been kicked from slot(%s) ***\n"..
+						"  reason: kick requested by flag", slotid),
+					pid, net.get_server_id())
+			end
+		end
 	end
 	do_rpc("server", rpc_set_flag(grpname.."_kick", false), "boolean")
 end
@@ -607,21 +617,11 @@ function DCTHooks:onSimulationFrame()
 	if math.abs(modeltime - self.slotkicktimer) > self.slotkickperiod then
 		log.write(facility, log.DEBUG, "kick check - starting")
 		self.slotkicktimer = modeltime
-		for _, slot in pairs(self.slots) do
-			self:kickPlayerFromSlot(slot)
+		for grpname, slots in pairs(self.groups) do
+			self:kickPlayersInGroup(grpname, slots)
 		end
 		log.write(facility, log.DEBUG, "kick check - complete")
 	end
-
-	-- This is where we could process commands received
-	-- TODO: a better approach would be to do a select type thing between
-	--   sending data
-	--   receiving data
-	--   and processing commands
-	-- an even further simplification would be to turn this into a generic
-	-- command processor like the Theater class. Then everything just
-	-- becomes about processing commands from a command queue. The limitation
-	-- with that is what happens when the server is paused?
 end
 
 local function dct_call_hook(hook, ...)
@@ -676,8 +676,3 @@ local status, errmsg = pcall(dct_load, DCTHooks())
 if not status then
 	log.write(facility, log.ERROR, "Load Error: "..tostring(errmsg))
 end
-
---[[
--- set the name of the server player
-net.set_name(net.get_server_id(), "ServerBOT")
---]]
