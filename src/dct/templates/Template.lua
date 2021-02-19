@@ -8,6 +8,7 @@ require("lfs")
 local class = require("libs.class")
 local utils = require("libs.utils")
 local enum  = require("dct.enum")
+local vector= require("dct.libs.vector")
 local Goal  = require("dct.Goal")
 local STM   = require("dct.templates.STM")
 
@@ -142,6 +143,9 @@ local function checkbldgdata(keydata, tpl)
 				Goal.objtype.SCENERY),
 			["name"] = tostring(bldg.id),
 		}
+		local sceneryobject = { id_ = tonumber(bldgdata.data.name), }
+		utils.mergetables(bldgdata.data,
+			vector.Vector2D(Object.getPoint(sceneryobject)):raw())
 		table.insert(tpl.tpldata, bldgdata)
 		if bldgdata.data.dct_deathgoal ~= nil then
 			tpl.hasDeathGoals = true

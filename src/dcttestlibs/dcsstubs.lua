@@ -786,7 +786,11 @@ function Object:getName()
 end
 
 function Object:getPoint()
-	return self.position.p
+	local tbl = self
+	if not self.position then
+		tbl = objdefaults
+	end
+	return tbl.position.p
 end
 
 function Object:getPosition()
