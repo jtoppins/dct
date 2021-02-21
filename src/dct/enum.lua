@@ -37,8 +37,8 @@ enum.assetType = {
 	["SHORAD"]      = 19,
 	["AIRBASE"]     = 20,
 	["PLAYERGROUP"] = 21,
-	["INSURGENT"]   = 22,
-	["INSURGENT_HELI"] = 23,
+	["ARMEDRECCE"] = 22,
+	["FOB"]           = 23,
 	["SQUADRONPLAYER"]= 24,
 }
 
@@ -65,8 +65,8 @@ enum.assetTypePriority = {
 	[enum.assetType.FACILITY]    = 100,
 	[enum.assetType.BUNKER]      = 100,
 	[enum.assetType.CHECKPOINT]  = 100,
-	[enum.assetType.INSURGENT]   = 100,
-	[enum.assetType.INSURGENT_HELI] = 100,
+	[enum.assetType.ARMEDRECCE] = 100,
+	[enum.assetType.FOB]         = 100,
 	[enum.assetType.FACTORY]     = 100,
 	[enum.assetType.KEEPOUT]     = 10000,
 }
@@ -78,8 +78,7 @@ enum.missionType = {
 	["SEAD"]     = 4,
 	["BAI"]      = 5,
 	["OCA"]      = 6,
-	["COIN"] 	 = 7,
-	["COIN_HELI"] = 8,
+	["ARMEDRECON"] = 7,
 }
 
 enum.assetClass = {
@@ -98,8 +97,8 @@ enum.assetClass = {
 		[enum.assetType.FACTORY]     = true,
 		[enum.assetType.SHORAD]      = true,
 		[enum.assetType.AIRBASE]     = true,
-		[enum.assetType.INSURGENT]   = true,
-		[enum.assetType.INSURGENT_HELI] = true,
+		[enum.assetType.ARMEDRECCE]  = true,
+		[enum.assetType.LOGISTICS]   = true,
 	},
 	-- agents never get seralized to the state file
 	["AGENTS"] = {
@@ -136,11 +135,8 @@ enum.missionTypeMap = {
 	[enum.missionType.CAP] = {
 		[enum.assetType.AIRSPACE]   = true,
 	},
-	[enum.missionType.COIN] = {
-		[enum.assetType.INSURGENT] = true,
-	},
-	[enum.missionType.COIN_HELI] = {
-		[enum.assetType.INSURGENT_HELI] = true,
+	[enum.missionType.ARMEDRECON] = {
+		[enum.assetType.ARMEDRECCE] = true,
 	},
 }
 
