@@ -40,6 +40,8 @@ enum.assetType = {
 	["SPECIALFORCES"] = 22,
 	["FOB"]           = 23,
 	["SQUADRONPLAYER"]= 24,
+	["ARMEDRECCE"]    = 26,
+	["COLUMN"]		  = 27,
 }
 
 --[[
@@ -52,10 +54,12 @@ enum.assetTypePriority = {
 	[enum.assetType.EWR]         = 20,
 	[enum.assetType.SAM]         = 20,
 	[enum.assetType.C2]          = 30,
+	[enum.assetType.MISSILE]     = 30,
+	[enum.assetType.FACTORY]     = 40,
 	[enum.assetType.AMMODUMP]    = 40,
 	[enum.assetType.FUELDUMP]    = 40,
-	[enum.assetType.MISSILE]     = 50,
 	[enum.assetType.SEA]         = 50,
+	[enum.assetType.COLUMN]      = 50,
 	[enum.assetType.BASEDEFENSE] = 60,
 	[enum.assetType.OCA]         = 70,
 	[enum.assetType.PORT]        = 70,
@@ -66,8 +70,8 @@ enum.assetTypePriority = {
 	[enum.assetType.BUNKER]      = 100,
 	[enum.assetType.CHECKPOINT]  = 100,
 	[enum.assetType.SPECIALFORCES] = 100,
+	[enum.assetType.COLUMN]		 = 100,
 	[enum.assetType.FOB]         = 100,
-	[enum.assetType.FACTORY]     = 100,
 	[enum.assetType.KEEPOUT]     = 10000,
 }
 
@@ -99,6 +103,8 @@ enum.assetClass = {
 		[enum.assetType.AIRBASE]     = true,
 		[enum.assetType.SPECIALFORCES] = true,
 		[enum.assetType.FOB]           = true,
+		[enum.assetType.ARMEDRECCE]    = true,
+		[enum.assetType.LOGISTICS]     = true, -- added temporarily to facilitate spawning of BAI Targets.
 	},
 	-- agents never get seralized to the state file
 	["AGENTS"] = {
@@ -136,8 +142,7 @@ enum.missionTypeMap = {
 		[enum.assetType.AIRSPACE]   = true,
 	},
 	[enum.missionType.ARMEDRECON] = {
-		[enum.assetType.SPECIALFORCES] = true,
-		[enum.assetType.FOB]           = true,
+		[enum.assetType.ARMEDRECCE] = true,
 	},
 }
 
