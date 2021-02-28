@@ -70,7 +70,6 @@ enum.assetTypePriority = {
 	[enum.assetType.BUNKER]      = 100,
 	[enum.assetType.CHECKPOINT]  = 100,
 	[enum.assetType.SPECIALFORCES] = 100,
-	[enum.assetType.COLUMN]		 = 100,
 	[enum.assetType.FOB]         = 100,
 	[enum.assetType.KEEPOUT]     = 10000,
 }
