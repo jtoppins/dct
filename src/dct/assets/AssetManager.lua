@@ -45,13 +45,19 @@ function AssetManager:__init(theater)
 end
 
 function AssetManager:factory(assettype)
+	local staticassets = {
+		[enum.assetType.OCA]           = true,
+		[enum.assetType.BASEDEFENSE]   = true,
+		[enum.assetType.SHORAD]        = true,
+		[enum.assetType.SPECIALFORCES] = true,
+	}
 	local asset = nil
 	if assettype == enum.assetType.AIRSPACE then
 		asset = require("dct.assets.Airspace")
 	elseif assettype == enum.assetType.AIRBASE then
 		asset = require("dct.assets.Airbase")
 	elseif enum.assetClass.STRATEGIC[assettype] or
-	       assettype == enum.assetType.BASEDEFENSE then
+	       staticassets[assettype] == true then
 		asset = require("dct.assets.StaticAsset")
 	elseif assettype == enum.assetType.PLAYERGROUP then
 		asset = require("dct.assets.Player")

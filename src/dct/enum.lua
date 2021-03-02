@@ -82,7 +82,7 @@ enum.missionType = {
 }
 
 enum.assetClass = {
-	["STRATEGIC"] = {
+	["INITIALIZE"] = {
 		[enum.assetType.AMMODUMP]    = true,
 		[enum.assetType.FUELDUMP]    = true,
 		[enum.assetType.C2]          = true,
@@ -99,8 +99,26 @@ enum.assetClass = {
 		[enum.assetType.AIRBASE]     = true,
 		[enum.assetType.SPECIALFORCES] = true,
 		[enum.assetType.FOB]           = true,
+		[enum.assetType.AIRSPACE]      = true,
 	},
-	-- agents never get seralized to the state file
+	-- strategic list is used in calculating ownership of a region
+	-- among other things
+	["STRATEGIC"] = {
+		[enum.assetType.AMMODUMP]    = true,
+		[enum.assetType.FUELDUMP]    = true,
+		[enum.assetType.C2]          = true,
+		[enum.assetType.EWR]         = true,
+		[enum.assetType.MISSILE]     = true,
+		[enum.assetType.PORT]        = true,
+		[enum.assetType.SAM]         = true,
+		[enum.assetType.FACILITY]    = true,
+		[enum.assetType.BUNKER]      = true,
+		[enum.assetType.CHECKPOINT]  = true,
+		[enum.assetType.FACTORY]     = true,
+		[enum.assetType.AIRBASE]     = true,
+		[enum.assetType.FOB]         = true,
+	},
+	-- agents never get serialized to the state file
 	["AGENTS"] = {
 		[enum.assetType.PLAYERGROUP] = true,
 	}
