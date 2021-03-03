@@ -179,7 +179,6 @@ local function theatercfgs(config)
 					["A-10A"]         = dctutils.posfmt.MGRS,
 					["A-10C"]         = dctutils.posfmt.MGRS,
 					["A-10C_2"]       = dctutils.posfmt.MGRS,
-					["AV8BNA"]        = dctutils.posfmt.DDM,
 					["F-5E-3"]        = dctutils.posfmt.DDM,
 					["F-16C_50"]      = dctutils.posfmt.DDM,
 					["FA-18C_hornet"] = dctutils.posfmt.DDM,
