@@ -434,6 +434,11 @@ function coalition.getAirbases(side)
 end
 
 function coalition.addGroup(cntryid, groupcat, groupdata)
+	--print("new group: "..require("libs.json"):encode_pretty(groupdata))
+	assert(groupdata.groupId == nil, "groupId field defined")
+	for _, unit in pairs(groupdata.units or {}) do
+		assert(unit.unitId == nil, "unitId field defined")
+	end
 	dctcheck.spawngroups = dctcheck.spawngroups + 1
 	groupdata.country = cntryid
 	groupdata.groupCategory = groupcat
@@ -446,6 +451,8 @@ function coalition.addGroup(cntryid, groupcat, groupdata)
 end
 
 function coalition.addStaticObject(cntryid, groupdata)
+	--print("new static: "..require("libs.json"):encode_pretty(groupdata))
+	assert(groupdata.unitId == nil, "unitId field defined")
 	dctcheck.spawnstatics = dctcheck.spawnstatics + 1
 	groupdata.country = cntryid
 	groupdata.exists = true

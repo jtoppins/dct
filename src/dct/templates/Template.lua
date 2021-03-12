@@ -112,6 +112,7 @@ local function overrideGroupOptions(grp, idx, tpl)
 	end
 
 	grp.data.groupId = nil
+	grp.data.unitId  = nil
 	grp.data.start_time = 0
 	grp.data.dct_deathgoal = goalFromName(grp.data.name, goaltype)
 	if grp.data.dct_deathgoal ~= nil then
