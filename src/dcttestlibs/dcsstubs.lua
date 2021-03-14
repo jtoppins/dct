@@ -33,7 +33,7 @@ local objectcat = {
 	["BASE"]    = 4,
 	["SCENERY"] = 5,
 	["CARGO"]   = 6,
-	-- not actuall part of DCS
+	-- not actualy part of DCS
 	["GROUP"] = 7,
 }
 
