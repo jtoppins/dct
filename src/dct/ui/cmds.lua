@@ -79,8 +79,8 @@ function ScratchPadSet:_execute(_, _)
 	local title = "SCRATCHPAD "..tostring(self.asset.groupId)
 
 	self.theater.scratchpad[mrkid] = self.asset.name
-	trigger.action.markToGroup(mrkid, title, pos, self.asset.groupId,
-		false, "edit me")
+	trigger.action.markToGroup(mrkid, "edit me", pos,
+		self.asset.groupId, false)
 	local msg = "Look on F10 MAP for user mark with title: "..
 		title.."\n"..
 		"Edit body with your scratchpad information. "..
