@@ -202,15 +202,15 @@ enum.event = {
 		--[[
 		-- HIT definition:
 		--   id = id of this event
-		--   point = location where the impact occurred
-		--   weapon = the description table from the DCS weapon object
+		--   initiator = DCT asset that was hit
+		--   weapon = DCTWeapon object
 		--]]
 	["DCT_EVENT_OPERATIONAL"] = eventbase + 3,
 		--[[
 		-- OPERATIONAL definition:
 		--   id = id of this event
 		--   initiator = base sending the operational notification
-		--   state = the of the base, true == operational
+		--   state = of the base, true == operational
 		--]]
 	["DCT_EVENT_CAPTURED"] = eventbase + 4,
 		--[[
@@ -218,6 +218,13 @@ enum.event = {
 		--   id = id of this event
 		--   initiator = object that initiated the capture
 		--   target = the base that has been captured
+		--]]
+	["DCT_EVENT_IMPACT"] = eventbase + 5,
+		--[[
+		-- IMPACT definition:
+		--   id = id of the event
+		--   initiator = DCTWeapon class causing the impact
+		--   point = impact point
 		--]]
 }
 
