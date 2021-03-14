@@ -9,6 +9,10 @@ local enums    = require("dct.goals.enum")
 local BaseGoal = require("dct.goals.BaseGoal")
 local Logger   = dct.Logger.getByName("Goal")
 
+local function initial_scenery_life()
+	return 1
+end
+
 local function getobject(objtype, name, init)
 	local switch = {
 		[enums.objtype.UNIT]   = Unit.getByName,
@@ -23,7 +27,7 @@ local function getobject(objtype, name, init)
 		[enums.objtype.UNIT]   = Unit.getLife0,
 		[enums.objtype.STATIC] = StaticObject.getLife,
 		[enums.objtype.GROUP]  = Group.getInitialSize,
-		[enums.objtype.SCENERY]= SceneryObject.getLife,
+		[enums.objtype.SCENERY]= initial_scenery_life,
 	}
 	local getlifefncs = {
 		[enums.objtype.UNIT]   = Unit.getLife,
