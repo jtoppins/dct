@@ -650,6 +650,12 @@ end
 _G.coalition = coalition
 
 local world = {}
+world.VolumeType = {
+	["SEGMENT"] = 1,
+	["BOX"]     = 2,
+	["SPHERE"]  = 3,
+	["PYRAMID"] = 4,
+}
 world.event = {
 	["S_EVENT_INVALID"]           = 0,
 	["S_EVENT_SHOT"]              = 1,
@@ -694,6 +700,8 @@ function world.getAirbases()
 		table.insert(tbl, obj)
 	end
 	return tbl
+end
+function world.searchObjects()
 end
 
 _G.world = world

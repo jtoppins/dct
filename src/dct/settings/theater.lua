@@ -117,6 +117,13 @@ local function validate_ui(cfgdata, tbl)
 	return newtbl
 end
 
+local function validate_blast_effects(cfgdata, tbl)
+	local newtbl = {}
+	newtbl = utils.mergetables(newtbl, cfgdata.default)
+	newtbl = utils.mergetables(newtbl, tbl)
+	return newtbl
+end
+
 --[[
 -- We have a few levels of configuration:
 -- 	* server defined config file; <dcs-saved-games>/Config/dct.cfg
@@ -148,22 +155,19 @@ local function theatercfgs(config)
 					["category"] = enum.weaponCategory.AG,
 				},
 			},
-		},
-		{
+		}, {
 			["name"] = "payloadlimits",
 			["file"] = config.server.theaterpath..utils.sep.."settings"..
 				utils.sep.."payloadlimits.cfg",
 			["validate"] = validate_payload_limits,
 			["default"] = defaultpayload,
-		},
-		{
+		}, {
 			["name"] = "codenamedb",
 			["file"] = config.server.theaterpath..utils.sep.."settings"..
 				utils.sep.."codenamedb.cfg",
 			["validate"] = validate_codenamedb,
 			["default"] = require("dct.data.codenamedb"),
-		},
-		{
+		}, {
 			["name"] = "ui",
 			["file"] = config.server.theaterpath..utils.sep.."settings"..
 				utils.sep.."ui.cfg",
@@ -186,6 +190,12 @@ local function theatercfgs(config)
 				},
 				["ato"] = {},
 			},
+		}, {
+			["name"] = "blasteffects",
+			["file"] = config.server.theaterpath..utils.sep.."settings"..
+				utils.sep.."blasteffects.cfg",
+			["validate"] = validate_blast_effects,
+			["default"] = require("dct.data.blasteffects"),
 		},
 	}
 
