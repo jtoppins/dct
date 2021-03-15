@@ -4,33 +4,31 @@
 -- Implements a basic building persisntence system.
 --]]
 
-local class  = require("libs.class")
-local Logger = require("dct.libs.Logger").getByName("bldgPersist")
+local class  = require("libs.namedclass")
+local Marshallable = require("dct.libs.Marshallable")
+local Logger = require("dct.libs.Logger").getByName("System")
 
-
-local bldgPersist = class()
-function bldgPersist:__init(theater)
-	self.destroyedBldgs = {}
-	self._theater = theater
-	self._theater:addObserver(self.onDCSEvent, self,
-		"bldgPersist.onDCSEvent")
+local SceneryTracker = class("SceneryTracker", Marshallable)
+function SceneryTracker:__init(theater)
+	Marshallable.__init(self)
+	self.destroyed = {}
+	theater:addObserver(self.onDCSEvent, self,
+		self.__clsname..".onDCSEvent")
+	self:_addMarshalNames({
+		"destroyed",
+	})
 end
 
-function bldgPersist:blowBuildings()
-	for _, bldg in pairs(self.destroyedBldgs) do
+function SceneryTracker:_unmarshalpost()
+	for _, bldg in pairs(self.destroyed) do
 		local id = tonumber(bldg)
 		local obj = {id_ = id}
 		local pt = Object.getPoint(obj)
-		trigger.action.explosion(pt, 1000)
+		trigger.action.explosion(pt, 500)
 	end
 end
 
-function bldgPersist:restoreState(destroyedBldgs)
-	self.destroyedBldgs = destroyedBldgs
-	self:blowBuildings()
-end
-
-function bldgPersist:onDCSEvent(event)
+function SceneryTracker:onDCSEvent(event)
 	if event.id ~= world.event.S_EVENT_DEAD then
 		Logger:debug(string.format("onDCSEvent() -"..
 		" bldgPersist not DEAD event, ignoring"))
@@ -38,12 +36,8 @@ function bldgPersist:onDCSEvent(event)
 	end
 	local obj = event.initiator
 	if obj:getCategory() == Object.Category.SCENERY then
-		table.insert(self.destroyedBldgs, tostring(obj:getName()))
+		table.insert(self.destroyed, tostring(obj:getName()))
 	end
 end
 
-function bldgPersist:returnList()
-	return self.destroyedBldgs
-end
-
-return bldgPersist
+return SceneryTracker

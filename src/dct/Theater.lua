@@ -14,15 +14,12 @@ local enum        = require("dct.enum")
 local dctutils    = require("dct.utils")
 local Observable  = require("dct.libs.Observable")
 local uicmds      = require("dct.ui.cmds")
-local uiscratchpad= require("dct.ui.scratchpad")
-local bldgPersist = require("dct.systems.bldgPersist")
 local STM         = require("dct.templates.STM")
 local Template    = require("dct.templates.Template")
 local Region      = require("dct.templates.Region")
 local AssetManager= require("dct.assets.AssetManager")
 local Commander   = require("dct.ai.Commander")
 local Command     = require("dct.Command")
-local Tickets     = require("dct.systems.tickets")
 local Logger      = dct.Logger.getByName("Theater")
 local settings    = _G.dct.settings.server
 
@@ -91,20 +88,21 @@ function Theater:__init()
 	self.ctime     = timer.getTime()
 	self.ltime     = 0
 	self.assetmgr  = AssetManager(self)
-	self.tickets   = Tickets(self,
-		settings.theaterpath..utils.sep.."theater.goals")
 	self.cmdrs     = {}
-	self.scratchpad= {}
+	self._systems  = {}
 	self.startdate = os.date("!*t")
-	self.bldgPersist= bldgPersist(self)
 	self.namecntr  = 1000
 
 	for _, val in pairs(coalition.side) do
 		self.cmdrs[val] = Commander(self, val)
 	end
 
+	self:loadSystems()
 	self:loadRegions()
-	self:queueCommand(5, Command("delayedInit", self.delayedInit, self))
+	self:queueCommand(5, Command(self.__clsname..".delayedInit",
+		self.delayedInit, self))
+	self:queueCommand(100, Command(self.__clsname..".export",
+		self.export, self))
 end
 
 function Theater.singleton()
@@ -122,6 +120,30 @@ function Theater:setTimings(cmdfreq, tgtfps, percent)
 	self.cmdqdelay    = 1/self._cmdqfreq
 	self.quanta       = self._tallowed * ((1 / self._targetfps) *
 		self.cmdqdelay)
+end
+
+function Theater:getSystem(path)
+	return self._systems[path]
+end
+
+function Theater:addSystem(path)
+	if self._systems[path] ~= nil then
+		return
+	end
+	self._systems[path] = require(path)(self)
+	Logger:info("init "..path)
+end
+
+function Theater:loadSystems()
+	local systems = {
+		"dct.ui.scratchpad",
+		"dct.systems.tickets",
+		"dct.systems.bldgPersist",
+	}
+
+	for _, syspath in pairs(systems) do
+		self:addSystem(syspath)
+	end
 end
 
 function Theater:loadRegions()
@@ -155,7 +177,7 @@ function Theater:loadPlayerSlots()
 				["name"]      = grp.data.name,
 				["regionname"]= "theater",
 				["coalition"] = side,
-				["cost"]      = self.tickets:getPlayerCost(side),
+				["cost"]      = self:getTickets():getPlayerCost(side),
 				["desc"]      = "Player group",
 				["tpldata"]   = grp,
 			}), {["name"] = "theater", ["priority"] = 1000,})
@@ -179,9 +201,13 @@ function Theater:loadOrGenerate()
 		self.statef = true
 		self.startdate = self.statetbl.startdate
 		self.namecntr  = self.statetbl.namecntr
+		for name, data in pairs(self.statetbl.systems) do
+			local sys = self:getSystem(name)
+			if sys ~= nil and type(sys.unmarshal) == "function" then
+				sys:unmarshal(data)
+			end
+		end
 		self:getAssetMgr():unmarshal(self.statetbl.assetmgr)
-		self.tickets:unmarshal(self.statetbl.tickets)
-		self.bldgPersist:restoreState(self.statetbl.bldgDest)
 	else
 		Logger:info("generating new theater")
 		for _, r in pairs(self.regions) do
@@ -204,10 +230,8 @@ function Theater:loadOrGenerate()
 end
 
 function Theater:delayedInit()
-	uiscratchpad(self)
 	self:loadPlayerSlots()
 	self:loadOrGenerate()
-	self:queueCommand(100, Command("Theater.export", self.export, self))
 end
 
 -- DCS looks for this function in any table we register with the world
@@ -218,7 +242,7 @@ function Theater:onEvent(event)
 		-- Only delete the state if there is an end mission event
 		-- and tickets are complete, otherwise when a server is
 		-- shutdown gracefully the state will be deleted.
-		if self.tickets:isComplete() then
+		if self:getTickets():isComplete() then
 			local ok, err = os.remove(settings.statepath)
 			if not ok then
 				Logger:error("unable to remove statepath; "..err)
@@ -240,16 +264,20 @@ function Theater:export(_)
 	end
 
 	local exporttbl = {
-		["complete"] = self.tickets:isComplete(),
+		["complete"] = self:getTickets():isComplete(),
 		["date"]     = os.date("!*t", dctutils.zulutime(timer.getAbsTime())),
 		["theater"]  = env.mission.theatre,
 		["sortie"]   = env.getValueDictByKey(env.mission.sortie),
-		["tickets"]  = self.tickets:marshal(),
+		["systems"]  = {},
 		["assetmgr"] = self:getAssetMgr():marshal(),
-		["bldgDest"]  = self.bldgPersist:returnList(),
 		["startdate"] = self.startdate,
 		["namecntr"]  = self.namecntr,
 	}
+	for name, sys in pairs(self._systems) do
+		if type(sys.marshal) == "function" then
+			exporttbl.systems[name] = sys:marshal()
+		end
+	end
 
 	statefile:write(json:encode(exporttbl))
 	statefile:flush()
@@ -271,7 +299,7 @@ function Theater:getcntr()
 end
 
 function Theater:getTickets()
-	return self.tickets
+	return self:getSystem("dct.systems.tickets")
 end
 
 function Theater:playerRequest(data)

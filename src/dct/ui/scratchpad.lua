@@ -5,7 +5,8 @@
 -- addition of the F10 menu is handled outside this module.
 --]]
 
-local Logger  = dct.Logger.getByName("UI")
+local class  = require("libs.namedclass")
+local Logger = require("dct.libs.Logger").getByName("UI")
 
 local function sanatize(txt)
 	if type(txt) ~= "string" then
@@ -16,26 +17,36 @@ local function sanatize(txt)
 	return txt:gsub('[^%w%.%-_: ]', '')
 end
 
-local function uiScratchPad(theater, event)
+local ScratchPad = class("ScratchPad")
+function ScratchPad:__init(theater)
+	self._scratchpad = {}
+	self._theater = theater
+	theater:addObserver(self.event, self, self.__clsname)
+	Logger:debug("init "..self.__clsname)
+end
+
+function ScratchPad:get(id)
+	return self._scratchpad[id]
+end
+
+function ScratchPad:set(id, data)
+	self._scratchpad[id] = data
+end
+
+function ScratchPad:event(event)
 	if event.id ~= world.event.S_EVENT_MARK_CHANGE then
 		return
 	end
 
-	local name = theater.scratchpad[event.idx]
+	local name = self:get(event.idx)
 	if name == nil then
 		return
 	end
 
-	local playerasset = theater:getAssetMgr():getAsset(name)
+	local playerasset = self._theater:getAssetMgr():getAsset(name)
 	playerasset.scratchpad = sanatize(event.text)
-	theater.scratchpad[event.idx] = nil
+	self:set(event.idx, nil)
 	trigger.action.removeMark(event.idx)
 end
 
-local function init(theater)
-	assert(theater ~= nil, "value error: theater must be a non-nil value")
-	Logger:debug("init Scratchpad event handler")
-	theater:addObserver(uiScratchPad, theater, "uiScratchPad")
-end
-
-return init
+return ScratchPad

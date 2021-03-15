@@ -94,9 +94,10 @@ local function checkside(keydata, tbl)
 end
 
 local Tickets = class(Marshallable)
-function Tickets:__init(theater, filepath)
+function Tickets:__init(theater)
 	Marshallable.__init(self)
-	self.cfgfile = filepath
+	self.cfgfile = dct.settings.server.theaterpath..utils.sep..
+		"theater.goals"
 	self.tickets = {}
 	self.timeout = {
 		["enabled"] = false,
