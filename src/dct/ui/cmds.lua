@@ -212,6 +212,7 @@ function MissionJoinCmd:_execute(_, cmdr)
 		msg = string.format("Mission %s assigned, use F10 menu "..
 			"to see this briefing again\n", msn:getID())
 		msg = msg..briefingmsg(msn, self.asset)
+		human.drawTargetIntel(msn, self.asset.groupId, false)
 	end
 	return msg
 end
