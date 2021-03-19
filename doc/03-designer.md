@@ -434,16 +434,13 @@ to spawn. The algorithm will then select X ammodumps defined in the
 region to spawn at random. If there are not X ammodumps to spawn then
 all possible ammodumps will be spawned.
 
-#### `airspace`
+#### `altitude_floor`
 
  * _required:_ no
- * _value:_ boolean
- * _default:_ true
+ * _value:_ number
+ * _default:_ 914.4 meters
 
-Set to false if an airspace object should not be created over this region.
-Airspace objects are used as navigation points and analysis points for
-airspace combat. The default radius of an automatically generated airspace
-is 50 nautical miles.
+Specifies the minimum safe altitue for a given region.
 
 ## Templates
 
@@ -765,16 +762,20 @@ player UI elements.
 ##### `location`
 
  * _required:_ yes
- * _value:_ table
+ * _value:_ table, with members `x` and `y`
 
-Is the centroid where the airspace is located.
+Is the center of the airspace. The location is defined as `x` is the
+east-west DCS location value while `y` is the north-south DCS value.
+_Note: These values cannot be lat-long or degrees decimal corrdinates,
+they much be DCS internal map coordinates._
 
-##### `volume`
+##### `radius`
 
  * _required:_ yes
- * _value:_ table
+ * _value:_ number in meters
+ * _default:_ 55560
 
-Is a DCS volume spec[\[6\]][6] defining the airspace being taken up.
+Is the radius of the circle defining the airspace region.
 
 #### Airbase
 

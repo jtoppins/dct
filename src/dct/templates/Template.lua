@@ -229,6 +229,19 @@ local function checkmsntype(keydata, tbl)
 	return true
 end
 
+local function checklocation(keydata, tbl)
+	local loc = tbl[keydata.name]
+	for _, val in pairs({"x", "y"}) do
+		if loc[val] == nil or type(loc[val]) ~= "number" then
+			return false
+		end
+	end
+	local vec2 = vector.Vector2D(tbl[keydata.name])
+	tbl[keydata.name] =
+		vector.Vector3D(vec2, land.getHeight(vec2:raw())):raw()
+	return true
+end
+
 local function check_payload_limits(keydata, tbl)
 	local newlimits = {}
 	for wpncat, val in pairs(tbl[keydata.name]) do
@@ -322,10 +335,12 @@ local function getkeys(objtype)
 	if objtype == enum.assetType.AIRSPACE then
 		table.insert(keys, {
 			["name"]  = "location",
-			["type"]  = "table",})
+			["type"]  = "table",
+			["check"] = checklocation,})
 		table.insert(keys, {
-			["name"]  = "volume",
-			["type"]  = "table", })
+			["name"]  = "radius",
+			["type"]  = "number",
+			["default"] = 55560,})
 	end
 
 	if objtype == enum.assetType.AIRBASE then
