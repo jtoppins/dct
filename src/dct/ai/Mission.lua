@@ -12,8 +12,40 @@ local utils    = require("libs.utils")
 local enum     = require("dct.enum")
 local dctutils = require("dct.utils")
 local uicmds   = require("dct.ui.cmds")
+local State    = require("dct.libs.State")
 
 local MISSION_LIMIT = 60*60*3  -- 3 hours in seconds
+local INACTIVE_LIMIT = 60*90   -- 1.5 hour in seconds
+
+
+local InactiveState = class("InactiveState", State)
+local ActiveState = class("ActiveState", State)
+
+function InactiveState:enter()
+        self.elapsedtime = timer.getAbsTime()
+        self.elapsedtimeout = self.timestart + INACTIVE_LIMIT
+end
+
+function InactiveState:update(msn)
+	if timer.getAbsTime() > self.elapsedtimeout then
+		msn:queueabort(enum.missionAbortType.TIMEOUT)
+	end
+
+	for k,v in pairs(msn.assigned) do
+		asset = dct.Theater.singleton():getAssetMgr():getAsset(assetname)
+		if asset.Type == enum.assetType.PLAYERGROUP then
+			if asset:isInAir() then
+				return ActiveState()
+			end
+		end
+	end
+	return nil
+end
+
+--TODO: find some way to remove players from mission if they de-slot and mission in active
+
+function ActiveState:__init()
+end
 
 local function composeBriefing(msn, tgt)
 	local briefing = tgt.briefing
@@ -25,7 +57,7 @@ local function composeBriefing(msn, tgt)
 end
 
 local Mission = require("libs.namedclass")("Mission")
-function Mission:__init(cmdr, missiontype, grpname, tgtname)
+function Mission:__init(cmdr, missiontype, grpname, tgtname, plan)
 	self._complete = false
 	self.iffcodes  = cmdr:genMissionCodes(missiontype)
 	self.id        = self.iffcodes.id
@@ -33,7 +65,7 @@ function Mission:__init(cmdr, missiontype, grpname, tgtname)
 	self.cmdr      = cmdr
 	self.type      = missiontype
 	self.target    = tgtname
-	self.assigned  = {}
+	self.assigned  = {}     --asset names of the participating assets
 	self.timestart = timer.getAbsTime()
 	self.timeend   = self.timestart + MISSION_LIMIT
 	self.station   = {
@@ -41,6 +73,7 @@ function Mission:__init(cmdr, missiontype, grpname, tgtname)
 		["total"]     = 0,
 		["start"]     = 0,
 	}
+	self.plan = plan
 
 	-- compose the briefing at mission creation to represent
 	-- known intel the pilots were given before departing
@@ -144,6 +177,9 @@ function Mission:update(_)
 	if self:isComplete() then
 		return
 	end
+
+	
+
 
 	if timer.getAbsTime() > self.timeend then
 		self:queueabort(enum.missionAbortType.TIMEOUT)
