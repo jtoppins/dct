@@ -9,6 +9,7 @@
 require("os")
 require("math")
 local utils    = require("libs.utils")
+local class    = require("libs.namedclass")
 local enum     = require("dct.enum")
 local dctutils = require("dct.utils")
 local uicmds   = require("dct.ui.cmds")
@@ -17,26 +18,30 @@ local State    = require("dct.libs.State")
 local MISSION_LIMIT = 60*60*3  -- 3 hours in seconds
 local INACTIVE_LIMIT = 60*90   -- 1.5 hour in seconds
 
-
 local InactiveState = class("InactiveState", State)
 local ActiveState = class("ActiveState", State)
 
-function InactiveState:enter()
-        self.elapsedtime = timer.getAbsTime()
-        self.elapsedtimeout = self.timestart + INACTIVE_LIMIT
+function InactiveState:__init()
+	self.timeoutlimit = INACTIVE_LIMIT
+	self.timeout = 0
+	self.curtime = timer.getAbsTime()
 end
 
 function InactiveState:update(msn)
-	if timer.getAbsTime() > self.elapsedtimeout then
+	local prevtime = self.curtime
+	self.curtime = timer.getAbsTime()
+	self.timeout = self.timeout + (self.curtime - prevtime)
+
+	if self.timeout > self.timeoutlimit then
 		msn:queueabort(enum.missionAbortType.TIMEOUT)
 	end
 
-	for k,v in pairs(msn.assigned) do
-		asset = dct.Theater.singleton():getAssetMgr():getAsset(assetname)
-		if asset.Type == enum.assetType.PLAYERGROUP then
-			if asset:isInAir() then
-				return ActiveState()
-			end
+	for _, v in pairs(msn.assigned) do
+		local asset =
+			dct.Theater.singleton():getAssetMgr():getAsset(v)
+		if asset.type == enum.assetType.PLAYERGROUP and
+		   asset:inAir() then
+			return ActiveState()
 		end
 	end
 	return nil
@@ -56,7 +61,7 @@ local function composeBriefing(msn, tgt)
 	return dctutils.interp(briefing, interptbl)
 end
 
-local Mission = require("libs.namedclass")("Mission")
+local Mission = class("Mission")
 function Mission:__init(cmdr, missiontype, grpname, tgtname, plan)
 	self._complete = false
 	self.iffcodes  = cmdr:genMissionCodes(missiontype)
