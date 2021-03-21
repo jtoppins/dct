@@ -1,22 +1,23 @@
 region = {
-		["name"] = "Krasnodar",
-		["priority"] = 10,
-		["limits"] = 	{
-			["fueldump"] = 		{
-				["min"] = 1,
-				["max"] = 1
-			},
-			["ewr"] = 		{
-				["min"] = 1,
-				["max"] = 1
-			},
-			["sam"] = 		{
-				["min"] = 1,
-				["max"] = 1
-			},
-			["factory"] = 		{
-				["min"] = 1,
-				["max"] = 1
-			}
+	["name"] = "Krasnodar",
+	["priority"] = 10,
+	["location"] = { x = 19695.256648279, y = 362381.31643785, },
+	["limits"] = 	{
+		["fueldump"] = 		{
+			["min"] = 1,
+			["max"] = 1
+		},
+		["ewr"] = 		{
+			["min"] = 1,
+			["max"] = 1
+		},
+		["sam"] = 		{
+			["min"] = 1,
+			["max"] = 1
+		},
+		["factory"] = 		{
+			["min"] = 1,
+			["max"] = 1
 		}
 	}
+}

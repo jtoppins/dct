@@ -1,6 +1,7 @@
 region = {
 		["name"] = "Novorossiysk",
 		["priority"] = 20,
+		["location"] = { x = -34693.616778727, y = 279318.25638389, },
 		["limits"] = 	{
 			["port"] = 		{
 				["min"] = 1,

@@ -1,10 +1,11 @@
 region = {
-		["name"] = "Krymsk",
-		["priority"] = 30,
-		["limits"] = 	{
-			["airbase"] = 		{
-				["min"] = 1,
-				["max"] = 1
-			}
+	["name"] = "Krymsk",
+	["priority"] = 30,
+	["location"] = { x = -5708.4484423691, y = 289578.30846916, },
+	["limits"] = 	{
+		["airbase"] = 		{
+			["min"] = 1,
+			["max"] = 1
 		}
 	}
+}

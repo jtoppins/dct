@@ -50,7 +50,7 @@ function AssetManager:__init(theater)
 	-- remember all spawned Asset classes will need to register the names
 	-- of their DCS objects with 'something', this will be the something.
 	self._object2asset = {}
-
+	self._spawnq = {}
 	self._factoryclasses = {}
 	for _, path in ipairs(assetpaths) do
 		local obj = require(path)
@@ -306,20 +306,22 @@ function AssetManager:marshal()
 end
 
 function AssetManager:unmarshal(data)
-	local spawnq = {}
 	for _, assettbl in pairs(data.assets) do
 		local assettype = assettbl.type
 		local asset = self:factory(assettype)()
 		asset:unmarshal(assettbl)
 		self:add(asset)
 		if asset:isSpawned() then
-			spawnq[asset.name] = true
+			self._spawnq[asset.name] = true
 		end
 	end
+end
 
-	for assetname, _ in pairs(spawnq) do
+function AssetManager:postinit()
+	for assetname, _ in pairs(self._spawnq) do
 		self:getAsset(assetname):spawn(true)
 	end
+	self._spawnq = {}
 end
 
 return AssetManager

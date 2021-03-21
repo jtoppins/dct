@@ -442,8 +442,11 @@ function Template:__init(data)
 	self.hasDeathGoals = false
 	utils.mergetables(self, utils.deepcopy(data))
 	self:validate()
+	self.checklocation = nil
 	self.fromFile = nil
 end
+
+Template.checklocation = checklocation
 
 function Template:validate()
 	utils.checkkeys({ [1] = {

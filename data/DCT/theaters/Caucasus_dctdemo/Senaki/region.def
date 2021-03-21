@@ -1,6 +1,7 @@
 region = {
 		["name"] = "Senaki",
 		["priority"] = 30,
+		["location"] = { x = -280761.24089216, y = 646192.46982575, },
 		["limits"] = 	{
 			["airbase"] = 		{
 				["min"] = 2,

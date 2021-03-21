@@ -1,6 +1,7 @@
 region = {
 		["name"] = "Sukhumi",
 		["priority"] = 20,
+		["location"] = { x = -201361.8782457, y = 557387.28601366, },
 		["limits"] = 	{
 			["ammodump"] = 		{
 				["min"] = 1,

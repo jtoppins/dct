@@ -206,13 +206,13 @@ local function associate_slots(ab)
 		return false
 	end
 	local assetmgr = dct.Theater.singleton():getAssetMgr()
+	local regionmgr = dct.Theater.singleton():getRegionMgr()
 
 	-- Associate player slots that cannot be autodetected by using
 	-- a list provided by the campaign designer. First look up the
 	-- template defining the airbase so that slots can be updated
 	-- without resetting the campaign state.
-	-- TODO: temp solution until a region manager is created
-	local region = dct.Theater.singleton().regions[ab.rgnname]
+	local region = regionmgr:getRegion(ab.rgnname)
 	local tpl = region:getTemplateByName(ab.tplname)
 	for _, name in ipairs(tpl.players) do
 		local asset = assetmgr:getAsset(name)
@@ -261,7 +261,6 @@ function AirbaseAsset:_completeinit(template)
 	self._tpldata = self._tpldata or {}
 	self.state = OperationalState()
 	self.state:enter(self)
-	associate_slots(self)
 end
 
 function AirbaseAsset:_setup()
@@ -303,10 +302,6 @@ function AirbaseAsset:unmarshal(data)
 	-- unmarshaled due to how the Marshallable object works
 	self.state = State.factory(statemap, data.state.type)
 	self.state:unmarshal(data.state)
-
-	-- do not call the state's enter function because we are not
-	-- entering the state we are just restoring the object
-	associate_slots(self)
 end
 
 function AirbaseAsset:resetDamage()
@@ -400,6 +395,7 @@ function AirbaseAsset:spawn(ignore)
 		self._logger:error("runtime bug - already spawned")
 		return
 	end
+	associate_slots(self)
 	self:spawn_despawn("spawn")
 	AssetBase.spawn(self)
 
