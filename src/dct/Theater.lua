@@ -245,7 +245,7 @@ function Theater:onEvent(event)
 		if self:getTickets():isComplete() then
 			local ok, err = os.remove(settings.statepath)
 			if not ok then
-				Logger:error("unable to remove statepath; "..err)
+				Logger:error("unable to remove statefile; "..err)
 			end
 		end
 	end
