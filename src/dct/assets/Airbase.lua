@@ -206,13 +206,13 @@ local function associate_slots(ab)
 		return false
 	end
 	local assetmgr = dct.Theater.singleton():getAssetMgr()
+	local regionmgr = dct.Theater.singleton():getRegionMgr()
 
 	-- Associate player slots that cannot be autodetected by using
 	-- a list provided by the campaign designer. First look up the
 	-- template defining the airbase so that slots can be updated
 	-- without resetting the campaign state.
-	-- TODO: temp solution until a region manager is created
-	local region = dct.Theater.singleton().regions[ab.rgnname]
+	local region = regionmgr:getRegion(ab.rgnname)
 	local tpl = region:getTemplateByName(ab.tplname)
 	for _, name in ipairs(tpl.players) do
 		local asset = assetmgr:getAsset(name)

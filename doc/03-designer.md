@@ -442,6 +442,23 @@ all possible ammodumps will be spawned.
 
 Specifies the minimum safe altitue for a given region.
 
+#### `links`
+
+ * _required:_ yes
+ * _value:_ table
+
+Specifies links (edges in graph theory) between two regions.
+
+	...
+	links = {
+		["air"] = {
+			"khasab", "jask",
+		},
+		["land"] = {},
+		["sea"] = {},
+	}
+	...
+
 ## Templates
 
 Templates are core to DCT and will be where the designer spends most of

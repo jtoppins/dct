@@ -7,7 +7,6 @@
 require("os")
 require("io")
 require("lfs")
-local utils       = require("libs.utils")
 local containers  = require("libs.containers")
 local json        = require("libs.json")
 local enum        = require("dct.enum")
@@ -16,14 +15,13 @@ local Observable  = require("dct.libs.Observable")
 local uicmds      = require("dct.ui.cmds")
 local STM         = require("dct.templates.STM")
 local Template    = require("dct.templates.Template")
-local Region      = require("dct.templates.Region")
 local AssetManager= require("dct.assets.AssetManager")
 local Commander   = require("dct.ai.Commander")
 local Command     = require("dct.Command")
 local Logger      = dct.Logger.getByName("Theater")
 local settings    = _G.dct.settings.server
 
-local STATE_VERSION = "1"
+local STATE_VERSION = "2"
 
 local function isPlayerGroup(grp, _, _)
 	local slotcnt = 0
@@ -90,7 +88,6 @@ function Theater:__init()
 	self:setTimings(settings.schedfreq, settings.tgtfps,
 		settings.percentTimeAllowed)
 	self.statef    = false
-	self.regions   = {}
 	self.qtimer    = require("dct.libs.Timer")(self.quanta, os.clock)
 	self.cmdq      = containers.PriorityQueue()
 	self.assetmgr  = AssetManager(self)
@@ -104,7 +101,6 @@ function Theater:__init()
 	end
 
 	self:loadSystems()
-	self:loadRegions()
 	self:queueCommand(5, Command(self.__clsname..".delayedInit",
 		self.delayedInit, self))
 	self:queueCommand(100, Command(self.__clsname..".export",
@@ -157,26 +153,11 @@ function Theater:loadSystems()
 		"dct.systems.bldgPersist",
 		"dct.systems.weaponstracking",
 		"dct.systems.blasteffects",
+		"dct.templates.RegionManager",
 	}
 
 	for _, syspath in ipairs(systems) do
 		self:addSystem(syspath)
-	end
-end
-
-function Theater:loadRegions()
-	for filename in lfs.dir(settings.theaterpath) do
-		if filename ~= "." and filename ~= ".." and
-			filename ~= ".git" and filename ~= "settings" then
-			local fpath = settings.theaterpath..utils.sep..filename
-			local fattr = lfs.attributes(fpath)
-			if fattr.mode == "directory" then
-				local r = Region(fpath)
-				assert(self.regions[r.name] == nil, "duplicate regions " ..
-					"defined for theater: " .. settings.theaterpath)
-				self.regions[r.name] = r
-			end
-		end
 	end
 end
 
@@ -229,9 +210,7 @@ function Theater:loadOrGenerate()
 		self:getAssetMgr():unmarshal(self.statetbl.assetmgr)
 	else
 		Logger:info("generating new theater")
-		for _, r in pairs(self.regions) do
-			r:generate(self.assetmgr)
-		end
+		self:getRegionMgr():generate()
 		-- TODO: temperary, spawn all generated assets
 		-- eventually we will want to spawn only a set of assets
 		local assetnames = self.assetmgr:filterAssets(function()
@@ -362,6 +341,10 @@ function Theater:export(_)
 	statefile:flush()
 	statefile:close()
 	return self.savestatefreq
+end
+
+function Theater:getRegionMgr()
+	return self:getSystem("dct.templates.RegionManager")
 end
 
 function Theater:getAssetMgr()
