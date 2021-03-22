@@ -134,6 +134,14 @@ function Theater:addSystem(path)
 	Logger:info("init "..path)
 end
 
+function Theater:postinitSystems()
+	for _, sys in pairs(self._systems) do
+		if type(sys.initpost) == "function" then
+			sys:initpost(self)
+		end
+	end
+end
+
 function Theater:loadSystems()
 	local systems = {
 		"dct.ui.scratchpad",
@@ -232,6 +240,7 @@ end
 function Theater:delayedInit()
 	self:loadPlayerSlots()
 	self:loadOrGenerate()
+	self:postinitSystems()
 end
 
 -- DCS looks for this function in any table we register with the world
