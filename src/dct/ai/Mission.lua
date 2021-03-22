@@ -6,6 +6,10 @@
 -- completing the Objective.
 --]]
 
+-- TODO:
+--  * have a joinable flag in the mission class only let
+--    assets join when the flag is true
+
 require("os")
 require("math")
 local utils    = require("libs.utils")
@@ -14,29 +18,100 @@ local enum     = require("dct.enum")
 local dctutils = require("dct.utils")
 local uicmds   = require("dct.ui.cmds")
 local State    = require("dct.libs.State")
+local Timer    = require("dct.libs.Timer")
 
 local MISSION_LIMIT = 60*60*3  -- 3 hours in seconds
-local INACTIVE_LIMIT = 60*90   -- 1.5 hour in seconds
+local PREP_LIMIT    = 60*90    -- 90 minutes in seconds
 
-local InactiveState = class("InactiveState", State)
-local ActiveState = class("ActiveState", State)
-
-function InactiveState:__init()
-	self.timeoutlimit = INACTIVE_LIMIT
-	self.timeout = 0
-	self.curtime = timer.getAbsTime()
+local Action = class("Action", State)
+function Action:__init(upper, tgtasset)
 end
 
-function InactiveState:update(msn)
-	local prevtime = self.curtime
-	self.curtime = timer.getAbsTime()
-	self.timeout = self.timeout + (self.curtime - prevtime)
+function Action:update()
+end
 
-	if self.timeout > self.timeoutlimit then
-		msn:queueabort(enum.missionAbortType.TIMEOUT)
+function Action:complete()
+	return false
+end
+
+function Action:getHumanDesc()
+end
+
+---------------- STATES ------------
+
+local TimeoutState = class("TimeoutState", State)
+function TimeoutState:enter(msn)
+	msn:queueabort(enum.missionAbortType.TIMEOUT)
+end
+
+local SuccessState = class("SuccessState", State)
+function SuccessState:enter(msn)
+	-- TODO: we could convert to emitting a DCT event to handle rewarding
+	-- tickets, this would require a little more than just emitting an
+	-- event here. Would require changing Tickets class a little too.
+	dct.Theater.singleton():getTickets():reward(msn.cmdr.owner,
+		msn.reward, true)
+	msn:queueabort(enum.missionAbortType.COMPLETE)
+end
+
+--[[
+-- ActiveState - mission is active and executing the plan
+--  Critera:
+--    * on plan completion, mission success
+--    * on timer expired, mission timed out
+--]]
+local ActiveState  = class("ActiveState",  State)
+function ActiveState:__init()
+	self.timer = Timer(MISSION_LIMIT)
+	self.action = nil
+end
+
+function ActiveState:enter(msn)
+	self.timer:reset()
+	self.action = msn.plan.pophead()
+end
+
+function ActiveState:update(msn)
+	self.timer:update()
+	if self.timer:expired() then
+		return TimeoutState()
 	end
 
-	for _, v in pairs(msn.assigned) do
+	if self.action == nil then
+		return SuccessState()
+	end
+	self.action:update(msn)
+	if self.action:complete(msn) then
+		local newaction = msn.plan:pophead()
+		self.action:exit(msn)
+		self.action = newaction
+		self.action:enter(msn)
+	end
+	return nil
+end
+
+--[[
+-- PrepState - mission is being planned
+--  Maintains a timer and once the timer expires the mission expires.
+--]]
+-- TODO: find some way to remove players from mission if they de-slot
+-- and mission in prep state
+local PrepState = class("PrepState", State)
+function PrepState:__init()
+	self.timer = Timer(PREP_LIMIT)
+end
+
+function PrepState:enter()
+	self.timer:reset()
+end
+
+function PrepState:update(msn)
+	self.timer:update()
+	if self.timer:expired() then
+		return TimeoutState()
+	end
+
+	for _, v in pairs(msn:getAssigned()) do
 		local asset =
 			dct.Theater.singleton():getAssetMgr():getAsset(v)
 		if asset.type == enum.assetType.PLAYERGROUP and
@@ -47,10 +122,15 @@ function InactiveState:update(msn)
 	return nil
 end
 
---TODO: find some way to remove players from mission if they de-slot and mission in active
-
-function ActiveState:__init()
+local PlanState = class("PlanState", State)
+function PlanState:__init(timeout)
+	self.timer = Timer(timeout or 60 * 60 * 2)
 end
+
+function PlanState:enter()
+	self.timer:reset()
+end
+
 
 local function composeBriefing(msn, tgt)
 	local briefing = tgt.briefing
@@ -62,35 +142,23 @@ local function composeBriefing(msn, tgt)
 end
 
 local Mission = class("Mission")
-function Mission:__init(cmdr, missiontype, grpname, tgtname, plan)
-	self._complete = false
-	self.iffcodes  = cmdr:genMissionCodes(missiontype)
-	self.id        = self.iffcodes.id
-	-- reference to owning commander
+function Mission:__init(cmdr, missiontype, tgtname, plan)
 	self.cmdr      = cmdr
 	self.type      = missiontype
 	self.target    = tgtname
-	self.assigned  = {}     --asset names of the participating assets
-	self.timestart = timer.getAbsTime()
-	self.timeend   = self.timestart + MISSION_LIMIT
-	self.station   = {
-		["onstation"] = false,
-		["total"]     = 0,
-		["start"]     = 0,
-	}
-	self.plan = plan
+	self.plan      = plan
+	self.iffcodes  = cmdr:genMissionCodes(missiontype)
+	self.id        = self.iffcodes.id
+	self.assigned  = {}
+	self:_setComplete(false)
+	self.state     = PrepState()
+	self.state:enter(self)
 
 	-- compose the briefing at mission creation to represent
 	-- known intel the pilots were given before departing
-	local tgt = self.cmdr:getAsset(tgtname)
+	local tgt = dct.Theater.singleton():getAssetMgr():getAsset(tgtname)
 	self.briefing  = composeBriefing(self, tgt)
-	tgt:addObserver(self.onTgtEvent, self,
-		"Mission("..tgtname..").onTgtEvent")
 	tgt:setTargeted(self.cmdr.owner, true)
-	self:addAssigned(self.cmdr:getAsset(grpname))
-
-	-- TODO: setup remaining mission parameters;
-	--   * mission world states
 end
 
 function Mission:getID()
@@ -151,7 +219,7 @@ function Mission:abort(asset)
 end
 
 function Mission:queueabort(reason)
-	self:_setComplete()
+	self:_setComplete(true)
 	local theater = dct.Theater.singleton()
 	for _, name in ipairs(self.assigned) do
 		local request = {
@@ -165,6 +233,8 @@ function Mission:queueabort(reason)
 	end
 end
 
+-- TODO: this function not used what do we do with this?
+--[[
 function Mission:onTgtEvent(event)
 	if event.id ~= enum.event.DCT_EVENT_DEAD then
 		return
@@ -175,25 +245,19 @@ function Mission:onTgtEvent(event)
 	tgt:removeObserver(self)
 	self:queueabort(enum.missionAbortType.COMPLETE)
 end
+--]]
 
--- for now just track if the mission has not timmed out and
--- if it has queue an abort command with abort reason
-function Mission:update(_)
-	if self:isComplete() then
-		return
+function Mission:update()
+	local newstate = self.state:update(self)
+	if newstate ~= nil then
+		self.state:exit(self)
+		self.state = newstate
+		self.state:enter(self)
 	end
-
-	
-
-
-	if timer.getAbsTime() > self.timeend then
-		self:queueabort(enum.missionAbortType.TIMEOUT)
-	end
-	return
 end
 
-function Mission:_setComplete()
-	self._complete = true
+function Mission:_setComplete(val)
+	self._complete = val
 end
 
 function Mission:isComplete()
@@ -215,7 +279,7 @@ end
 --       precision too
 --]]
 function Mission:getTargetInfo()
-	local asset = self.cmdr:getAsset(self.target)
+	local asset = dct.Theater.singleton():getAssetMgr():getAsset(self.target)
 	local tgtinfo = {}
 	tgtinfo.location = asset:getLocation()
 	tgtinfo.callsign = asset.codename
@@ -225,29 +289,14 @@ function Mission:getTargetInfo()
 end
 
 function Mission:getTimeout()
+	-- TODO: fix this, timeend DNE
 	return self.timeend
 end
 
 function Mission:addTime(time)
+	-- TODO: fix this, timeend DNE
 	self.timeend = self.timeend + time
 	return time
-end
-
-function Mission:checkin(time)
-	if self.station.onstation == true then
-		return
-	end
-	self.station.onstation = true
-	self.station.start = time
-end
-
-function Mission:checkout(time)
-	if self.station.onstation == false then
-		return 0
-	end
-	self.station.onstation = false
-	self.station.total = self.station.total + (time - self.station.start)
-	return self.station.total
 end
 
 function Mission:getDescription(fmt)
