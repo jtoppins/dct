@@ -76,6 +76,14 @@ if not ok then
 	return
 end
 
+local dctenum
+ok, dctenum = pcall(require, "dct.enum")
+if not ok then
+	log.write(facility, log.ERROR,
+		string.format("unable to require dct.enum: %s", dctenum))
+	return
+end
+
 local PROTOCOL_VERSION = 1
 
 --[[
@@ -580,19 +588,21 @@ end
 
 function DCTHooks:kickPlayersInGroup(grpname, slots)
 	local kick = do_rpc("server", rpc_get_flag(grpname.."_kick"), "number")
-	if kick == 1 then
+	if kick ~= dctenum.kickCode.NOKICK then
 		for slotid, _ in pairs(slots) do
 			local pid = self.slot2player[slotid]
 			if pid then
 				net.force_player_slot(pid, 0, '')
 				net.send_chat_to(string.format(
 						"*** you have been kicked from slot(%s) ***\n"..
-						"  reason: kick requested by flag", slotid),
+						"  reason: %s", slotid, dctenum.kickReason[kick]),
 					pid, net.get_server_id())
 			end
 		end
 	end
-	do_rpc("server", rpc_set_flag(grpname.."_kick", false), "boolean")
+	do_rpc("server",
+		rpc_set_flag(grpname.."_kick", dctenum.kickCode.NOKICK),
+		"number")
 end
 
 function DCTHooks:onSimulationFrame()
