@@ -242,13 +242,13 @@ function Commander:getAssigned(asset)
 	local msn = self.missions[asset.missionid]
 
 	if msn == nil then
-		asset.missionid = 0
+		asset.missionid = enum.misisonInvalidID
 		return nil
 	end
 
 	local member = msn:isMember(asset.name)
 	if not member then
-		asset.missionid = 0
+		asset.missionid = enum.misisonInvalidID
 		return nil
 	end
 	return msn

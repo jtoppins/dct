@@ -85,7 +85,7 @@ function Mission:removeAssigned(asset)
 		return
 	end
 	table.remove(self.assigned, i)
-	asset.missionid = 0
+	asset.missionid = enum.misisonInvalidID
 end
 
 --[[
