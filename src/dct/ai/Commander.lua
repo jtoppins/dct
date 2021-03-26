@@ -212,7 +212,7 @@ function Commander:requestMission(grpname, missiontype)
 	Logger:debug(string.format("requestMission() - tgt name: '%s'; "..
 		"isTargeted: %s", tgt.name, tostring(tgt:isTargeted())))
 
-	local plan = plan = { require("dct.ai.actions.KillTarget")(tgt) }
+	local plan = { require("dct.ai.actions.KillTarget")(tgt) }
 	local mission = Mission(self, missiontype, tgt.name, plan)
 	mission:addAssigned(assetmgr:getAsset(grpname))
 	self:addMission(mission)
