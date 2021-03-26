@@ -10,7 +10,7 @@ local class = require("libs.namedclass")
 local State = require("dct.libs.State")
 
 local Action = class("Action", State)
-function Action:__init(upper, tgtasset)
+function Action:__init(tgtasset)
 end
 
 --Perform check for action completion here
