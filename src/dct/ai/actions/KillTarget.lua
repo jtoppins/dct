@@ -9,7 +9,7 @@
 local class = require("libs.namedclass")
 local Action = require("dct.libs.Action")
 
-local KillTarget = class("Action", State)
+local KillTarget = class("KillTarget", Action)
 function KillTarget:__init(tgtasset)
 	self.target = tgtasset
 end
