@@ -19,7 +19,6 @@ local dctutils = require("dct.utils")
 local uicmds   = require("dct.ui.cmds")
 local State    = require("dct.libs.State")
 local Timer    = require("dct.libs.Timer")
-local Action   = require("dct.libs.Action")
 
 local MISSION_LIMIT = 60*60*3  -- 3 hours in seconds
 local PREP_LIMIT    = 60*90    -- 90 minutes in seconds
