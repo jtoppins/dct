@@ -19,6 +19,7 @@ local dctutils = require("dct.utils")
 local uicmds   = require("dct.ui.cmds")
 local State    = require("dct.libs.State")
 local Timer    = require("dct.libs.Timer")
+local Logger   = require("dct.libs.Logger").getByName("Mission")
 
 local MISSION_LIMIT = 60*60*3  -- 3 hours in seconds
 local PREP_LIMIT    = 60*90    -- 90 minutes in seconds
@@ -104,12 +105,15 @@ function PrepState:__init()
 end
 
 function PrepState:enter()
+	Logger:debug(self.__clsname..":enter()")
 	self.timer:reset()
 end
 
 function PrepState:update(msn)
+	Logger:debug(self.__clsname..":update()")
 	self.timer:update()
 	if self.timer:expired() then
+		Logger:debug(self.__clsname..":enter() - timeout")
 		return TimeoutState()
 	end
 
@@ -118,6 +122,7 @@ function PrepState:update(msn)
 			dct.Theater.singleton():getAssetMgr():getAsset(v)
 		if asset.type == enum.assetType.PLAYERGROUP and
 		   asset:inAir() then
+			Logger:debug(self.__clsname..":enter() - to active state")
 			return ActiveState()
 		end
 	end
@@ -248,8 +253,10 @@ function Mission:queueabort(reason)
 end
 
 function Mission:update()
+	Logger:debug("update() called for state: "..self.state.__clsname)
 	local newstate = self.state:update(self)
 	if newstate ~= nil then
+		Logger:debug("update() new state: "..newstate.__clsname)
 		self.state:exit(self)
 		self.state = newstate
 		self.state:enter(self)
