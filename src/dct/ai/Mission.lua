@@ -26,12 +26,20 @@ local PREP_LIMIT    = 60*90    -- 90 minutes in seconds
 
 ---------------- STATES ------------
 
-local TimeoutState = class("TimeoutState", State)
+local BaseMissionState = class("BaseMissionState", State)
+function BaseMissionState:timeremain()
+	return 0
+end
+
+function BaseMissionState:timeextend(--[[addtime]])
+end
+
+local TimeoutState = class("TimeoutState", BaseMissionState)
 function TimeoutState:enter(msn)
 	msn:queueabort(enum.missionAbortType.TIMEOUT)
 end
 
-local SuccessState = class("SuccessState", State)
+local SuccessState = class("SuccessState", BaseMissionState)
 function SuccessState:enter(msn)
 	-- TODO: we could convert to emitting a DCT event to handle rewarding
 	-- tickets, this would require a little more than just emitting an
@@ -47,7 +55,7 @@ end
 --    * on plan completion, mission success
 --    * on timer expired, mission timed out
 --]]
-local ActiveState  = class("ActiveState",  State)
+local ActiveState  = class("ActiveState",  BaseMissionState)
 function ActiveState:__init()
 	self.timer = Timer(MISSION_LIMIT)
 	self.action = nil
@@ -75,6 +83,14 @@ function ActiveState:update(msn)
 		self.action:enter(msn)
 	end
 	return nil
+end
+
+function ActiveState:timeremain()
+	return self.timer:remain()
+end
+
+function ActiveState:timeextend(addtime)
+	self.timer:extend(addtime)
 end
 
 --[[
@@ -109,15 +125,13 @@ function PrepState:update(msn)
 	return nil
 end
 
-local PlanState = class("PlanState", State)
-function PlanState:__init(timeout)
-	self.timer = Timer(timeout or 60 * 60 * 2)
+function PrepState:timeremain()
+	return self.timer:remain()
 end
 
-function PlanState:enter()
-	self.timer:reset()
+function PrepState:timeextend(addtime)
+	self.timer:extend(addtime)
 end
-
 
 local function composeBriefing(msn, tgt)
 	local briefing = tgt.briefing
@@ -220,20 +234,6 @@ function Mission:queueabort(reason)
 	end
 end
 
--- TODO: this function not used what do we do with this?
---[[
-function Mission:onTgtEvent(event)
-	if event.id ~= enum.event.DCT_EVENT_DEAD then
-		return
-	end
-	local tgt = event.initiator
-	dct.Theater.singleton():getTickets():reward(self.cmdr.owner,
-		tgt.cost, true)
-	tgt:removeObserver(self)
-	self:queueabort(enum.missionAbortType.COMPLETE)
-end
---]]
-
 function Mission:update()
 	local newstate = self.state:update(self)
 	if newstate ~= nil then
@@ -252,7 +252,7 @@ function Mission:isComplete()
 end
 
 --[[
--- getTargetInfo - provide target info information
+-- getTargetInfo - provide target information
 --
 -- The target information supplied:
 --   * location - centroid of the asset
@@ -267,6 +267,9 @@ end
 --]]
 function Mission:getTargetInfo()
 	local asset = dct.Theater.singleton():getAssetMgr():getAsset(self.target)
+	if asset == nil then
+		return nil
+	end
 	local tgtinfo = {}
 	tgtinfo.location = asset:getLocation()
 	tgtinfo.callsign = asset.codename
@@ -276,13 +279,12 @@ function Mission:getTargetInfo()
 end
 
 function Mission:getTimeout()
-	-- TODO: fix this, timeend DNE
-	return self.timeend
+	local remain, ctime = self.state:timeremain()
+	return ctime + remain
 end
 
 function Mission:addTime(time)
-	-- TODO: fix this, timeend DNE
-	self.timeend = self.timeend + time
+	self.state:timeextend(time)
 	return time
 end
 

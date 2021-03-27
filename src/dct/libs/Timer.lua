@@ -46,4 +46,8 @@ function Timer:remain()
 	return remain, self.curtime
 end
 
+function Timer:extend(time)
+	self.timeoutlimit = self.timeoutlimit + time
+end
+
 return Timer
