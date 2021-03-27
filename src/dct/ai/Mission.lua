@@ -37,11 +37,13 @@ end
 
 local TimeoutState = class("TimeoutState", BaseMissionState)
 function TimeoutState:enter(msn)
+	Logger:debug(self.__clsname..":enter()")
 	msn:queueabort(enum.missionAbortType.TIMEOUT)
 end
 
 local SuccessState = class("SuccessState", BaseMissionState)
 function SuccessState:enter(msn)
+	Logger:debug(self.__clsname..":enter()")
 	-- TODO: we could convert to emitting a DCT event to handle rewarding
 	-- tickets, this would require a little more than just emitting an
 	-- event here. Would require changing Tickets class a little too.
@@ -58,38 +60,49 @@ end
 --]]
 local ActiveState  = class("ActiveState",  BaseMissionState)
 function ActiveState:__init()
+	Logger:debug(self.__clsname..":_init()")
 	self.timer = Timer(MISSION_LIMIT)
 	self.action = nil
 end
 
 function ActiveState:enter(msn)
+	Logger:debug(self.__clsname..":enter()")
 	self.timer:reset()
 	self.action = msn.plan:pophead()
 end
 
 function ActiveState:update(msn)
+	Logger:debug(self.__clsname..":update()")
 	self.timer:update()
 	if self.timer:expired() then
 		return TimeoutState()
 	end
 
 	if self.action == nil then
+		Logger:debug(self.__clsname..":update() - transition success")
 		return SuccessState()
 	end
 	if self.action:complete(msn) then
 		local newaction = msn.plan:pophead()
+		Logger:debug(self.__clsname..":update() - new action: "..
+			newaction.__clsname)
 		self.action:exit(msn)
 		self.action = newaction
+		if self.action == nil then
+			return SuccessState()
+		end
 		self.action:enter(msn)
 	end
 	return nil
 end
 
 function ActiveState:timeremain()
+	Logger:debug(self.__clsname..":timeremain()")
 	return self.timer:remain()
 end
 
 function ActiveState:timeextend(addtime)
+	Logger:debug(self.__clsname..":timeextend()")
 	self.timer:extend(addtime)
 end
 
@@ -130,10 +143,12 @@ function PrepState:update(msn)
 end
 
 function PrepState:timeremain()
+	Logger:debug(self.__clsname..":timeremain()")
 	return self.timer:remain()
 end
 
 function PrepState:timeextend(addtime)
+	Logger:debug(self.__clsname..":timeextend()")
 	self.timer:extend(addtime)
 end
 
@@ -164,6 +179,8 @@ function Mission:__init(cmdr, missiontype, tgt, plan)
 	self.id        = self.iffcodes.id
 	self.assigned  = {}
 	self:_setComplete(false)
+	self.state = PrepState()
+	self.state:enter(self)
 
 	-- compose the briefing at mission creation to represent
 	-- known intel the pilots were given before departing
@@ -175,9 +192,6 @@ function Mission:__init(cmdr, missiontype, tgt, plan)
 	self.tgtinfo.callsign = tgt.codename
 	self.tgtinfo.status   = tgt:getStatus()
 	self.tgtinfo.intellvl = tgt:getIntel(self.cmdr.owner)
-
-	self.state = PrepState()
-	self.state:enter(self)
 end
 
 function Mission:getID()
@@ -226,6 +240,7 @@ end
 --      bit
 --]]
 function Mission:abort(asset)
+	Logger:debug(self.__clsname..":abort()")
 	self:removeAssigned(asset)
 	if next(self.assigned) == nil then
 		self.cmdr:removeMission(self.id)
@@ -238,6 +253,7 @@ function Mission:abort(asset)
 end
 
 function Mission:queueabort(reason)
+	Logger:debug(self.__clsname..":queueabort()")
 	self:_setComplete(true)
 	local theater = dct.Theater.singleton()
 	for _, name in ipairs(self.assigned) do
