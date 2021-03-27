@@ -1,0 +1,36 @@
+name: create dev build
+
+on:
+  pull_request:
+    branches:
+    - master
+  push:
+    branches:
+    - master
+
+env:
+  PACKAGES: make zip wget
+
+jobs:
+  build:
+    name: Create dev DCS Mod package
+    runs-on: ubuntu-latest
+    steps:
+    - name: Install Packages
+      run: sudo apt-get install $PACKAGES
+
+    - name: Checkout Code
+      uses: actions/checkout@v2
+
+    - id: trim_ref
+      run: echo "VERSION=${{ github.sha }}" >> $GITHUB_ENV
+
+    - name: Build Mod
+      run: make build
+
+    - name: Upload Build Artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: DCT-${{ env.VERSION }}
+        path: ./DCT-${{ env.VERSION }}.zip
+        retention-days: 14
