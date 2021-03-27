@@ -63,7 +63,7 @@ end
 
 function ActiveState:enter(msn)
 	self.timer:reset()
-	self.action = msn.plan.pophead()
+	self.action = msn.plan:pophead()
 end
 
 function ActiveState:update(msn)
@@ -75,7 +75,6 @@ function ActiveState:update(msn)
 	if self.action == nil then
 		return SuccessState()
 	end
-	self.action:update(msn)
 	if self.action:complete(msn) then
 		local newaction = msn.plan:pophead()
 		self.action:exit(msn)
@@ -142,24 +141,38 @@ local function composeBriefing(msn, tgt)
 	return dctutils.interp(briefing, interptbl)
 end
 
+local function createPlanQ(plan)
+	local Q = require("libs.containers.queue")()
+	for _, v in ipairs(plan) do
+		Q:pushtail(v)
+	end
+	return Q
+end
+
 local Mission = class("Mission")
-function Mission:__init(cmdr, missiontype, tgtname, plan)
+function Mission:__init(cmdr, missiontype, tgt, plan)
 	self.cmdr      = cmdr
 	self.type      = missiontype
-	self.target    = tgtname
-	self.plan      = plan
+	self.target    = tgt.name
+	self.plan      = createPlanQ(plan)
 	self.iffcodes  = cmdr:genMissionCodes(missiontype)
 	self.id        = self.iffcodes.id
 	self.assigned  = {}
 	self:_setComplete(false)
-	self.state     = PrepState()
-	self.state:enter(self)
 
 	-- compose the briefing at mission creation to represent
 	-- known intel the pilots were given before departing
-	local tgt = dct.Theater.singleton():getAssetMgr():getAsset(tgtname)
 	self.briefing  = composeBriefing(self, tgt)
 	tgt:setTargeted(self.cmdr.owner, true)
+
+	self.tgtinfo = {}
+	self.tgtinfo.location = tgt:getLocation()
+	self.tgtinfo.callsign = tgt.codename
+	self.tgtinfo.status   = tgt:getStatus()
+	self.tgtinfo.intellvl = tgt:getIntel(self.cmdr.owner)
+
+	self.state = PrepState()
+	self.state:enter(self)
 end
 
 function Mission:getID()
@@ -268,14 +281,11 @@ end
 function Mission:getTargetInfo()
 	local asset = dct.Theater.singleton():getAssetMgr():getAsset(self.target)
 	if asset == nil then
-		return nil
+		self.tgtinfo.status = 100
+	else
+		self.tgtinfo.status = asset:getStatus()
 	end
-	local tgtinfo = {}
-	tgtinfo.location = asset:getLocation()
-	tgtinfo.callsign = asset.codename
-	tgtinfo.status   = asset:getStatus()
-	tgtinfo.intellvl = asset:getIntel(self.cmdr.owner)
-	return tgtinfo
+	return utils.deepcopy(self.tgtinfo)
 end
 
 function Mission:getTimeout()

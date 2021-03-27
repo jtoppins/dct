@@ -19,6 +19,9 @@ function Action:complete()
 	return false
 end
 
+Action.update = nil
+Action.onDCTEvent = nil
+
 --[[
 -- The human readable description of the task.
 -- This will be presented to the user in the mission briefing.
