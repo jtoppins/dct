@@ -174,21 +174,15 @@ local function briefingmsg(msn, asset)
 	local tgtinfo = msn:getTargetInfo()
 	local msg = string.format("Package: #%s\n", msn:getID())..
 		string.format("IFF Codes: M1(%02o), M3(%04o)\n",
-			msn.iffcodes.m1, msn.iffcodes.m3)
-
-	if tgtinfo == nil then
-		msg = msg..string.format("%s: location unknown\n",
-			human.locationhdr(msn.type))
-	else
-		msg = msg..string.format("%s: %s (%s)\n",
+			msn.iffcodes.m1, msn.iffcodes.m3)..
+		string.format("%s: %s (%s)\n",
 			human.locationhdr(msn.type),
 			dctutils.fmtposition(
 				tgtinfo.location,
 				tgtinfo.intellvl,
 				asset.gridfmt),
-			tgtinfo.callsign)
-	end
-	msg = msg.."Briefing:\n"..msn:getDescription(asset.gridfmt)
+			tgtinfo.callsign)..
+		"Briefing:\n"..msn:getDescription(asset.gridfmt)
 	return msg
 end
 
@@ -275,7 +269,7 @@ end
 
 function MissionStatusCmd:_mission(time, _, msn)
 	local msg
-	local tgtinfo  = msn:getTargetInfo() or {}
+	local tgtinfo  = msn:getTargetInfo()
 	local timeout  = msn:getTimeout()
 	local minsleft = (timeout - time)
 	if minsleft < 0 then
@@ -287,7 +281,7 @@ function MissionStatusCmd:_mission(time, _, msn)
 		string.format("Timeout: %s (in %d mins)\n",
 			os.date("!%F %Rz", dctutils.zulutime(timeout)),
 			minsleft) ..
-		string.format("BDA: %d%% complete\n", tgtinfo.status or 0)
+		string.format("BDA: %d%% complete\n", tgtinfo.status)
 
 	return msg
 end
