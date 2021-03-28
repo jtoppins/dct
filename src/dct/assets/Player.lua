@@ -271,6 +271,7 @@ end
 local Player = class("Player", AssetBase)
 function Player:__init(template, region)
 	AssetBase.__init(self, template, region)
+	self.inair = false
 	self._operstate = false
 	self.missionid = dctenum.missionInvalidID
 	trigger.action.setUserFlag(self.name, false)
@@ -327,6 +328,11 @@ end
 function Player:_setup()
 	self.state = EmptyState(dctenum.kickCode.SETUP)
 	self.state:enter(self)
+end
+
+function Player:inAir()
+	self.inair = self.state.inair or false
+	return self.inair
 end
 
 function Player:getObjectNames()

@@ -46,7 +46,7 @@ function Commander:__init(theater, side)
 	self.owner        = side
 	self.missionstats = Stats(genstatids())
 	self.missions     = {}
-	self.aifreq       = 300 -- seconds
+	self.aifreq       = 2*60 -- 2 minutes in seconds
 
 	theater:queueCommand(120, Command(
 		"Commander.startIADS:"..tostring(self.owner),
@@ -199,9 +199,9 @@ end
 --   meets the mission criteria
 --]]
 function Commander:requestMission(grpname, missiontype)
-	local pq = heapsort_tgtlist(
-		require("dct.Theater").singleton():getAssetMgr(),
-		self.owner, enum.missionTypeMap[missiontype])
+	local assetmgr = require("dct.Theater").singleton():getAssetMgr()
+	local pq = heapsort_tgtlist(assetmgr, self.owner,
+		enum.missionTypeMap[missiontype])
 
 	-- if no target, there is no mission to assign so return back
 	-- a nil object
@@ -212,7 +212,9 @@ function Commander:requestMission(grpname, missiontype)
 	Logger:debug(string.format("requestMission() - tgt name: '%s'; "..
 		"isTargeted: %s", tgt.name, tostring(tgt:isTargeted())))
 
-	local mission = Mission(self, missiontype, grpname, tgt.name)
+	local plan = { require("dct.ai.actions.KillTarget")(tgt) }
+	local mission = Mission(self, missiontype, tgt, plan)
+	mission:addAssigned(assetmgr:getAsset(grpname))
 	self:addMission(mission)
 	return mission
 end

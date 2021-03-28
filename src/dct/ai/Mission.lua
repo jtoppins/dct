@@ -6,14 +6,152 @@
 -- completing the Objective.
 --]]
 
+-- TODO:
+--  * have a joinable flag in the mission class only let
+--    assets join when the flag is true
+
 require("os")
 require("math")
 local utils    = require("libs.utils")
+local class    = require("libs.namedclass")
 local enum     = require("dct.enum")
 local dctutils = require("dct.utils")
 local uicmds   = require("dct.ui.cmds")
+local State    = require("dct.libs.State")
+local Timer    = require("dct.libs.Timer")
+local Logger   = require("dct.libs.Logger").getByName("Mission")
 
 local MISSION_LIMIT = 60*60*3  -- 3 hours in seconds
+local PREP_LIMIT    = 60*90    -- 90 minutes in seconds
+
+
+---------------- STATES ----------------
+
+local BaseMissionState = class("BaseMissionState", State)
+function BaseMissionState:timeremain()
+	return 0, 0
+end
+
+function BaseMissionState:timeextend(--[[addtime]])
+end
+
+local TimeoutState = class("Timeout", BaseMissionState)
+function TimeoutState:enter(msn)
+	Logger:debug(self.__clsname..":enter()")
+	msn:queueabort(enum.missionAbortType.TIMEOUT)
+end
+
+local SuccessState = class("Success", BaseMissionState)
+function SuccessState:enter(msn)
+	Logger:debug(self.__clsname..":enter()")
+	-- TODO: we could convert to emitting a DCT event to handle rewarding
+	-- tickets, this would require a little more than just emitting an
+	-- event here. Would require changing Tickets class a little too.
+	dct.Theater.singleton():getTickets():reward(msn.cmdr.owner,
+		msn.reward, true)
+	msn:queueabort(enum.missionAbortType.COMPLETE)
+end
+
+--[[
+-- ActiveState - mission is active and executing the plan
+--  Critera:
+--    * on plan completion, mission success
+--    * on timer expired, mission timed out
+--]]
+local ActiveState  = class("Active",  BaseMissionState)
+function ActiveState:__init()
+	Logger:debug(self.__clsname..":_init()")
+	self.timer = Timer(MISSION_LIMIT)
+	self.action = nil
+end
+
+function ActiveState:enter(msn)
+	Logger:debug(self.__clsname..":enter()")
+	self.timer:reset()
+	self.action = msn.plan:pophead()
+end
+
+function ActiveState:update(msn)
+	Logger:debug(self.__clsname..":update()")
+	self.timer:update()
+	if self.timer:expired() then
+		Logger:debug(self.__clsname..":update() - transition timeout")
+		return TimeoutState()
+	end
+
+	if self.action == nil then
+		Logger:debug(self.__clsname..":update() - transition success")
+		return SuccessState()
+	end
+	if self.action:complete(msn) then
+		Logger:debug(self.__clsname..":update() - pop new action")
+		local newaction = msn.plan:pophead()
+		self.action:exit(msn)
+		self.action = newaction
+		if self.action == nil then
+			Logger:debug(self.__clsname..":update() - transition success")
+			return SuccessState()
+		end
+		self.action:enter(msn)
+	end
+	return nil
+end
+
+function ActiveState:timeremain()
+	Logger:debug(self.__clsname..":timeremain()")
+	return self.timer:remain()
+end
+
+function ActiveState:timeextend(addtime)
+	Logger:debug(self.__clsname..":timeextend()")
+	self.timer:extend(addtime)
+end
+
+--[[
+-- PrepState - mission is being planned
+--  Maintains a timer and once the timer expires the mission expires.
+--]]
+-- TODO: find some way to remove players from mission if they de-slot
+-- and mission in prep state
+local PrepState = class("Preparing", State)
+function PrepState:__init()
+	self.timer = Timer(PREP_LIMIT)
+end
+
+function PrepState:enter()
+	Logger:debug(self.__clsname..":enter()")
+	self.timer:reset()
+end
+
+function PrepState:update(msn)
+	Logger:debug(self.__clsname..":update()")
+	self.timer:update()
+	if self.timer:expired() then
+		Logger:debug(self.__clsname..":enter() - timeout")
+		return TimeoutState()
+	end
+
+	for _, v in pairs(msn:getAssigned()) do
+		local asset =
+			dct.Theater.singleton():getAssetMgr():getAsset(v)
+		if asset.type == enum.assetType.PLAYERGROUP and
+		   asset:inAir() then
+			Logger:debug(self.__clsname..":enter() - to active state")
+			return ActiveState()
+		end
+	end
+	return nil
+end
+
+function PrepState:timeremain()
+	Logger:debug(self.__clsname..":timeremain()")
+	return self.timer:remain()
+end
+
+function PrepState:timeextend(addtime)
+	Logger:debug(self.__clsname..":timeextend()")
+	self.timer:extend(addtime)
+end
 
 local function composeBriefing(msn, tgt)
 	local briefing = tgt.briefing
@@ -24,35 +162,42 @@ local function composeBriefing(msn, tgt)
 	return dctutils.interp(briefing, interptbl)
 end
 
-local Mission = require("libs.namedclass")("Mission")
-function Mission:__init(cmdr, missiontype, grpname, tgtname)
-	self._complete = false
-	self.iffcodes  = cmdr:genMissionCodes(missiontype)
-	self.id        = self.iffcodes.id
-	-- reference to owning commander
+local function createPlanQ(plan)
+	local Q = require("libs.containers.queue")()
+	for _, v in ipairs(plan) do
+		Q:pushtail(v)
+	end
+	return Q
+end
+
+local Mission = class("Mission")
+function Mission:__init(cmdr, missiontype, tgt, plan)
 	self.cmdr      = cmdr
 	self.type      = missiontype
-	self.target    = tgtname
+	self.target    = tgt.name
+	self.reward    = tgt.cost
+	self.plan      = createPlanQ(plan)
+	self.iffcodes  = cmdr:genMissionCodes(missiontype)
+	self.id        = self.iffcodes.id
 	self.assigned  = {}
-	self.timestart = timer.getAbsTime()
-	self.timeend   = self.timestart + MISSION_LIMIT
-	self.station   = {
-		["onstation"] = false,
-		["total"]     = 0,
-		["start"]     = 0,
-	}
+	self:_setComplete(false)
+	self.state = PrepState()
+	self.state:enter(self)
 
 	-- compose the briefing at mission creation to represent
 	-- known intel the pilots were given before departing
-	local tgt = self.cmdr:getAsset(tgtname)
 	self.briefing  = composeBriefing(self, tgt)
-	tgt:addObserver(self.onTgtEvent, self,
-		"Mission("..tgtname..").onTgtEvent")
 	tgt:setTargeted(self.cmdr.owner, true)
-	self:addAssigned(self.cmdr:getAsset(grpname))
 
-	-- TODO: setup remaining mission parameters;
-	--   * mission world states
+	self.tgtinfo = {}
+	self.tgtinfo.location = tgt:getLocation()
+	self.tgtinfo.callsign = tgt.codename
+	self.tgtinfo.status   = tgt:getStatus()
+	self.tgtinfo.intellvl = tgt:getIntel(self.cmdr.owner)
+end
+
+function Mission:getStateName()
+	return self.state.__clsname
 end
 
 function Mission:getID()
@@ -101,6 +246,7 @@ end
 --      bit
 --]]
 function Mission:abort(asset)
+	Logger:debug(self.__clsname..":abort()")
 	self:removeAssigned(asset)
 	if next(self.assigned) == nil then
 		self.cmdr:removeMission(self.id)
@@ -113,7 +259,8 @@ function Mission:abort(asset)
 end
 
 function Mission:queueabort(reason)
-	self:_setComplete()
+	Logger:debug(self.__clsname..":queueabort()")
+	self:_setComplete(true)
 	local theater = dct.Theater.singleton()
 	for _, name in ipairs(self.assigned) do
 		local request = {
@@ -127,32 +274,19 @@ function Mission:queueabort(reason)
 	end
 end
 
-function Mission:onTgtEvent(event)
-	if event.id ~= enum.event.DCT_EVENT_DEAD then
-		return
+function Mission:update()
+	Logger:debug("update() called for state: "..self.state.__clsname)
+	local newstate = self.state:update(self)
+	if newstate ~= nil then
+		Logger:debug("update() new state: "..newstate.__clsname)
+		self.state:exit(self)
+		self.state = newstate
+		self.state:enter(self)
 	end
-	local tgt = event.initiator
-	dct.Theater.singleton():getTickets():reward(self.cmdr.owner,
-		tgt.cost, true)
-	tgt:removeObserver(self)
-	self:queueabort(enum.missionAbortType.COMPLETE)
 end
 
--- for now just track if the mission has not timmed out and
--- if it has queue an abort command with abort reason
-function Mission:update(_)
-	if self:isComplete() then
-		return
-	end
-
-	if timer.getAbsTime() > self.timeend then
-		self:queueabort(enum.missionAbortType.TIMEOUT)
-	end
-	return
-end
-
-function Mission:_setComplete()
-	self._complete = true
+function Mission:_setComplete(val)
+	self._complete = val
 end
 
 function Mission:isComplete()
@@ -160,7 +294,7 @@ function Mission:isComplete()
 end
 
 --[[
--- getTargetInfo - provide target info information
+-- getTargetInfo - provide target information
 --
 -- The target information supplied:
 --   * location - centroid of the asset
@@ -174,39 +308,23 @@ end
 --       precision too
 --]]
 function Mission:getTargetInfo()
-	local asset = self.cmdr:getAsset(self.target)
-	local tgtinfo = {}
-	tgtinfo.location = asset:getLocation()
-	tgtinfo.callsign = asset.codename
-	tgtinfo.status   = asset:getStatus()
-	tgtinfo.intellvl = asset:getIntel(self.cmdr.owner)
-	return tgtinfo
+	local asset = dct.Theater.singleton():getAssetMgr():getAsset(self.target)
+	if asset == nil then
+		self.tgtinfo.status = 100
+	else
+		self.tgtinfo.status = asset:getStatus()
+	end
+	return utils.deepcopy(self.tgtinfo)
 end
 
 function Mission:getTimeout()
-	return self.timeend
+	local remain, ctime = self.state:timeremain()
+	return ctime + remain
 end
 
 function Mission:addTime(time)
-	self.timeend = self.timeend + time
+	self.state:timeextend(time)
 	return time
-end
-
-function Mission:checkin(time)
-	if self.station.onstation == true then
-		return
-	end
-	self.station.onstation = true
-	self.station.start = time
-end
-
-function Mission:checkout(time)
-	if self.station.onstation == false then
-		return 0
-	end
-	self.station.onstation = false
-	self.station.total = self.station.total + (time - self.station.start)
-	return self.station.total
 end
 
 function Mission:getDescription(fmt)
