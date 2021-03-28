@@ -41,7 +41,7 @@ local briefingtxt = "Package: #5720\n"..
 			" targets, e.g. Mk-84s or PGM Variants."
 
 local testcmds = {
-	[1] = {
+	{
 		["data"] = {
 			["name"]   = grp:getName(),
 			["type"]   = enum.uiRequestType.THEATERSTATUS,
@@ -53,8 +53,7 @@ local testcmds = {
 			"== Friendly Force Info ==\n  Force Str: Nominal\n\n"..
 			"== Current Active Air Missions ==\n  No Active Missions\n\n"..
 			"Recommended Mission Type: CAP\n",
-	},
-	[2] = {
+	}, {
 		["data"] = {
 			["name"]   = grp:getName(),
 			["type"]   = enum.uiRequestType.MISSIONREQUEST,
@@ -63,8 +62,7 @@ local testcmds = {
 		["assert"]     = true,
 		["expected"]   = "Mission 5720 assigned, use F10 menu to "..
 			"see this briefing again\n"..briefingtxt,
-	},
-	[3] = {
+	}, {
 		["data"] = {
 			["name"]   = grp:getName(),
 			["type"]   = enum.uiRequestType.THEATERSTATUS,
@@ -76,16 +74,14 @@ local testcmds = {
 			"== Friendly Force Info ==\n  Force Str: Nominal\n\n"..
 			"== Current Active Air Missions ==\n  STRIKE:   1\n\n"..
 			"Recommended Mission Type: CAP\n",
-	},
-	[4] = {
+	}, {
 		["data"] = {
 			["name"]   = grp:getName(),
 			["type"]   = enum.uiRequestType.MISSIONBRIEF,
 		},
 		["assert"]     = true,
 		["expected"]   = briefingtxt,
-	},
-	[5] = {
+	}, {
 		["data"] = {
 			["name"]   = grp:getName(),
 			["type"]   = enum.uiRequestType.MISSIONSTATUS,
@@ -93,8 +89,7 @@ local testcmds = {
 		["assert"]     = true,
 		["expected"]   = "Package: 5720\nTimeout: "..
 			"2001-06-23 02:03z (in 297 mins)\nBDA: 0% complete\n",
-	},
-	[6] = {
+	}, {
 		["data"] = {
 			["name"]   = grp:getName(),
 			["type"]   = enum.uiRequestType.MISSIONROLEX,
@@ -102,24 +97,21 @@ local testcmds = {
 		},
 		["assert"]     = true,
 		["expected"]   = "+2 mins added to mission timeout",
-	},
-	[7] = {
+	}, {
 		["data"] = {
 			["name"]   = grp:getName(),
 			["type"]   = enum.uiRequestType.MISSIONCHECKIN,
 		},
 		["assert"]     = true,
 		["expected"]   = "on-station received",
-	},
-	[8] = {
+	}, {
 		["data"] = {
 			["name"]   = grp:getName(),
 			["type"]   = enum.uiRequestType.MISSIONCHECKOUT,
 		},
 		["assert"]     = true,
 		["expected"]   = "off-station received, vul time: 0",
-	},
-	[9] = {
+	}, {
 		["data"] = {
 			["name"]   = grp:getName(),
 			["type"]   = enum.uiRequestType.MISSIONABORT,
