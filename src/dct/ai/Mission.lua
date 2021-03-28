@@ -83,9 +83,8 @@ function ActiveState:update(msn)
 		return SuccessState()
 	end
 	if self.action:complete(msn) then
+		Logger:debug(self.__clsname..":update() - pop new action")
 		local newaction = msn.plan:pophead()
-		Logger:debug(self.__clsname..":update() - new action: "..
-			newaction.__clsname)
 		self.action:exit(msn)
 		self.action = newaction
 		if self.action == nil then

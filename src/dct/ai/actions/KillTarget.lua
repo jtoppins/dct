@@ -15,7 +15,7 @@ function KillTarget:__init(tgtasset)
 	assert(tgtasset ~= nil and tgtasset:isa(require("dct.assets.AssetBase")),
 		"tgtasset is not a BaseAsset")
 	self.tgtname = tgtasset.name
-	self.complete = tgtasset:isDead()
+	self._complete = tgtasset:isDead()
 	tgtasset:addObserver(self.onDCTEvent, self,
 		self.__clsname..".onDCTEvent")
 end
@@ -25,14 +25,14 @@ function KillTarget:onDCTEvent(event)
 		return
 	end
 
-	self.complete = true
+	self._complete = true
 	event.initiator:removeObserver(self)
 end
 
 -- Perform check for action completion here
 -- Examples: target death criteria, F10 command execution, etc
 function KillTarget:complete()
-	return self.complete
+	return self._complete
 end
 
 return KillTarget
