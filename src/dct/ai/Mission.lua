@@ -173,6 +173,7 @@ function Mission:__init(cmdr, missiontype, tgt, plan)
 	self.cmdr      = cmdr
 	self.type      = missiontype
 	self.target    = tgt.name
+	self.reward    = tgt.cost
 	self.plan      = createPlanQ(plan)
 	self.iffcodes  = cmdr:genMissionCodes(missiontype)
 	self.id        = self.iffcodes.id
