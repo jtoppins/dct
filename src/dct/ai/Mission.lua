@@ -29,7 +29,7 @@ local PREP_LIMIT    = 60*90    -- 90 minutes in seconds
 
 local BaseMissionState = class("BaseMissionState", State)
 function BaseMissionState:timeremain()
-	return 0
+	return 0, 0
 end
 
 function BaseMissionState:timeextend(--[[addtime]])
