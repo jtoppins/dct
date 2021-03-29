@@ -237,6 +237,9 @@ end
 -- DCS looks for this function in any table we register with the world
 -- event handler
 function Theater:onEvent(event)
+	if event.id == world.event.S_EVENT_BASE_CAPTURED then
+		return
+	end
 	self:notify(event)
 	if event.id == world.event.S_EVENT_MISSION_END then
 		-- Only delete the state if there is an end mission event
