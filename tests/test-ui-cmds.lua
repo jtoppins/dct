@@ -10,7 +10,7 @@ local uicmds = require("dct.ui.cmds")
 -- create a player group
 local grp = Group(4, {
 	["id"] = 12,
-	["name"] = "Uzi 11",
+	["name"] = "99thFS Uzi 11",
 	["coalition"] = coalition.side.BLUE,
 	["exists"] = true,
 })
@@ -20,17 +20,18 @@ local unit1 = Unit({
 	["exists"] = true,
 	["desc"] = {
 		["typeName"] = "FA-18C_hornet",
+		["attributes"] = {},
 	},
 }, grp, "bobplayer")
 
 local briefingtxt = "Package: #5720\n"..
 			"IFF Codes: M1(05), M3(5720)\n"..
-			"Target AO: 88°07.2'N 063°27.6'W (PHOENIX)\n"..
+			"Target AO: 88°07.2'N 063°27.6'W (DELHI)\n"..
 			"Briefing:\n"..
-			"Ground units operating in the area have informed us of"..
+			"Satellite imaging has found"..
 			" an Iranian Ammo Dump 88°07.2'N 063°27.6'W."..
 			" Find and destroy the bunkers and the ordnance within.\n"..
-			"    Tot: 2001-06-22 12:02z\n    \n"..
+			"    Tot: 2001-06-23 00:02z\n    \n"..
 			"    Primary Objectives: Destroy the large, armoured bunker."..
 			" It is heavily fortified, so accuracy is key.\n    \n"..
 			"    Secondary Objectives: Destroy the two smaller, white"..
@@ -46,8 +47,10 @@ local testcmds = {
 			["type"]   = enum.uiRequestType.THEATERSTATUS,
 		},
 		["assert"]     = true,
-		["expected"]   = "== Theater Threat Status ==\n  Sea:    medium\n"..
+		["expected"]   = "== Theater Threat Status ==\n"..
+			"  Force Str: Nominal\n  Sea:    medium\n"..
 			"  Air:    parity\n  ELINT:  medium\n  SAM:    medium\n\n"..
+			"== Friendly Force Info ==\n  Force Str: Nominal\n\n"..
 			"== Current Active Air Missions ==\n  No Active Missions\n\n"..
 			"Recommended Mission Type: CAP\n",
 	},
@@ -67,8 +70,10 @@ local testcmds = {
 			["type"]   = enum.uiRequestType.THEATERSTATUS,
 		},
 		["assert"]     = true,
-		["expected"]   = "== Theater Threat Status ==\n  Sea:    medium\n"..
+		["expected"]   = "== Theater Threat Status ==\n"..
+			"  Force Str: Nominal\n  Sea:    medium\n"..
 			"  Air:    parity\n  ELINT:  medium\n  SAM:    medium\n\n"..
+			"== Friendly Force Info ==\n  Force Str: Nominal\n\n"..
 			"== Current Active Air Missions ==\n  STRIKE:   1\n\n"..
 			"Recommended Mission Type: CAP\n",
 	},
@@ -87,7 +92,7 @@ local testcmds = {
 		},
 		["assert"]     = true,
 		["expected"]   = "Package: 5720\nTimeout: "..
-			"2001-06-22 14:03z (in 297 mins)\nBDA: 0% complete\n",
+			"2001-06-23 02:03z (in 297 mins)\nBDA: 0% complete\n",
 	},
 	[6] = {
 		["data"] = {

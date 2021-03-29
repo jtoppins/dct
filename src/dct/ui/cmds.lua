@@ -21,6 +21,9 @@ function UICmd:__init(theater, data)
 	local asset = theater:getAssetMgr():getAsset(data.name)
 	assert(asset, "runtime error: asset was nil, "..data.name)
 
+	Command.__init(self, "UICmd", self.uicmd, self)
+
+	self.prio         = Command.PRIORITY.UI
 	self.theater      = theater
 	self.asset        = asset
 	self.type         = data.type
@@ -32,7 +35,7 @@ function UICmd:isAlive()
 	return dctutils.isalive(self.asset.name)
 end
 
-function UICmd:execute(time)
+function UICmd:uicmd(time)
 	-- only process commands from live players unless they are abort
 	-- commands
 	if not self:isAlive() and
@@ -55,6 +58,7 @@ end
 local ScratchPadDisplay = class(UICmd)
 function ScratchPadDisplay:__init(theater, data)
 	UICmd.__init(self, theater, data)
+	self.name = "ScratchPadDisplay:"..data.name
 end
 
 function ScratchPadDisplay:_execute(_, _)
@@ -66,6 +70,7 @@ end
 local ScratchPadSet = class(UICmd)
 function ScratchPadSet:__init(theater, data)
 	UICmd.__init(self, theater, data)
+	self.name = "ScratchPadSet:"..data.name
 end
 
 function ScratchPadSet:_execute(_, _)
@@ -74,8 +79,8 @@ function ScratchPadSet:_execute(_, _)
 	local title = "SCRATCHPAD "..tostring(self.asset.groupId)
 
 	self.theater.scratchpad[mrkid] = self.asset.name
-	trigger.action.markToGroup(mrkid, title, pos, self.asset.groupId,
-		false, "edit me")
+	trigger.action.markToGroup(mrkid, "edit me", pos,
+		self.asset.groupId, false)
 	local msg = "Look on F10 MAP for user mark with title: "..
 		title.."\n"..
 		"Edit body with your scratchpad information. "..
@@ -87,16 +92,22 @@ end
 local TheaterUpdateCmd = class(UICmd)
 function TheaterUpdateCmd:__init(theater, data)
 	UICmd.__init(self, theater, data)
+	self.name = "TheaterUpdateCmd:"..data.name
 end
 
 function TheaterUpdateCmd:_execute(_, cmdr)
 	local update = cmdr:getTheaterUpdate()
 	local msg =
 		string.format("== Theater Threat Status ==\n") ..
+		string.format("  Force Str: %s\n",
+			human.strength(update.enemy.str))..
 		string.format("  Sea:    %s\n", human.threat(update.enemy.sea)) ..
 		string.format("  Air:    %s\n", human.airthreat(update.enemy.air)) ..
 		string.format("  ELINT:  %s\n", human.threat(update.enemy.elint))..
 		string.format("  SAM:    %s\n", human.threat(update.enemy.sam)) ..
+		string.format("\n== Friendly Force Info ==\n")..
+		string.format("  Force Str: %s\n",
+			human.strength(update.friendly.str))..
 		string.format("\n== Current Active Air Missions ==\n")
 	if next(update.missions) ~= nil then
 		for k,v in pairs(update.missions) do
@@ -114,10 +125,26 @@ end
 local CheckPayloadCmd = class(UICmd)
 function CheckPayloadCmd:__init(theater, data)
 	UICmd.__init(self, theater, data)
+	self.name = "CheckPayloadCmd:"..data.name
 end
 
 function CheckPayloadCmd:_execute(_ --[[time]], _ --[[cmdr]])
-	local msg = loadout.check(self.asset)
+	local msg
+	local ok, costs = loadout.check(self.asset)
+	if ok then
+		msg = "Valid loadout, you may depart. Good luck!"
+	else
+		msg = "You are over budget! Re-arm before departing, or "..
+			"you will be kicked to spectator!"
+	end
+
+	-- print cost summary
+	msg = msg.."\n== Loadout Summary:"
+	for cat, val in pairs(enum.weaponCategory) do
+		msg = msg ..string.format("\n\t%s cost: %d / %d",
+			cat, costs[val].current, costs[val].max)
+	end
+
 	return msg
 end
 
@@ -150,17 +177,19 @@ local function briefingmsg(msn, asset)
 			msn.iffcodes.m1, msn.iffcodes.m3)..
 		string.format("%s: %s (%s)\n",
 			human.locationhdr(msn.type),
-			human.grid2actype(asset.unittype,
-				tgtinfo.location, tgtinfo.intellvl),
+			dctutils.fmtposition(
+				tgtinfo.location,
+				tgtinfo.intellvl,
+				asset.gridfmt),
 			tgtinfo.callsign)..
-		"Briefing:\n"..msn:getDescription(asset.unittype,
-			tgtinfo.intellvl)
+		"Briefing:\n"..msn:getDescription(asset.gridfmt)
 	return msg
 end
 
 local MissionJoinCmd = class(MissionCmd)
 function MissionJoinCmd:__init(theater, data)
 	MissionCmd.__init(self, theater, data)
+	self.name = "MissionJoinCmd:"..data.name
 end
 
 function MissionJoinCmd:_execute(_, cmdr)
@@ -183,6 +212,7 @@ function MissionJoinCmd:_execute(_, cmdr)
 		msg = string.format("Mission %s assigned, use F10 menu "..
 			"to see this briefing again\n", msn:getID())
 		msg = msg..briefingmsg(msn, self.asset)
+		human.drawTargetIntel(msn, self.asset.groupId, false)
 	end
 	return msg
 end
@@ -190,6 +220,7 @@ end
 local MissionRqstCmd = class(MissionCmd)
 function MissionRqstCmd:__init(theater, data)
 	MissionCmd.__init(self, theater, data)
+	self.name = "MissionRqstCmd:"..data.name
 	self.missiontype = data.value
 	self.displaytime = 120
 end
@@ -221,6 +252,7 @@ end
 local MissionBriefCmd = class(MissionCmd)
 function MissionBriefCmd:__init(theater, data)
 	MissionCmd.__init(self, theater, data)
+	self.name = "MissionBriefCmd:"..data.name
 	self.displaytime = 120
 end
 
@@ -232,6 +264,7 @@ end
 local MissionStatusCmd = class(MissionCmd)
 function MissionStatusCmd:__init(theater, data)
 	MissionCmd.__init(self, theater, data)
+	self.name = "MissionStatusCmd:"..data.name
 end
 
 function MissionStatusCmd:_mission(time, _, msn)
@@ -246,7 +279,7 @@ function MissionStatusCmd:_mission(time, _, msn)
 
 	msg = string.format("Package: %s\n", msn:getID()) ..
 		string.format("Timeout: %s (in %d mins)\n",
-			dctutils.date("%F %Rz", dctutils.zulutime(timeout)),
+			os.date("!%F %Rz", dctutils.zulutime(timeout)),
 			minsleft) ..
 		string.format("BDA: %d%% complete\n", tgtinfo.status)
 
@@ -257,6 +290,7 @@ end
 local MissionAbortCmd = class(MissionCmd)
 function MissionAbortCmd:__init(theater, data)
 	MissionCmd.__init(self, theater, data)
+	self.name = "MissionAbortCmd:"..data.name
 	self.erequest = false
 	self.reason   = data.value
 end
@@ -283,6 +317,7 @@ end
 local MissionRolexCmd = class(MissionCmd)
 function MissionRolexCmd:__init(theater, data)
 	MissionCmd.__init(self, theater, data)
+	self.name = "MissionRolexCmd:"..data.name
 	self.rolextime = data.value
 end
 
@@ -294,6 +329,7 @@ end
 
 local MissionCheckinCmd = class(MissionCmd)
 function MissionCheckinCmd:__init(theater, data)
+	self.name = "MissionCheckinCmd:"..data.name
 	MissionCmd.__init(self, theater, data)
 end
 
@@ -306,6 +342,7 @@ end
 local MissionCheckoutCmd = class(MissionCmd)
 function MissionCheckoutCmd:__init(theater, data)
 	MissionCmd.__init(self, theater, data)
+	self.name = "MissionCheckoutCmd:"..data.name
 end
 
 function MissionCheckoutCmd:_mission(time, _, msn)

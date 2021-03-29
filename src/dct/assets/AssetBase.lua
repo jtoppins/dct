@@ -17,16 +17,18 @@ An AIAgent is an Asset that is movable.
 --]]
 
 require("math")
-local class    = require("libs.class")
+local namedclass = require("libs.namedclass")
 local utils    = require("libs.utils")
 local dctenum  = require("dct.enum")
 local dctutils = require("dct.utils")
 local Goal     = require("dct.Goal")
 local Marshallable = require("dct.libs.Marshallable")
-local Logger   = dct.Logger.getByName("Asset")
+local Observable   = require("dct.libs.Observable")
+local Logger   = require("dct.libs.Logger")
 local settings = _G.dct.settings
 
 local norenametype = {
+	[dctenum.assetType.SQUADRONPLAYER] = true,
 	[dctenum.assetType.PLAYERGROUP]    = true,
 	[dctenum.assetType.AIRBASE]        = true,
 }
@@ -57,6 +59,32 @@ local function genLocationMethod()
 	return txt[idx]
 end
 
+local AssetLogger = namedclass("AssetLogger", Logger)
+function AssetLogger:__init(name, cls)
+	Logger.__init(self, name)
+	self.cls = cls
+end
+
+function AssetLogger:error(msg)
+	local l = string.format("%s(%s) - ", self.cls.__clsname, self.cls.name)
+	Logger.error(self, l..msg)
+end
+
+function AssetLogger:warn(msg)
+	local l = string.format("%s(%s) - ", self.cls.__clsname, self.cls.name)
+	Logger.warn(self, l..msg)
+end
+
+function AssetLogger:info(msg)
+	local l = string.format("%s(%s) - ", self.cls.__clsname, self.cls.name)
+	Logger.info(self, l..msg)
+end
+
+function AssetLogger:debug(msg)
+	local l = string.format("%s(%s) - ", self.cls.__clsname, self.cls.name)
+	Logger.debug(self, l..msg)
+end
+
 --[[
 AssetBase:
 	attributes(public, read-only):
@@ -71,15 +99,14 @@ AssetBase:
 	             briefings to players
 --]]
 
-local AssetBase = class(Marshallable)
+local AssetBase = namedclass("AssetBase", Marshallable, Observable)
 function AssetBase:__init(template, region)
-	if not self.__clsname then
-		self.__clsname = "AssetBase"
-	end
 	if not self._eventhandlers then
 		self._eventhandlers = {}
 	end
+	self._logger = AssetLogger("Asset", self)
 	Marshallable.__init(self)
+	Observable.__init(self)
 	self:_addMarshalNames({
 		"_spawned",
 		"_dead",
@@ -91,7 +118,11 @@ function AssetBase:__init(template, region)
 		"rgnname",
 		"tplname",
 		"name",
-		"codename",})
+		"codename",
+		"cost",
+		"ignore",
+		"regenerate",
+	})
 	self._spawned    = false
 	self._dead       = false
 	self._targeted   = {}
@@ -111,6 +142,7 @@ function AssetBase:__init(template, region)
 		self:_setup()
 		self._initcomplete = true
 	end
+	self.defaultgoal = nil
 end
 
 function AssetBase:_completeinit(template, region)
@@ -123,13 +155,20 @@ function AssetBase:_completeinit(template, region)
 		print(string.format("Template(%s) has nil 'desc' field",
 			template.name))
 	end
+	self.regenerate = template.regenerate
+	self.ignore   = template.ignore
 	self.owner    = template.coalition
 	self.rgnname  = region.name
 	self.tplname  = template.name
+	self.cost     = math.abs(template.cost)
 	if norenametype[self.type] == true then
 		self.name = self.tplname
 	else
 		self.name = region.name.."_"..self.owner.."_"..template.name
+		if template.uniquenames == true then
+			self.name = self.name.." #"..
+				dct.Theater.singleton():getcntr()
+		end
 	end
 	self.codename = generateCodename(self.type)
 
@@ -171,6 +210,9 @@ end
 function AssetBase:marshal()
 	assert(self._initcomplete == true,
 		"runtime error: init not completed")
+	if self:isDead() then
+		return nil
+	end
 	return Marshallable.marshal(self)
 end
 
@@ -180,9 +222,6 @@ function AssetBase:unmarshal(data)
 	Marshallable.unmarshal(self, data)
 	self:_setup()
 	self._initcomplete = true
-	if self:isSpawned() then
-		self:spawn(true)
-	end
 end
 
 --[[
@@ -283,14 +322,11 @@ end
 --]]
 function AssetBase:setDead(val)
 	assert(type(val) == "boolean", "value error: val must be of type bool")
+	local prev = self._dead
 	self._dead = val
-end
-
---[[
--- Check the asset death goals.
--- Returns: none
---]]
-function AssetBase:checkDead()
+	if self._dead and prev ~= self._dead then
+		self:notify(dctutils.buildevent.dead(self))
+	end
 end
 
 --[[
@@ -308,9 +344,9 @@ end
 --]]
 function AssetBase:onDCTEvent(event)
 	local handler = self._eventhandlers[event.id]
-	Logger:debug(string.format(
-		"AssetBase:onDCTEvent(%s); event.id: %d, handler: %s",
-		self.__clsname, event.id, tostring(handler)))
+	self._logger:debug(string.format(
+		"onDCTEvent(); event.id: %d, handler: %s",
+		event.id, tostring(handler)))
 	if handler ~= nil then
 		handler(self, event)
 	end

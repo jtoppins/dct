@@ -94,21 +94,33 @@ local function validate_server_config(cfgdata, tbl)
 	return tbl
 end
 
+-- luacheck: read_globals DCS
+local function getEnvVars()
+	local vars = {}
+	if env == nil then
+		vars.theater = "unknown"
+		vars.sortie  = "unknown"
+	else
+		vars.theater = env.mission.theatre
+		vars.sortie  = env.getValueDictByKey(env.mission.sortie)
+	end
+	return vars
+end
+
 local function servercfgs(config)
+	local vars = getEnvVars()
 	utils.readconfigs({
 		{
 			["name"] = "server",
 			["file"] = lfs.writedir()..utils.sep.."Config"..
 				utils.sep.."dct.cfg",
-			["cfgtblname"] = "dctserverconfig",
 			["validate"] = validate_server_config,
 			["default"] = {
 				["debug"]       = false,
 				["profile"]     = false,
 				["statepath"]   =
-					lfs.writedir()..utils.sep..
-					env.mission.theatre.."_"..
-					env.getValueDictByKey(env.mission.sortie)..".state",
+					lfs.writedir()..utils.sep..vars.theater.."_"..
+					vars.sortie..".state",
 				["theaterpath"] = lfs.tempdir()..utils.sep.."theater",
 				["schedfreq"] = 2, -- hertz
 				["tgtfps"] = 75,

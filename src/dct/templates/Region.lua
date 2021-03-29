@@ -11,7 +11,6 @@ local utils      = require("libs.utils")
 local dctenums   = require("dct.enum")
 local dctutils   = require("dct.utils")
 local Template   = require("dct.templates.Template")
-local Asset      = require("dct.Asset")
 local Logger     = dct.Logger.getByName("Region")
 
 local tplkind = {
@@ -61,44 +60,37 @@ local function loadMetadata(self, regiondefpath)
 		},
 	}
 
-	local region = utils.readlua(regiondefpath, "region")
+	local region = utils.readlua(regiondefpath)
+	if region.region then
+		region = region.region
+	end
 	region.defpath = regiondefpath
 	utils.checkkeys(keys, region)
 	utils.mergetables(self, region)
 end
 
-local function getTemplates(self, dirname, basepath)
-	local tplpath = basepath .. "/" .. dirname
-	Logger:debug("=> tplpath: "..tplpath)
+local function getTemplates(self, basepath)
+	local ignorepaths = {
+		["."] = true,
+		[".."] = true,
+		["region.def"] = true,
+	}
 
-	for filename in lfs.dir(tplpath) do
-		if filename ~= "." and filename ~= ".." then
-			local fpath = tplpath .. "/" .. filename
+	Logger:debug("=> basepath: "..basepath)
+	for filename in lfs.dir(basepath) do
+		if ignorepaths[filename] == nil then
+			local fpath = basepath..utils.sep..filename
 			local fattr = lfs.attributes(fpath)
 			if fattr.mode == "directory" then
-				getTemplates(self, filename, tplpath)
-			else
-				if string.find(fpath, ".dct", -4, true) ~= nil then
-					Logger:debug("=> process template: "..fpath)
-					local stmpath = string.gsub(fpath, "[.]dct", ".stm")
-					if lfs.attributes(stmpath) == nil then
-						stmpath = nil
-					end
-					self:addTemplate(
-						Template.fromFile(self.name, fpath, stmpath))
+				getTemplates(self, basepath..utils.sep..filename)
+			elseif string.find(fpath, ".dct", -4, true) ~= nil then
+				Logger:debug("=> process template: "..fpath)
+				local stmpath = string.gsub(fpath, "[.]dct", ".stm")
+				if lfs.attributes(stmpath) == nil then
+					stmpath = nil
 				end
-			end
-		end
-	end
-end
-
-local function loadTemplates(self)
-	for filename in lfs.dir(self.path) do
-		if filename ~= "." and filename ~= ".." then
-			local fpath = self.path.."/"..filename
-			local fattr = lfs.attributes(fpath)
-			if fattr.mode == "directory" then
-				getTemplates(self, filename, self.path)
+				self:addTemplate(
+					Template.fromFile(self.name, fpath, stmpath))
 			end
 		end
 	end
@@ -142,12 +134,15 @@ local function addAndSpawnAsset(self, name, assetmgr, centroid)
 		return nil
 	end
 
-	local asset = Asset.factory(tpl, self)
+	local mgr = dct.Theater.singleton():getAssetMgr()
+	local asset = mgr:factory(tpl.objtype)(tpl, self)
 	assetmgr:add(asset)
-	asset:spawn()
 	asset:generate(assetmgr, self)
-	centroid.point, centroid.n = dctutils.centroid(asset:getLocation(),
-		centroid.point, centroid.n)
+	local location = asset:getLocation()
+	if location then
+		centroid.point, centroid.n = dctutils.centroid(location,
+			centroid.point, centroid.n)
+	end
 	return asset
 end
 
@@ -202,12 +197,14 @@ function Region:__init(regionpath)
 	self._exclusions   = {}
 	Logger:debug("=> regionpath: "..regionpath)
 	loadMetadata(self, regionpath..utils.sep.."region.def")
-	loadTemplates(self)
+	getTemplates(self, self.path)
+	Logger:debug("'"..self.name.."' Loaded")
 end
 
 function Region:addTemplate(tpl)
 	assert(self._templates[tpl.name] == nil,
 		"duplicate template '"..tpl.name.."' defined; "..tostring(tpl.path))
+	Logger:debug("  + add template: "..tpl.name)
 	self._templates[tpl.name] = tpl
 	if tpl.exclusion ~= nil then
 		if self._exclusions[tpl.exclusion] == nil then
@@ -270,7 +267,7 @@ function Region:generate(assetmgr)
 	local tpltypes = utils.deepcopy(self._tpltypes)
 	local centroid = {}
 
-	for objtype, _ in pairs(dctenums.assetClass["STRATEGIC"]) do
+	for objtype, _ in pairs(dctenums.assetClass.INITIALIZE) do
 		local names = tpltypes[objtype]
 		if names ~= nil then
 			self:_generate(assetmgr, objtype, names, centroid)

@@ -2,8 +2,6 @@
 
 require("dcttestlibs")
 require("dct")
-dct.settings.server.profile = false
-dct.settings.server.debug   = false
 
 local testcases = {
 	[1] = {
@@ -60,9 +58,10 @@ end
 
 local function main()
 	local t = dct.Theater()
+	dct.theater = t
 	local playergrp = Group(4, {
 		["id"] = 15,
-		["name"] = "Uzi 35",
+		["name"] = "99thFS Uzi 34",
 		["coalition"] = coalition.side.BLUE,
 		["exists"] = true,
 	})
@@ -75,12 +74,9 @@ local function main()
 	}, playergrp, "bobplayer")
 
 	t:exec(50)
-	t:getAssetMgr():checkAssets(2000)
-
 	for _, data in ipairs(testcases) do
 		t:onEvent(createEvent(data.event, player1))
 	end
-	t:getAssetMgr():checkAssets(2050)
 	return 0
 end
 

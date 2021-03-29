@@ -4,17 +4,15 @@
 -- Provides functions to define and manage Assets.
 --]]
 
-local class    = require("libs.class")
-local utils    = require("libs.utils")
+local checklib = require("libs.check")
 local enum     = require("dct.enum")
 local dctutils = require("dct.utils")
-local Logger   = dct.Logger.getByName("AssetManager")
 local Command  = require("dct.Command")
+local Logger   = dct.Logger.getByName("AssetManager")
 
-local ASSET_CHECK_PERIOD = 12*60  -- seconds
-
-local AssetManager = class()
+local AssetManager = require("libs.namedclass")("AssetManager")
 function AssetManager:__init(theater)
+	self.updaterate = 120
 	-- The master list of assets, regardless of side, indexed by name.
 	-- Means Asset names must be globally unique.
 	self._assetset = {}
@@ -41,14 +39,40 @@ function AssetManager:__init(theater)
 	-- of their DCS objects with 'something', this will be the something.
 	self._object2asset = {}
 
-	theater:registerHandler(self.onDCSEvent, self, "AssetManager handler")
-	theater:queueCommand(ASSET_CHECK_PERIOD,
-		Command(self.checkAssets, self))
+	theater:addObserver(self.onDCSEvent, self, "AssetManager.onDCSEvent")
+	theater:queueCommand(self.updaterate,
+		Command(self.__clsname..".update", self.update, self))
+end
+
+function AssetManager:factory(assettype)
+	local staticassets = {
+		[enum.assetType.OCA]           = true,
+		[enum.assetType.BASEDEFENSE]   = true,
+		[enum.assetType.SHORAD]        = true,
+		[enum.assetType.SPECIALFORCES] = true,
+	}
+	local asset = nil
+	if assettype == enum.assetType.AIRSPACE then
+		asset = require("dct.assets.Airspace")
+	elseif assettype == enum.assetType.AIRBASE then
+		asset = require("dct.assets.Airbase")
+	elseif enum.assetClass.STRATEGIC[assettype] or
+	       staticassets[assettype] == true then
+		asset = require("dct.assets.StaticAsset")
+	elseif assettype == enum.assetType.PLAYERGROUP then
+		asset = require("dct.assets.Player")
+	elseif assettype == enum.assetType.SQUADRONPLAYER then
+		asset = require("dct.assets.Squadron")
+	else
+		assert(false, "unsupported asset type: "..assettype)
+	end
+	return asset
 end
 
 function AssetManager:remove(asset)
 	assert(asset ~= nil, "value error: asset object must be provided")
 
+	asset:removeObserver(self)
 	self._assetset[asset.name] = nil
 
 	-- remove asset name from per-side asset list
@@ -62,32 +86,57 @@ end
 
 function AssetManager:add(asset)
 	assert(asset ~= nil, "value error: asset object must be provided")
-
-	-- add asset to master list
 	assert(self._assetset[asset.name] == nil, "asset name ('"..
 		asset.name.."') already exists")
+
+	if asset:isDead() then
+		Logger:debug("AssetManager:add - not adding dead asset:"..
+			asset.name)
+		return
+	end
+
 	self._assetset[asset.name] = asset
+	asset:addObserver(self.onDCSEvent, self, "AssetManager.onDCSEvent")
 
 	-- add asset to approperate side lists
-	if not asset:isDead() then
-		if asset.type == enum.assetType.AIRSPACE then
-			for _, side in pairs(coalition.side) do
-				self._sideassets[side].assets[asset.name] = asset.type
-			end
-		else
-			self._sideassets[asset.owner].assets[asset.name] = asset.type
+	if asset.type == enum.assetType.AIRSPACE then
+		for _, side in pairs(coalition.side) do
+			self._sideassets[side].assets[asset.name] = asset.type
 		end
+	else
+		self._sideassets[asset.owner].assets[asset.name] = asset.type
+	end
 
-		-- read Asset's object names and setup object to asset mapping
-		-- to be used in handling DCS events and other uses
-		for _, objname in pairs(asset:getObjectNames()) do
-			self._object2asset[objname] = asset.name
-		end
+	Logger:debug("Adding object names for '"..asset.name.."'")
+	-- read Asset's object names and setup object to asset mapping
+	-- to be used in handling DCS events and other uses
+	for _, objname in pairs(asset:getObjectNames()) do
+		Logger:debug("    + "..objname)
+		self._object2asset[objname] = asset.name
 	end
 end
 
 function AssetManager:getAsset(name)
 	return self._assetset[name]
+end
+
+--[[
+-- filterAssets - return all asset names matching `filter`
+-- filter(asset)
+--   returns true if the filter matches and the asset name should be kept
+-- Return: a table with asset names as keys. Will always returns a table,
+--   even if it is empty
+--]]
+function AssetManager:filterAssets(filter)
+	checklib.func(filter)
+
+	local list = {}
+	for name, asset in pairs(self._assetset) do
+		if filter(asset) then
+			list[name] = true
+		end
+	end
+	return list
 end
 
 --[[
@@ -121,45 +170,54 @@ function AssetManager:getTargets(requestingside, assettypelist)
 	end
 
 	for tgtname, tgttype in pairs(self._sideassets[enemy].assets) do
-		if filterlist[tgttype] ~= nil then
+		if filterlist[tgttype] ~= nil and
+		   not self._assetset[tgtname].ignore then
 			tgtlist[tgtname] = tgttype
 		end
 	end
 	return tgtlist
 end
 
---[[
--- Check all assets to see if their death goal has been met.
---
--- *Note:* We just do the simple thing, check all assets.
--- Nothing complicated for now.
---]]
-function AssetManager:checkAssets(_ --[[time]])
-	local perftime_s = os.clock()
-	local cnt = 0
-
+function AssetManager:update()
+	local deletionq = {}
 	for _, asset in pairs(self._assetset) do
-		cnt = cnt + 1
-		if asset:isSpawned() and asset:checkDead() and
-		   asset:isDead() then
-			self:remove(asset)
+		if type(asset.update) == "function" then
+			asset:update()
+		end
+		if asset:isDead() then
+			deletionq[asset.name] = true
 		end
 	end
-	Logger:debug(string.format("checkAssets() - runtime: %4.3f ms, "..
-		"assets checked: %d", (os.clock()-perftime_s)*1000, cnt))
-	return ASSET_CHECK_PERIOD
+	for name, _ in pairs(deletionq) do
+		self:remove(self:getAsset(name))
+	end
+	return self.updaterate
 end
 
 local function handleDead(self, event)
-	self._object2asset[event.initiator:getName()] = nil
+	self._object2asset[tostring(event.initiator:getName())] = nil
+end
+
+local function handleAssetDeath(self, event)
+	local asset = event.initiator
+	dct.Theater.singleton():getTickets():loss(asset.owner,
+		asset.cost, false)
+	if asset.type ~= enum.assetType.PLAYERGROUP then
+		self:remove(asset)
+	end
 end
 
 local handlers = {
 	[world.event.S_EVENT_DEAD] = handleDead,
+	[enum.event.DCT_EVENT_DEAD] = handleAssetDeath,
 }
 
 function AssetManager:doOneObject(obj, event)
-	local name = obj:getName()
+	if event.id > world.event.S_EVENT_MAX then
+		return
+	end
+
+	local name = tostring(obj:getName())
 	if obj:getCategory() == Object.Category.UNIT then
 		name = obj:getGroup():getName()
 	end
@@ -191,6 +249,7 @@ function AssetManager:onDCSEvent(event)
 		[world.event.S_EVENT_EJECTION]        = true,
 		[world.event.S_EVENT_HIT]             = true,
 		[world.event.S_EVENT_DEAD]            = true,
+		[enum.event.DCT_EVENT_DEAD]           = true,
 		--[world.event.S_EVENT_UNIT_LOST]     = true,
 	}
 	local objmap = {
@@ -226,13 +285,9 @@ function AssetManager:marshal()
 	local tbl = {
 		["assets"] = {},
 	}
-	local shouldmarshal = utils.shallowclone(enum.assetClass.STRATEGIC)
-	shouldmarshal[enum.assetType.AIRSPACE] = true
-	shouldmarshal[enum.assetType.AIRBASE]  = true
-
 
 	for name, asset in pairs(self._assetset) do
-		if shouldmarshal[asset.type] ~= nil then
+		if type(asset.marshal) == "function" and not asset:isDead() then
 			tbl.assets[name] = asset:marshal()
 		end
 	end
@@ -240,21 +295,19 @@ function AssetManager:marshal()
 end
 
 function AssetManager:unmarshal(data)
+	local spawnq = {}
 	for _, assettbl in pairs(data.assets) do
-		local asset = nil
 		local assettype = assettbl.type
-		if assettype == enum.assetType.AIRSPACE then
-			asset = require("dct.assets.Airspace")()
-		elseif enum.assetClass.STRATEGIC[assettype] or
-		       assettype == enum.assetType.BASEDEFENSE then
-			asset = require("dct.assets.StaticAsset")()
-		elseif assettype == enum.assetType.PLAYERGROUP then
-			asset = require("dct.assets.Player")()
-		else
-			assert(false, "unsupported asset type: "..assettype)
-		end
+		local asset = self:factory(assettype)()
 		asset:unmarshal(assettbl)
 		self:add(asset)
+		if asset:isSpawned() then
+			spawnq[asset.name] = true
+		end
+	end
+
+	for assetname, _ in pairs(spawnq) do
+		self:getAsset(assetname):spawn(true)
 	end
 end
 

@@ -9,7 +9,7 @@ local enum = require("dct.enum")
 -- create a player group
 local grp = Group(4, {
 	["id"] = 12,
-	["name"] = "Uzi 11",
+	["name"] = "99thFS Uzi 11",
 	["coalition"] = coalition.side.BLUE,
 	["exists"] = true,
 })
@@ -19,6 +19,7 @@ local unit1 = Unit({
 	["exists"] = true,
 	["desc"] = {
 		["typeName"] = "FA-18C_hornet",
+		["attributes"] = {},
 	},
 }, grp, "bobplayer")
 

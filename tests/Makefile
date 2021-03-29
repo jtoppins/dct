@@ -1,3 +1,3 @@
 .PHONY: tests
 tests:
-	@./runtests
+	@TZ="UTC 0" ./runtests

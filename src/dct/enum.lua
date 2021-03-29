@@ -39,6 +39,7 @@ enum.assetType = {
 	["PLAYERGROUP"] = 21,
 	["SPECIALFORCES"] = 22,
 	["FOB"]           = 23,
+	["SQUADRONPLAYER"]= 24,
 }
 
 --[[
@@ -81,7 +82,7 @@ enum.missionType = {
 }
 
 enum.assetClass = {
-	["STRATEGIC"] = {
+	["INITIALIZE"] = {
 		[enum.assetType.AMMODUMP]    = true,
 		[enum.assetType.FUELDUMP]    = true,
 		[enum.assetType.C2]          = true,
@@ -95,13 +96,29 @@ enum.assetClass = {
 		[enum.assetType.CHECKPOINT]  = true,
 		[enum.assetType.FACTORY]     = true,
 		[enum.assetType.SHORAD]      = true,
+		[enum.assetType.AIRBASE]     = true,
 		[enum.assetType.SPECIALFORCES] = true,
 		[enum.assetType.FOB]           = true,
+		[enum.assetType.AIRSPACE]      = true,
 	},
-	["BASES"] = {
+	-- strategic list is used in calculating ownership of a region
+	-- among other things
+	["STRATEGIC"] = {
+		[enum.assetType.AMMODUMP]    = true,
+		[enum.assetType.FUELDUMP]    = true,
+		[enum.assetType.C2]          = true,
+		[enum.assetType.EWR]         = true,
+		[enum.assetType.MISSILE]     = true,
+		[enum.assetType.PORT]        = true,
+		[enum.assetType.SAM]         = true,
+		[enum.assetType.FACILITY]    = true,
+		[enum.assetType.BUNKER]      = true,
+		[enum.assetType.CHECKPOINT]  = true,
+		[enum.assetType.FACTORY]     = true,
 		[enum.assetType.AIRBASE]     = true,
+		[enum.assetType.FOB]         = true,
 	},
-	-- agents never get seralized to the state file
+	-- agents never get serialized to the state file
 	["AGENTS"] = {
 		[enum.assetType.PLAYERGROUP] = true,
 	}
@@ -169,5 +186,37 @@ enum.weaponCategory = {
 }
 
 enum.WPNINFCOST = 5000
+enum.UNIT_CAT_SCENERY = Unit.Category.STRUCTURE + 1
+
+local eventbase = world.event.S_EVENT_MAX + 2000
+enum.event = {
+	["DCT_EVENT_DEAD"] = eventbase + 1,
+		--[[
+		-- DEAD definition:
+		--   id = id of this event
+		--   initiator = asset sending the death notification
+		--]]
+	["DCT_EVENT_HIT"]  = eventbase + 2,
+		--[[
+		-- HIT definition:
+		--   id = id of this event
+		--   point = location where the impact occurred
+		--   weapon = the description table from the DCS weapon object
+		--]]
+	["DCT_EVENT_OPERATIONAL"] = eventbase + 3,
+		--[[
+		-- OPERATIONAL definition:
+		--   id = id of this event
+		--   initiator = base sending the operational notification
+		--   state = the of the base, true == operational
+		--]]
+	["DCT_EVENT_CAPTURED"] = eventbase + 4,
+		--[[
+		-- CAPTURED definition:
+		--   id = id of this event
+		--   initiator = object that initiated the capture
+		--   target = the base that has been captured
+		--]]
+}
 
 return enum

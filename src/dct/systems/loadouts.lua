@@ -24,7 +24,7 @@ local function totalPayload(grp, limits)
 	end
 
 	-- tally restricted weapon cost
-	for _, wpn in ipairs(payload) do
+	for _, wpn in ipairs(payload or {}) do
 		local wpnname = wpn.desc.displayName
 		local wpncnt  = wpn.count
 		local restricted = restrictedWeapons[wpnname]
@@ -54,49 +54,11 @@ local function validatePayload(grp, limits)
 	return true, total
 end
 
-local notifymsg =
-	"Please read the loadout limits in the briefing and "..
-	"use the F10 Menu to validate your loadout before departing."
 local loadout = {}
 
-function loadout.notify(player)
-	trigger.action.outTextForGroup(player.groupId, notifymsg, 20, false)
-end
-
-function loadout.kick(player)
-	local ok = validatePayload(Group.getByName(player.name),
-		player.payloadlimits)
-	if ok then
-		return
-	end
-
-	trigger.action.outTextForGroup(player.groupId,
-		"You have been removed to spectator for flying with an "..
-		"invalid loadout. "..notifymsg,
-		20, true)
-	trigger.action.setUserFlag(player.name, 100)
-	player:kick()
-	return ok
-end
-
 function loadout.check(player)
-	local msg
-	local ok, costs = validatePayload(Group.getByName(player.name),
+	return validatePayload(Group.getByName(player.name),
 		player.payloadlimits)
-	if ok then
-		msg = "Valid loadout, you may depart. Good luck!"
-	else
-		msg = "You are over budget! Re-arm before departing, or "..
-			"you will be kicked to spectator!"
-	end
-
-	-- print cost summary
-	msg = msg.."\n== Loadout Summary:"
-	for cat, val in pairs(enum.weaponCategory) do
-		msg = msg ..string.format("\n\t%s cost: %d / %d",
-			cat, costs[val].current, costs[val].max)
-	end
-	return msg
 end
 
 function loadout.addmenu(asset, menu, handler, context)

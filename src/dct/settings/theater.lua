@@ -74,11 +74,45 @@ local function validate_codenamedb(cfgdata, tbl)
 	return newtbl
 end
 
+local function gridfmt_transform(tbl)
+	local ntbl = {}
+	for k, v in pairs(tbl) do
+		if type(v) == "number" then
+			ntbl[k] = v
+		else
+			ntbl[k] = dctutils.posfmt[string.upper(v)]
+			assert(ntbl[k] ~= nil, "invalid grid format for "..k)
+		end
+	end
+	return ntbl
+end
+
+local function ato_transform(tbl)
+	local ntbl = {}
+	for ac, mlist in pairs(tbl) do
+		ntbl[ac] = {}
+		for _, v in pairs(mlist) do
+			local mtype = string.upper(v)
+			local mval  = enum.missionType[mtype]
+			assert(mval ~= nil,
+				string.format("invalid mission type: %s for ac: %s",
+					v, ac))
+			ntbl[ac][mtype] = mval
+		end
+	end
+	return ntbl
+end
+
 local function validate_ui(cfgdata, tbl)
 	local newtbl = {}
 	utils.mergetables(newtbl, cfgdata.default)
 	for k, v in pairs(tbl) do
 		utils.mergetables(newtbl[k], v)
+		if k == "gridfmt" then
+			newtbl[k] = gridfmt_transform(newtbl[k])
+		elseif k == "ato" then
+			newtbl[k] = ato_transform(newtbl[k])
+		end
 	end
 	return newtbl
 end
@@ -119,7 +153,6 @@ local function theatercfgs(config)
 			["name"] = "payloadlimits",
 			["file"] = config.server.theaterpath..utils.sep.."settings"..
 				utils.sep.."payloadlimits.cfg",
-			["cfgtblname"] = "payloadlimits",
 			["validate"] = validate_payload_limits,
 			["default"] = defaultpayload,
 		},
@@ -127,7 +160,6 @@ local function theatercfgs(config)
 			["name"] = "codenamedb",
 			["file"] = config.server.theaterpath..utils.sep.."settings"..
 				utils.sep.."codenamedb.cfg",
-			["cfgtblname"] = "codenamedb",
 			["validate"] = validate_codenamedb,
 			["default"] = require("dct.data.codenamedb"),
 		},
@@ -135,7 +167,6 @@ local function theatercfgs(config)
 			["name"] = "ui",
 			["file"] = config.server.theaterpath..utils.sep.."settings"..
 				utils.sep.."ui.cfg",
-			["cfgtblname"] = "dctui",
 			["validate"] = validate_ui,
 			["default"] = {
 				["gridfmt"] = {
@@ -148,7 +179,6 @@ local function theatercfgs(config)
 					["A-10A"]         = dctutils.posfmt.MGRS,
 					["A-10C"]         = dctutils.posfmt.MGRS,
 					["A-10C_2"]       = dctutils.posfmt.MGRS,
-					["AV8BNA"]        = dctutils.posfmt.DDM,
 					["F-5E-3"]        = dctutils.posfmt.DDM,
 					["F-16C_50"]      = dctutils.posfmt.DDM,
 					["FA-18C_hornet"] = dctutils.posfmt.DDM,

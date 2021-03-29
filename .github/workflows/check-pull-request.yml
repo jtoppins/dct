@@ -4,6 +4,9 @@ on:
   pull_request:
     branches:
     - master
+  push:
+    branches:
+    - master
 
 env:
   PACKAGES: lua5.1 lua-md5 lua-filesystem lua-check

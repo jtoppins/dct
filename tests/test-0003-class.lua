@@ -3,6 +3,7 @@
 require("os")
 require("io")
 local class = require("libs.class")
+local namedclass = require("libs.namedclass")
 --local json  = require("libs.json")
 local instance
 
@@ -31,6 +32,9 @@ local function main()
     --print("b: "..json:encode_pretty(b))
     --print("a: "..tostring(a).."; b: "..tostring(b)..
     --    "; instance: "..tostring(instance))
+
+    local named = namedclass("New Class", A)
+    assert(named.__clsname == "New Class", "named classes not working?")
 end
 
 os.exit(main())

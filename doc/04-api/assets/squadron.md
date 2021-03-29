@@ -1,16 +1,26 @@
-# Squadrons
+# Squadron
 
 A logical representation of a group of aircraft associated with a given
 airbase.
 
-## Definition
+## Template Definition
 
-Like other templates[1] squadrons are defined in regions and
-associated with an airbase by means of the airbase's subordinate
-list. See [template](template.md) for details on individual attributes
-or the [examples](examples) section.
+Example template definition.
 
-## AI Squadrons
+**file location:** `<theater-root>/Region 1/99thfs.dct`
+
+	objtype = "squadronplayer"
+	name = "99thFS"
+	coalition = 2
+	intel = 2
+	ato = {"CAP", "cas"}
+	payloadlimits = {
+		["ag"] = 20,
+		["aa"] = 5,
+	}
+
+
+### AI Squadrons
 
 An STM file is associated with an AI squadron which defines various
 things including:
@@ -46,36 +56,34 @@ payload defined.
  - SEAD
  - Transport
 
-## Player Squadrons
+### Player Squadrons
 
 Player squadrons do not need an STM file and have a few limitations:
 
  * Player slots cannot be mixed with an AI squadron
  * a slot can belong to one and only one squadron
 
-### Player Slot Membership
-
-All player slots must belong to a squadron. If the slot does not specify
-which squadron it is a member of the slot will be placed in a generic
-per-side squadron.
-
 A player slot can specify squadron membership by making the **first
 word of the group name** equal to any squadron template name defined
-in the theater definition.
+in the theater definition. If the squadron does not exist when
+a player spawns into the slot defaults for payloadlimits and ato
+will be used.
 
-## Disablement and Death
+## Details
+
+### Disablement and Death
 
 Conditions which a squadron is no longer able to sortie missions.
 
 Disable Conditions:
 
  1. Depleting airframe count
- 2. Disabling airbase runway
- 3. Airbase is contested
+ 2. Airbase is not operational
 
 Death Conditions:
 
  1. Capturing the airbase
 
-## Create Flights from Mission Requests
+### Create Flights from Mission Requests
 
+TODO

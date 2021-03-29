@@ -47,6 +47,25 @@ _Note: if you have multiple dedicated server saved game folders (referred to
 a "write directory" in the DCS dedicated server documentation) you will need
 a dct.cfg in each instance._
 
+### Example Configuration File
+
+The below is a valid example of the `dct.cfg` configuration file. Where
+text in `<>` represent a variable instead of a constant.
+
+	debug = false
+	profile = false
+	--statepath = "<dcs-saved-games>/<theater-name>_<sortie-name>.state"
+	--theaterpath = "<dcs-temp-directory>/theater"
+	schedfreq = 2
+	tgtfps = 75
+	percentTimeAllowed = .3
+	period = -1
+	logger = {}
+	whitelists = {}
+	statServerHostname = "localhost"
+	statServerPort = 8095
+	dctid = "changeme"
+
 ### Options
 
 All DCT server configuration can be accessed via LUA's global table at:
@@ -142,3 +161,80 @@ logging levels are:
  * `(4) debug`
 
 The default level is the "warn" level.
+
+`<subsystem>` can be one of the following:
+
+ * `Theater`
+ * `Command`
+ * `Goal`
+ * `Commander`
+ * `Asset`
+ * `AssetManager`
+ * `Observable`
+ * `Region`
+ * `UI`
+
+#### `period`
+
+ * _value:_ time in seconds, -1 disables restart
+ * _default:_ -1
+
+The amount of time, in seconds, the server will be run before being
+restarted by the dct-hooks script. This allows a server to periodically
+restart its mission, this does not reset the saved state of the mission.
+
+#### `whitelists`
+
+ * _value:_ a two level table specifying whitelists for special role slots
+ * _default:_ empty table
+
+ An allow list can be defined for each special role slot allowing a server
+ administrator to restrict the usage of these slots to specific people.
+
+ A example of how to define a whitelist:
+
+	whitelist = {
+		["admin"] = {
+			"ucid-1",
+			"ucid-2",
+		},
+		["observer"] = {
+			"ucid-3",
+			"ucid-4",
+		},
+	}
+
+Role specific slot types:
+
+ * admin
+ * forward_observer
+ * instructor
+ * artillery_commander
+ * observer
+
+If a UCID is a member of the "admin" role type these players can join any
+slot on the server, assuming they have the DCS paid for content.
+
+#### `statServerHostname`
+
+ * _value:_ string, DNS server name or IPv4 address
+ * _default:_ localhost
+
+This address is used to send UDP data about the mission and its status
+to a UDP server, generally a discord bot.
+
+#### `statServerPort`
+
+ * _value:_ number, UDP port number
+ * _default:_ localhost
+
+The port number on which a UDP server is listening to receive server data.
+
+#### `dctid`
+
+ * _value:_ string
+ * _default:_ changeme
+
+This is the ID by which this DCS server will be identified in UDP export
+messages. This is used to differentiate different servers that use the
+same UDP server to centralize the data.

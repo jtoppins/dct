@@ -1,5 +1,6 @@
 #!/usr/bin/lua
 
+require("os")
 require("dcttestlibs")
 require("dct")
 local utils = require("dct.utils")
@@ -77,7 +78,7 @@ local testlo = {
 }
 
 local testcentroid = {
-	[1] = {
+	{
 		["points"] = {
 			[1] = {
 				["x"] = 10, ["y"] = -4, ["z"] = 15,
@@ -92,8 +93,7 @@ local testcentroid = {
 		["expected"] = {
 			["x"] = 5, ["y"] = 1, ["z"] = 7,
 		},
-	},
-	[2] = {
+	}, {
 		["points"] = {
 			[1] = {
 				["x"] = 10, ["z"] = 15,
@@ -108,8 +108,16 @@ local testcentroid = {
 		["expected"] = {
 			["x"] = 7, ["y"] = 0, ["z"] = 7,
 		},
-	},
-
+	}, {
+		["points"] = {
+			{ ["y"] = -172350.64739488, ["x"] = -26914.832345419, },
+			{ ["y"] = -172782.23876319, ["x"] = -26886.142122476, },
+			{ ["y"] = -172576.47430698, ["x"] = -27159.936678189, },
+		},
+		["expected"] = {
+			["x"] = -26986.970382028, ["y"] = -172569.786821683, ["z"] = 0,
+		},
+	}
 }
 
 local function main()
@@ -136,17 +144,18 @@ local function main()
 		for _, pt in ipairs(v.points) do
 			centroid, n = utils.centroid(pt, centroid, n)
 		end
-		assert(centroid.x == v.expected.x and centroid.y == v.expected.y and
-			centroid.z == v.expected.z,
+		assert(math.abs(centroid.x - v.expected.x) < 0.00001 and
+			math.abs(centroid.y - v.expected.y) < 0.00001 and
+			math.abs(centroid.z - v.expected.z) < 0.00001,
 			"utils.centroid unexpected value; got: "..
 			json:encode_pretty(centroid).."; expected: "..
 			json:encode_pretty(v.expected))
 	end
 
-	assert("2001-06-22 16:00l" == utils.date("%F %Rl", utils.time(3600)),
-		"failed: "..utils.date("%F %Rl", utils.time(3600)))
-	assert("2001-06-22 10:00z" == utils.date("%F %Rz", utils.zulutime(3600)),
-		"failed: "..utils.date("%F %Rz", utils.zulutime(3600)))
+	assert("2001-06-22 16:00l" == os.date("!%F %Rl", utils.time(3600)),
+		"failed: "..os.date("!%F %Rl", utils.time(3600)))
+	assert("2001-06-22 22:00z" == os.date("!%F %Rz", utils.zulutime(3600)),
+		"failed: "..os.date("!%F %Rz", utils.zulutime(3600)))
 	return 0
 end
 

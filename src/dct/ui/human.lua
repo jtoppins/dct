@@ -8,7 +8,6 @@ require("math")
 local utils    = require("libs.utils")
 local enum     = require("dct.enum")
 local dctutils = require("dct.utils")
-local settings = _G.dct.settings.ui
 
 local human = {}
 
@@ -48,6 +47,21 @@ function human.threat(value)
 	return "high"
 end
 
+function human.strength(value)
+	if value == nil then
+		return "Unknown"
+	end
+
+	if value < 25 then
+		return "Critical"
+	elseif value >= 25 and value < 75 then
+		return "Marginal"
+	elseif value >= 75 and value < 125 then
+		return "Nominal"
+	end
+	return "Excellent"
+end
+
 function human.missiontype(mtype)
 	return assert(utils.getkey(enum.missionType, mtype),
 		"no name found for mission type ("..mtype..")")
@@ -60,15 +74,6 @@ function human.locationhdr(msntype)
 		hdr = "Station AO"
 	end
 	return hdr
-end
-
-function human.grid2actype(actype, location, precision)
-	local fmt = settings.gridfmt[actype]
-	precision = precision or 3
-	if fmt == nil then
-		fmt = dctutils.posfmt.DMS
-	end
-	return dctutils.fmtposition(location, precision, fmt)
 end
 
 function human.drawTargetIntel(msn, grpid, readonly)

@@ -19,6 +19,7 @@
 
 -- luacheck: read_globals log DCS net
 
+local dctflag           = "DCTFLAG"
 local facility          = "[DCT-HOOKS]"
 local DEBUG_SCRIPT      = false
 local loglevel = log.ALERT + log.ERROR + log.WARNING + log.INFO
@@ -61,12 +62,19 @@ end
 
 local settingsf
 ok, settingsf = pcall(require, "dct.settings.server")
-if not ok then
+if not ok or type(settingsf) ~= "function" then
 	log.write(facility, log.ERROR,
-		string.format("unable to load dct settings: %s", settingsf))
+		string.format("unable to require server settings: %s", settingsf))
 	return
 end
-local settings = settingsf({})
+
+local settings
+ok, settings = pcall(settingsf, {})
+if not ok then
+	log.write(facility, log.ERROR,
+		string.format("unable to load server settings: %s", settings))
+	return
+end
 
 local PROTOCOL_VERSION = 1
 
@@ -116,6 +124,14 @@ local special_unit_role_types = {
 	["observer"]            = true,
 }
 
+local function get_player_info(id)
+	local player = net.get_player_info(id)
+	if player and player.slot == '' then
+		player.slot = nil
+	end
+	return player
+end
+
 -- returns a JSON string conforming to the application format
 local function build_message(serverid, msgtype, value)
 	local msg = {
@@ -128,6 +144,103 @@ local function build_message(serverid, msgtype, value)
 	local j = net.lua2json(msg)
 	log.write(facility, log.DEBUG, "build_message: "..j)
 	return j
+end
+
+local function rpc_send_msg_to_all(msg, dtime, clear)
+	local cmd = [[
+		trigger.action.outText("]]..tostring(msg)..
+			[[", ]]..tostring(dtime)..[[, ]]..tostring(clear)..[[);
+		return "true"
+	]]
+	return cmd
+end
+
+local function rpc_slot_enabled(grpname)
+	local cmd = [[
+		local name = "]]..tostring(grpname)..[["
+		local en = trigger.misc.getUserFlag(name)
+		local kick = trigger.misc.getUserFlag(name.."_kick")
+		local result = (en == 1 and kick ~= 1)
+		env.info(string.format(
+			"DCT slot(%s) check - slot: %s; kick: %s; result: %s",
+			tostring(name), tostring(en), tostring(kick),
+			tostring(result)), false)
+		return tostring(result)
+	]]
+	return cmd
+end
+
+local function rpc_get_flag(flagname)
+	local cmd = [[
+		local flag = trigger.misc.getUserFlag("]]..
+			tostring(flagname)..[[") or 0
+		return tostring(flag)
+	]]
+	return cmd
+end
+
+local function rpc_set_flag(flagname, value)
+	local cmd = [[
+		trigger.action.setUserFlag("]]..tostring(flagname)..
+			[[",]]..tostring(value)..[[);
+		return "true"
+	]]
+	return cmd
+end
+
+-- Returns: nil on error otherwise data in the requested type
+local function do_rpc(ctx, cmd, valtype)
+	local status, errmsg = net.dostring_in(ctx, cmd)
+	if not status then
+		log.write(facility, log.ERROR,
+			string.format("rpc failed in context(%s): %s", ctx, errmsg))
+		return
+	end
+
+	local val
+	if valtype == "number" then
+		val = tonumber(status)
+	elseif valtype == "boolean" then
+		local t = {
+			["true"] = true,
+			["false"] = false,
+		}
+		val = t[string.lower(status)]
+	elseif valtype == "string" then
+		val = status
+	elseif valtype == "table" then
+		local rc, result = pcall(net.json2lua, status)
+		if not rc then
+			log.write(facility, log.ERROR,
+				"rpc json decode failed: "..tostring(result))
+			log.write(facility, log.DEBUG,
+				"rpc json decode input: "..tostring(status))
+			val = nil
+		else
+			val = result
+		end
+	else
+		log.write(facility, log.ERROR,
+			string.format("rpc unsupported type(%s)", valtype))
+		val = nil
+	end
+	return val
+end
+
+local function isSlotEnabled(slot)
+	if slot == nil then
+		return false
+	end
+
+	local flag = do_rpc("server", rpc_slot_enabled(slot.groupName),
+		"boolean")
+	log.write(facility, log.DEBUG,
+		string.format("slot(%s) enabled: %s",
+			slot.groupName, tostring(flag)))
+	if flag == nil then
+		flag = true
+	end
+	return flag
 end
 
 local DCTHooks = class()
@@ -185,11 +298,14 @@ function DCTHooks:__init()
 		},
 	}
 
-	self.players  = {}
-	self.grp2player = {}
-	self.slots    = {}
+	self.players  = {} -- indexed by player id
+	self.slots    = {} -- indexed by unitId
+	self.groups   = {} -- maps group names to slot ids, indexed by
+	                   -- slot.groupName - a 1-to-many relation
 	self.blockspecialslots = (next(settings.server.whitelists) ~= nil)
 	self.whitelists = settings.server.whitelists
+	self.slot2player = {}  -- indexed by slotid (player.slot / slot.unitId)
+	                       -- pointing to player id; [unitId] = playerid
 end
 
 function DCTHooks:start()
@@ -210,6 +326,7 @@ end
 -- load the mission's available player slots
 function DCTHooks:getslots()
 	self.slots = {}
+	self.groups = {}
 
 	for coa, _ in pairs(DCS.getAvailableCoalitions()) do
 		for _, slot in ipairs(DCS.getAvailableSlots(coa)) do
@@ -218,6 +335,12 @@ function DCTHooks:getslots()
 					"multiple units with unitId: "..tostring(slot.unitId))
 			end
 			self.slots[slot.unitId] = slot
+			if slot.groupName then
+				if self.groups[slot.groupName] == nil then
+					self.groups[slot.groupName] = {}
+				end
+				self.groups[slot.groupName][slot.unitId] = true
+			end
 		end
 	end
 end
@@ -250,7 +373,11 @@ end
 
 function DCTHooks:onSimulationResume()
 	log.write(facility, log.DEBUG, "onSimulationResume")
-	if not DCS.isServer() then
+	local dctenabled = do_rpc("server", rpc_get_flag(dctflag), "number")
+	if not DCS.isServer() or not dctenabled then
+		log.write(facility, log.DEBUG,
+			string.format("not DCT enabled; server(%s), enabled(%s)",
+				tostring(DCS.isServer()), tostring(dctenabled)))
 		return
 	end
 	self:start()
@@ -271,6 +398,7 @@ function DCTHooks:onMissionLoadEnd()
 		["sec"]   = 0,
 		["isdst"] = false,
 	}) + mission.start_time
+	self.slotkicktimer = 0
 	self.mission_start_mt = DCS.getModelTime()
 	self.mission_start_rt = DCS.getRealTime()
 	log.write(facility, log.DEBUG, string.format("mission_time: %f, %s",
@@ -282,17 +410,18 @@ function DCTHooks:onMissionLoadEnd()
 	log.write(facility, log.DEBUG, "mission_period: "..
 		tostring(self.mission_period))
 	for _, data in pairs(self.restartwarnings) do
-		data.sent = false
+		if settings.server.period < 0 then
+			data.sent = true
+		else
+			data.sent = false
+		end
 	end
 	self.info.mission.dirty = true
 end
 
 function DCTHooks:onPlayerConnect(id)
 	log.write(facility, log.DEBUG, "player connect, id: "..tostring(id))
-	local player = net.get_player_info(id)
-	if player.slot == '' then
-		player.slot = nil
-	end
+	local player = get_player_info(id)
 	if self.players[id] ~= nil then
 		log.write(facility, log.WARNING,
 			string.format("player id(%s) already assigned, overwriting", id))
@@ -310,139 +439,50 @@ function DCTHooks:onPlayerDisconnect(id, err_code)
 	log.write(facility, log.DEBUG,
 		string.format("player disconnect; id(%s), code(%s)",
 			tostring(id), tostring(err_code)))
-	local player = self.players[id]
-	if player == nil then
-		log.write(facility, log.WARNING,
-			string.format(
-				"received disconnect for non-existent player id(%s)", id))
-		return
+	-- clean up tables from last cached player data
+	if self.players[id] and self.players[id].slot then
+		self.slot2player[self.players[id].slot] = nil
 	end
+	-- delete player entry
 	self.players[id] = nil
 	self.info.players.dirty = true
 end
 
-function DCTHooks:addGrpEntry(id)
-	if self.players[id] == nil or self.players[id].slot == nil then
-		return
-	end
-	local grpname = self.slots[self.players[id].slot].groupName
-	self.grp2player[grpname] = id
-end
-
-function DCTHooks:removeGrpEntry(id)
-	if self.players[id] == nil or self.players[id].slot == nil then
-		return
-	end
-	local grpname = self.slots[self.players[id].slot].groupName
-	self.grp2player[grpname] = nil
-end
-
 function DCTHooks:onPlayerChangeSlot(id)
 	log.write(facility, log.DEBUG, "player change slot, id: "..tostring(id))
-	self:removeGrpEntry(id)
-	self.players[id] = net.get_player_info(id)
-	if self.players[id].slot == '' then
-		self.players[id].slot = nil
+	local prev_player = self.players[id]
+	local new_player  = get_player_info(id)
+	if prev_player and prev_player.slot then
+		self.slot2player[prev_player.slot] = nil
 	end
-	self:addGrpEntry(id)
+	if new_player and new_player.slot then
+		self.slot2player[new_player.slot] = id
+	end
+	self.players[id] = new_player
 	self.info.players.dirty = true
 end
 
-local function rpc_send_msg_to_all(msg, dtime, clear)
-	local cmd = [[
-		trigger.action.outText("]]..tostring(msg)..
-			[[", ]]..tostring(dtime)..[[, ]]..tostring(clear)..[[);
-		return true;
-	]]
-	return cmd
-end
-
-local function rpc_slot_enabled(grpname)
-	local cmd = [[
-		local t = require("dct.Theater").singleton()
-		local asset = t:getAssetMgr():getAsset(]]..grpname..[[)
-		local v = asset:isSpawned()
-		if v == true then
-			v = 1
-		else
-			v = 0
-		end
-		return v
-	]]
-	return cmd
-end
-
-local function rpc_get_kicklist()
-	local cmd = [[
-		local t = require("dct.Theater").singleton()
-		return t:getkicklist()
-	]]
-	return cmd
-end
-
--- Returns: nil on error otherwise data in the requested type
-local function do_rpc(ctx, cmd, valtype)
-	local status, errmsg = net.dostring_in(ctx, cmd)
-	if not status then
-		log.write(facility, log.ERROR,
-			string.format("rpc failed in context(%s): %s", ctx, errmsg))
-		return
-	end
-
-	local val
-	if valtype == "number" then
-		val = tonumber(status)
-	elseif valtype == "boolean" then
-		val = (tonumber(status) ~= 0)
-	elseif valtype == "string" then
-		val = status
-	elseif valtype == "table" then
-		local result
-		status, result = pcall(net.json2lua, status)
-		if not status then
-			log.write(facility, log.ERROR,
-				"rpc json decode failed: "..tostring(result))
-			val = nil
-		else
-			val = result
-		end
-	else
-		log.write(facility, log.ERROR,
-			string.format("rpc unsupported type(%s)", valtype))
-		val = nil
-	end
-	return val
-end
-
-local function isSlotEnabled(slot)
-	if slot == nil then
-		return false
-	end
-
-	local flag = do_rpc("server", rpc_slot_enabled(slot.groupName),
-		"boolean")
-	log.write(facility, log.DEBUG, "flag: "..tostring(flag))
-	if flag == nil then
-		flag = true
-	end
-	return flag
+function DCTHooks:isEnabled()
+	return self.started
 end
 
 -- Returns: true - allows slot change, false - denies change
 function DCTHooks:onPlayerTryChangeSlot(playerid, _, slotid)
-	if not self.started then
+	if not self:isEnabled() then
 		return
 	end
 
 	local slot   = self.slots[slotid]
 	local player = self.players[playerid]
 	local rc = false
+	local reason
 
 	if slot == nil then
 		return true
 	end
 
 	if special_unit_role_types[slot.role] ~= nil then
+		reason = "not allowed in special role slot"
 		for _, list in ipairs({slot.role, "admin"}) do
 			if self.whitelists[list] ~= nil and
 			   self.whitelists[list][player.ucid] ~= nil then
@@ -456,6 +496,7 @@ function DCTHooks:onPlayerTryChangeSlot(playerid, _, slotid)
 			rc = true
 		end
 	else
+		reason = "plane slot is disabled"
 		rc = isSlotEnabled(slot)
 	end
 
@@ -463,6 +504,8 @@ function DCTHooks:onPlayerTryChangeSlot(playerid, _, slotid)
 		net.send_chat_to(
 			string.format("***slot(%s) permission denied, choose another***",
 				tostring(slot.unitId)),
+			playerid, net.get_server_id())
+		net.send_chat_to(string.format("  reason: %s", reason),
 			playerid, net.get_server_id())
 	end
 	return rc
@@ -535,50 +578,50 @@ function DCTHooks:sendplayers()
 	self.info.players.dirty = false
 end
 
-function DCTHooks:kickPlayerFromSlot(id)
-	net.force_player_slot(id, 0, '')
-	net.send_chat_to("*** you have been removed from slot ***", id)
-end
-
-function DCTHooks:getkicklist()
-	local t = do_rpc("server", rpc_get_kicklist(), "table")
-	if t == nil then
-		t = {}
+function DCTHooks:kickPlayersInGroup(grpname, slots)
+	local kick = do_rpc("server", rpc_get_flag(grpname.."_kick"), "number")
+	if kick == 1 then
+		for slotid, _ in pairs(slots) do
+			local pid = self.slot2player[slotid]
+			if pid then
+				net.force_player_slot(pid, 0, '')
+				net.send_chat_to(string.format(
+						"*** you have been kicked from slot(%s) ***\n"..
+						"  reason: kick requested by flag", slotid),
+					pid, net.get_server_id())
+			end
+		end
 	end
-	return t
+	do_rpc("server", rpc_set_flag(grpname.."_kick", false), "boolean")
 end
 
 function DCTHooks:onSimulationFrame()
-	if not self.started then
+	if not self:isEnabled() then
 		return
 	end
 
 	local realtime = DCS.getRealTime()
 	for t, info in pairs(self.info) do
 		if info.dirty and realtime - info.lastsent > info.period then
+			log.write(facility, log.DEBUG, "time check - starting")
 			self.info[t].lastsent = realtime
 			self["send"..t](self)
+			log.write(facility, log.DEBUG,
+				string.format("Model time is: %f", DCS.getModelTime()))
+			log.write(facility, log.DEBUG, "time check - complete")
 			break
 		end
 	end
 
-	local modeltime = DCS.getModelTime()
-	if (modeltime - self.slotkicktimer) > self.slotkickperiod then
+	local modeltime = os.clock()
+	if math.abs(modeltime - self.slotkicktimer) > self.slotkickperiod then
+		log.write(facility, log.DEBUG, "kick check - starting")
 		self.slotkicktimer = modeltime
-		for _, id in pairs(self:getkicklist()) do
-			self:kickPlayerFromSlot(id)
+		for grpname, slots in pairs(self.groups) do
+			self:kickPlayersInGroup(grpname, slots)
 		end
+		log.write(facility, log.DEBUG, "kick check - complete")
 	end
-
-	-- This is where we could process commands received
-	-- TODO: a better approach would be to do a select type thing between
-	--   sending data
-	--   receiving data
-	--   and processing commands
-	-- an even further simplification would be to turn this into a generic
-	-- command processor like the Theater class. Then everything just
-	-- becomes about processing commands from a command queue. The limitation
-	-- with that is what happens when the server is paused?
 end
 
 local function dct_call_hook(hook, ...)
@@ -633,8 +676,3 @@ local status, errmsg = pcall(dct_load, DCTHooks())
 if not status then
 	log.write(facility, log.ERROR, "Load Error: "..tostring(errmsg))
 end
-
---[[
--- set the name of the server player
-net.set_name(net.get_server_id(), "ServerBOT")
---]]

@@ -8,6 +8,7 @@ require("lfs")
 local class = require("libs.class")
 local utils = require("libs.utils")
 local enum  = require("dct.enum")
+local vector= require("dct.libs.vector")
 local Goal  = require("dct.Goal")
 local STM   = require("dct.templates.STM")
 
@@ -72,20 +73,12 @@ local function goalFromName(name, objtype)
 	return goal
 end
 
--- unique name counter, allows us to generate names that are always unique
--- TODO: this value would need to be saved for mission persistance
-local namecntr = 1000
-
-local function getcntr()
-	namecntr = namecntr + 1
-	return namecntr
-end
-
 local function makeNamesUnique(data)
 	for _, grp in ipairs(data) do
-		grp.data.name = grp.data.name .. " #" .. getcntr()
+		grp.data.name = grp.data.name.." #"..
+			dct.Theater.singleton():getcntr()
 		for _, v in ipairs(grp.data.units or {}) do
-			v.name = v.name .. " #" .. getcntr()
+			v.name = v.name.." #"..dct.Theater.singleton():getcntr()
 		end
 	end
 end
@@ -119,6 +112,7 @@ local function overrideGroupOptions(grp, idx, tpl)
 	end
 
 	grp.data.groupId = nil
+	grp.data.unitId  = nil
 	grp.data.start_time = 0
 	grp.data.dct_deathgoal = goalFromName(grp.data.name, goaltype)
 	if grp.data.dct_deathgoal ~= nil then
@@ -136,6 +130,27 @@ local function checktpldata(_, tpl)
 	-- loop over all tpldata and process names and existence of deathgoals
 	for idx, grp in ipairs(tpl.tpldata) do
 		overrideGroupOptions(grp, idx, tpl)
+	end
+	return true
+end
+
+local function checkbldgdata(keydata, tpl)
+	for _, bldg in ipairs(tpl[keydata.name]) do
+		local bldgdata = {}
+		bldgdata.countryid = 0
+		bldgdata.category  = enum.UNIT_CAT_SCENERY
+		bldgdata.data = {
+			["dct_deathgoal"] = goalFromName(bldg.goal,
+				Goal.objtype.SCENERY),
+			["name"] = tostring(bldg.id),
+		}
+		local sceneryobject = { id_ = tonumber(bldgdata.data.name), }
+		utils.mergetables(bldgdata.data,
+			vector.Vector2D(Object.getPoint(sceneryobject)):raw())
+		table.insert(tpl.tpldata, bldgdata)
+		if bldgdata.data.dct_deathgoal ~= nil then
+			tpl.hasDeathGoals = true
+		end
 	end
 	return true
 end
@@ -164,54 +179,129 @@ local function checkside(keydata, tbl)
 	return false
 end
 
+local function checktakeoff(keydata, tpl)
+	local allowed = {
+		["inair"]   = AI.Task.WaypointType.TURNING_POINT,
+		["runway"]  = AI.Task.WaypointType.TAKEOFF,
+		["parking"] = AI.Task.WaypointType.TAKEOFF_PARKING,
+	}
+
+	local val = allowed[tpl[keydata.name]]
+	if val then
+		tpl[keydata.name] = val
+		return true
+	end
+	return false
+end
+
+local function checkrecovery(keydata, tpl)
+	local allowed = {
+		["terminal"] = true,
+		["land"]     = true,
+		["taxi"]     = true,
+	}
+
+	if allowed[tpl[keydata.name]] then
+		return true
+	end
+	return false
+end
+
+local function checkmsntype(keydata, tbl)
+	local msnlist = {}
+	for _, msntype in pairs(tbl[keydata.name]) do
+		local msnstr = string.upper(msntype)
+		if type(msntype) ~= "string" or
+		   enum.missionType[msnstr] == nil then
+			return false
+		end
+		msnlist[msnstr] = enum.missionType[msnstr]
+	end
+	tbl[keydata.name] = msnlist
+	return true
+end
+
+local function check_payload_limits(keydata, tbl)
+	local newlimits = {}
+	for wpncat, val in pairs(tbl[keydata.name]) do
+		local w = enum.weaponCategory[string.upper(wpncat)]
+		if w == nil then
+			return false
+		end
+		newlimits[w] = val
+	end
+	tbl[keydata.name] = newlimits
+	return true
+end
+
+
 local function getkeys(objtype)
+	local notpldata = {
+		[enum.assetType.AIRSPACE]       = true,
+		[enum.assetType.AIRBASE]        = true,
+		[enum.assetType.SQUADRONPLAYER] = true,
+	}
+	local defaultintel = 0
+	if objtype == enum.assetType.AIRBASE then
+		defaultintel = 5
+	end
+
 	local keys = {
-		[1] = {
+		{
 			["name"]  = "name",
 			["type"]  = "string",
-		},
-		[2] = {
+		}, {
 			["name"]  = "regionname",
 			["type"]  = "string",
-		},
-		[3] = {
+		}, {
 			["name"]  = "coalition",
 			["type"]  = "number",
 			["check"] = checkside,
-		},
-		[4] = {
+		}, {
 			["name"]    = "uniquenames",
 			["type"]    = "boolean",
 			["default"] = false,
-		},
-		[5] = {
+		}, {
+			["name"]    = "ignore",
+			["type"]    = "boolean",
+			["default"] = false,
+		}, {
+			["name"]    = "regenerate",
+			["type"]    = "boolean",
+			["default"] = false,
+		}, {
 			["name"]    = "priority",
 			["type"]    = "number",
 			["default"] = enum.assetTypePriority[objtype] or 1000,
-		},
-		[6] = {
-			["name"]    = "primary",
-			["type"]    = "boolean",
-			["default"] = false,
-		},
-		[7] = {
+		}, {
 			["name"]    = "intel",
 			["type"]    = "number",
-			["default"] = 0,
-		},
-		[8] = {
+			["default"] = defaultintel,
+		}, {
 			["name"]    = "spawnalways",
 			["type"]    = "boolean",
 			["default"] = false,
+		}, {
+			["name"]    = "cost",
+			["type"]    = "number",
+			["default"] = 0,
+		}, {
+			["name"]    = "desc",
+			["type"]    = "string",
+			["default"] = "default template description",
 		},
 	}
 
-	if objtype ~= enum.assetType.AIRSPACE and
-		objtype ~= enum.assetType.AIRBASE then
+	if notpldata[objtype] == nil then
 		table.insert(keys, {
 			["name"]  = "tpldata",
 			["type"]  = "table",
 			["check"] = checktpldata,})
+		table.insert(keys, {
+			["name"]    = "buildings",
+			["type"]    = "table",
+			["default"] = {},
+			["check"] = checkbldgdata,})
 	end
 
 	if objtype == enum.assetType.AIRSPACE then
@@ -225,10 +315,35 @@ local function getkeys(objtype)
 
 	if objtype == enum.assetType.AIRBASE then
 		table.insert(keys, {
-			["name"]  = "defenses",
-			["type"]  = "string", })
+			["name"]  = "subordinates",
+			["type"]  = "table", })
+		table.insert(keys, {
+			["name"]    = "takeofftype",
+			["type"]    = "string",
+			["default"] = "inair",
+			["check"]   = checktakeoff,})
+		table.insert(keys, {
+			["name"]    = "recoverytype",
+			["type"]    = "string",
+			["default"] = "terminal",
+			["check"]   = checkrecovery,})
 	end
 
+	if objtype == enum.assetType.SQUADRONPLAYER then
+		table.insert(keys, {
+			["name"]    = "ato",
+			["type"]    = "table",
+			["check"]   = checkmsntype,
+			["default"] = enum.missionType,
+		})
+
+		table.insert(keys, {
+			["name"]    = "payloadlimits",
+			["type"]    = "table",
+			["check"]   = check_payload_limits,
+			["default"] = dct.settings.payloadlimits,
+		})
+	end
 	return keys
 end
 
@@ -267,13 +382,6 @@ end
 --      Optional Keys:
 --        * uniquenames - when a Template's data is copied the group and
 --              unit names a guaranteed to be unique if true
---        * priority - the relative importance of the template in relation
---              to other templates
---        * rank - determines if the template is a "primary", "secondary"
---              or "tertiary" target.
---        * base - [Required] only used if the 'objtype' represents some
---              sort of base object that needs to be associated with a
---              DCS base object, the name of the DCS base is put here.
 --
 --]]
 local Template = class()
@@ -282,7 +390,6 @@ function Template:__init(data)
 	self.hasDeathGoals = false
 	utils.mergetables(self, utils.deepcopy(data))
 	self:validate()
-
 	self.fromFile = nil
 end
 
@@ -309,7 +416,10 @@ function Template.fromFile(regionname, dctfile, stmfile)
 	assert(regionname ~= nil, "regionname is required")
 	assert(dctfile ~= nil, "dctfile is required")
 
-	local template = utils.readlua(dctfile, "metadata")
+	local template = utils.readlua(dctfile)
+	if template.metadata then
+		template = template.metadata
+	end
 	template.regionname = regionname
 	template.path = dctfile
 	if stmfile ~= nil then

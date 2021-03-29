@@ -58,7 +58,7 @@ function menus.createMenu(asset)
 
 	local msnmenu = addmenu(gid, "Mission", nil)
 	local rqstmenu = addmenu(gid, "Request", msnmenu)
-	for k, v in pairs(theater:getAssetMgr():getAsset(asset.name).ato) do
+	for k, v in pairs(asset.ato) do
 		addcmd(gid, k, rqstmenu, theater.playerRequest, theater,
 			{
 				["name"]   = name,

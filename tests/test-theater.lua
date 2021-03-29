@@ -213,7 +213,7 @@ end
 local function main()
 	local playergrp = Group(4, {
 		["id"] = 15,
-		["name"] = "Uzi 41",
+		["name"] = "99thFS Uzi 41",
 		["coalition"] = coalition.side.BLUE,
 		["exists"] = true,
 	})
@@ -222,18 +222,21 @@ local function main()
 		["exists"] = true,
 		["desc"] = {
 			["typeName"] = "FA-18C_hornet",
+			["attributes"] = {},
 		},
 	}, playergrp, "bobplayer")
 
 	local theater = dct.Theater()
 	_G.dct.theater = theater
 	theater:exec(50)
-	assert(dctcheck.spawngroups == 1,
+	local expected = 3
+	assert(dctcheck.spawngroups == expected,
 		string.format("group spawn broken; expected(%d), got(%d)",
-		1, dctcheck.spawngroups))
-	assert(dctcheck.spawnstatics == 11,
+		expected, dctcheck.spawngroups))
+	expected = 12
+	assert(dctcheck.spawnstatics == expected,
 		string.format("static spawn broken; expected(%d), got(%d)",
-		11, dctcheck.spawnstatics))
+		expected, dctcheck.spawnstatics))
 
 	--[[ TODO: test ATO once support is added for squadron
 	local restriction =
@@ -278,8 +281,10 @@ local function main()
 			["type"]   = enum.uiRequestType.THEATERSTATUS,
 		},
 		["assert"]     = true,
-		["expected"]   = "== Theater Threat Status ==\n  Sea:    medium\n"..
+		["expected"]   = "== Theater Threat Status ==\n"..
+			"  Force Str: Nominal\n  Sea:    medium\n"..
 			"  Air:    parity\n  ELINT:  medium\n  SAM:    medium\n\n"..
+			"== Friendly Force Info ==\n  Force Str: Nominal\n\n"..
 			"== Current Active Air Missions ==\n  No Active Missions\n\n"..
 			"Recommended Mission Type: CAP\n",
 	}
@@ -288,6 +293,14 @@ local function main()
 	trigger.action.setmsgbuffer(status.expected)
 	local cmd = uicmds[status.data.type](newtheater, status.data)
 	cmd:execute(400)
+
+	local playercnt = 0
+	for _, asset in pairs(theater:getAssetMgr()._assetset) do
+		if asset.type == enum.assetType.PLAYERGROUP then
+			playercnt = playercnt + 1
+		end
+	end
+	assert(playercnt == 162, "Player asset creation broken")
 
 	newtheater:export()
 	f = io.open(settings.statepath, "r")

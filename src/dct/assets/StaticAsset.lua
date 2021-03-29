@@ -9,16 +9,15 @@
 --]]
 
 require("math")
-local class    = require("libs.class")
 local utils    = require("libs.utils")
-local Logger   = dct.Logger.getByName("Asset")
+local enum     = require("dct.enum")
 local dctutils = require("dct.utils")
+local vector   = require("dct.libs.vector")
 local Goal     = require("dct.Goal")
 local AssetBase= require("dct.assets.AssetBase")
 
-local StaticAsset = class(AssetBase)
+local StaticAsset = require("libs.namedclass")("StaticAsset", AssetBase)
 function StaticAsset:__init(template, region)
-	self.__clsname = "StaticAsset"
 	self._maxdeathgoals = 0
 	self._curdeathgoals = 0
 	self._deathgoals    = {}
@@ -69,11 +68,11 @@ function StaticAsset:_removeDeathGoal(name, goal)
 		"value error: name must be provided")
 	assert(goal ~= nil, "value error: goal must be provided")
 
-	Logger:debug(string.format("%s:_removeDeathGoal() - obj name: %s",
-		self.__clsname, name))
+	self._logger:debug(string.format("_removeDeathGoal() - obj name: %s",
+		name))
 	if self:isDead() then
-		Logger:error(string.format("%s:_removeDeathGoal() called "..
-			"'%s' marked as dead", self.__clsname, self.name))
+		self._logger:error(string.format("_removeDeathGoal() called "..
+			"'%s' marked as dead", self.name))
 		return
 	end
 
@@ -102,7 +101,7 @@ end
 -- If no death goals have been defined a default of 90%
 -- damaged for all objects in the Asset is used.
 --]]
-function StaticAsset:_setupDeathGoal(grpdata, static)
+function StaticAsset:_setupDeathGoal(grpdata, category)
 	if self._hasDeathGoals then
 		if grpdata.dct_deathgoal ~= nil then
 			self:_addDeathGoal(grpdata.name, grpdata.dct_deathgoal)
@@ -113,7 +112,10 @@ function StaticAsset:_setupDeathGoal(grpdata, static)
 			end
 		end
 	else
-		self:_addDeathGoal(grpdata.name, AssetBase.defaultgoal(static))
+		self:_addDeathGoal(grpdata.name,
+			AssetBase.defaultgoal(
+				category == Unit.Category.STRUCTURE or
+				category == enum.UNIT_CAT_SCENERY))
 	end
 end
 
@@ -123,45 +125,29 @@ end
 --]]
 function StaticAsset:_setup()
 	for _, grp in ipairs(self._tpldata) do
-		self:_setupDeathGoal(grp.data,
-			grp.category == Unit.Category.STRUCTURE)
+		self:_setupDeathGoal(grp.data, grp.category)
 		self._assets[grp.data.name] = grp
 	end
-	assert(next(self._deathgoals) ~= nil,
-		string.format("runtime error: %s must have a deathgoal: %s",
-			self.__clsname, self.name))
+	if next(self._deathgoals) == nil then
+		self._logger:error("runtime error: must have a deathgoal, deleting")
+		self:setDead(true)
+	end
 end
 
 function StaticAsset:getLocation()
 	if self._location == nil then
-		local vec2
+		local vec2, n
 		for _, grp in pairs(self._assets) do
-			vec2 = dctutils.centroid(grp.data, vec2)
+			vec2, n = dctutils.centroid(grp.data, vec2, n)
 		end
-		self._location = dctutils.createVec3(vec2, land.getHeight(vec2))
+		vec2.z = nil
+		self._location = vector.Vector3D(vec2, land.getHeight(vec2)):raw()
 	end
 	return self._location
 end
 
 function StaticAsset:getStatus()
 	return math.floor((1 - (self._curdeathgoals / self._maxdeathgoals)) * 100)
-end
-
-function StaticAsset:checkDead()
-	assert(self:isSpawned() == true,
-		string.format("runtime error: Asset(%s) must be spawned",
-			self.name))
-
-	local cnt = 0
-	for name, goal in pairs(self._deathgoals) do
-		cnt = cnt + 1
-		if goal:checkComplete() then
-			self:_removeDeathGoal(name, goal)
-		end
-	end
-	Logger:debug(string.format("checkDead(%s) - max goals: %d; "..
-		"cur goals: %d; checked: %d", self.name,
-		self._maxdeathgoals, self._curdeathgoals, cnt))
 end
 
 function StaticAsset:getObjectNames()
@@ -178,7 +164,7 @@ function StaticAsset:handleDead(event)
 	local obj = event.initiator
 
 	-- mark the unit/group/static as dead in the template, dct_dead
-	local unitname = obj:getName()
+	local unitname = tostring(obj:getName())
 	if obj:getCategory() == Object.Category.UNIT then
 		local grpname = obj:getGroup():getName()
 		local grp = self._assets[grpname]
@@ -188,8 +174,16 @@ function StaticAsset:handleDead(event)
 				break
 			end
 		end
+		local goal = self._deathgoals[grpname]
+		if goal and goal:checkComplete() then
+			self:_removeDeathGoal(grpname, goal)
+		end
 	else
 		self._assets[unitname].data.dct_dead = true
+		local goal = self._deathgoals[unitname]
+		if goal and goal:checkComplete() then
+			self:_removeDeathGoal(unitname, goal)
+		end
 	end
 
 	-- delete any deathgoal related to the unit notified as dead,
@@ -223,17 +217,23 @@ local function removeDCTKeys(grp)
 	return g
 end
 
+local function __spawn(grp)
+	if grp.category == enum.UNIT_CAT_SCENERY then
+		return
+	end
+	if grp.category == Unit.Category.STRUCTURE then
+		coalition.addStaticObject(grp.countryid, grp.data)
+	else
+		coalition.addGroup(grp.countryid, grp.category, grp.data)
+	end
+end
+
 function StaticAsset:_spawn()
 	for _, grp in ipairs(self._tpldata) do
-		local gcpy = removeDCTKeys(grp)
-		if gcpy.category == Unit.Category.STRUCTURE then
-			coalition.addStaticObject(gcpy.countryid, gcpy.data)
-		else
-			coalition.addGroup(gcpy.countryid, gcpy.category, gcpy.data)
-		end
+		__spawn(removeDCTKeys(grp))
 	end
 
-	self._spawned = true
+	AssetBase.spawn(self)
 	for _, goal in pairs(self._deathgoals) do
 		goal:onSpawn()
 	end
@@ -241,8 +241,7 @@ end
 
 function StaticAsset:spawn(ignore)
 	if not ignore and self:isSpawned() then
-		Logger:error(string.format("runtime bug - %s(%s) already spawned",
-			self.__clsname, self.name))
+		self._logger:error("runtime bug - already spawned")
 		return
 	end
 	self:_spawn()
@@ -260,7 +259,7 @@ function StaticAsset:despawn()
 			object:destroy()
 		end
 	end
-	self._spawned = false
+	AssetBase.despawn(self)
 end
 
 local function filterDeadObjects(tbl, grp)
@@ -299,15 +298,19 @@ local function filterTemplateData(tpldata)
 end
 
 function StaticAsset:marshal()
-	if self:isDead() then
+	local tbl = AssetBase.marshal(self)
+	if tbl == nil then
 		return nil
 	end
-	local tbl = {}
-	tbl._tpldata = filterTemplateData(self._tpldata)
+	if self.regenerate then
+		tbl._tpldata = self._tpldata
+	else
+		tbl._tpldata = filterTemplateData(self._tpldata)
+	end
 	if tbl._tpldata == nil then
 		return nil
 	end
-	return utils.mergetables(AssetBase.marshal(self), tbl)
+	return tbl
 end
 
 return StaticAsset

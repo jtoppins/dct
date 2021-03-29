@@ -6,6 +6,7 @@
 
 require("os")
 require("math")
+local check = require("libs.check")
 local enum  = require("dct.enum")
 local utils = {}
 
@@ -40,6 +41,20 @@ function utils.assettype2mission(assettype)
 	return nil
 end
 
+local airbase_id2name_map = nil
+function utils.airbaseId2Name(id)
+	if id == nil then
+		return nil
+	end
+	if airbase_id2name_map == nil then
+		airbase_id2name_map = {}
+		for _, ab in pairs(world.getAirbases()) do
+			airbase_id2name_map[tonumber(ab:getID())] = ab:getName()
+		end
+	end
+	return airbase_id2name_map[id]
+end
+
 function utils.time(dcsabstime)
 	local time = os.time({
 		["year"]  = env.mission.date.Year,
@@ -54,72 +69,16 @@ function utils.time(dcsabstime)
 end
 
 local offsettbl = {
-	["Test Theater"] = -6*3600,
+	["Test Theater"] =  6*3600, -- simulate US Central TZ
 	["PersianGulf"]  = -4*3600,
 	["Nevada"]       =  8*3600,
 	["Caucuses"]     = -4*3600,
-	["Normandy"]     =  1*3600,
+	["Normandy"]     = -1*3600,
 }
 
 function utils.zulutime(abstime)
-	local correction = offsettbl[env.mission.theatre]
-	if correction == nil then
-		correction = 0
-	end
+	local correction = offsettbl[env.mission.theatre] or 0
 	return (utils.time(abstime) + correction)
-end
-
-local dst
-function utils.date(fmt, time)
-	if dst == nil then
-		local t = os.date("*t")
-		dst = t.isdst
-	end
-
-	if dst == true then
-		time = time - 3600
-	end
-	return os.date(fmt, time)
-end
-
---[[
-function utils.centroid(points)
-	local i = 0
-	local centroid = {
-		["x"] = 0, ["y"] = 0, ["z"] = 0,
-	}
-	for _,v in pairs(points) do
-		if v.x then
-			centroid.x = centroid.x + v.x
-		end
-		if v.y then
-			centroid.y = centroid.y + v.y
-		end
-		if v.z then
-			centroid.z = centroid.z + v.z
-		end
-		i = i + 1
-	end
-	centroid.x = centroid.x / i
-	centroid.y = centroid.y / i
-	centroid.z = centroid.z / i
-	return centroid
-end
---]]
-
-function utils.createVec2(vec3)
-	if vec3.z then
-		return {["x"] = vec3.x, ["y"] = vec3.z}
-	end
-	return {["x"] = vec3.x, ["y"] = vec3.y}
-end
-
-function utils.createVec3(vec2, height)
-	if vec2.z then
-		return {["x"] = vec2.x, ["y"] = vec2.y, ["z"] = vec2.z}
-	end
-	local h = height or vec2.alt or 0
-	return {["x"] = vec2.x, ["y"] = h, ["z"] = vec2.y}
 end
 
 function utils.centroid(point, pcentroid, n)
@@ -143,6 +102,15 @@ function utils.centroid(point, pcentroid, n)
 	return centroid, n1
 end
 
+-- returns a value guaranteed to be between min and max, inclusive.
+function utils.clamp(x, min, max)
+    return math.min(math.max(x, min), max)
+end
+
+-- add a random value between +/- sigma to val and return
+function utils.addstddev(val, sigma)
+    return val + math.random(-sigma, sigma)
+end
 
 utils.posfmt = {
 	["DD"]   = 1,
@@ -264,5 +232,35 @@ function utils.fmtposition(position, precision, fmt)
 
 	return utils.LLtostring(lat, long, precision, fmt)
 end
+
+utils.buildevent = {}
+function utils.buildevent.dead(obj)
+	check.table(obj)
+	local event = {}
+	event.id = enum.event.DCT_EVENT_DEAD
+	event.initiator = obj
+	return event
+end
+
+function utils.buildevent.hit(point, weapon)
+	check.table(point)
+	check.table(weapon)
+	local event = {}
+	event.id = enum.event.DCT_EVENT_HIT
+	event.point = point
+	event.weapon = weapon
+	return event
+end
+
+function utils.buildevent.operational(base, state)
+	check.table(base)
+	check.bool(state)
+	local event = {}
+	event.id = enum.event.DCT_EVENT_OPERATIONAL
+	event.initiator = base
+	event.state = state
+	return event
+end
+
 
 return utils

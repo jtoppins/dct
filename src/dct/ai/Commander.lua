@@ -4,7 +4,6 @@
 -- Defines a side's strategic theater commander.
 --]]
 
-local class      = require("libs.class")
 local utils      = require("libs.utils")
 local containers = require("libs.containers")
 local enum       = require("dct.enum")
@@ -41,7 +40,7 @@ end
 --[[
 -- For now the commander is only concerned with flight missions
 --]]
-local Commander = class()
+local Commander = require("libs.namedclass")("Commander")
 
 function Commander:__init(theater, side)
 	self.owner        = side
@@ -49,7 +48,16 @@ function Commander:__init(theater, side)
 	self.missions     = {}
 	self.aifreq       = 300 -- seconds
 
-	theater:queueCommand(self.aifreq, Command(self.update, self))
+	theater:queueCommand(120, Command(
+		"Commander.startIADS:"..tostring(self.owner),
+		self.startIADS, self))
+	theater:queueCommand(self.aifreq, Command(
+		"Commander.update:"..tostring(self.owner),
+		self.update, self))
+end
+
+function Commander:startIADS()
+	self.IADS = require("dct.systems.IADS")(self)
 end
 
 function Commander:update(time)
@@ -70,14 +78,20 @@ end
 --     - current active air mission types
 --]]
 function Commander:getTheaterUpdate()
-	--local enemystats = self.theater:getTargetStats(self.owner)
+	local theater = dct.Theater.singleton()
 	local theaterUpdate = {}
+	local tks, start
 
+	theaterUpdate.friendly = {}
+	tks, start = theater:getTickets():get(self.owner)
+	theaterUpdate.friendly.str = math.floor((tks / start)*100)
 	theaterUpdate.enemy = {}
 	theaterUpdate.enemy.sea = 50
 	theaterUpdate.enemy.air = 50
 	theaterUpdate.enemy.elint = 50
 	theaterUpdate.enemy.sam = 50
+	tks, start = theater:getTickets():get(dctutils.getenemy(self.owner))
+	theaterUpdate.enemy.str = math.floor((tks / start)*100)
 	theaterUpdate.missions = self.missionstats:getStats()
 	for k,v in pairs(theaterUpdate.missions) do
 		if v == 0 then
