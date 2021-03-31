@@ -7,7 +7,7 @@
 --]]
 
 local dctenum = require("dct.enum")
-local Action = require("dct.libs.Action")
+local Action = require("dct.ai.actions.Action")
 
 local KillTarget = require("libs.namedclass")("KillTarget", Action)
 function KillTarget:__init(tgtasset)
