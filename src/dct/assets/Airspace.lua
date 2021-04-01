@@ -18,6 +18,12 @@ function Airspace:__init(template, region)
 	})
 end
 
+function Airspace.assettypes()
+	return {
+		require("dct.enum").assetType.AIRSPACE,
+	}
+end
+
 function Airspace:_completeinit(template, region)
 	AssetBase._completeinit(self, template, region)
 	assert(template.location ~= nil,

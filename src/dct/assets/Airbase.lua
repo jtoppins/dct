@@ -232,6 +232,12 @@ function AirbaseAsset:__init(template, region)
 	self._eventhandlers = nil
 end
 
+function AirbaseAsset.assettypes()
+	return {
+		dctenum.assetType.AIRBASE,
+	}
+end
+
 function AirbaseAsset:_completeinit(template, region)
 	AssetBase._completeinit(self, template, region)
 	self._tplnames    = template.subordinates

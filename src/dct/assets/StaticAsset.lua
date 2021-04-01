@@ -32,6 +32,27 @@ function StaticAsset:__init(template, region)
 	})
 end
 
+function StaticAsset.assettypes()
+	return {
+		enum.assetType.OCA,
+		enum.assetType.BASEDEFENSE,
+		enum.assetType.SHORAD,
+		enum.assetType.SPECIALFORCES,
+		enum.assetType.AMMODUMP,
+		enum.assetType.FUELDUMP,
+		enum.assetType.C2,
+		enum.assetType.EWR,
+		enum.assetType.MISSILE,
+		enum.assetType.PORT,
+		enum.assetType.SAM,
+		enum.assetType.FACILITY,
+		enum.assetType.BUNKER,
+		enum.assetType.CHECKPOINT,
+		enum.assetType.FACTORY,
+		enum.assetType.FOB,
+	}
+end
+
 function StaticAsset:_completeinit(template, region)
 	AssetBase._completeinit(self, template, region)
 	self._hasDeathGoals = template.hasDeathGoals

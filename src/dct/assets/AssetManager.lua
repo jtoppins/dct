@@ -5,10 +5,19 @@
 --]]
 
 local checklib = require("libs.check")
+local utils    = require("libs.utils")
 local enum     = require("dct.enum")
 local dctutils = require("dct.utils")
 local Command  = require("dct.Command")
 local Logger   = dct.Logger.getByName("AssetManager")
+
+local assetpaths = {
+	"dct.assets.Airbase",
+	"dct.assets.Airspace",
+	"dct.assets.Player",
+	"dct.assets.Squadron",
+	"dct.assets.StaticAsset",
+}
 
 local AssetManager = require("libs.namedclass")("AssetManager")
 function AssetManager:__init(theater)
@@ -39,33 +48,26 @@ function AssetManager:__init(theater)
 	-- of their DCS objects with 'something', this will be the something.
 	self._object2asset = {}
 
+	self._factoryclasses = {}
+	for _, path in ipairs(assetpaths) do
+		local obj = require(path)
+		for _, assettype in ipairs(obj.assettypes()) do
+			assert(self._factoryclasses[assettype] == nil,
+				"object already registered for type: "..
+				utils.getkey(enum.assetType, assettype))
+			self._factoryclasses[assettype] = obj
+		end
+	end
+
 	theater:addObserver(self.onDCSEvent, self, "AssetManager.onDCSEvent")
 	theater:queueCommand(self.updaterate,
 		Command(self.__clsname..".update", self.update, self))
 end
 
 function AssetManager:factory(assettype)
-	local staticassets = {
-		[enum.assetType.OCA]           = true,
-		[enum.assetType.BASEDEFENSE]   = true,
-		[enum.assetType.SHORAD]        = true,
-		[enum.assetType.SPECIALFORCES] = true,
-	}
-	local asset = nil
-	if assettype == enum.assetType.AIRSPACE then
-		asset = require("dct.assets.Airspace")
-	elseif assettype == enum.assetType.AIRBASE then
-		asset = require("dct.assets.Airbase")
-	elseif enum.assetClass.STRATEGIC[assettype] or
-	       staticassets[assettype] == true then
-		asset = require("dct.assets.StaticAsset")
-	elseif assettype == enum.assetType.PLAYERGROUP then
-		asset = require("dct.assets.Player")
-	elseif assettype == enum.assetType.SQUADRONPLAYER then
-		asset = require("dct.assets.Squadron")
-	else
-		assert(false, "unsupported asset type: "..assettype)
-	end
+	local asset = self._factoryclasses[assettype]
+	assert(asset, "unsupported asset type: "..
+		utils.getkey(enum.assetType, assettype))
 	return asset
 end
 

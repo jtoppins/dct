@@ -147,6 +147,7 @@ function AssetBase:__init(template, region)
 		self._initcomplete = true
 	end
 	self.defaultgoal = nil
+	self.assettypes = nil
 end
 
 function AssetBase:_completeinit(template, region)

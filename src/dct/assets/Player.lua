@@ -281,6 +281,12 @@ function Player:__init(template, region)
 	self.unmarshal = nil
 end
 
+function Player.assettypes()
+	return {
+		dctenum.assetType.PLAYERGROUP,
+	}
+end
+
 local function airbaseId(grp)
 	assert(grp, "value error: grp cannot be nil")
 	local id = nil

@@ -21,6 +21,12 @@ function Squadron:__init(template, region)
 	})
 end
 
+function Squadron.assettypes()
+	return {
+		require("dct.enum").assetType.SQUADRONPLAYER,
+	}
+end
+
 function Squadron:_completeinit(template, region)
 	AssetBase._completeinit(self, template, region)
 	self.ato = utils.deepcopy(template.ato)
