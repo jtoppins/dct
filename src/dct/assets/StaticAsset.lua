@@ -160,6 +160,23 @@ function StaticAsset:getObjectNames()
 	return keyset
 end
 
+function StaticAsset:update()
+	if not self:isSpawned() then
+		return
+	end
+
+	local cnt = 0
+	for name, goal in pairs(self._deathgoals) do
+		cnt = cnt + 1
+		if goal:checkComplete() then
+			self:_removeDeathGoal(name, goal)
+		end
+	end
+	self._logger:debug(string.format(
+		"update() - max goals: %d; cur goals: %d; checked: %d",
+		self._maxdeathgoals, self._curdeathgoals, cnt))
+end
+
 function StaticAsset:handleDead(event)
 	local obj = event.initiator
 
