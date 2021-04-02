@@ -17,7 +17,7 @@ local Goal     = require("dct.Goal")
 local AssetBase= require("dct.assets.AssetBase")
 
 local StaticAsset = require("libs.namedclass")("StaticAsset", AssetBase)
-function StaticAsset:__init(template, region)
+function StaticAsset:__init(template)
 	self._maxdeathgoals = 0
 	self._curdeathgoals = 0
 	self._deathgoals    = {}
@@ -25,7 +25,7 @@ function StaticAsset:__init(template, region)
 	self._eventhandlers = {
 		[world.event.S_EVENT_DEAD] = self.handleDead,
 	}
-	AssetBase.__init(self, template, region)
+	AssetBase.__init(self, template)
 	self:_addMarshalNames({
 		"_hasDeathGoals",
 		"_maxdeathgoals",
@@ -53,8 +53,8 @@ function StaticAsset.assettypes()
 	}
 end
 
-function StaticAsset:_completeinit(template, region)
-	AssetBase._completeinit(self, template, region)
+function StaticAsset:_completeinit(template)
+	AssetBase._completeinit(self, template)
 	self._hasDeathGoals = template.hasDeathGoals
 	self._tpldata       = template:copyData()
 end

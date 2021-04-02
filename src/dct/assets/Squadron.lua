@@ -12,8 +12,8 @@ local utils = require("libs.utils")
 local AssetBase = require("dct.assets.AssetBase")
 
 local Squadron = class("Squadron", AssetBase)
-function Squadron:__init(template, region)
-	AssetBase.__init(self, template, region)
+function Squadron:__init(template)
+	AssetBase.__init(self, template)
 	self:_addMarshalNames({
 		"ato",
 		"airbase",
@@ -27,8 +27,8 @@ function Squadron.assettypes()
 	}
 end
 
-function Squadron:_completeinit(template, region)
-	AssetBase._completeinit(self, template, region)
+function Squadron:_completeinit(template)
+	AssetBase._completeinit(self, template)
 	self.ato = utils.deepcopy(template.ato)
 	self.payloadlimits = utils.deepcopy(template.payloadlimits)
 	self.airbase = template.airbase

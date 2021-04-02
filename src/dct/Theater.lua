@@ -184,11 +184,12 @@ function Theater:loadPlayerSlots()
 				["objtype"]   = "playergroup",
 				["name"]      = grp.data.name,
 				["regionname"]= "theater",
+				["regionprio"]= 1000,
 				["coalition"] = side,
 				["cost"]      = self:getTickets():getPlayerCost(side),
 				["desc"]      = "Player group",
 				["tpldata"]   = grp,
-			}), {["name"] = "theater", ["priority"] = 1000,})
+			}))
 			self:getAssetMgr():add(asset)
 			cnt = cnt + 1
 		end

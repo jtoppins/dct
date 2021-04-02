@@ -10,8 +10,8 @@ local vector = require("dct.libs.vector")
 local AssetBase = require("dct.assets.AssetBase")
 
 local Airspace = require("libs.namedclass")("Airspace", AssetBase)
-function Airspace:__init(template, region)
-	AssetBase.__init(self, template, region)
+function Airspace:__init(template)
+	AssetBase.__init(self, template)
 	self:_addMarshalNames({
 		"_location",
 		"_volume",
@@ -24,8 +24,8 @@ function Airspace.assettypes()
 	}
 end
 
-function Airspace:_completeinit(template, region)
-	AssetBase._completeinit(self, template, region)
+function Airspace:_completeinit(template)
+	AssetBase._completeinit(self, template)
 	assert(template.location ~= nil,
 		"runtime error: Airspace requires template to define a location")
 	self._location = vector.Vector3D(template.location):raw()

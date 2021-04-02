@@ -90,7 +90,7 @@ local function getTemplates(self, basepath)
 					stmpath = nil
 				end
 				self:addTemplate(
-					Template.fromFile(self.name, fpath, stmpath))
+					Template.fromFile(self, fpath, stmpath))
 			end
 		end
 	end
@@ -288,6 +288,7 @@ function Region:generate(assetmgr)
 		["objtype"]    = "airspace",
 		["name"]       = "airspace",
 		["regionname"] = self.name,
+		["regionprio"] = 1000,
 		["desc"]       = "airspace",
 		["coalition"]  = coalition.side.NEUTRAL,
 		["location"]   = self.location,

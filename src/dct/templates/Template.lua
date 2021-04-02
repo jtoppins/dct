@@ -274,6 +274,9 @@ local function getkeys(objtype)
 			["type"]    = "number",
 			["default"] = enum.assetTypePriority[objtype] or 1000,
 		}, {
+			["name"]    = "regionprio",
+			["type"]    = "number",
+		}, {
 			["name"]    = "intel",
 			["type"]    = "number",
 			["default"] = defaultintel,
@@ -416,15 +419,16 @@ function Template:copyData()
 	return copy
 end
 
-function Template.fromFile(regionname, dctfile, stmfile)
-	assert(regionname ~= nil, "regionname is required")
+function Template.fromFile(region, dctfile, stmfile)
+	assert(region ~= nil, "region is required")
 	assert(dctfile ~= nil, "dctfile is required")
 
 	local template = utils.readlua(dctfile)
 	if template.metadata then
 		template = template.metadata
 	end
-	template.regionname = regionname
+	template.regionname = region.name
+	template.regionprio = region.priority
 	template.path = dctfile
 	if stmfile ~= nil then
 		template = utils.mergetables(

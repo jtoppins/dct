@@ -269,8 +269,8 @@ end
 -- Player - represents a player slot in DCS
 --]]
 local Player = class("Player", AssetBase)
-function Player:__init(template, region)
-	AssetBase.__init(self, template, region)
+function Player:__init(template)
+	AssetBase.__init(self, template)
 	self.inair = false
 	self._operstate = false
 	self.missionid = dctenum.missionInvalidID
@@ -309,8 +309,8 @@ local function airbaseParkingId(grp)
 	return nil
 end
 
-function Player:_completeinit(template, region)
-	AssetBase._completeinit(self, template, region)
+function Player:_completeinit(template)
+	AssetBase._completeinit(self, template)
 	-- we assume all slots in a player group are the same
 	self._tpldata   = template:copyData()
 	self.unittype   = self._tpldata.data.units[1].type

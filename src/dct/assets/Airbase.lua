@@ -218,11 +218,11 @@ local function associate_slots(ab)
 end
 
 local AirbaseAsset = class("Airbase", AssetBase, Subordinates)
-function AirbaseAsset:__init(template, region)
+function AirbaseAsset:__init(template)
 	Subordinates.__init(self)
 	self._departures = PriorityQueue()
 	self._parking_occupied = {}
-	AssetBase.__init(self, template, region)
+	AssetBase.__init(self, template)
 	self:_addMarshalNames({
 		"_tplnames",
 		"_subordinates",
@@ -238,8 +238,8 @@ function AirbaseAsset.assettypes()
 	}
 end
 
-function AirbaseAsset:_completeinit(template, region)
-	AssetBase._completeinit(self, template, region)
+function AirbaseAsset:_completeinit(template)
+	AssetBase._completeinit(self, template)
 	self._tplnames    = template.subordinates
 	self.takeofftype  = template.takeofftype
 	self.recoverytype = template.recoverytype
@@ -372,7 +372,7 @@ function AirbaseAsset:generate(assetmgr, region)
 		if tpl.coalition == self.owner then
 			tpl.airbase = self.name
 			tpl.location = self:getLocation()
-			local asset = assetmgr:factory(tpl.objtype)(tpl, region)
+			local asset = assetmgr:factory(tpl.objtype)(tpl)
 			assetmgr:add(asset)
 			self:addSubordinate(asset)
 		end

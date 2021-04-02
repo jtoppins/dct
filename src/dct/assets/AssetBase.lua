@@ -104,7 +104,7 @@ AssetBase:
 --]]
 
 local AssetBase = namedclass("AssetBase", Marshallable, Observable)
-function AssetBase:__init(template, region)
+function AssetBase:__init(template)
 	if not self._eventhandlers then
 		self._eventhandlers = {}
 	end
@@ -141,8 +141,8 @@ function AssetBase:__init(template, region)
 		}
 	end
 	self._initcomplete = false
-	if template ~= nil and region ~= nil then
-		self:_completeinit(template, region)
+	if template ~= nil then
+		self:_completeinit(template)
 		self:_setup()
 		self._initcomplete = true
 	end
@@ -150,7 +150,7 @@ function AssetBase:__init(template, region)
 	self.assettypes = nil
 end
 
-function AssetBase:_completeinit(template, region)
+function AssetBase:_completeinit(template)
 	self.type     = template.objtype
 	if template.desc then
 		self.briefing = dctutils.interp(template.desc, {
@@ -163,13 +163,13 @@ function AssetBase:_completeinit(template, region)
 	self.regenerate = template.regenerate
 	self.ignore   = template.ignore
 	self.owner    = template.coalition
-	self.rgnname  = region.name
+	self.rgnname  = template.regionname
 	self.tplname  = template.name
 	self.cost     = math.abs(template.cost)
 	if norenametype[self.type] == true then
 		self.name = self.tplname
 	else
-		self.name = region.name.."_"..self.owner.."_"..template.name
+		self.name = self.rgnname.."_"..self.owner.."_"..template.name
 		if template.uniquenames == true then
 			self.name = self.name.." #"..
 				dct.Theater.singleton():getcntr()
@@ -183,7 +183,7 @@ function AssetBase:_completeinit(template, region)
 	end
 	for _, side in pairs(coalition.side) do
 		self._priority[side] = {
-			["region"] = region.priority,
+			["region"] = template.regionprio,
 			["asset"]  = template.priority,
 		}
 	end
