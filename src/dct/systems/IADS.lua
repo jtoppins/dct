@@ -91,6 +91,15 @@ function IADS:__init(cmdr)
 		self.disableAllSAMs, self))
 end
 
+function IADS:getSamByName(name)
+  for _, site in pairs(self.SAMSites) do
+    if site.Name == name then
+      return site
+    end
+  end
+  return nil
+end
+
 function IADS:rangeOfSAM(gp)
 	local maxRange = 0
 	for _, unit in pairs(gp:getUnits()) do
@@ -189,7 +198,7 @@ end
 function IADS:magHide(site)
 	if site.Type ~= "Tor 9A331" and not site.Hidden then
 		local randomTime = math.random(15,35)
-    toHide[site.Name] = randomTime
+    self.toHide[site.Name] = randomTime
     site.HiddenTime = math.random(65,100)+randomTime
     site.Hidden = true
 	end
@@ -324,7 +333,7 @@ function IADS:SAMCheckHidden()
 	end
 	for site, time in pairs(self.toHide) do
 		if time < 0 then
-			hideSAM(getSamByName(site))
+			self.hideSAM(self:getSamByName(site))
 			self.toHide[site] = nil
 		else
 			self.toHide[site] = time - 2
