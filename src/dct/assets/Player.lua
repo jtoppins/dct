@@ -96,8 +96,12 @@ end
 
 local OccupiedState = class("OccupiedState", State)
 local EmptyState    = class("EmptyState", State)
+function EmptyState:__init(kickcode)
+	self.kickcode = kickcode or dctenum.kickCode.UNKNOWN
+end
+
 function EmptyState:enter(asset)
-	asset:kick()
+	asset:kick(self.kickcode)
 end
 
 function EmptyState:onDCTEvent(asset, event)
@@ -168,7 +172,7 @@ function OccupiedState:_bleed(asset)
 		trigger.action.outTextForGroup(asset.groupId,
 			"You have been kicked for not having a mission assigned.",
 			20, true)
-		state = EmptyState()
+		state = EmptyState(dctenum.kickCode.MISSION)
 	end
 	return state
 end
@@ -176,7 +180,7 @@ end
 function OccupiedState:update(asset)
 	local grp = Group.getByName(asset.name)
 	if grp == nil then
-		return EmptyState()
+		return EmptyState(dctenum.kickCode.EMPTY)
 	end
 	return self:_bleed(asset)
 end
@@ -202,7 +206,7 @@ function OccupiedState:handleTakeoff(asset, _ --[[event]])
 			"You have been removed to spectator for flying with an "..
 			"invalid loadout. "..notifymsg,
 			20, true)
-		return EmptyState()
+		return EmptyState(dctenum.kickCode.LOADOUT)
 	end
 	return nil
 end
@@ -230,7 +234,7 @@ end
 
 function OccupiedState:handleLoseTicket(--[[asset, event]])
 	self.loseticket = true
-	return EmptyState()
+	return EmptyState(dctenum.kickCode.DEAD)
 end
 
 function OccupiedState:handleSwitchOccupied(asset, event)
@@ -247,7 +251,8 @@ function Player:__init(template, region)
 	AssetBase.__init(self, template, region)
 	self._operstate = false
 	trigger.action.setUserFlag(self.name, false)
-	trigger.action.setUserFlag(build_kick_flagname(self.name), false)
+	trigger.action.setUserFlag(build_kick_flagname(self.name),
+		dctenum.kickCode.NOKICK)
 	self.marshal   = nil
 	self.unmarshal = nil
 end
@@ -297,7 +302,7 @@ function Player:_completeinit(template, region)
 end
 
 function Player:_setup()
-	self.state = EmptyState()
+	self.state = EmptyState(dctenum.kickCode.SETUP)
 	self.state:enter(self)
 end
 
@@ -377,9 +382,9 @@ end
 -- This will then allow the player state the be reset allowing
 -- another player to join the slot.
 --]]
-function Player:kick()
+function Player:kick(kickcode)
 	local flagname = build_kick_flagname(self.name)
-	trigger.action.setUserFlag(flagname, true)
+	trigger.action.setUserFlag(flagname, kickcode)
 	self._logger:debug(string.format("requesting kick: %s", flagname))
 end
 

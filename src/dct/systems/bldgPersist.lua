@@ -9,23 +9,28 @@ local Marshallable = require("dct.libs.Marshallable")
 local Logger = require("dct.libs.Logger").getByName("System")
 
 local SceneryTracker = class("SceneryTracker", Marshallable)
-function SceneryTracker:__init(theater)
+function SceneryTracker:__init()
 	Marshallable.__init(self)
 	self.destroyed = {}
-	theater:addObserver(self.onDCSEvent, self,
-		self.__clsname..".onDCSEvent")
 	self:_addMarshalNames({
 		"destroyed",
 	})
 end
 
+function SceneryTracker:postinit(theater)
+	theater:addObserver(self.onDCSEvent, self,
+		self.__clsname..".onDCSEvent")
+end
+
 function SceneryTracker:_unmarshalpost()
-	for _, bldg in pairs(self.destroyed) do
-		local id = tonumber(bldg)
-		local obj = {id_ = id}
-		local pt = Object.getPoint(obj)
-		trigger.action.explosion(pt, 500)
+	for bldg, _ in pairs(self.destroyed) do
+		local pt = Object.getPoint({id_ = tonumber(bldg)})
+		trigger.action.explosion(pt, 250)
 	end
+end
+
+function SceneryTracker:addObject(id)
+	self.destroyed[tostring(id)] = true
 end
 
 function SceneryTracker:onDCSEvent(event)
@@ -36,7 +41,7 @@ function SceneryTracker:onDCSEvent(event)
 	end
 	local obj = event.initiator
 	if obj:getCategory() == Object.Category.SCENERY then
-		table.insert(self.destroyed, tostring(obj:getName()))
+		self:addObject(obj:getName())
 	end
 end
 
