@@ -76,6 +76,7 @@ local offsettbl = {
 	["Nevada"]       =  8*3600,
 	["Caucasus"]     = -4*3600,
 	["Normandy"]     = -1*3600,
+	["Syria"]        = -3*3600, -- EEST according to sunrise times
 }
 
 function utils.zulutime(abstime)
