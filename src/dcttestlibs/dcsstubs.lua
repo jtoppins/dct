@@ -69,13 +69,16 @@ _G.env = env
 
 local timer = {}
 function timer.getTime()
-	return os.clock()
-end
-function timer.getAbsTime()
-	return (2*3600)+234
+	-- 00:03:54 model time
+	return 234
 end
 function timer.getTime0()
+	--- 15:00:00 mission start time
 	return 15*3600
+end
+function timer.getAbsTime()
+	-- 15:03:54 mission time
+	return timer.getTime() + timer.getTime0()
 end
 function timer.scheduleFunction(_, _, _)
 end
