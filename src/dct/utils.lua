@@ -56,6 +56,8 @@ function utils.airbaseId2Name(id)
 end
 
 function utils.time(dcsabstime)
+	-- timer.getAbsTime() returns local time of day, but we still need
+	-- to calculate the day
 	local time = os.time({
 		["year"]  = env.mission.date.Year,
 		["month"] = env.mission.date.Month,
@@ -65,7 +67,7 @@ function utils.time(dcsabstime)
 		["sec"]   = 0,
 		["isdst"] = false,
 	})
-	return time + timer.getTime0() + dcsabstime
+	return time + dcsabstime
 end
 
 local offsettbl = {
