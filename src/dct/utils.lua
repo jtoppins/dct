@@ -72,7 +72,7 @@ local offsettbl = {
 	["Test Theater"] =  6*3600, -- simulate US Central TZ
 	["PersianGulf"]  = -4*3600,
 	["Nevada"]       =  8*3600,
-	["Caucuses"]     = -4*3600,
+	["Caucasus"]     = -4*3600,
 	["Normandy"]     = -1*3600,
 }
 
