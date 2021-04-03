@@ -410,7 +410,7 @@ function DCTHooks:onMissionLoadEnd()
 	self.mission_start_mt = DCS.getModelTime()
 	self.mission_start_rt = DCS.getRealTime()
 	log.write(facility, log.DEBUG, string.format("mission_time: %f, %s",
-		tostring(self.mission_time), os.date("!%F %R", self.mission_time)))
+		tostring(self.mission_time), os.date("%F %R", self.mission_time)))
 	log.write(facility, log.DEBUG, "mission_start_mt: "..
 		tostring(self.mission_start_mt))
 	log.write(facility, log.DEBUG, "mission_start_rt: "..
@@ -521,7 +521,7 @@ end
 
 function DCTHooks:sendheartbeat()
 	local info = {
-		["time"] = os.date("!*t", self.mission_time +
+		["time"] = os.date("*t", self.mission_time +
 			DCS.getRealTime() - self.mission_start_rt),
 		["time_left"] = (self.mission_start_mt + self.mission_period) -
 			DCS.getModelTime()

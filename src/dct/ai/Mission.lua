@@ -156,7 +156,7 @@ end
 local function composeBriefing(msn, tgt)
 	local briefing = tgt.briefing
 	local interptbl = {
-		["TOT"] = os.date("!%F %Rz",
+		["TOT"] = os.date("%F %Rz",
 			dctutils.zulutime(msn:getTimeout()*.6)),
 	}
 	return dctutils.interp(briefing, interptbl)

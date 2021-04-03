@@ -152,10 +152,11 @@ local function main()
 			json:encode_pretty(v.expected))
 	end
 
-	assert("2001-06-22 16:00l" == os.date("!%F %Rl", utils.time(3600)),
-		"failed: "..os.date("!%F %Rl", utils.time(3600)))
-	assert("2001-06-22 22:00z" == os.date("!%F %Rz", utils.zulutime(3600)),
-		"failed: "..os.date("!%F %Rz", utils.zulutime(3600)))
+	local test_time = 3600*16 -- 16:00 local time
+	assert("2001-06-22 16:00l" == os.date("%F %Rl", utils.time(test_time)),
+		"failed: "..os.date("%F %Rl", utils.time(test_time)))
+	assert("2001-06-22 22:00z" == os.date("%F %Rz", utils.zulutime(test_time)),
+		"failed: "..os.date("%F %Rz", utils.zulutime(test_time)))
 	return 0
 end
 

@@ -277,7 +277,7 @@ function Theater:export(_)
 
 	local exporttbl = {
 		["complete"] = self:getTickets():isComplete(),
-		["date"]     = os.date("!*t", dctutils.zulutime(timer.getAbsTime())),
+		["date"]     = os.date("*t", dctutils.zulutime(timer.getAbsTime())),
 		["theater"]  = env.mission.theatre,
 		["sortie"]   = env.getValueDictByKey(env.mission.sortie),
 		["systems"]  = {},
