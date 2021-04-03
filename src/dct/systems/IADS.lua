@@ -72,6 +72,7 @@ function IADS:__init(cmdr)
 	self.SAMSites = {}
 	self.EWRSites = {}
 	self.AewAC    = {}
+	self.toHide		= {}
 
 	local theater = require("dct.Theater").singleton()
 	theater:addObserver(self.sysIADSEventHandler, self,
@@ -108,7 +109,6 @@ function IADS:disableSAM(site)
 	if not site.Enabled then
 		return nil
 	end
-
 	local inRange = false
 	if site.trkFiles then
 		for _, trk in pairs(site.trkFiles) do
@@ -118,17 +118,11 @@ function IADS:disableSAM(site)
 			end
 		end
 	end
-
-	if inRange then
-		-- This looks wrong
-		require("dct.Theater").singleton():queueCommand(10,
-			Command("iads.disableSAM", self.disableSAM, self, site))
-	else
+	if inRange ~= true then
 		site.group:getController():setOption(
 			AI.Option.Ground.id.ALARM_STATE,
 			AI.Option.Ground.val.ALARM_STATE.GREEN)
 		site.Enabled = false
-		env.info("SAM: "..site.Name.." disabled")
 	end
 	return nil
 end
@@ -138,7 +132,6 @@ function IADS:hideSAM(site)
 		AI.Option.Ground.id.ALARM_STATE,
 		AI.Option.Ground.val.ALARM_STATE.GREEN)
 	site.Enabled = false
-	env.info("SAM: "..site.Name.." hidden")
 	return nil
 end
 
@@ -164,7 +157,6 @@ function IADS:enableSAM(site)
 	if site.Hidden or site.Enabled then
 		return
 	end
-
 	local hasAmmo = ammoCheck(site)
 	if next(site.ControlledBy) ~= nil then
 		if contSamAmmo and not hasAmmo then
@@ -175,12 +167,10 @@ function IADS:enableSAM(site)
 			return
 		end
 	end
-
 	site.group:getController():setOption(
 		AI.Option.Ground.id.ALARM_STATE,
 		AI.Option.Ground.val.ALARM_STATE.RED)
 	site.Enabled = true
-	env.info("SAM: "..site.Name.." enabled")
 end
 
 function IADS:associateSAMS()
@@ -199,10 +189,9 @@ end
 function IADS:magHide(site)
 	if site.Type ~= "Tor 9A331" and not site.Hidden then
 		local randomTime = math.random(15,35)
-		require("dct.Theater").singleton():queueCommand(randomTime,
-			Command("iads.hideSAM", self.hideSAM, self, site))
-		site.HiddenTime = math.random(65,100)+randomTime
-		site.Hidden = true
+    toHide[site.Name] = randomTime
+    site.HiddenTime = math.random(65,100)+randomTime
+    site.Hidden = true
 	end
 end
 
@@ -333,20 +322,25 @@ function IADS:SAMCheckHidden()
 			end
 		end
 	end
+	for site, time in pairs(self.toHide) do
+		if time < 0 then
+			hideSAM(getSamByName(site))
+			self.toHide[site] = nil
+		else
+			self.toHide[site] = time - 2
+		end
+	end
 	return 2
 end
 
 function IADS:BlinkSAM()
 	for _, SAM in pairs(self.SAMSites) do
 		if next(SAM.ControlledBy) == nil then
-			--env.info("SAM: "..SAM.Name.." is uncontrolled")
 			if SAM.BlinkTimer < 1  and (not SAM.Hidden) then
 				if SAM.Enabled then
-					--env.info("Blink Off")
 					self:disableSAM(SAM)
 					SAM.BlinkTimer = math.random(30,60)
 				else
-					--env.info("Blink On")
 					self:enableSAM(SAM)
 					SAM.BlinkTimer = math.random(30,60)
 				end
@@ -508,9 +502,9 @@ function IADS:onShot(event)
 end
 
 function IADS:onBirth(event)
-	if event.initiator.getGroup == nil then
-		return
-	end
+	if event.initiator:getCategory() ~= Object.Category.Unit then
+    return
+  end
 	local gp = event.initiator:getGroup()
 	self:checkGroupRole(gp)
 	self:associateSAMS()
