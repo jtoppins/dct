@@ -423,8 +423,9 @@ function Template.fromFile(regionname, dctfile, stmfile)
 	template.regionname = regionname
 	template.path = dctfile
 	if stmfile ~= nil then
-		template = utils.mergetables(template,
-			STM.transform(utils.readlua(stmfile, "staticTemplate")))
+		template = utils.mergetables(
+			STM.transform(utils.readlua(stmfile, "staticTemplate")),
+			template)
 	end
 	return Template(template)
 end
