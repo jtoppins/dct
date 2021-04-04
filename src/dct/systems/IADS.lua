@@ -72,6 +72,7 @@ function IADS:__init(cmdr)
 	self.SAMSites = {}
 	self.EWRSites = {}
 	self.AewAC    = {}
+	self.toHide   = {}
 
 	local theater = require("dct.Theater").singleton()
 	theater:addObserver(self.sysIADSEventHandler, self,
@@ -88,6 +89,10 @@ function IADS:__init(cmdr)
 		self.EWRSAMOnRequest, self))
 	theater:queueCommand(15, Command("iads.disableAllSAMs",
 		self.disableAllSAMs, self))
+end
+
+function IADS:getSamByName(name)
+	return self.SAMSites[name]
 end
 
 function IADS:rangeOfSAM(gp)
@@ -119,11 +124,7 @@ function IADS:disableSAM(site)
 		end
 	end
 
-	if inRange then
-		-- This looks wrong
-		require("dct.Theater").singleton():queueCommand(10,
-			Command("iads.disableSAM", self.disableSAM, self, site))
-	else
+	if inRange ~= true then
 		site.group:getController():setOption(
 			AI.Option.Ground.id.ALARM_STATE,
 			AI.Option.Ground.val.ALARM_STATE.GREEN)
@@ -199,8 +200,7 @@ end
 function IADS:magHide(site)
 	if site.Type ~= "Tor 9A331" and not site.Hidden then
 		local randomTime = math.random(15,35)
-		require("dct.Theater").singleton():queueCommand(randomTime,
-			Command("iads.hideSAM", self.hideSAM, self, site))
+		self.toHide[site.Name] = randomTime
 		site.HiddenTime = math.random(65,100)+randomTime
 		site.Hidden = true
 	end
@@ -331,6 +331,14 @@ function IADS:SAMCheckHidden()
 			if SAM.HiddenTime < 1 then
 				SAM.Hidden = false
 			end
+		end
+	end
+	for site, time in pairs(self.toHide) do
+		if time < 0 then
+			self.hideSAM(self:getSamByName(site))
+			self.toHide[site] = nil
+		else
+			self.toHide[site] = time - 2
 		end
 	end
 	return 2
@@ -508,7 +516,7 @@ function IADS:onShot(event)
 end
 
 function IADS:onBirth(event)
-	if event.initiator.getGroup == nil then
+	if event.initiator:getCategory() ~= Object.Category.Unit then
 		return
 	end
 	local gp = event.initiator:getGroup()
