@@ -512,8 +512,8 @@ end
 
 function IADS:onBirth(event)
 	if event.initiator:getCategory() ~= Object.Category.Unit then
-    return
-  end
+		return
+	end
 	local gp = event.initiator:getGroup()
 	self:checkGroupRole(gp)
 	self:associateSAMS()
