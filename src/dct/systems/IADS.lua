@@ -92,12 +92,7 @@ function IADS:__init(cmdr)
 end
 
 function IADS:getSamByName(name)
-  for _, site in pairs(self.SAMSites) do
-    if site.Name == name then
-      return site
-    end
-  end
-  return nil
+	return self.SAMSites(name)
 end
 
 function IADS:rangeOfSAM(gp)
