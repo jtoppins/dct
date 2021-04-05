@@ -36,7 +36,7 @@ function Timer:update()
 end
 
 function Timer:expired()
-	return self.timeout > self.timeoutlimit
+	return self.timeout >= self.timeoutlimit
 end
 
 function Timer:remain()
