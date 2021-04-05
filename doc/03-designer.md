@@ -748,6 +748,16 @@ With the ticket system each side has a given amount of tickets they can
 lose. An asset with a cost value will deduct against this per-side ticket
 pool. See the [tickets](#tickets) section for more information.
 
+### `codename`
+
+ * _required:_ no
+ * _value:_ string
+ * _default:_ random codename assigned to asset
+
+A static codename can be assigned to a template overriding the normally
+random codename. Codenames are displayed in mission briefings and other
+player UI elements.
+
 ### Attributes - Type Specific
 
 #### Airspace

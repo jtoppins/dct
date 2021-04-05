@@ -33,9 +33,13 @@ local norenametype = {
 	[dctenum.assetType.AIRBASE]        = true,
 }
 
-local function generateCodename(objtype)
+local function generateCodename(template)
+	if template.codename ~= "default codename" then
+		return template.codename
+	end
+
 	local codenamedb = settings.codenamedb
-	local typetbl = codenamedb[objtype]
+	local typetbl = codenamedb[template.objtype]
 
 	if typetbl == nil then
 		typetbl = codenamedb.default
@@ -170,7 +174,7 @@ function AssetBase:_completeinit(template, region)
 				dct.Theater.singleton():getcntr()
 		end
 	end
-	self.codename = generateCodename(self.type)
+	self.codename = generateCodename(template)
 
 	self._intel[self.owner] = dctutils.INTELMAX
 	if self.owner ~= coalition.side.NEUTRAL and template.intel then
