@@ -290,9 +290,9 @@ local function getkeys(objtype)
 			["type"]    = "string",
 			["default"] = "default template description",
 		},{
-			["name"]		= "codename",
-			["type"]		=	"string",
-			["default"]	=	"default codename"
+			["name"]    = "codename",
+			["type"]    = "string",
+			["default"] = "default codename"
 		},
 	}
 
