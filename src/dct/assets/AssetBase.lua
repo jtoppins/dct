@@ -170,8 +170,11 @@ function AssetBase:_completeinit(template, region)
 				dct.Theater.singleton():getcntr()
 		end
 	end
-	self.codename = generateCodename(self.type)
-
+	if template.codename ~= "default codename" then
+		self.codename = template.codename
+	else
+		self.codename = generateCodename(self.type)
+	end
 	self._intel[self.owner] = dctutils.INTELMAX
 	if self.owner ~= coalition.side.NEUTRAL and template.intel then
 		self._intel[dctutils.getenemy(self.owner)] = template.intel
