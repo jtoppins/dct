@@ -79,7 +79,8 @@ end
 function timer.getAbsTime()
 	return timer.getTime() + timer.getTime0()
 end
-function timer.scheduleFunction(_, _, _)
+function timer.scheduleFunction(fn, arg, time)
+	fn(arg, time)
 end
 function timer.stub_setTime(time)
 	model_time = time
