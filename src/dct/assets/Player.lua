@@ -236,19 +236,21 @@ end
 -- An authorized airbase is any base defined as an asset for
 -- the same side.
 function OccupiedState:handleLand(asset, event)
-	if event.place then
-		local assetmgr = dct.Theater.singleton():getAssetMgr()
-		local airbase = assetmgr:getAsset(event.place:getName())
+	if event.place == nil then
+		return nil
+	end
 
-		if (airbase and airbase.owner == asset.owner) or
-			event.place:getName() == asset.airbase then
-			self.loseticket = false
-			self.inair = false
-			trigger.action.outTextForGroup(asset.groupId,
-				"Welcome home. You are able to safely disconnect"..
-				" without costing your side tickets.",
-				20, true)
-		end
+	local assetmgr = dct.Theater.singleton():getAssetMgr()
+	local airbase = assetmgr:getAsset(event.place:getName())
+
+	if (airbase and airbase.owner == asset.owner) or
+	   event.place:getName() == asset.airbase then
+		self.loseticket = false
+		self.inair = false
+		trigger.action.outTextForGroup(asset.groupId,
+			"Welcome home. You are able to safely disconnect"..
+			" without costing your side tickets.",
+			20, true)
 	end
 	return nil
 end
