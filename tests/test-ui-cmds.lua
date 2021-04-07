@@ -31,7 +31,7 @@ local briefingtxt = "Package: #5720\n"..
 			"Satellite imaging has found"..
 			" an Iranian Ammo Dump 88°07.2'N 063°27.6'W."..
 			" Find and destroy the bunkers and the ordnance within.\n"..
-			"    Tot: 2001-06-22 23:08z\n    \n"..
+			"    Tot: 2001-06-22 22:48z\n    \n"..
 			"    Primary Objectives: Destroy the large, armoured bunker."..
 			" It is heavily fortified, so accuracy is key.\n    \n"..
 			"    Secondary Objectives: Destroy the two smaller, white"..
@@ -89,7 +89,7 @@ local testcmds = {
 		["assert"]     = true,
 		["expected"]   = "Mission State: Preparing\n"..
 			"Package: 5720\n"..
-			"Timeout: 2001-06-23 00:33z (in 207 mins)\n"..
+			"Timeout: 2001-06-22 22:30z (in 90 mins)\n"..
 			"BDA: 0% complete\n",
 	}, {
 		["data"] = {
