@@ -80,7 +80,8 @@ function timer.getAbsTime()
 	-- 15:03:54 mission time
 	return timer.getTime() + timer.getTime0()
 end
-function timer.scheduleFunction(_, _, _)
+function timer.scheduleFunction(fn, arg, time)
+	fn(arg, time)
 end
 _G.timer = timer
 
