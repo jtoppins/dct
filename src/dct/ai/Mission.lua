@@ -153,11 +153,11 @@ function PrepState:timeextend(addtime)
 	self.timer:extend(addtime)
 end
 
-local function composeBriefing(msn, tgt)
+local function composeBriefing(_, tgt, start_time)
 	local briefing = tgt.briefing
 	local interptbl = {
 		["TOT"] = os.date("%F %Rz",
-			dctutils.zulutime(msn:getTimeout()*.6)),
+			dctutils.zulutime(start_time + MISSION_LIMIT * 0.6)),
 	}
 	return dctutils.interp(briefing, interptbl)
 end
@@ -186,7 +186,7 @@ function Mission:__init(cmdr, missiontype, tgt, plan)
 
 	-- compose the briefing at mission creation to represent
 	-- known intel the pilots were given before departing
-	self.briefing  = composeBriefing(self, tgt)
+	self.briefing  = composeBriefing(self, tgt, timer.getAbsTime())
 	tgt:setTargeted(self.cmdr.owner, true)
 
 	self.tgtinfo = {}
