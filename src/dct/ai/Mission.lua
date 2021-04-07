@@ -153,7 +153,7 @@ function PrepState:timeextend(addtime)
 	self.timer:extend(addtime)
 end
 
-local function composeBriefing(msn, tgt, start_time)
+local function composeBriefing(_, tgt, start_time)
 	local briefing = tgt.briefing
 	local interptbl = {
 		["TOT"] = os.date("%F %Rz",
