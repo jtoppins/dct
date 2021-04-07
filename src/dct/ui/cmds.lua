@@ -282,7 +282,7 @@ function MissionStatusCmd:_mission(_, _, msn)
 		string.format("Package: %s\n", msn:getID())..
 		string.format("Timeout: %s (in %d mins)\n",
 			os.date("%F %Rz", dctutils.zulutime(timeout)),
-			minsleft) ..
+			minsleft)..
 		string.format("BDA: %d%% complete\n", tgtinfo.status)
 
 	return msg
