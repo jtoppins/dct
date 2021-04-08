@@ -13,6 +13,15 @@ local function initial_scenery_life()
 	return 1
 end
 
+local function get_scenery_life(obj)
+	if SceneryObject.isExist(obj) then
+		return SceneryObject.getLife(obj)
+	end
+	-- Undamaged scenery objects don't "exist" yet in the MSE,
+	-- so we return a safe full health value
+	return initial_scenery_life()
+end
+
 local function getobject(objtype, name, init)
 	local switch = {
 		[enums.objtype.UNIT]   = Unit.getByName,
@@ -33,7 +42,7 @@ local function getobject(objtype, name, init)
 		[enums.objtype.UNIT]   = Unit.getLife,
 		[enums.objtype.STATIC] = StaticObject.getLife,
 		[enums.objtype.GROUP]  = Group.getSize,
-		[enums.objtype.SCENERY]= SceneryObject.getLife,
+		[enums.objtype.SCENERY]= get_scenery_life,
 	}
 
 	local obj = nil
