@@ -95,16 +95,6 @@ function menus.createMenu(asset)
 			["type"]   = enum.uiRequestType.MISSIONROLEX,
 			["value"]  = 30*60,  -- seconds
 		})
-	addcmd(gid, "Check-In", msnmenu, theater.playerRequest, theater,
-		{
-			["name"]   = name,
-			["type"]   = enum.uiRequestType.MISSIONCHECKIN,
-		})
-	addcmd(gid, "Check-Out", msnmenu, theater.playerRequest, theater,
-		{
-			["name"]   = name,
-			["type"]   = enum.uiRequestType.MISSIONCHECKOUT,
-		})
 	loadout.addmenu(asset, nil, theater.playerRequest, theater)
 end
 
