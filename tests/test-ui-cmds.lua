@@ -116,6 +116,18 @@ local testcmds = {
 		["expected"]   = "off-station received, vul time: 0",
 		--]]
 	}, {
+		-- Test 2 min rolex and 5 min delay
+		["data"] = {
+			["name"]   = grp:getName(),
+			["type"]   = enum.uiRequestType.MISSIONSTATUS,
+		},
+		["modelTime"]  = 300,
+		["assert"]     = true,
+		["expected"]   = "Mission State: Preparing\n"..
+			"Package: 5720\n"..
+			"Timeout: 2001-06-22 22:32z (in 87 mins)\n"..
+			"BDA: 0% complete\n",
+	}, {
 		["data"] = {
 			["name"]   = grp:getName(),
 			["type"]   = enum.uiRequestType.MISSIONABORT,
@@ -136,6 +148,9 @@ local function main()
 	})
 
 	for _, v in ipairs(testcmds) do
+		if v.modelTime ~= nil then
+			timer.stub_setTime(v.modelTime)
+		end
 		trigger.action.setassert(v.assert)
 		trigger.action.setmsgbuffer(v.expected)
 		local cmd = uicmds[v.data.type](theater, v.data)
