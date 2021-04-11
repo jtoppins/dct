@@ -29,3 +29,9 @@ For any issues or feature requests please use the issue tracker and file
 a new issue. Please make sure to provide as much detail about the problem
 or feature as possible. New development is done in feature branches which
 are eventually merged into master, base your features and fixes off master.
+
+## Contact Us
+
+You can join the VMFA-169 discord(https://discord.gg/6z8uERVW5Y) if you
+would like to discuss DCT topics. The channel is
+`#dynamic-campaign-tools-discussion`.
