@@ -267,11 +267,12 @@ function MissionStatusCmd:__init(theater, data)
 	self.name = "MissionStatusCmd:"..data.name
 end
 
-function MissionStatusCmd:_mission(time, _, msn)
+function MissionStatusCmd:_mission(_, _, msn)
 	local msg
-	local tgtinfo  = msn:getTargetInfo()
-	local timeout  = msn:getTimeout()
-	local minsleft = (timeout - time)
+	local missiontime = timer.getAbsTime()
+	local tgtinfo     = msn:getTargetInfo()
+	local timeout     = msn:getTimeout()
+	local minsleft    = (timeout - missiontime)
 	if minsleft < 0 then
 		minsleft = 0
 	end
@@ -280,7 +281,7 @@ function MissionStatusCmd:_mission(time, _, msn)
 	msg = string.format("Mission State: %s\n", msn:getStateName())..
 		string.format("Package: %s\n", msn:getID())..
 		string.format("Timeout: %s (in %d mins)\n",
-			os.date("!%F %Rz", dctutils.zulutime(timeout)),
+			os.date("%F %Rz", dctutils.zulutime(timeout)),
 			minsleft)..
 		string.format("BDA: %d%% complete\n", tgtinfo.status)
 
