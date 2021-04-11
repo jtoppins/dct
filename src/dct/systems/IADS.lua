@@ -238,7 +238,8 @@ end
 
 function IADS:EWRtrkFileBuild()
 	for _, EWR in pairs(self.EWRSites) do
-		local det = EWR.EWRGroup:getController():getDetectedTargets(Controller.Detection.RADAR)
+		local det = EWR.EWRGroup:getController():getDetectedTargets(
+			Controller.Detection.RADAR)
 		for _, targets in pairs(det) do
 			if targets.object and targets.object:isExist()
 				and targets.object:inAir() then
@@ -246,8 +247,10 @@ function IADS:EWRtrkFileBuild()
 				self:addtrkFile(EWR, targets)
 				trkFiles["EWR"][trkName] = EWR.trkFiles[trkName]
 				if targets.object:getCategory() == Object.Category.WEAPON
-					and targets.object:getDesc().guidance == Weapon.GuidanceType.RADAR_PASSIVE
-					and EwrArmDetect and not self:prevDetected(EWR, targets.object) then
+					and targets.object:getDesc().guidance ==
+						Weapon.GuidanceType.RADAR_PASSIVE
+					and EwrArmDetect and
+						not self:prevDetected(EWR, targets.object) then
 					EWR.ARMDetected[targets.object:getName()] = targets.object
 					for _, SAM in pairs(EWR.SAMsControlled) do
 						if math.random(1,100) < EwrOffChance then
@@ -263,7 +266,8 @@ end
 
 function IADS:SAMtrkFileBuild()
 	for _, SAM in pairs(self.SAMSites) do
-		local det = SAM.group:getController():getDetectedTargets(Controller.Detection.RADAR)
+		local det = SAM.group:getController():getDetectedTargets(
+			Controller.Detection.RADAR)
 		for _, targets in pairs(det) do
 			if targets.object and targets.object:isExist()
 				and targets.object:inAir() then
@@ -286,7 +290,8 @@ end
 
 function IADS:AWACStrkFileBuild()
 	for _, AWACS in pairs(self.AewAC) do
-		local det = AWACS.AWACSGroup:getController():getDetectedTargets(Controller.Detection.RADAR)
+		local det = AWACS.AWACSGroup:getController():getDetectedTargets(
+			Controller.Detection.RADAR)
 		for _, targets in pairs(det) do
 			if targets.object and targets.object:isExist()
 				and targets.object:inAir() then
