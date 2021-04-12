@@ -132,6 +132,74 @@ local testcmds = {
 		},
 		["assert"]     = true,
 		["expected"]   = "Mission 5720 aborted",
+	}, {
+		-- Allowed payload
+		["data"] = {
+			["name"]   = grp:getName(),
+			["type"]   = enum.uiRequestType.CHECKPAYLOAD,
+		},
+		["ammo"] = {
+			{
+				["desc"] = {
+					["displayName"] = "Cannon Shells",
+					["category"] = Weapon.Category.SHELL,
+				},
+				["count"] = 600,
+			}, {
+				["desc"] = {
+					["displayName"] = "AIM-9M",
+					["typeName"] = "AIM_9",
+					["category"] = Weapon.Category.MISSILE,
+					["missileCategory"] = Weapon.MissileCategory.AAM,
+				},
+				["count"] = 2,
+			}, {
+				["desc"] = {
+					["displayName"] = "AIM-120B",
+					["typeName"] = "AIM_120",
+					["category"] = Weapon.Category.MISSILE,
+					["missileCategory"] = Weapon.MissileCategory.AAM,
+				},
+				["count"] = 4,
+			}
+		},
+		["assert"]     = true,
+		["expected"]   = "Valid loadout, you may depart. Good luck!\n\n"..
+			"== Loadout Summary:\n"..
+			"  AA cost: 20 / 20\n"..
+			"  AG cost: 0 / 60\n"..
+			"\n"..
+			"== AA Weapons:\n"..
+			"  AIM-9M\n"..
+			"    ↳ 2 × unrestricted (0 pts)\n"..
+			"  AIM-120B\n"..
+			"    ↳ 4 × 5 pts = 20 pts",
+	}, {
+		-- Over limit with forbidden weapon
+		["data"] = {
+			["name"]   = grp:getName(),
+			["type"]   = enum.uiRequestType.CHECKPAYLOAD,
+		},
+		["ammo"] = {
+			{
+				["desc"] = {
+					["displayName"] = "RN-28",
+					["typeName"] = "RN-28",
+					["category"] = Weapon.Category.BOMB,
+				},
+				["count"] = 1,
+			}
+		},
+		["assert"]     = true,
+		["expected"]   = "You are over budget! Re-arm before departing, or "..
+			"you will be punished!\n\n"..
+			"== Loadout Summary:\n"..
+			"  AA cost: 0 / 20\n"..
+			"  AG cost: -- / 60\n"..
+			"\n"..
+			"== AG Weapons:\n"..
+			"  RN-28\n"..
+			"    ↳ Weapon cannot be used in this theater [!]",
 	},
 }
 
@@ -147,6 +215,9 @@ local function main()
 	for _, v in ipairs(testcmds) do
 		if v.modelTime ~= nil then
 			timer.stub_setTime(v.modelTime)
+		end
+		if v.ammo ~= nil then
+			unit1.ammo = v.ammo
 		end
 		trigger.action.setassert(v.assert)
 		trigger.action.setmsgbuffer(v.expected)
