@@ -754,6 +754,7 @@ function Unit:__init(objdata, group, pname)
 	Coalition.__init(self, objdata)
 	self.clife = self.desc.life
 	self.group = group
+	self.ammo = objdata.ammo
 	if group ~= nil then
 		group:_addUnit(self)
 	end
@@ -797,6 +798,10 @@ end
 
 function Unit:getCallsign()
 	return "foo"
+end
+
+function Unit:getAmmo()
+	return self.ammo
 end
 _G.Unit = Unit
 
