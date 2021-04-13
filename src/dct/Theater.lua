@@ -23,6 +23,8 @@ local Command     = require("dct.Command")
 local Logger      = dct.Logger.getByName("Theater")
 local settings    = _G.dct.settings.server
 
+local STATE_VERSION = "1"
+
 local function isPlayerGroup(grp, _, _)
 	local slotcnt = 0
 	for _, unit in ipairs(grp.units) do
@@ -49,6 +51,11 @@ local function isStateValid(state)
 
 	if state.complete == true then
 		Logger:info("isStateValid(); theater goals were completed")
+		return false
+	end
+
+	if state.version ~= STATE_VERSION then
+		Logger:warn("isStateValid(); invalid state version")
 		return false
 	end
 
@@ -277,6 +284,7 @@ function Theater:export(_)
 	end
 
 	local exporttbl = {
+		["version"]  = STATE_VERSION,
 		["complete"] = self:getTickets():isComplete(),
 		["date"]     = os.date("*t", dctutils.zulutime(timer.getAbsTime())),
 		["theater"]  = env.mission.theatre,
