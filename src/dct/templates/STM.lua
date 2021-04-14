@@ -125,8 +125,9 @@ end
 function STM.transform(stmdata, file)
 	local template   = {}
 	local lookupname =  function(name)
-		assert(name and type(name) == "string",
-			"value error: name must be provided and a string")
+		if name == nil then
+			return nil
+		end
 		local newname = name
 		local namelist = stmdata.localization.DEFAULT
 		if namelist[name] ~= nil then
