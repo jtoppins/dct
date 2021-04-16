@@ -77,7 +77,7 @@ if not ok then
 end
 
 local dctenum
-ok, dctenum = pcall(require, "dct.enum")
+ok, dctenum = pcall(require, "dct.libs.kickinfo")
 if not ok then
 	log.write(facility, log.ERROR,
 		string.format("unable to require dct.enum: %s", dctenum))
