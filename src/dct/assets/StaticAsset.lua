@@ -50,6 +50,7 @@ function StaticAsset.assettypes()
 		enum.assetType.CHECKPOINT,
 		enum.assetType.FACTORY,
 		enum.assetType.FOB,
+		enum.assetType.LOGISTICS,
 	}
 end
 

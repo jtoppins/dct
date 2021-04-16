@@ -102,6 +102,7 @@ enum.assetClass = {
 		[enum.assetType.SPECIALFORCES] = true,
 		[enum.assetType.FOB]           = true,
 		[enum.assetType.AIRSPACE]      = true,
+		[enum.assetType.LOGISTICS]     = true,
 	},
 	-- strategic list is used in calculating ownership of a region
 	-- among other things
