@@ -1003,6 +1003,14 @@ function Group:__init(unitcnt, objdata)
 	self.inAir = nil
 end
 
+Group.Category = {
+	AIRPLANE   = 0,
+	HELICOPTER = 1,
+	GROUND     = 2,
+	SHIP       = 3,
+	TRAIN      = 4,
+}
+
 function Group.getByName(name)
 	return objects[Object.Category.GROUP][name]
 end
