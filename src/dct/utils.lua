@@ -245,12 +245,12 @@ function utils.buildevent.dead(obj)
 	return event
 end
 
-function utils.buildevent.hit(point, weapon)
-	check.table(point)
+function utils.buildevent.hit(asset, weapon)
+	check.table(asset)
 	check.table(weapon)
 	local event = {}
 	event.id = enum.event.DCT_EVENT_HIT
-	event.point = point
+	event.initiator = asset
 	event.weapon = weapon
 	return event
 end
@@ -265,5 +265,13 @@ function utils.buildevent.operational(base, state)
 	return event
 end
 
+function utils.buildevent.impact(wpn)
+	check.table(wpn)
+	local event = {}
+	event.id = enum.event.DCT_EVENT_IMPACT
+	event.initiator = wpn
+	event.point = wpn:getImpactPoint()
+	return event
+end
 
 return utils

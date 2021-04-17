@@ -154,6 +154,8 @@ function Theater:loadSystems()
 		"dct.ui.scratchpad",
 		"dct.systems.tickets",
 		"dct.systems.bldgPersist",
+		"dct.systems.weaponstracking",
+		"dct.systems.blasteffects",
 	}
 
 	for _, syspath in pairs(systems) do
