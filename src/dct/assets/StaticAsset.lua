@@ -160,7 +160,7 @@ function StaticAsset:getLocation()
 	if self._location == nil then
 		local vec2, n
 		for _, grp in pairs(self._assets) do
-			vec2, n = dctutils.centroid(grp.data, vec2, n)
+			vec2, n = dctutils.centroid2D(grp.data, vec2, n)
 		end
 		vec2.z = nil
 		self._location = vector.Vector3D(vec2, land.getHeight(vec2)):raw()

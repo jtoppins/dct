@@ -255,9 +255,10 @@ local function main()
 
 	theater:export()
 	local f = io.open(settings.statepath, "r")
-	local sumorig = md5.sum(f:read("*all"))
+	local sumorig = md5.sumhexa(f:read("*all"))
 	f:close()
 	if DEBUG == true then
+		print("sumorig: "..tostring(sumorig))
 		copyfile(settings.statepath, settings.statepath..".orig")
 	end
 
@@ -302,11 +303,13 @@ local function main()
 	end
 	assert(playercnt == 162, "Player asset creation broken")
 
+	os.remove(settings.statepath)
 	newtheater:export()
 	f = io.open(settings.statepath, "r")
-	local sumsave = md5.sum(f:read("*all"))
+	local sumsave = md5.sumhexa(f:read("*all"))
 	f:close()
 	if DEBUG == true then
+		print("sumsave: "..tostring(sumsave))
 		copyfile(settings.statepath, settings.statepath..".new")
 	end
 	os.remove(settings.statepath)
