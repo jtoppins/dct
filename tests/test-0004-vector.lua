@@ -14,7 +14,8 @@ local function main()
 		"unit vector broken?")
 	assert((a - b) == vector.Vector2D({x=2,y=2}),
 		"subtraction broken?")
-	assert((a * 3) == vector.Vector2D({x=15,y=15}), "scalar product broken?")
+	assert((3 * a) == vector.Vector2D({x=15,y=15}), "scalar product broken?")
+	assert((3 * a) / 3 == a, "scalar division broken?")
 end
 
 os.exit(main())
