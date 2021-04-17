@@ -140,7 +140,7 @@ local function addAndSpawnAsset(self, name, assetmgr, centroid)
 	asset:generate(assetmgr, self)
 	local location = asset:getLocation()
 	if location then
-		centroid.point, centroid.n = dctutils.centroid(location,
+		centroid.point, centroid.n = dctutils.centroid2D(location,
 			centroid.point, centroid.n)
 	end
 	return asset

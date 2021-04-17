@@ -8,6 +8,7 @@ require("os")
 require("math")
 local check = require("libs.check")
 local enum  = require("dct.enum")
+local vector = require("dct.libs.vector")
 local utils = {}
 
 local enemymap = {
@@ -84,25 +85,18 @@ function utils.zulutime(abstime)
 	return (utils.time(abstime) + correction)
 end
 
-function utils.centroid(point, pcentroid, n)
+function utils.centroid2D(point, pcentroid, n)
 	if pcentroid == nil or n == nil then
-		return {["x"] = point.x, ["y"] = point.y, ["z"] = point.z,}, 1
+		return vector.Vector2D(point), 1
 	end
 
-	local centroid = {}
 	local n1 = n + 1
-	local x = point.x or 0
-	local y = point.y or 0
-	local z = point.z or point.alt or 0
-	pcentroid = {
-		["x"] = pcentroid.x or 0,
-		["y"] = pcentroid.y or 0,
-		["z"] = pcentroid.z or 0,
-	}
-	centroid.x = (x + (n * pcentroid.x))/n1
-	centroid.y = (y + (n * pcentroid.y))/n1
-	centroid.z = (z + (n * pcentroid.z))/n1
-	return centroid, n1
+	local p = vector.Vector2D(point)
+	local pc = vector.Vector2D(pcentroid)
+	local c = {}
+	c.x = (p.x + (n * pc.x))/n1
+	c.y = (p.y + (n * pc.y))/n1
+	return vector.Vector2D(c), n1
 end
 
 -- returns a value guaranteed to be between min and max, inclusive.
