@@ -251,12 +251,44 @@ function Theater:delayedInit()
 	self:postinitSystems()
 end
 
+local function handlefarps(airbase, event)
+	if event.place ~= nil or
+	   Airbase.Category.HELIPAD ~= airbase:getDesc().category then
+		return
+	end
+	event.place = airbase
+end
+
+local airbase_events = {
+	[world.event.S_EVENT_TAKEOFF] = true,
+	[world.event.S_EVENT_LAND]    = true,
+}
+
+-- some airbases (invisible FARPs seems to be the only one currently)
+-- do not trigger takeoff and land events, this function figured out
+-- if there is a FARP near the event and if so uses that FARP as the
+-- place for the event.
+local function fixup_airbase(event)
+	if airbase_events[event.id] == nil or event.place ~= nil then
+		return
+	end
+	local vol = {
+		id = world.VolumeType.SPHERE,
+		params = {
+			point  = event.initiator:getPoint(),
+			radius = 700, -- meters
+		},
+	}
+	world.searchObjects(Object.Category.BASE, vol, handlefarps, event)
+end
+
 -- DCS looks for this function in any table we register with the world
 -- event handler
 function Theater:onEvent(event)
 	if event.id == world.event.S_EVENT_BASE_CAPTURED then
 		return
 	end
+	fixup_airbase(event)
 	self:notify(event)
 	if event.id == world.event.S_EVENT_MISSION_END then
 		-- Only delete the state if there is an end mission event

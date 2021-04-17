@@ -351,6 +351,15 @@ local function getkeys(objtype)
 			["default"] = dct.settings.payloadlimits,
 		})
 	end
+
+	if objtype == enum.assetType.SQUADRONPLAYER or
+	   objtype == enum.assetType.AIRBASE then
+		table.insert(keys, {
+			["name"]  = "players",
+			["type"]  = "table",
+			["default"] = {},
+		})
+   end
 	return keys
 end
 

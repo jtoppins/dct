@@ -220,7 +220,8 @@ function AssetManager:doOneObject(obj, event)
 	end
 
 	local name = tostring(obj:getName())
-	if obj:getCategory() == Object.Category.UNIT then
+	if obj.className_ ~= "Airbase" and
+	   obj:getCategory() == Object.Category.UNIT then
 		name = obj:getGroup():getName()
 	end
 
