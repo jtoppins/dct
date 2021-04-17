@@ -282,10 +282,27 @@ local function fixup_airbase(event)
 	world.searchObjects(Object.Category.BASE, vol, handlefarps, event)
 end
 
+-- ignore unnecessary events from DCS
+local irrelevants = {
+	[world.event.S_EVENT_BASE_CAPTURED]                = true,
+	[world.event.S_EVENT_TOOK_CONTROL]                 = true,
+	[world.event.S_EVENT_HUMAN_FAILURE]                = true,
+	[world.event.S_EVENT_DETAILED_FAILURE]             = true,
+	[world.event.S_EVENT_PLAYER_ENTER_UNIT]            = true,
+	[world.event.S_EVENT_PLAYER_LEAVE_UNIT]            = true,
+	[world.event.S_EVENT_PLAYER_COMMENT]               = true,
+	[world.event.S_EVENT_SCORE]                        = true,
+	[world.event.S_EVENT_DISCARD_CHAIR_AFTER_EJECTION] = true,
+	[world.event.S_EVENT_WEAPON_ADD]                   = true,
+	[world.event.S_EVENT_TRIGGER_ZONE]                 = true,
+	[world.event.S_EVENT_LANDING_QUALITY_MARK]         = true,
+	[world.event.S_EVENT_BDA]                          = true,
+}
+
 -- DCS looks for this function in any table we register with the world
 -- event handler
 function Theater:onEvent(event)
-	if event.id == world.event.S_EVENT_BASE_CAPTURED then
+	if irrelevants[event.id] ~= nil then
 		return
 	end
 	fixup_airbase(event)
