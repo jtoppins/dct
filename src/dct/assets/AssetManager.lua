@@ -124,6 +124,15 @@ function AssetManager:getAsset(name)
 	return self._assetset[name]
 end
 
+-- dcsObjName must be one of; group, static, or airbase names
+function AssetManager:getAssetByDCSObject(dcsObjName)
+	local assetname = self._object2asset[dcsObjName]
+	if assetname == nil then
+		return nil
+	end
+	return self._assetset[assetname]
+end
+
 --[[
 -- filterAssets - return all asset names matching `filter`
 -- filter(asset)
@@ -224,14 +233,9 @@ function AssetManager:doOneObject(obj, event)
 		name = obj:getGroup():getName()
 	end
 
-	local assetname = self._object2asset[name]
-	if assetname == nil then
-		Logger:debug("onDCSEvent - not tracked object, obj name: "..name)
-		return
-	end
-	local asset = self:getAsset(assetname)
+	local asset = self:getAssetByDCSObject(name)
 	if asset == nil then
-		Logger:debug("onDCSEvent - asset doesn't exist, name: "..assetname)
+		Logger:debug("onDCSEvent - asset doesn't exist, name: "..name)
 		self._object2asset[name] = nil
 		return
 	end
