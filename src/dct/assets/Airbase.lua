@@ -386,7 +386,7 @@ function AirbaseAsset:generate(assetmgr, region)
 				"not supported type", self.name, tplname, tpl.objtype))
 		if tpl.coalition == self.owner then
 			tpl.airbase = self.name
-			tpl.location = self:getLocation()
+			tpl.location = tpl.location or self:getLocation()
 			local asset = assetmgr:factory(tpl.objtype)(tpl)
 			assetmgr:add(asset)
 			self:addSubordinate(asset)

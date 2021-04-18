@@ -755,19 +755,19 @@ A static codename can be assigned to a template overriding the normally
 random codename. Codenames are displayed in mission briefings and other
 player UI elements.
 
-### Attributes - Type Specific
+### `location`
 
-#### Airspace
-
-##### `location`
-
- * _required:_ yes
+ * _required:_ no, only required for airspace templates
  * _value:_ table, with members `x` and `y`
 
 Is the center of the airspace. The location is defined as `x` is the
 east-west DCS location value while `y` is the north-south DCS value.
 _Note: These values cannot be lat-long or degrees decimal corrdinates,
 they much be DCS internal map coordinates._
+
+### Attributes - Type Specific
+
+#### Airspace
 
 ##### `radius`
 

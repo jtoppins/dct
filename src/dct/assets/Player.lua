@@ -356,7 +356,7 @@ end
 function Player:getLocation()
 	local p = Group.getByName(self.name)
 	self._location = p:getUnit(1):getPoint()
-	return self._location
+	return AssetBase.getLocation(self)
 end
 
 function Player:isEnabled()

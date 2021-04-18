@@ -32,7 +32,7 @@ function Squadron:_completeinit(template)
 	self.ato = utils.deepcopy(template.ato)
 	self.payloadlimits = utils.deepcopy(template.payloadlimits)
 	self.airbase = template.airbase
-	self._location = template.location
+	self._location = Airbase.getByName(self.airbase):getPoint()
 	self._logger:debug("payloadlimits: "..
 		require("libs.json"):encode_pretty(self.payloadlimits))
 	self._logger:debug("ato: "..

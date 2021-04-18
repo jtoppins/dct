@@ -231,6 +231,10 @@ end
 
 local function checklocation(keydata, tbl)
 	local loc = tbl[keydata.name]
+	if next(tbl[keydata.name]) == nil then
+		tbl[keydata.name] = nil
+		return true
+	end
 	for _, val in pairs({"x", "y"}) do
 		if loc[val] == nil or type(loc[val]) ~= "number" then
 			return false
@@ -254,7 +258,6 @@ local function check_payload_limits(keydata, tbl)
 	tbl[keydata.name] = newlimits
 	return true
 end
-
 
 local function getkeys(objtype)
 	local notpldata = {
@@ -341,6 +344,12 @@ local function getkeys(objtype)
 			["name"]  = "radius",
 			["type"]  = "number",
 			["default"] = 55560,})
+	else
+		table.insert(keys, {
+			["name"]    = "location",
+			["type"]    = "table",
+			["default"] = {},
+			["check"]   = checklocation,})
 	end
 
 	if objtype == enum.assetType.AIRBASE then

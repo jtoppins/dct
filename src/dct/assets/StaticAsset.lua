@@ -165,7 +165,7 @@ function StaticAsset:getLocation()
 		vec2.z = nil
 		self._location = vector.Vector3D(vec2, land.getHeight(vec2)):raw()
 	end
-	return self._location
+	return AssetBase.getLocation(self)
 end
 
 function StaticAsset:getStatus()
