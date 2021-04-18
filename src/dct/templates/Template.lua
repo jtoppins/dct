@@ -234,6 +234,17 @@ local function check_payload_limits(keydata, tbl)
 	return true
 end
 
+local function checklocation(keydata, tbl)
+	if next(tbl[keydata.name]) == nil then
+		tbl[keydata.name] = nil
+		return true
+	end
+	if tbl[keydata.name].x == nil or tbl[keydata.name].y == nil then
+		return false
+	end
+	tbl[keydata.name] = vector.Vector3D(tbl[keydata.name]):raw()
+	return true
+end
 
 local function getkeys(objtype)
 	local notpldata = {
@@ -296,6 +307,11 @@ local function getkeys(objtype)
 			["name"]    = "codename",
 			["type"]    = "string",
 			["default"] = "default codename",
+		}, {
+			["name"]    = "location",
+			["type"]    = "table",
+			["default"] = {},
+			["check"]   = checklocation,
 		},
 	}
 
@@ -312,9 +328,6 @@ local function getkeys(objtype)
 	end
 
 	if objtype == enum.assetType.AIRSPACE then
-		table.insert(keys, {
-			["name"]  = "location",
-			["type"]  = "table",})
 		table.insert(keys, {
 			["name"]  = "volume",
 			["type"]  = "table", })

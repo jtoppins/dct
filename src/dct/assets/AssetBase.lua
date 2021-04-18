@@ -116,6 +116,7 @@ function AssetBase:__init(template)
 		"_dead",
 		"_intel",
 		"_priority",
+		"_location",
 		"type",
 		"briefing",
 		"owner",
@@ -160,6 +161,7 @@ function AssetBase:_completeinit(template)
 		print(string.format("Template(%s) has nil 'desc' field",
 			template.name))
 	end
+	self._location = template.location
 	self.regenerate = template.regenerate
 	self.ignore   = template.ignore
 	self.owner    = template.coalition
