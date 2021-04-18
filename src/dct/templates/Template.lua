@@ -291,7 +291,7 @@ local function getkeys(objtype)
 		}, {
 			["name"]    = "desc",
 			["type"]    = "string",
-			["default"] = "default template description",
+			["default"] = "false",
 		},{
 			["name"]    = "codename",
 			["type"]    = "string",
@@ -439,6 +439,9 @@ function Template.fromFile(region, dctfile, stmfile)
 	template.regionname = region.name
 	template.regionprio = region.priority
 	template.path = dctfile
+	if template.desc == "false" then
+		template.desc = nil
+	end
 	if stmfile ~= nil then
 		template = utils.mergetables(
 			STM.transform(utils.readlua(stmfile, "staticTemplate")),
