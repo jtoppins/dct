@@ -253,9 +253,15 @@ function Theater:delayedInit()
 	self:postinitSystems()
 end
 
+local airbase_cats = {
+	[Airbase.Category.HELIPAD] = true,
+	[Airbase.Category.SHIP]    = true,
+}
+
 local function handlefarps(airbase, event)
 	if event.place ~= nil or
-	   Airbase.Category.HELIPAD ~= airbase:getDesc().category then
+	   airbase:getCategory() ~= Object.Category.BASE or
+	   airbase_cats[airbase:getDesc().category] == nil then
 		return
 	end
 	event.place = airbase
