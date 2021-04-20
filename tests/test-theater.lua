@@ -212,7 +212,7 @@ end
 
 local function main()
 	local playergrp = Group(4, {
-		["id"] = 15,
+		["id"] = 87506,
 		["name"] = "99thFS Uzi 41",
 		["coalition"] = coalition.side.BLUE,
 		["exists"] = true,
@@ -314,6 +314,11 @@ local function main()
 	end
 	os.remove(settings.statepath)
 
+	if DEBUG == true then
+		print("sumorig: "..tostring(sumorig))
+		print("sumsave: "..tostring(sumsave))
+		print(" sumorig == sumsave: "..tostring(sumorig == sumsave))
+	end
 	assert(newtheater.statef == true and sumorig == sumsave,
 		"state saving didn't produce the same md5sum")
 	return 0

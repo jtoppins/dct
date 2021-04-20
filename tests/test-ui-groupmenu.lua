@@ -5,7 +5,7 @@ require("dct")
 
 -- create a player group
 local grp = Group(4, {
-	["id"] = 12,
+	["id"] = 26971,
 	["name"] = "99thFS Uzi 11",
 	["coalition"] = coalition.side.BLUE,
 	["exists"] = true,
@@ -23,7 +23,7 @@ local unit1 = Unit({
 }, grp, "bobplayer")
 
 local grp2 = Group(1, {
-	["id"] = 20,
+	["id"] = 87507,
 	["name"] = "Uzi 42",
 	["coalition"] = coalition.side.BLUE,
 	["exists"] = true,
