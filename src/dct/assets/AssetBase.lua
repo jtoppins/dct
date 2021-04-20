@@ -4,16 +4,6 @@
 -- Provides the base class for Assets.
 -- An Asset is a group of virtual or real objects in the game world
 -- that can be interacted with.
---
-Class Hierarchy:
-
-            AssetBase----Airspace
-                |
-   Airbase------+------Squadron
-				|
-			  Static-----IAgent-----Player
-
-An AIAgent is an Asset that is movable.
 --]]
 
 require("math")
@@ -25,7 +15,7 @@ local Goal     = require("dct.Goal")
 local Marshallable = require("dct.libs.Marshallable")
 local Observable   = require("dct.libs.Observable")
 local Logger   = require("dct.libs.Logger")
-local settings = _G.dct.settings
+local settings = dct.settings
 
 local norenametype = {
 	[dctenum.assetType.SQUADRONPLAYER] = true,
@@ -48,7 +38,6 @@ local function generateCodename(template)
 	local idx = math.random(1, #typetbl)
 	return typetbl[idx]
 end
-
 
 local function genLocationMethod()
 	local txt = {
@@ -102,15 +91,26 @@ AssetBase:
 	- codename - [string] single word code name of the asset, used in
 	             briefings to players
 --]]
-
 local AssetBase = namedclass("AssetBase", Marshallable, Observable)
 function AssetBase:__init(template)
-	if not self._eventhandlers then
-		self._eventhandlers = {}
-	end
 	self._logger = AssetLogger("Asset", self)
 	Marshallable.__init(self)
 	Observable.__init(self)
+	self._eventhandlers = self._eventhandlers or {}
+	self._spawned    = false
+	self._dead       = false
+	self._targeted   = {}
+	self._intel      = {}
+	self._priority   = {}
+	for _, side in pairs(coalition.side) do
+		self._targeted[side] = false
+		self._intel[side]    = 0
+		self._priority[side] = {
+			["region"] = 0,
+			["asset"]  = 0,
+		}
+	end
+
 	self:_addMarshalNames({
 		"_spawned",
 		"_dead",
@@ -128,19 +128,7 @@ function AssetBase:__init(template)
 		"ignore",
 		"regenerate",
 	})
-	self._spawned    = false
-	self._dead       = false
-	self._targeted   = {}
-	self._intel      = {}
-	self._priority   = {}
-	for _, side in pairs(coalition.side) do
-		self._targeted[side] = false
-		self._intel[side]    = 0
-		self._priority[side] = {
-			["region"] = 0,
-			["asset"]  = 0,
-		}
-	end
+
 	self._initcomplete = false
 	if template ~= nil then
 		self:_completeinit(template)
@@ -152,14 +140,15 @@ function AssetBase:__init(template)
 end
 
 function AssetBase:_completeinit(template)
-	self.type     = template.objtype
+	self.type = template.objtype
+	self.briefing = ""
 	if template.desc then
 		self.briefing = dctutils.interp(template.desc, {
 			["LOCATIONMETHOD"] = genLocationMethod(),
 		})
 	else
-		print(string.format("Template(%s) has nil 'desc' field",
-			template.name))
+		self._logger:error(string.format(
+			"Template(%s) has nil 'desc' field", template.name))
 	end
 	self._location = template.location
 	self.regenerate = template.regenerate
