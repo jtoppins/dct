@@ -112,7 +112,7 @@ function WeaponsTracker:_update(time)
 	for _, wpn in pairs(impacts) do
 		self._theater:notify(dctutils.buildevent.impact(wpn))
 	end
-	Logger:warn(string.format("'%s' exec time: %5.2fms",
+	Logger:info(string.format("'%s' exec time: %5.2fms",
 		self.__clsname..".update", (os.clock()-tstart)*1000))
 end
 
