@@ -7,6 +7,7 @@
 
 require("lfs")
 local enum     = require("dct.enum")
+local dctutils = require("dct.utils")
 local settings = _G.dct.settings
 
 -- returns totals for all weapon types, returns nil if the group
@@ -25,7 +26,7 @@ local function totalPayload(grp, limits)
 
 	-- tally restricted weapon cost
 	for _, wpn in ipairs(payload or {}) do
-		local wpnname = wpn.desc.typeName
+		local wpnname = dctutils.trimTypeName(wpn.desc.typeName)
 		local wpncnt  = wpn.count
 		local restricted = restrictedWeapons[wpnname]
 

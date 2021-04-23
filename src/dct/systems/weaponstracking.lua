@@ -38,7 +38,7 @@ function DCTWeapon:__init(wpn, initiator)
 	self.timeout     = false
 	self.lifetime    = 300 -- weapons only "live" for 5 minutes
 	self.weapon      = wpn
-	self.type        = wpn:getTypeName()
+	self.type        = dctutils.trimTypeName(wpn:getTypeName())
 	self.shootername = initiator:getName()
 	self.desc        = wpn:getDesc()
 	self.impactpt    = nil

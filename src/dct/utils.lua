@@ -236,6 +236,10 @@ function utils.fmtposition(position, precision, fmt)
 	return utils.LLtostring(lat, long, precision, fmt)
 end
 
+function utils.trimTypeName(typename)
+	return string.match(typename, "[^.]-$")
+end
+
 utils.buildevent = {}
 function utils.buildevent.dead(obj)
 	check.table(obj)

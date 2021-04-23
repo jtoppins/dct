@@ -146,11 +146,11 @@ local function theatercfgs(config)
 			["cfgtblname"] = "restrictedweapons",
 			["validate"] = validate_weapon_restrictions,
 			["default"] = {
-				["weapons.bombs.RN-24"] = {
+				["RN-24"] = {
 					["cost"]     = enum.WPNINFCOST,
 					["category"] = enum.weaponCategory.AG,
 				},
-				["weapons.bombs.RN-28"] = {
+				["RN-28"] = {
 					["cost"]     = enum.WPNINFCOST,
 					["category"] = enum.weaponCategory.AG,
 				},
