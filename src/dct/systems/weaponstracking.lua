@@ -138,7 +138,7 @@ function WeaponsTracker:event(event)
 		Logger:debug(string.format("%s - weapon not valid "..
 			"typename: %s; initiator: ", self.__clsname,
 			event.weapon:getTypeName(),
-			event.initiator.getName()))
+			event.initiator:getName()))
 		return
 	end
 	self.trackedwpns[event.weapon.id_] = DCTWeapon(event.weapon,
