@@ -315,7 +315,7 @@ local function getkeys(objtype)
 		table.insert(keys, {
 			["name"]  = "tpldata",
 			["type"]  = "table",
-			["check"] = checktpldata,})	
+			["check"] = checktpldata,})
 	end
 
 	if objtype == enum.assetType.AIRSPACE then
