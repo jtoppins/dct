@@ -96,6 +96,10 @@ local function overrideUnitOptions(unit, key, tpl, basename)
 end
 
 local function overrideGroupOptions(grp, idx, tpl)
+	if grp.category == enum.UNIT_CAT_SCENERY then
+		return
+	end
+
 	local opts = {
 		visible        = true,
 		uncontrollable = true,
@@ -147,6 +151,9 @@ local function checkbldgdata(keydata, tpl)
 		local sceneryobject = { id_ = tonumber(bldgdata.data.name), }
 		utils.mergetables(bldgdata.data,
 			vector.Vector2D(Object.getPoint(sceneryobject)):raw())
+		if tpl.tpldata == nil then
+			tpl.tpldata = {}
+		end
 		table.insert(tpl.tpldata, bldgdata)
 		if bldgdata.data.dct_deathgoal ~= nil then
 			tpl.hasDeathGoals = true
@@ -301,15 +308,14 @@ local function getkeys(objtype)
 
 	if notpldata[objtype] == nil then
 		table.insert(keys, {
-			["name"]  = "tpldata",
-			["type"]  = "table",
-			["default"] = {},
-			["check"] = checktpldata,})
-		table.insert(keys, {
 			["name"]    = "buildings",
 			["type"]    = "table",
 			["default"] = {},
 			["check"] = checkbldgdata,})
+		table.insert(keys, {
+			["name"]  = "tpldata",
+			["type"]  = "table",
+			["check"] = checktpldata,})	
 	end
 
 	if objtype == enum.assetType.AIRSPACE then
