@@ -96,6 +96,10 @@ local function overrideUnitOptions(unit, key, tpl, basename)
 end
 
 local function overrideGroupOptions(grp, idx, tpl)
+	if grp.category == enum.UNIT_CAT_SCENERY then
+		return
+	end
+
 	local opts = {
 		visible        = true,
 		uncontrollable = true,
@@ -135,6 +139,10 @@ local function checktpldata(_, tpl)
 end
 
 local function checkbldgdata(keydata, tpl)
+	if next(tpl[keydata.name]) ~= nil and tpl.tpldata == nil then
+		tpl.tpldata = {}
+	end
+
 	for _, bldg in ipairs(tpl[keydata.name]) do
 		local bldgdata = {}
 		bldgdata.countryid = 0
@@ -301,14 +309,14 @@ local function getkeys(objtype)
 
 	if notpldata[objtype] == nil then
 		table.insert(keys, {
-			["name"]  = "tpldata",
-			["type"]  = "table",
-			["check"] = checktpldata,})
-		table.insert(keys, {
 			["name"]    = "buildings",
 			["type"]    = "table",
 			["default"] = {},
 			["check"] = checkbldgdata,})
+		table.insert(keys, {
+			["name"]  = "tpldata",
+			["type"]  = "table",
+			["check"] = checktpldata,})
 	end
 
 	if objtype == enum.assetType.AIRSPACE then
