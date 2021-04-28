@@ -380,7 +380,9 @@ function Theater:getTickets()
 	return self:getSystem("dct.systems.tickets")
 end
 
-function Theater:playerRequest(data)
+function Theater.playerRequest(data)
+	local self = require("dct.Theater").singleton()
+
 	if data == nil then
 		Logger:error("playerRequest(); value error: data must be "..
 			"provided; "..debug.traceback())
