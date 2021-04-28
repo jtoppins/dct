@@ -1,10 +1,10 @@
 metadata = {
-	["rank"]     = 2,
-	["objtype"]  = "factory",
-	["intel"]	 = 1,
-	["name"]     = "bldgTest2",
-	["coalition"]= 1, -- redfor
-	["buildings"]= {
+	["rank"]      = 2,
+	["objtype"]   = "factory",
+	["intel"]	  = 1,
+	["name"]      = "bldgTest2",
+	["coalition"] = 1, -- redfor
+	["buildings"] = {
 		{
 			["name"] = "building 1",
 			["goal"] = "primary destroyed",
