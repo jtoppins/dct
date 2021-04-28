@@ -303,6 +303,7 @@ local function getkeys(objtype)
 		table.insert(keys, {
 			["name"]  = "tpldata",
 			["type"]  = "table",
+			["default"] = {},
 			["check"] = checktpldata,})
 		table.insert(keys, {
 			["name"]    = "buildings",
