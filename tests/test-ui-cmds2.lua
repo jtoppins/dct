@@ -61,7 +61,7 @@ local function main()
 	for _, v in ipairs(testcmds) do
 		trigger.action.setassert(v.assert)
 		trigger.action.setmsgbuffer(v.expected)
-		theater:playerRequest(v.data)
+		dct.Theater.playerRequest(v.data)
 	end
 	return 0
 end

@@ -62,11 +62,11 @@ function loadout.check(player)
 		player.payloadlimits)
 end
 
-function loadout.addmenu(asset, menu, handler, context)
+function loadout.addmenu(asset, menu, handler)
 	local gid  = asset.groupId
 	local name = asset.name
-	missionCommands.addCommandForGroup(gid,
-		"Check Payload", menu, handler, context, {
+	return missionCommands.addCommandForGroup(gid,
+		"Check Payload", menu, handler, {
 			["name"]   = name,
 			["type"]   = enum.uiRequestType.CHECKPAYLOAD,
 		})
