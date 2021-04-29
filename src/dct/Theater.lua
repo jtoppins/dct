@@ -99,6 +99,7 @@ function Theater:__init()
 	self._systems  = {}
 	self.startdate = os.date("!*t")
 	self.namecntr  = 1000
+	self.scratchpad = {}
 
 	for _, val in pairs(coalition.side) do
 		self.cmdrs[val] = Commander(self, val)
