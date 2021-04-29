@@ -543,7 +543,7 @@ end
 function IADS:monitortrks()
 	self:EWRtrkFileBuild()
 	self:SAMtrkFileBuild()
-	self:AWACStrkFileBuild()
+	-- self:AWACStrkFileBuild()
 	for _, EWR in pairs(self.EWRSites) do
 		for _, trk in pairs(EWR.trkFiles) do
 			if ((timer.getAbsTime() - trk.LastDetected) > trkMem or
