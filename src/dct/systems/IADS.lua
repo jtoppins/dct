@@ -134,6 +134,10 @@ function IADS:disableSAM(site)
 end
 
 function IADS:hideSAM(site)
+	if site == nil then
+		Logger:debug("IADS:hideSam: site is nil")
+		return
+	end
 	site.group:getController():setOption(
 		AI.Option.Ground.id.ALARM_STATE,
 		AI.Option.Ground.val.ALARM_STATE.GREEN)
