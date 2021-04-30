@@ -1,9 +1,0 @@
-metadata = {
-    ["objtype"]  = "ammodump",
-    ["respawn"] = {
-        ["type"]  = "timed|land|death",
-        ["limit"] = 3,
-        ["time"]  = 30,
-    },
-    ["intel"] = 2,
-}

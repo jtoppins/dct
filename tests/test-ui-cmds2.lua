@@ -8,8 +8,8 @@ local enum = require("dct.enum")
 
 -- create a player group
 local grp = Group(4, {
-	["id"] = 26971,
-	["name"] = "99thFS Uzi 11",
+	["id"] = 9,
+	["name"] = "VMFA251 - Enfield 1-1",
 	["coalition"] = coalition.side.BLUE,
 	["exists"] = true,
 })

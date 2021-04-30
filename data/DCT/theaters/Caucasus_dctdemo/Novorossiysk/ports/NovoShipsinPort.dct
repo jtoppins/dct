@@ -1,0 +1,4 @@
+objtype = "port"
+intel = 5
+cost = 10
+coalition = 1

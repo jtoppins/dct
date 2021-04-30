@@ -20,6 +20,7 @@ local class = require("libs.class")
 
 local dctcheck = {}
 dctcheck.spawngroups  = 0
+dctcheck.spawnunits   = 0
 dctcheck.spawnstatics = 0
 _G.dctcheck = dctcheck
 
@@ -37,15 +38,16 @@ local objectcat = {
 	["GROUP"] = 7,
 }
 
+local function readfile(path)
+	local f = io.open(path)
+	local t = f:read()
+	f:close()
+	return t
+end
+
 local env = {}
 env.mission = utils.readlua(lfs.tempdir()..utils.sep.."mission", "mission")
-env.mission.theatre = "Test Theater"
-env.mission.sortie  = "test mission"
-env.mission.date = {
-	["Year"]  = 2001,
-	["Month"] = 6,
-	["Day"]   = 22,
-}
+env.mission.theatre = readfile(lfs.tempdir()..utils.sep.."theatre")
 local dictkeys = utils.readlua(lfs.tempdir()..utils.sep..
 	table.concat({"l10n", "DEFAULT", "dictionary"}, utils.sep), "dictionary")
 function env.getValueDictByKey(s)
@@ -163,6 +165,7 @@ country.id = {
 	["QATAR"]                   = 72,
 	["OMAN"]                    = 73,
 	["UNITED_ARAB_EMIRATES"]    = 74,
+	["UNKNOWN_81"]              = 81,
 }
 
 country.name  = {}
@@ -446,6 +449,7 @@ function coalition.addGroup(cntryid, groupcat, groupdata)
 		assert(unit.unitId == nil, "unitId field defined")
 	end
 	dctcheck.spawngroups = dctcheck.spawngroups + 1
+	dctcheck.spawnunits = dctcheck.spawnunits + #(groupdata.units)
 	groupdata.country = cntryid
 	groupdata.groupCategory = groupcat
 	groupdata.exists = true
@@ -465,187 +469,16 @@ function coalition.addStaticObject(cntryid, groupdata)
 	StaticObject(groupdata)
 end
 
-local coaltbl = {
-	-- BLUE Coalition
-	[21] = {
-		["name"] = "Australia",
-		["side"] = coalition.side.BLUE,
-	},
-	[11] = {
-		["name"] = "Belgium",
-		["side"] = coalition.side.BLUE,
-	},
-	[8] = {
-		["name"] = "Canada",
-		["side"] = coalition.side.BLUE,
-	},
-	[28] = {
-		["name"] = "Croatia",
-		["side"] = coalition.side.BLUE,
-	},
-	[26] = {
-		["name"] = "Czech Republic",
-		["side"] = coalition.side.BLUE,
-	},
-	[13] = {
-		["name"] = "Denmark",
-		["side"] = coalition.side.BLUE,
-	},
-	[5] = {
-		["name"] = "France",
-		["side"] = coalition.side.BLUE,
-	},
-	[16] = {
-		["name"] = "Georgia",
-		["side"] = coalition.side.BLUE,
-	},
-	[6] = {
-        ["name"] = "Germany",
-		["side"] = coalition.side.BLUE,
-	},
-	[15] = {
-		["name"] = "Israel",
-		["side"] = coalition.side.BLUE,
-	},
-	[20] = {
-		["name"] = "Italy",
-		["side"] = coalition.side.BLUE,
-	},
-	[12] = {
-		["name"] = "Norway",
-		["side"] = coalition.side.BLUE,
-	},
-	[40] = {
-		["name"] = "Poland",
-		["side"] = coalition.side.BLUE,
-	},
-	[45] = {
-		["name"] = "South Korea",
-		["side"] = coalition.side.BLUE,
-	},
-	[9] = {
-		["name"] = "Spain",
-		["side"] = coalition.side.BLUE,
-	},
-	[46] = {
-		["name"] = "Sweden",
-		["side"] = coalition.side.BLUE,
-	},
-	[10] = {
-        ["name"] = "The Netherlands",
-		["side"] = coalition.side.BLUE,
-	},
-	[3] = {
-		["name"] = "Turkey",
-		["side"] = coalition.side.BLUE,
-	},
-	[4] = {
-        ["name"] = "UK",
-		["side"] = coalition.side.BLUE,
-	},
-	[1] = {
-		["name"] = "Ukraine",
-		["side"] = coalition.side.BLUE,
-	},
-	[2] = {
-		["name"] = "USA",
-		["side"] = coalition.side.BLUE,
-	},
-	[73] = {
-		["name"] = "Oman",
-		["side"] = coalition.side.BLUE,
-	},
-	[74] = {
-		["name"] = "UAE",
-		["side"] = coalition.side.BLUE,
-	},
-	[39] = {
-		["name"] = "Pakistan",
-		["side"] = coalition.side.BLUE,
-	},
-	[35] = {
-		["name"] = "Iraq",
-		["side"] = coalition.side.BLUE,
-	},
-	[42] = {
-		["name"] = "SAUDI_ARABIA",
-		["side"] = coalition.side.BLUE,
-	},
-
-	-- RED Coalition
-	[25] = {
-		["name"] = "Bulgaria",
-		["side"] = coalition.side.RED,
-	},
-	[18] = {
-		["name"] = "Abkhazia",
-		["side"] = coalition.side.RED,
-	},
-	[24] = {
-		["name"] = "Belarus",
-		["side"] = coalition.side.RED,
-	},
-	[27] = {
-		["name"] = "China",
-		["side"] = coalition.side.RED,
-	},
-	[34] = {
-		["name"] = "Iran",
-		["side"] = coalition.side.RED,
-	},
-	[37] = {
-		["name"] = "Kazakhstan",
-		["side"] = coalition.side.RED,
-	},
-	[38] = {
-		["name"] = "North Korea",
-		["side"] = coalition.side.RED,
-	},
-	[0] = {
-		["name"] = "Russia",
-		["side"] = coalition.side.RED,
-	},
-	[43] = {
-		["name"] = "Serbia",
-		["side"] = coalition.side.RED,
-	},
-	[19] = {
-		["name"] = "South Ossetia",
-		["side"] = coalition.side.RED,
-	},
-	[47] = {
-		["name"] = "Syria",
-		["side"] = coalition.side.RED,
-	},
-	[7] = {
-		["name"] = "USAF Aggressors",
-		["side"] = coalition.side.RED,
-	},
-	[17] = {
-		["name"] = "Insurgents",
-		["side"] = coalition.side.RED,
-	},
-	[71] = {
-		["name"] = "Unknown-RED1",
-		["side"] = coalition.side.RED,
-	},
-	[65] = {
-		["name"] = "Unknown-RED2",
-		["side"] = coalition.side.RED,
-	},
-	[72] = {
-		["name"] = "Unknown-RED3",
-		["side"] = coalition.side.RED,
-	},
-	[59] = {
-		["name"] = "JORDAN",
-		["side"] = coalition.side.RED,
-	},
-}
-
 function coalition.getCountryCoalition(id)
-	assert(coaltbl[id] ~= nil, "get country coalition id: "..id)
-	return coaltbl[id]["side"]
+	local c
+	for coa, tbl in pairs(env.mission.coalitions) do
+		local found = utils.getkey(tbl, id)
+		if found ~= nil then
+			c = string.upper(coa)
+			break
+		end
+	end
+	return coalition.side[c]
 end
 _G.coalition = coalition
 

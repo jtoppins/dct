@@ -1,6 +1,7 @@
 #!/bin/sh
 
 export LC_ALL=C
+export TZ="UTC 0"
 
 #set -e
 cwd=$(pwd)

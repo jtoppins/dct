@@ -1,0 +1,10 @@
+region = {
+		["name"] = "BlackSea",
+		["priority"] = 30,
+		["limits"] = 	{
+			["airbase"] = 		{
+				["min"] = 1,
+				["max"] = 1,
+			}
+		}
+	}

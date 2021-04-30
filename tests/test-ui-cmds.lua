@@ -9,8 +9,8 @@ local uicmds = require("dct.ui.cmds")
 
 -- create a player group
 local grp = Group(4, {
-	["id"] = 26971,
-	["name"] = "99thFS Uzi 11",
+	["id"] = 9,
+	["name"] = "VMFA251 - Enfield 1-1",
 	["coalition"] = coalition.side.BLUE,
 	["exists"] = true,
 })
@@ -26,19 +26,16 @@ local unit1 = Unit({
 
 local briefingtxt = "Package: #5720\n"..
 			"IFF Codes: M1(05), M3(5720)\n"..
-			"Target AO: 88°07.2'N 063°27.6'W (DELHI)\n"..
+			"Target AO: 88°07.38'N 063°27.36'W (LONDON)\n"..
 			"Briefing:\n"..
-			"Satellite imaging has found"..
-			" an Iranian Ammo Dump 88°07.2'N 063°27.6'W."..
-			" Find and destroy the bunkers and the ordnance within.\n"..
-			"    Tot: 2001-06-22 22:48z\n    \n"..
-			"    Primary Objectives: Destroy the large, armoured bunker."..
-			" It is heavily fortified, so accuracy is key.\n    \n"..
-			"    Secondary Objectives: Destroy the two smaller, white"..
-			" hangars.\n    \n"..
-			"    Recommended Pilots: 2\n    \n"..
-			"    Recommended Ordnance: Heavy ordnance required for bunker"..
-			" targets, e.g. Mk-84s or PGM Variants."
+			"Aerial photography shows that there is"..
+			" a fuel storage facility at 88°07.38'N 063°27.36'W,"..
+			" East of Krasnodar-Center.\n\n"..
+			"Primary Objectives: Destroy the fuel tanks embedded in "..
+			"the ground at the facility.\n\n"..
+			"Secondary Objectives: Destroy the white storage hangars.\n\n"..
+			"Recommended Pilots: 2\n\n"..
+			"Recommended Ordnance: Pilot discretion."
 
 local testcmds = {
 	{
@@ -52,7 +49,7 @@ local testcmds = {
 			"  Air:    parity\n  ELINT:  medium\n  SAM:    medium\n\n"..
 			"== Friendly Force Info ==\n  Force Str: Nominal\n\n"..
 			"== Current Active Air Missions ==\n  No Active Missions\n\n"..
-			"Recommended Mission Type: CAP\n",
+			"Recommended Mission Type: SEAD\n",
 	}, {
 		["data"] = {
 			["name"]   = grp:getName(),
@@ -73,7 +70,7 @@ local testcmds = {
 			"  Air:    parity\n  ELINT:  medium\n  SAM:    medium\n\n"..
 			"== Friendly Force Info ==\n  Force Str: Nominal\n\n"..
 			"== Current Active Air Missions ==\n  STRIKE:   1\n\n"..
-			"Recommended Mission Type: CAP\n",
+			"Recommended Mission Type: SEAD\n",
 	}, {
 		["data"] = {
 			["name"]   = grp:getName(),
@@ -89,7 +86,7 @@ local testcmds = {
 		["assert"]     = true,
 		["expected"]   = "Mission State: Preparing\n"..
 			"Package: 5720\n"..
-			"Timeout: 2001-06-22 22:30z (in 90 mins)\n"..
+			"Timeout: 2016-06-21 12:30z (in 90 mins)\n"..
 			"BDA: 0% complete\n",
 	}, {
 		["data"] = {
@@ -125,7 +122,7 @@ local testcmds = {
 		["assert"]     = true,
 		["expected"]   = "Mission State: Preparing\n"..
 			"Package: 5720\n"..
-			"Timeout: 2001-06-22 22:32z (in 87 mins)\n"..
+			"Timeout: 2016-06-21 12:32z (in 87 mins)\n"..
 			"BDA: 0% complete\n",
 	}, {
 		["data"] = {

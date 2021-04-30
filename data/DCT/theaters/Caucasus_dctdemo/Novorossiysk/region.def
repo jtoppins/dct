@@ -1,0 +1,10 @@
+region = {
+		["name"] = "Novorossiysk",
+		["priority"] = 20,
+		["limits"] = 	{
+			["port"] = 		{
+				["min"] = 1,
+				["max"] = 1
+			}
+		}
+	}

@@ -5,8 +5,8 @@ require("dct")
 
 -- create a player group
 local grp = Group(4, {
-	["id"] = 26971,
-	["name"] = "99thFS Uzi 11",
+	["id"] = 9,
+	["name"] = "VMFA251 - Enfield 1-1",
 	["coalition"] = coalition.side.BLUE,
 	["exists"] = true,
 })
@@ -23,8 +23,8 @@ local unit1 = Unit({
 }, grp, "bobplayer")
 
 local grp2 = Group(1, {
-	["id"] = 87507,
-	["name"] = "Uzi 42",
+	["id"] = 10,
+	["name"] = "VMFA251 - Enfield 1-2",
 	["coalition"] = coalition.side.BLUE,
 	["exists"] = true,
 })
@@ -77,14 +77,11 @@ local function main()
 		trigger.action.chkmsgbuffer()
 	end
 
-	local uzi11 = theater:getAssetMgr():getAsset("99thFS Uzi 11")
-	local uzi42 = theater:getAssetMgr():getAsset("Uzi 42")
+	local uzi11 = theater:getAssetMgr():getAsset(grp:getName())
 
 	local enum = require("dct.enum")
-	assert(uzi11.payloadlimits[enum.weaponCategory.AG] == 20,
+	assert(uzi11.payloadlimits[enum.weaponCategory.AG] == 60,
 		"uzi11 doesn't have the expected AG payload limit")
-	assert(uzi42.payloadlimits[enum.weaponCategory.AG] == 2000,
-		"uzi42 doesn't have the expected AG payload limit")
 	return 0
 end
 

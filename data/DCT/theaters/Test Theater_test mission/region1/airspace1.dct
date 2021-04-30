@@ -1,9 +1,0 @@
-objtype = "airspace"
-name = "knox"
-coalition = 2
-intel = 2
-location = {
-	x = 22,
-	y = 60,
-}
-radius = 3000

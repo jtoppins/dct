@@ -8,8 +8,8 @@ local testcases = {
 		["event"] = {
 			["id"] = world.event.S_EVENT_HIT,
 			["object"] = {
-				["name"] = "Test region_Abu Musa Ammo Dump 1 STRUCTURE 1",
-				["objtype"] = Object.Category.STATIC,
+				["name"] = "Novorossiysk_NovoShipsinPort 1 SHIP 1-1",
+				["objtype"] = Object.Category.UNIT,
 				["life"] = 1,
 			},
 		},
@@ -18,8 +18,8 @@ local testcases = {
 		["event"] = {
 			["id"] = world.event.S_EVENT_DEAD,
 			["object"] = {
-				["name"] = "Test region_Abu Musa Ammo Dump 1 STRUCTURE 1",
-				["objtype"] = Object.Category.STATIC,
+				["name"] = "Novorossiysk_NovoShipsinPort 1 SHIP 1-2",
+				["objtype"] = Object.Category.UNIT,
 			},
 		},
 	},

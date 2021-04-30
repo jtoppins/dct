@@ -152,9 +152,9 @@ local function main()
 	end
 
 	local test_time = 3600*16 -- 16:00 local time
-	assert("2001-06-22 16:00l" == os.date("%F %Rl", utils.time(test_time)),
+	assert("2016-06-21 16:00l" == os.date("%F %Rl", utils.time(test_time)),
 		"failed: "..os.date("%F %Rl", utils.time(test_time)))
-	assert("2001-06-22 22:00z" == os.date("%F %Rz", utils.zulutime(test_time)),
+	assert("2016-06-21 12:00z" == os.date("%F %Rz", utils.zulutime(test_time)),
 		"failed: "..os.date("%F %Rz", utils.zulutime(test_time)))
 	return 0
 end

@@ -13,157 +13,37 @@ local events = {
 	{
 		["id"] = world.event.S_EVENT_DEAD,
 		["object"] = {
-			["name"] = "Test region_Abu Musa Ammo Dump 1 STRUCTURE 1",
-			["objtype"] = Object.Category.STATIC,
-		},
-	},{
-		["id"] = world.event.S_EVENT_DEAD,
-		["object"] = {
-			["name"] = "Test region_Abu Musa Ammo Dump 1 STRUCTURE 2",
-			["objtype"] = Object.Category.STATIC,
-		},
-	},{
-		["id"] = world.event.S_EVENT_DEAD,
-		["object"] = {
-			["name"] = "Test region_Abu Musa Ammo Dump 1 STRUCTURE 3",
-			["objtype"] = Object.Category.STATIC,
-		},
-	},{
-		["id"] = world.event.S_EVENT_DEAD,
-		["object"] = {
-			["name"] = "Test region_Abu Musa Ammo Dump 1 STRUCTURE 4",
-			["objtype"] = Object.Category.STATIC,
-		},
-	},{
-		["id"] = world.event.S_EVENT_DEAD,
-		["object"] = {
-			["name"] = "Test region_Abu Musa Ammo Dump 1 STRUCTURE 5",
-			["objtype"] = Object.Category.STATIC,
-		},
-	},{
-		["id"] = world.event.S_EVENT_DEAD,
-		["object"] = {
-			["name"] = "Test region_Abu Musa Ammo Dump 1 STRUCTURE 6",
-			["objtype"] = Object.Category.STATIC,
-		},
-	},{
-		["id"] = world.event.S_EVENT_DEAD,
-		["object"] = {
-			["name"] = "Test region_Abu Musa Ammo Dump 1 STRUCTURE 7",
-			["objtype"] = Object.Category.STATIC,
-		},
-	},{
-		["id"] = world.event.S_EVENT_DEAD,
-		["object"] = {
-			["name"] = "Test region_Abu Musa Ammo Dump 1 STRUCTURE 8",
-			["objtype"] = Object.Category.STATIC,
-		},
-	},{
-		["id"] = world.event.S_EVENT_DEAD,
-		["object"] = {
-			["name"] = "Test region_Abu Musa Ammo Dump 1 STRUCTURE 9",
-			["objtype"] = Object.Category.STATIC,
-		},
-	},{
-		["id"] = world.event.S_EVENT_DEAD,
-		["object"] = {
-			["name"] = "Test region_Abu Musa Ammo Dump 1 STRUCTURE 10",
-			["objtype"] = Object.Category.STATIC,
-		},
-	},{
-		["id"] = world.event.S_EVENT_DEAD,
-		["object"] = {
-			["name"] = "Test region_Abu Musa Ammo Dump 1 STRUCTURE 11",
-			["objtype"] = Object.Category.STATIC,
-		},
-	},{
-		["id"] = world.event.S_EVENT_DEAD,
-		["object"] = {
-			["name"] = "Test region_Abu Musa Ammo Dump 1 GROUND_UNIT 12-1",
+			["name"] = "Novorossiysk_NovoShipsinPort 1 SHIP 1-1",
 			["objtype"] = Object.Category.UNIT,
 		},
 	},{
 		["id"] = world.event.S_EVENT_DEAD,
 		["object"] = {
-			["name"] = "Test region_Abu Musa Ammo Dump 1 GROUND_UNIT 12-2",
+			["name"] = "Novorossiysk_NovoShipsinPort 1 SHIP 1-2",
 			["objtype"] = Object.Category.UNIT,
 		},
 	},{
 		["id"] = world.event.S_EVENT_DEAD,
 		["object"] = {
-			["name"] = "Test region_Abu Musa Ammo Dump 1 GROUND_UNIT 12-3",
+			["name"] = "Novorossiysk_NovoShipsinPort 1 SHIP 1-3",
 			["objtype"] = Object.Category.UNIT,
 		},
 	},{
 		["id"] = world.event.S_EVENT_DEAD,
 		["object"] = {
-			["name"] = "Test region_Abu Musa Ammo Dump 1 GROUND_UNIT 12-4",
+			["name"] = "Novorossiysk_NovoShipsinPort 1 SHIP 1-4",
 			["objtype"] = Object.Category.UNIT,
 		},
 	},{
 		["id"] = world.event.S_EVENT_DEAD,
 		["object"] = {
-			["name"] = "Test region_Abu Musa Ammo Dump 1 GROUND_UNIT 12-5",
+			["name"] = "Novorossiysk_NovoShipsinPort 1 SHIP 1-5",
 			["objtype"] = Object.Category.UNIT,
 		},
 	},{
 		["id"] = world.event.S_EVENT_DEAD,
 		["object"] = {
-			["name"] = "Test region_Abu Musa Ammo Dump 1 GROUND_UNIT 12-6",
-			["objtype"] = Object.Category.UNIT,
-		},
-	},{
-		["id"] = world.event.S_EVENT_DEAD,
-		["object"] = {
-			["name"] = "Test region_Abu Musa Ammo Dump 1 GROUND_UNIT 12-7",
-			["objtype"] = Object.Category.UNIT,
-		},
-	},{
-		["id"] = world.event.S_EVENT_DEAD,
-		["object"] = {
-			["name"] = "Test region_Abu Musa Ammo Dump 1 GROUND_UNIT 12-8",
-			["objtype"] = Object.Category.UNIT,
-		},
-	},{
-		["id"] = world.event.S_EVENT_DEAD,
-		["object"] = {
-			["name"] = "Test region_Abu Musa Ammo Dump 1 GROUND_UNIT 12-9",
-			["objtype"] = Object.Category.UNIT,
-		},
-	},{
-		["id"] = world.event.S_EVENT_DEAD,
-		["object"] = {
-			["name"] = "Test region_Abu Musa Ammo Dump 1 GROUND_UNIT 12-10",
-			["objtype"] = Object.Category.UNIT,
-		},
-	},{
-		["id"] = world.event.S_EVENT_DEAD,
-		["object"] = {
-			["name"] = "Test region_Abu Musa Ammo Dump 1 GROUND_UNIT 12-11",
-			["objtype"] = Object.Category.UNIT,
-		},
-	},{
-		["id"] = world.event.S_EVENT_DEAD,
-		["object"] = {
-			["name"] = "Test region_Abu Musa Ammo Dump 1 GROUND_UNIT 12-12",
-			["objtype"] = Object.Category.UNIT,
-		},
-	},{
-		["id"] = world.event.S_EVENT_DEAD,
-		["object"] = {
-			["name"] = "Test region_Abu Musa Ammo Dump 1 GROUND_UNIT 12-13",
-			["objtype"] = Object.Category.UNIT,
-		},
-	},{
-		["id"] = world.event.S_EVENT_DEAD,
-		["object"] = {
-			["name"] = "Test region_Abu Musa Ammo Dump 1 GROUND_UNIT 12-14",
-			["objtype"] = Object.Category.UNIT,
-		},
-	},{
-		["id"] = world.event.S_EVENT_DEAD,
-		["object"] = {
-			["name"] = "Test region_Abu Musa Ammo Dump 1 GROUND_UNIT 12-15",
+			["name"] = "Novorossiysk_NovoShipsinPort 1 SHIP 1-6",
 			["objtype"] = Object.Category.UNIT,
 		},
 	},
@@ -212,8 +92,8 @@ end
 
 local function main()
 	local playergrp = Group(4, {
-		["id"] = 87506,
-		["name"] = "99thFS Uzi 41",
+		["id"] = 9,
+		["name"] = "VMFA251 - Enfield 1-1",
 		["coalition"] = coalition.side.BLUE,
 		["exists"] = true,
 	})
@@ -229,11 +109,11 @@ local function main()
 	local theater = dct.Theater()
 	_G.dct.theater = theater
 	theater:exec(50)
-	local expected = 3
+	local expected = 32
 	assert(dctcheck.spawngroups == expected,
 		string.format("group spawn broken; expected(%d), got(%d)",
 		expected, dctcheck.spawngroups))
-	expected = 12
+	expected = 29
 	assert(dctcheck.spawnstatics == expected,
 		string.format("static spawn broken; expected(%d), got(%d)",
 		expected, dctcheck.spawnstatics))
@@ -287,7 +167,7 @@ local function main()
 			"  Air:    parity\n  ELINT:  medium\n  SAM:    medium\n\n"..
 			"== Friendly Force Info ==\n  Force Str: Nominal\n\n"..
 			"== Current Active Air Missions ==\n  No Active Missions\n\n"..
-			"Recommended Mission Type: CAP\n",
+			"Recommended Mission Type: SEAD\n",
 	}
 	local uicmds = require("dct.ui.cmds")
 	trigger.action.setassert(status.assert)
@@ -301,7 +181,7 @@ local function main()
 			playercnt = playercnt + 1
 		end
 	end
-	assert(playercnt == 162, "Player asset creation broken")
+	assert(playercnt == 20, "Player asset creation broken")
 
 	os.remove(settings.statepath)
 	newtheater:export()

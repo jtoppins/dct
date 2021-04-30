@@ -1,0 +1,10 @@
+region = {
+		["name"] = "Sukhumi",
+		["priority"] = 20,
+		["limits"] = 	{
+			["ammodump"] = 		{
+				["min"] = 1,
+				["max"] = 1
+			}
+		}
+	}

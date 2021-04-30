@@ -1,0 +1,10 @@
+objtype = "airbase"
+name = "CVN-71 Theodore Roosevelt"
+coalition = 2
+subordinates = {
+	"VF102",
+}
+desc = "CVN-71 Theodore Roosevelt"
+recoverytype = "land"
+takeofftype = "runway"
+cost = 20

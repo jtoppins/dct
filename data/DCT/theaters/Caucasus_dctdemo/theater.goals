@@ -1,0 +1,18 @@
+blue = {
+	flag = 45,
+	tickets = 100,
+	difficulty = "normal",
+}
+
+neutral = {
+	flag = 0,
+	tickets = 0,
+}
+
+red = {
+	flag = 60,
+	tickets = 100,
+	player_cost = 1,
+	modifier_reward = 1,
+	modifier_loss = 1,
+}

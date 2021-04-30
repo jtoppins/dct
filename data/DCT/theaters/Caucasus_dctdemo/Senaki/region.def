@@ -1,0 +1,10 @@
+region = {
+		["name"] = "Senaki",
+		["priority"] = 30,
+		["limits"] = 	{
+			["airbase"] = 		{
+				["min"] = 2,
+				["max"] = 2,
+			}
+		}
+	}
