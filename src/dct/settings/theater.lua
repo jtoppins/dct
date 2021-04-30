@@ -155,6 +155,9 @@ local function theatercfgs(config)
 					["category"] = enum.weaponCategory.AG,
 				},
 			},
+			["env"] = {
+				["INFCOST"] = enum.WPNINFCOST,
+			},
 		}, {
 			["name"] = "payloadlimits",
 			["file"] = config.server.theaterpath..utils.sep.."settings"..
