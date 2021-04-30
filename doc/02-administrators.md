@@ -55,7 +55,7 @@ text in `<>` represent a variable instead of a constant.
 	debug = false
 	profile = false
 	--statepath = "<dcs-saved-games>/<theater-name>_<sortie-name>.state"
-	--theaterpath = "<dcs-temp-directory>/theater"
+	--theaterpath = "<dcs-saved-games>/DCT/theaters/<theater-name>_<sortie-name>"
 	schedfreq = 2
 	tgtfps = 75
 	percentTimeAllowed = .3
@@ -102,6 +102,7 @@ _Note: An adminstrator likely does not need to modify this from the default._
 #### `theaterpath`
 
  * _value:_ string
+ * _default path:_ `<dcs-saved-games>/DCT/theaters/<theater-name>_<sortie-name>`
 
 Defines where the "theater definition" exists. See
 [Campaign Designer](03-designer.md) documentation for what a
