@@ -79,6 +79,8 @@ function AssetManager:remove(asset)
 		return
 	end
 
+	self._logger:debug("Removing asset: "..asset.name)
+
 	asset:removeObserver(self)
 	self._assetset[asset.name] = nil
 
@@ -100,6 +102,8 @@ function AssetManager:add(asset)
 		self._logger:debug("AssetManager:add - not adding dead asset: %s", asset.name)
 		return
 	end
+
+	self._logger:debug("Adding asset: "..asset.name)
 
 	self._assetset[asset.name] = asset
 	asset:addObserver(self.onDCSEvent, self, "AssetManager.onDCSEvent")
