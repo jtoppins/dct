@@ -338,6 +338,12 @@ function Player:_setup()
 	self.state:enter(self)
 end
 
+-- Player assets cannot die, prevent them from ever being cleaned up
+-- by the AssetManager
+function Player:isDead()
+	return false
+end
+
 function Player:inAir()
 	self.inair = self.state.inair or false
 	return self.inair
