@@ -316,10 +316,14 @@ local function getkeys(objtype)
 			["name"]    = "desc",
 			["type"]    = "string",
 			["default"] = "false",
-		},{
+		}, {
 			["name"]    = "codename",
 			["type"]    = "string",
 			["default"] = "default codename",
+		}, {
+			["name"]    = "theater",
+			["type"]    = "string",
+			["default"] = env.mission.theatre,
 		},
 	}
 
