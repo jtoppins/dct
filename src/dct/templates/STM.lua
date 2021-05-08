@@ -144,8 +144,8 @@ function STM.transform(stmdata, file)
 			"runtime error: invalid STM; country(%s) does not belong "..
 			"to '%s' coalition, country belongs to '%s' coalition; file: %s",
 			country.name[cntryid],
-			utils.getkey(coalition.side, template.coalition),
-			utils.getkey(coalition.side, side),
+			tostring(utils.getkey(coalition.side, template.coalition)),
+			tostring(utils.getkey(coalition.side, side)),
 			file))
 		return true
 	end
