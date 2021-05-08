@@ -434,7 +434,7 @@ function Theater:queueCommand(delay, cmd)
 		cmd.name, self.cmdq:size()))
 end
 
-function Theater:_exec(time)
+function Theater:exec(time)
 	self.ltime = self.ctime
 	self.ctime = time
 
@@ -448,9 +448,13 @@ function Theater:_exec(time)
 		end
 
 		local cmd = self.cmdq:pop()
-		local requeue = cmd:execute(time)
-		if requeue ~= nil and type(requeue) == "number" then
-			self:queueCommand(requeue, cmd)
+		local ok, requeue = pcall(cmd.execute, cmd, time)
+		if ok then
+			if requeue ~= nil and type(requeue) == "number" then
+				self:queueCommand(requeue, cmd)
+			end
+		else
+			Logger:error("protected call - "..tostring(requeue))
 		end
 		cmdctr = cmdctr + 1
 
@@ -464,18 +468,6 @@ function Theater:_exec(time)
 	end
 	Logger:debug(string.format("exec(); time taken: %4.2fms;"..
 		" cmds executed: %d", tdiff*1000, cmdctr))
-end
-
-function Theater:exec(time)
-	local errhandler = function(err)
-		Logger:error("protected call - "..tostring(err).."\n"..
-			debug.traceback())
-	end
-	local pcallfunc = function()
-		self:_exec(time)
-	end
-
-	xpcall(pcallfunc, errhandler)
 	return time + self.cmdqdelay
 end
 
