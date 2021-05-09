@@ -92,8 +92,6 @@ function Theater:__init()
 	self.statef    = false
 	self.regions   = {}
 	self.cmdq      = containers.PriorityQueue()
-	self.ctime     = timer.getTime()
-	self.ltime     = 0
 	self.assetmgr  = AssetManager(self)
 	self.cmdrs     = {}
 	self._systems  = {}
@@ -429,15 +427,12 @@ function Theater:queueCommand(delay, cmd)
 			delay, self.cmdmindelay))
 		delay = self.cmdmindelay
 	end
-	self.cmdq:push(self.ctime + delay, cmd)
+	self.cmdq:push(timer.getTime() + delay, cmd)
 	Logger:debug(string.format("queueCommand(); cmd(%s) cmdq size: %d",
 		cmd.name, self.cmdq:size()))
 end
 
 function Theater:exec(time)
-	self.ltime = self.ctime
-	self.ctime = time
-
 	local tstart = os.clock()
 	local tdiff = 0
 	local cmdctr = 0
