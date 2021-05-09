@@ -91,6 +91,7 @@ function Theater:__init()
 		settings.percentTimeAllowed)
 	self.statef    = false
 	self.regions   = {}
+	self.qtimer    = require("dct.libs.Timer")(self.quanta, os.clock)
 	self.cmdq      = containers.PriorityQueue()
 	self.assetmgr  = AssetManager(self)
 	self.cmdrs     = {}
@@ -433,8 +434,7 @@ function Theater:queueCommand(delay, cmd)
 end
 
 function Theater:exec(time)
-	local tstart = os.clock()
-	local tdiff = 0
+	self.qtimer:reset()
 	local cmdctr = 0
 	while not self.cmdq:empty() do
 		local _, prio = self.cmdq:peek()
@@ -452,17 +452,17 @@ function Theater:exec(time)
 			Logger:error("protected call - "..tostring(requeue))
 		end
 		cmdctr = cmdctr + 1
-
-		tdiff = os.clock() - tstart
-		if tdiff >= self.quanta then
+		self.qtimer:update()
+		if self.qtimer:expired() then
 			Logger:debug(
 				string.format("exec(); quanta reached, quanta: %5.2fms",
 					self.quanta*1000))
 			break
 		end
 	end
+	self.qtimer:update()
 	Logger:debug(string.format("exec(); time taken: %4.2fms;"..
-		" cmds executed: %d", tdiff*1000, cmdctr))
+		" cmds executed: %d", self.qtimer.timeout*1000, cmdctr))
 	return time + self.cmdqdelay
 end
 
