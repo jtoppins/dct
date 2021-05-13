@@ -212,10 +212,11 @@ local MissionJoinCmd = class(MissionCmd)
 function MissionJoinCmd:__init(theater, data)
 	MissionCmd.__init(self, theater, data)
 	self.name = "MissionJoinCmd:"..data.name
+	self.missioncode = data.missioncode
 end
 
 function MissionJoinCmd:_execute(_, cmdr)
-	local missioncode = self.asset.scratchpad or 0
+	local missioncode = self.missioncode or self.asset.scratchpad or 0
 	local msn = cmdr:getAssigned(self.asset)
 	local msg
 
