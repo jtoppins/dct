@@ -43,15 +43,3 @@ for t in $tests; do
 done
 cd "${cwd}"
 exit ${fail}
-
-
-# TODO instead of going the route of converting each test to a lua table
-# and having a single runner instead have each test accept commands;
-# Goals for tests
-#  * able to be run individually
-#      this can be done by passing the call of the test to a function
-#        that prints a 1-liner if the test fails
-#
-# test improvements
-# * convert this to a lua file
-# * still allow each "test suite" to be in a file
