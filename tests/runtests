@@ -14,6 +14,7 @@ DCT_TEMPLATE_PATH=${DCT_TEMPLATE_PATH:-${srcroot}/../dcs-mission-oeo-templates}
 if ! test -d "${DCT_TEMPLATE_PATH}"; then
 	unset DCT_TEMPLATE_PATH
 fi
+LUA_EXEC=${LUA_EXEC:-lua5.1}
 LUA_LIB_PATH=${LUA_LIB_PATH:-${srcroot}/../lua-libs/src/?.lua}
 LUA_PATH="${srcroot}/src/?.lua;${LUA_LIB_PATH}"
 LUA_PATH="${LUA_PATH};;"
@@ -33,7 +34,7 @@ fi
 
 for t in $tests; do
 	result="PASS"
-	./$(basename ${t})
+	${LUA_EXEC} $(basename ${t})
 	if test $? -ne 0; then
 		result="FAIL"
 		fail=1
