@@ -144,8 +144,8 @@ end
 
 function Theater:postinitSystems()
 	for _, sys in pairs(self._systems) do
-		if type(sys.initpost) == "function" then
-			sys:initpost(self)
+		if type(sys.postinit) == "function" then
+			sys:postinit(self)
 		end
 	end
 end
