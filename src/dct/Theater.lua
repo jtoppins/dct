@@ -7,38 +7,93 @@
 require("os")
 require("io")
 require("lfs")
+local class       = require("libs.namedclass")
 local containers  = require("libs.containers")
 local json        = require("libs.json")
 local enum        = require("dct.enum")
 local dctutils    = require("dct.utils")
 local Observable  = require("dct.libs.Observable")
 local uicmds      = require("dct.ui.cmds")
-local STM         = require("dct.templates.STM")
-local Template    = require("dct.templates.Template")
-local AssetManager= require("dct.assets.AssetManager")
 local Commander   = require("dct.ai.Commander")
 local Command     = require("dct.Command")
 local Logger      = dct.Logger.getByName("Theater")
 local settings    = _G.dct.settings.server
+local STATE_VERSION = "3"
 
-local STATE_VERSION = "2"
+--[[--
+ Component system. Defines a generic way for initializing components
+ of the system without directly tying the two systems together.
+ A system can provide the following methods:
 
-local function isPlayerGroup(grp, _, _)
-	local slotcnt = 0
-	for _, unit in ipairs(grp.units) do
-		if unit.skill == "Client" then
-			slotcnt = slotcnt + 1
+ @function __init initialization
+ @function marshal all the system's data for serialization
+ @function unmarshal initializes the system from the saved data
+ @function generate any Assets the system may need
+ @function postinit run after __init and generate, thus guarantees all
+   assets are generated after all Assets have been created/loaded
+--]]
+local Systems = class("System")
+function Systems:__init()
+	self._systemscnt = 0
+	self._systems  = {}
+
+	local systems = {
+		"dct.assets.AssetManager",
+		"dct.ui.scratchpad",
+		"dct.systems.tickets",
+		"dct.systems.bldgPersist",
+		"dct.systems.weaponstracking",
+		"dct.systems.blasteffects",
+		"dct.systems.playerslots",
+		"dct.templates.RegionManager",
+	}
+
+	for _, syspath in ipairs(systems) do
+		self:addSystem(syspath)
+	end
+	Logger:info("systems init: "..tostring(self._systemscnt))
+end
+
+function Systems:marshal()
+	local tbl = {}
+	for name, sys in pairs(self._systems) do
+		if type(sys.marshal) == "function" then
+			tbl[name] = sys:marshal()
 		end
 	end
-	if slotcnt > 0 then
-		if slotcnt > 1 then
-			Logger:warn(string.format("DCT requires 1 slot groups. Group "..
-				"'%s' of type a/c (%s) has more than one player slot.",
-				grp.name, grp.units[1].type))
+	return tbl
+end
+
+function Systems:unmarshal(tbl)
+	for name, data in pairs(tbl) do
+		local sys = self:getSystem(name)
+		if sys ~= nil and type(sys.unmarshal) == "function" then
+			sys:unmarshal(data)
 		end
-		return true
 	end
-	return false
+end
+
+-- runs a system method that can optionally be provided by a system
+function Systems:_runsys(methodname, ...)
+	for sysname, sys in pairs(self._systems) do
+		if type(sys[methodname]) == "function" then
+			Logger:info("system calling "..sysname..":"..methodname)
+			sys[methodname](sys, ...)
+		end
+	end
+end
+
+function Systems:getSystem(path)
+	return self._systems[path]
+end
+
+function Systems:addSystem(path)
+	if self._systems[path] ~= nil then
+		return
+	end
+	self._systems[path] = require(path)(self)
+	Logger:info("init "..path)
+	self._systemscnt = self._systemscnt + 1
 end
 
 local function isStateValid(state)
@@ -79,7 +134,7 @@ end
 --    and provides a base interface for manipulating data at a theater
 --    level.
 --]]
-local Theater = require("libs.namedclass")("Theater", Observable)
+local Theater = class("Theater", Observable, Systems)
 function Theater:__init()
 	Observable.__init(self, Logger)
 	self.savestatefreq = 7*60 -- seconds
@@ -90,17 +145,15 @@ function Theater:__init()
 	self.statef    = false
 	self.qtimer    = require("dct.libs.Timer")(self.quanta, os.clock)
 	self.cmdq      = containers.PriorityQueue()
-	self.assetmgr  = AssetManager(self)
 	self.cmdrs     = {}
-	self._systems  = {}
 	self.startdate = os.date("!*t")
 	self.namecntr  = 1000
 
+	Systems.__init(self)
 	for _, val in pairs(coalition.side) do
 		self.cmdrs[val] = Commander(self, val)
 	end
 
-	self:loadSystems()
 	self:queueCommand(5, Command(self.__clsname..".delayedInit",
 		self.delayedInit, self))
 	self:queueCommand(100, Command(self.__clsname..".export",
@@ -126,111 +179,39 @@ function Theater:setTimings(cmdfreq, tgtfps, percent)
 		self.cmdqdelay)
 end
 
-function Theater:getSystem(path)
-	return self._systems[path]
-end
-
-function Theater:addSystem(path)
-	if self._systems[path] ~= nil then
-		return
-	end
-	self._systems[path] = require(path)(self)
-	Logger:info("init "..path)
-end
-
-function Theater:postinitSystems()
-	for _, sys in pairs(self._systems) do
-		if type(sys.postinit) == "function" then
-			sys:postinit(self)
-		end
-	end
-end
-
-function Theater:loadSystems()
-	local systems = {
-		"dct.ui.scratchpad",
-		"dct.systems.tickets",
-		"dct.systems.bldgPersist",
-		"dct.systems.weaponstracking",
-		"dct.systems.blasteffects",
-		"dct.templates.RegionManager",
-	}
-
-	for _, syspath in ipairs(systems) do
-		self:addSystem(syspath)
-	end
-end
-
-function Theater:loadPlayerSlots()
-	local cnt = 0
-	for _, coa_data in pairs(env.mission.coalition) do
-		local grps = STM.processCoalition(coa_data,
-			env.getValueDictByKey,
-			isPlayerGroup,
-			nil)
-		for _, grp in ipairs(grps) do
-			local side = coalition.getCountryCoalition(grp.countryid)
-			local asset =
-			self:getAssetMgr():factory(enum.assetType.PLAYERGROUP)(Template({
-				["objtype"]   = "playergroup",
-				["name"]      = grp.data.name,
-				["regionname"]= "theater",
-				["regionprio"]= 1000,
-				["coalition"] = side,
-				["cost"]      = self:getTickets():getPlayerCost(side),
-				["desc"]      = "Player group",
-				["tpldata"]   = grp,
-			}))
-			self:getAssetMgr():add(asset)
-			cnt = cnt + 1
-		end
-	end
-	Logger:info(string.format("loadPlayerSlots(); found %d slots", cnt))
-end
-
 function Theater:loadOrGenerate()
+	local statetbl
 	local statefile = io.open(settings.statepath)
 
 	if statefile ~= nil then
-		self.statetbl = json:decode(statefile:read("*all"))
+		statetbl = json:decode(statefile:read("*all"))
 		statefile:close()
 	end
 
-	if isStateValid(self.statetbl) then
+	if isStateValid(statetbl) then
 		Logger:info("restoring saved state")
 		self.statef = true
-		self.startdate = self.statetbl.startdate
-		self.namecntr  = self.statetbl.namecntr
-		for name, data in pairs(self.statetbl.systems) do
-			local sys = self:getSystem(name)
-			if sys ~= nil and type(sys.unmarshal) == "function" then
-				sys:unmarshal(data)
-			end
-		end
-		self:getAssetMgr():unmarshal(self.statetbl.assetmgr)
+		self.startdate = statetbl.startdate
+		self.namecntr  = statetbl.namecntr
+		self:unmarshal(statetbl.systems)
 	else
 		Logger:info("generating new theater")
-		self:getRegionMgr():generate()
-		-- TODO: temperary, spawn all generated assets
-		-- eventually we will want to spawn only a set of assets
-		local assetnames = self.assetmgr:filterAssets(function()
-			return true
-		end)
-		for name, _ in pairs(assetnames) do
-			local asset = self.assetmgr:getAsset(name)
-			if asset.type ~= enum.assetType.PLAYERGROUP and
-			   not asset:isSpawned() then
-				asset:spawn()
-			end
-		end
+		self:_runsys("generate", self)
 	end
-	self.statetbl = nil
 end
 
 function Theater:delayedInit()
-	self:loadPlayerSlots()
 	self:loadOrGenerate()
-	self:postinitSystems()
+	self:_runsys("postinit", self)
+
+	-- TODO: temporary, spawn all generated assets
+	-- eventually we will want to spawn only a set of assets
+	for _, asset in self:getAssetMgr():iterate() do
+		if asset.type ~= enum.assetType.PLAYERGROUP and
+		   not asset:isSpawned() then
+			asset:spawn()
+		end
+	end
 end
 
 local airbase_cats = {
@@ -326,16 +307,10 @@ function Theater:export(_)
 		["date"]     = os.date("*t", dctutils.zulutime(timer.getAbsTime())),
 		["theater"]  = env.mission.theatre,
 		["sortie"]   = env.getValueDictByKey(env.mission.sortie),
-		["systems"]  = {},
-		["assetmgr"] = self:getAssetMgr():marshal(),
+		["systems"]  = self:marshal(),
 		["startdate"] = self.startdate,
 		["namecntr"]  = self.namecntr,
 	}
-	for name, sys in pairs(self._systems) do
-		if type(sys.marshal) == "function" then
-			exporttbl.systems[name] = sys:marshal()
-		end
-	end
 
 	statefile:write(json:encode(exporttbl))
 	statefile:flush()
@@ -348,7 +323,7 @@ function Theater:getRegionMgr()
 end
 
 function Theater:getAssetMgr()
-	return self.assetmgr
+	return self:getSystem("dct.assets.AssetManager")
 end
 
 function Theater:getCommander(side)

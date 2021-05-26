@@ -129,6 +129,13 @@ function AssetManager:getAsset(name)
 	return self._assetset[name]
 end
 
+function AssetManager:iterate()
+	if next(self._assetset) == nil then
+		return function() end, nil, nil
+	end
+	return next, self._assetset, nil
+end
+
 -- dcsObjName must be one of; group, static, or airbase names
 function AssetManager:getAssetByDCSObject(dcsObjName)
 	local assetname = self._object2asset[dcsObjName]
