@@ -9,6 +9,7 @@ require("math")
 local class      = require("libs.namedclass")
 local utils      = require("libs.utils")
 local dctenums   = require("dct.enum")
+local vector     = require("dct.libs.vector")
 local Marshallable = require("dct.libs.Marshallable")
 local Template   = require("dct.templates.Template")
 local Logger     = dct.Logger.getByName("Region")
@@ -170,6 +171,9 @@ local function addAndSpawnAsset(self, name, assetmgr)
 	local asset = mgr:factory(tpl.objtype)(tpl, self)
 	assetmgr:add(asset)
 	asset:generate(assetmgr, self)
+	local d = vector.distance(vector.Vector2D(self:getPoint()),
+		vector.Vector2D(asset:getLocation()))
+	self.radius = math.max(self.radius, d)
 	return asset
 end
 
@@ -222,6 +226,7 @@ function Region:__init(regionpath)
 	self:_addMarshalNames({
 		"location",
 		"links",
+		"radius",
 	})
 
 	self.path          = regionpath
@@ -234,6 +239,7 @@ function Region:__init(regionpath)
 		self.weight[side] = 0
 	end
 	self.owner         = STATUS.NEUTRAL
+	self.radius        = 25
 	self.DOMAIN        = nil
 	self.STATUS        = nil
 
