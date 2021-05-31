@@ -4,7 +4,9 @@
 -- Implements a Observable interface
 --]]
 
-local class  = require("libs.class")
+local class = require("libs.class")
+local utils = require("libs.utils")
+local enum  = require("dct.enum")
 
 local Observable = class()
 function Observable:__init(logger)
@@ -37,7 +39,9 @@ function Observable:removeObserver(obj)
 end
 
 function Observable:_notify(event)
-	self._logger:debug(string.format("notify; event.id: %d", event.id))
+	self._logger:debug(string.format("notify; event.id: %d (%s)",
+		event.id, tostring(utils.getkey(world.event, event.id) or
+			utils.getkey(enum.event, event.id))))
 	for obj, val in pairs(self._observers) do
 		self._logger:debug("+ executing handler: "..val.name)
 		val.func(obj, event)
