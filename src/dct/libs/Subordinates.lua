@@ -18,6 +18,17 @@ function Subordinates:__init()
 	end
 end
 
+function Subordinates:setDead(val)
+	local assetmgr = dct.Theater.singleton():getAssetMgr()
+	for name, _ in pairs(self._subordinates) do
+		local asset = assetmgr:getAsset(name)
+		if asset then
+			asset:setDead(val)
+		end
+	end
+	AssetBase.setDead(self, val)
+end
+
 --[[
 -- Process a DCS or DCT event associated w/ an asset.
 -- Returns: none
