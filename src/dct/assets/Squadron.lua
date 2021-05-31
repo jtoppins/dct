@@ -11,6 +11,23 @@ local class = require("libs.namedclass")
 local utils = require("libs.utils")
 local AssetBase = require("dct.assets.AssetBase")
 
+local function associate_slots(sqdn)
+	local filter = function(a)
+		if a.type == require("dct.enum").assetType.PLAYERGROUP and
+		   a.squadron == sqdn.name and a.owner == sqdn.owner then
+			return true
+		end
+		return false
+	end
+	local assetmgr = dct.Theater.singleton():getAssetMgr()
+	for name, _ in pairs(assetmgr:filterAssets(filter)) do
+		local asset = assetmgr:getAsset(name)
+		if asset and asset.airbase == nil then
+			asset.airbase = sqdn.airbase
+		end
+	end
+end
+
 local Squadron = class("Squadron", AssetBase)
 function Squadron:__init(template)
 	AssetBase.__init(self, template)
@@ -40,6 +57,7 @@ function Squadron:_completeinit(template)
 	else
 		self._location = ab:getPoint()
 	end
+	associate_slots(self)
 	self._logger:debug("payloadlimits: "..
 		require("libs.json"):encode_pretty(self.payloadlimits))
 	self._logger:debug("ato: "..
