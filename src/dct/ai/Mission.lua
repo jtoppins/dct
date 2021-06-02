@@ -68,6 +68,7 @@ end
 function ActiveState:enter(msn)
 	Logger:debug(self.__clsname..":enter()")
 	self.timer:reset()
+	self.timer:start()
 	self.action = msn.plan:pophead()
 end
 
@@ -121,6 +122,7 @@ end
 function PrepState:enter()
 	Logger:debug(self.__clsname..":enter()")
 	self.timer:reset()
+	self.timer:start()
 end
 
 function PrepState:update(msn)

@@ -12,6 +12,8 @@ local function main()
 	local a = Timer(15, os.clock)
 	local b = Timer(2, os.clock)
 
+	a:start()
+	b:start()
 	sleep(3)
 	a:update()
 	b:update()

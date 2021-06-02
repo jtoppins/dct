@@ -4,6 +4,8 @@
 -- A count-up Timer
 --
 -- interface:
+--   * start   - start the timer
+--   * stop    - stop the timer
 --   * reset   - reset timer to zero
 --   * update  - update the timer, uses timefunc to determine the elapsed time
 --               between updates
@@ -20,16 +22,26 @@ function Timer:__init(timeout, timefunc)
 		"timeout must be a number and greater than zero")
 	self.timeoutlimit = timeout
 	self.timeout = 0
+	self.curtime = nil
+end
+
+function Timer:start()
 	self.curtime = self.timefunc()
+end
+
+function Timer:stop()
+	self.curtime = nil
 end
 
 function Timer:reset(limit)
 	self.timeoutlimit = limit or self.timeoutlimit
 	self.timeout = 0
-	self.curtime = self.timefunc()
 end
 
 function Timer:update()
+	if self.curtime == nil then
+		return
+	end
 	local prevtime = self.curtime
 	self.curtime = self.timefunc()
 	self.timeout = self.timeout + (self.curtime - prevtime)
