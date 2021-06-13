@@ -1008,6 +1008,9 @@ function trigger.action.markToGroup(
 	--[[id, title, pos, grpid, readonly, msg]])
 end
 
+function trigger.action.removeMark(_ --[[id]])
+end
+
 function trigger.action.setUserFlag(flagname, value)
 	gblflagtbl[flagname] = tonumber(value)
 end
