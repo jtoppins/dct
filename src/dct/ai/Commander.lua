@@ -216,6 +216,11 @@ function Commander:requestMission(grpname, missiontype)
 	local mission = Mission(self, missiontype, tgt, plan)
 	mission:addAssigned(assetmgr:getAsset(grpname))
 	self:addMission(mission)
+
+	Logger:debug("requestMission() - assigned target '%s' to "..
+		"mission %d (codename: %s)", tgt.name,
+		mission.id, tgt.codename)
+
 	return mission
 end
 
