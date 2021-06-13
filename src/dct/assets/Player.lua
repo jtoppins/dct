@@ -425,6 +425,31 @@ function Player:despawn()
 	self:doEnable()
 end
 
+-- Calls a given function on the unit if available, otherwise
+-- returns nil if the player's aircraft has despawned
+function Player:_callOnUnit(fn)
+	local grp = Group.getByName(self.name)
+	if grp ~= nil then
+		local unit = grp:getUnit(1)
+		if unit ~= nil then
+			return fn(unit)
+		end
+	end
+	return nil
+end
+
+function Player:getPlayerName()
+	return self:_callOnUnit(Unit.getPlayerName)
+end
+
+function Player:getAircraftName()
+	local desc = self:_callOnUnit(Unit.getDesc)
+	if desc ~= nil then
+		return desc["displayName"] or "Unknown Aircraft"
+	end
+	return nil
+end
+
 --[[
 -- kick - request player to be kicked from slot
 --
