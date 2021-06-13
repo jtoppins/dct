@@ -332,6 +332,7 @@ function MissionAbortCmd:_mission(_ --[[time]], _, msn)
 	if msg == nil then
 		msg = "aborted - unknown reason"
 	end
+	human.removeIntel(msn, self.asset.groupId)
 	return string.format("Mission %s %s",
 		msn:abort(self.asset),
 		msg)

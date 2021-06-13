@@ -16,6 +16,7 @@ function human.getMarkID()
 	markindex = markindex + 1
 	return markindex
 end
+local marks = {}
 
 -- enemy air superiroty as defined by the US-DOD is
 --  'incapability', 'denial', 'parity', 'superiority',
@@ -83,12 +84,24 @@ function human.drawTargetIntel(msn, grpid, readonly)
 	local msg = "desc: "..tostring(tgtinfo.description).."\n"..
 		string.format("status: %d%% complete\nthreats: TODO",
 			tgtinfo.status)
-	trigger.action.markToGroup(human.getMarkID(),
+	local markId = human.getMarkID()
+	trigger.action.markToGroup(markId,
 		"TGT: "..tgtinfo.callsign,
 		degpos,
 		grpid,
 		readonly,
 		msg)
+	if marks[grpid] == nil then
+		marks[grpid] = {}
+	end
+	marks[grpid][msn.id] = markId
+end
+
+function human.removeIntel(msn, grpid)
+	if marks[grpid] ~= nil and marks[grpid][msn.id] ~= nil then
+		trigger.action.removeMark(marks[grpid][msn.id])
+		marks[grpid][msn.id] = nil
+	end
 end
 
 return human
