@@ -97,8 +97,7 @@ function AssetManager:add(asset)
 		asset.name.."') already exists")
 
 	if asset:isDead() then
-		self._logger:debug("AssetManager:add - not adding dead asset:"..
-			asset.name)
+		self._logger:debug("AssetManager:add - not adding dead asset: %s", asset.name)
 		return
 	end
 
@@ -114,11 +113,11 @@ function AssetManager:add(asset)
 		self._sideassets[asset.owner].assets[asset.name] = asset.type
 	end
 
-	self._logger:debug("Adding object names for '"..asset.name.."'")
+	self._logger:debug("Adding object names for '%s'", asset.name)
 	-- read Asset's object names and setup object to asset mapping
 	-- to be used in handling DCS events and other uses
 	for _, objname in pairs(asset:getObjectNames()) do
-		self._logger:debug("    + "..objname)
+		self._logger:debug("    + %s", objname)
 		self._object2asset[objname] = asset.name
 	end
 
@@ -247,7 +246,7 @@ function AssetManager:doOneObject(obj, event)
 
 	local asset = self:getAssetByDCSObject(name)
 	if asset == nil then
-		self._logger:debug("onDCSEvent - asset doesn't exist, name: "..name)
+		self._logger:debug("onDCSEvent - asset doesn't exist, name: %s", name)
 		self._object2asset[name] = nil
 		return
 	end
@@ -278,8 +277,7 @@ function AssetManager:onDCSEvent(event)
 	}
 
 	if not relevents[event.id] then
-		self._logger:debug("onDCSEvent - not relevent event: "..
-			tostring(event.id))
+		self._logger:debug("onDCSEvent - not relevant event: %s", tostring(event.id))
 		return
 	end
 

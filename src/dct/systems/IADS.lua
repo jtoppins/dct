@@ -581,8 +581,7 @@ function IADS:sysIADSEventHandler(event)
 		[world.event.S_EVENT_BIRTH]               = self.onBirth,
 	}
 	if relevents[event.id] == nil then
-		Logger:debug("sysIADSEventHandler - not relevent event: "..
-		tostring(event.id))
+		Logger:debug("sysIADSEventHandler - not relevent event: %d", event.id)
 		return
 	end
 	relevents[event.id](self, event)

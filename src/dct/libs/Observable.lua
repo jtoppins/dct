@@ -29,7 +29,7 @@ function Observable:addObserver(func, obj, name)
 			") already set - skipping "..debug.traceback())
 		return
 	end
-	self._logger:debug(string.format("adding handler(%s)", name))
+	self._logger:debug("adding handler(%s)", name)
 	self._observers[obj] = { ["func"] = func, ["name"] = name, }
 end
 
@@ -39,11 +39,11 @@ function Observable:removeObserver(obj)
 end
 
 function Observable:_notify(event)
-	self._logger:debug(string.format("notify; event.id: %d (%s)",
+	self._logger:debug("notify; event.id: %d (%s)",
 		event.id, tostring(utils.getkey(world.event, event.id) or
-			utils.getkey(enum.event, event.id))))
+			utils.getkey(enum.event, event.id)))
 	for obj, val in pairs(self._observers) do
-		self._logger:debug("+ executing handler: "..val.name)
+		self._logger:debug("+ executing handler: %s", val.name)
 		val.func(obj, event)
 	end
 end
@@ -54,8 +54,7 @@ if dct.settings and dct.settings.server and
 	function Observable:notify(event)
 		local tstart = os.clock()
 		self:_notify(event)
-		self._logger:warn(string.format("notify time: %5.2fms",
-			(os.clock()-tstart)*1000))
+		self._logger:warn("notify time: %5.2fms", (os.clock()-tstart)*1000)
 	end
 else
 	function Observable:notify(event)

@@ -112,8 +112,8 @@ function WeaponsTracker:_update(time)
 	for _, wpn in pairs(impacts) do
 		self._theater:notify(dctutils.buildevent.impact(wpn))
 	end
-	Logger:info(string.format("'%s' exec time: %5.2fms",
-		self.__clsname..".update", (os.clock()-tstart)*1000))
+	Logger:info("'%s.update' exec time: %5.2fms",
+		self.__clsname, (os.clock()-tstart)*1000)
 end
 
 function WeaponsTracker:update(time)
@@ -136,10 +136,10 @@ function WeaponsTracker:event(event)
 	end
 
 	if not isWpnValid(event) then
-		Logger:debug(string.format("%s - weapon not valid "..
-			"typename: %s; initiator: ", self.__clsname,
+		Logger:debug("%s - weapon not valid typename: %s; initiator: %s",
+			self.__clsname,
 			event.weapon:getTypeName(),
-			event.initiator:getName()))
+			event.initiator:getName())
 		return
 	end
 	self.trackedwpns[event.weapon.id_] = DCTWeapon(event.weapon,

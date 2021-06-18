@@ -52,15 +52,14 @@ function Squadron:_completeinit(template)
 	local ab = Airbase.getByName(self.airbase)
 	if ab == nil then
 		self._location = { x = 0, y = 0, z = 0 }
-		self._logger:error(string.format("Airbase(%s) does not exist",
-			self.airbase))
+		self._logger:error("Airbase(%s) does not exist", self.airbase)
 	else
 		self._location = ab:getPoint()
 	end
 	associate_slots(self)
-	self._logger:debug("payloadlimits: "..
+	self._logger:debug("payloadlimits: %s",
 		require("libs.json"):encode_pretty(self.payloadlimits))
-	self._logger:debug("ato: "..
+	self._logger:debug("ato: %s",
 		require("libs.json"):encode_pretty(self.ato))
 end
 

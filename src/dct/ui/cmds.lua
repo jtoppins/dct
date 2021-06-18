@@ -40,8 +40,7 @@ function UICmd:uicmd(time)
 	-- commands
 	if not self:isAlive() and
 	   self.type ~= enum.uiRequestType.MISSIONABORT then
-		Logger:debug("UICmd thinks player is dead, ignore cmd; "..
-			debug.traceback())
+		Logger:debug("UICmd thinks player is dead, ignore cmd; %s", debug.traceback())
 		self.asset.cmdpending = false
 		return nil
 	end

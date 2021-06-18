@@ -98,9 +98,9 @@ function DamageGoal:checkComplete()
 		health = getlife(obj)
 	end
 
-	Logger:debug(string.format("DamageGoal:checkComplete() - "..
-		"name: '%s'; health: %3.2f; maxlife: %d",
-		self.name, health, self._maxlife))
+	Logger:debug(
+		"DamageGoal:checkComplete() - name: '%s'; health: %3.2f; maxlife: %d",
+		self.name, health, self._maxlife)
 
 	local damagetaken = (1 - (health/self._maxlife)) * 100
 	if damagetaken > self._tgtdamage then

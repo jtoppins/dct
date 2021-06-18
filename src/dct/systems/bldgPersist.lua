@@ -35,8 +35,7 @@ end
 
 function SceneryTracker:onDCSEvent(event)
 	if event.id ~= world.event.S_EVENT_DEAD then
-		Logger:debug(string.format("onDCSEvent() -"..
-		" bldgPersist not DEAD event, ignoring"))
+		Logger:debug("onDCSEvent() - bldgPersist not DEAD event, ignoring")
 		return
 	end
 	local obj = event.initiator

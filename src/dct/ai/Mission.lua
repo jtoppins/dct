@@ -37,13 +37,13 @@ end
 
 local TimeoutState = class("Timeout", BaseMissionState)
 function TimeoutState:enter(msn)
-	Logger:debug(self.__clsname..":enter()")
+	Logger:debug("%s:enter()", self.__clsname)
 	msn:queueabort(enum.missionAbortType.TIMEOUT)
 end
 
 local SuccessState = class("Success", BaseMissionState)
 function SuccessState:enter(msn)
-	Logger:debug(self.__clsname..":enter()")
+	Logger:debug("%s:enter()", self.__clsname)
 	-- TODO: we could convert to emitting a DCT event to handle rewarding
 	-- tickets, this would require a little more than just emitting an
 	-- event here. Would require changing Tickets class a little too.
@@ -60,36 +60,36 @@ end
 --]]
 local ActiveState  = class("Active",  BaseMissionState)
 function ActiveState:__init()
-	Logger:debug(self.__clsname..":_init()")
+	Logger:debug("%s:_init()", self.__clsname)
 	self.timer = Timer(MISSION_LIMIT)
 	self.action = nil
 end
 
 function ActiveState:enter(msn)
-	Logger:debug(self.__clsname..":enter()")
+	Logger:debug("%s:enter()", self.__clsname)
 	self.timer:reset()
 	self.action = msn.plan:pophead()
 end
 
 function ActiveState:update(msn)
-	Logger:debug(self.__clsname..":update()")
+	Logger:debug("%s:update()", self.__clsname)
 	self.timer:update()
 	if self.timer:expired() then
-		Logger:debug(self.__clsname..":update() - transition timeout")
+		Logger:debug("%s:update() - transition timeout", self.__clsname)
 		return TimeoutState()
 	end
 
 	if self.action == nil then
-		Logger:debug(self.__clsname..":update() - transition success")
+		Logger:debug("%s:update() - transition success", self.__clsname)
 		return SuccessState()
 	end
 	if self.action:complete(msn) then
-		Logger:debug(self.__clsname..":update() - pop new action")
+		Logger:debug("%s:update() - pop new action", self.__clsname)
 		local newaction = msn.plan:pophead()
 		self.action:exit(msn)
 		self.action = newaction
 		if self.action == nil then
-			Logger:debug(self.__clsname..":update() - transition success")
+			Logger:debug("%s:update() - transition success", self.__clsname)
 			return SuccessState()
 		end
 		self.action:enter(msn)
@@ -98,12 +98,12 @@ function ActiveState:update(msn)
 end
 
 function ActiveState:timeremain()
-	Logger:debug(self.__clsname..":timeremain()")
+	Logger:debug("%s:timeremain()", self.__clsname)
 	return self.timer:remain()
 end
 
 function ActiveState:timeextend(addtime)
-	Logger:debug(self.__clsname..":timeextend()")
+	Logger:debug("%s:timeextend()", self.__clsname)
 	self.timer:extend(addtime)
 end
 
@@ -119,15 +119,15 @@ function PrepState:__init()
 end
 
 function PrepState:enter()
-	Logger:debug(self.__clsname..":enter()")
+	Logger:debug("%s:enter()", self.__clsname)
 	self.timer:reset()
 end
 
 function PrepState:update(msn)
-	Logger:debug(self.__clsname..":update()")
+	Logger:debug("%s:update()", self.__clsname)
 	self.timer:update()
 	if self.timer:expired() then
-		Logger:debug(self.__clsname..":enter() - timeout")
+		Logger:debug("%s:enter() - timeout", self.__clsname)
 		return TimeoutState()
 	end
 
@@ -136,7 +136,7 @@ function PrepState:update(msn)
 			dct.Theater.singleton():getAssetMgr():getAsset(v)
 		if asset.type == enum.assetType.PLAYERGROUP and
 		   asset:inAir() then
-			Logger:debug(self.__clsname..":enter() - to active state")
+			Logger:debug("%s:enter() - to active state", self.__clsname)
 			return ActiveState()
 		end
 	end
@@ -144,12 +144,12 @@ function PrepState:update(msn)
 end
 
 function PrepState:timeremain()
-	Logger:debug(self.__clsname..":timeremain()")
+	Logger:debug("%s:timeremain()", self.__clsname)
 	return self.timer:remain()
 end
 
 function PrepState:timeextend(addtime)
-	Logger:debug(self.__clsname..":timeextend()")
+	Logger:debug("%s:timeextend()", self.__clsname)
 	self.timer:extend(addtime)
 end
 
@@ -246,7 +246,7 @@ end
 --      bit
 --]]
 function Mission:abort(asset)
-	Logger:debug(self.__clsname..":abort()")
+	Logger:debug("%s:abort()", self.__clsname)
 	self:removeAssigned(asset)
 	if next(self.assigned) == nil then
 		self.cmdr:removeMission(self.id)
@@ -259,7 +259,7 @@ function Mission:abort(asset)
 end
 
 function Mission:queueabort(reason)
-	Logger:debug(self.__clsname..":queueabort()")
+	Logger:debug("%s:queueabort()", self.__clsname)
 	self:_setComplete(true)
 	local theater = dct.Theater.singleton()
 	for _, name in ipairs(self.assigned) do

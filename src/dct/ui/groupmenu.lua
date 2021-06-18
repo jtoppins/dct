@@ -31,11 +31,11 @@ function menus.createMenu(asset)
 	local name = asset.name
 
 	if asset.uimenus ~= nil then
-		Logger:debug("createMenu - group("..name..") already had menu added")
+		Logger:debug("createMenu - group(%s) already had menu added", name)
 		return
 	end
 
-	Logger:debug("createMenu - adding menu for group: "..tostring(name))
+	Logger:debug("createMenu - adding menu for group: %s", name)
 
 	asset.uimenus = {}
 

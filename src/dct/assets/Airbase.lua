@@ -370,7 +370,7 @@ end
 function AirbaseAsset:generate(assetmgr, region)
 	self._logger:debug("generate called")
 	for _, tplname in ipairs(self._tplnames or {}) do
-		self._logger:debug("subordinate template: "..tplname)
+		self._logger:debug("subordinate template: %s", tplname)
 		local tpl = region:getTemplateByName(tplname)
 		assert(tpl, string.format("runtime error: airbase(%s) defines "..
 			"a subordinate template of name '%s', does not exist",

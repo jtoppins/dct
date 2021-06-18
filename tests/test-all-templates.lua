@@ -25,8 +25,7 @@ local function main()
 	local tstart = os.clock()
 	t:export()
 	os.remove(dct.settings.server.statepath)
-	Logger:warn(string.format("took %4.2fms to write statefile",
-		(os.clock() - tstart)*1000))
+	Logger:warn("took %4.2fms to write statefile", (os.clock() - tstart)*1000)
 	return 0
 end
 
