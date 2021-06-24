@@ -84,9 +84,9 @@ local function reset_slot(asset)
 	local msn  = cmdr:getAssigned(asset)
 
 	if msn then
-		trigger.action.outTextForGroup(asset.groupId,
-			"Welcome. A mission is already assigned to this slot, "..
-			"use the F10 menu to get the briefing or find another.",
+		trigger.action.outTextForGroup(asset.groupId, string.format(
+			"Welcome. Mission %d is already assigned to this slot, "..
+			"use the F10 menu to get the briefing or find another.", msn:getID()),
 			20, false)
 	else
 		trigger.action.outTextForGroup(asset.groupId,
