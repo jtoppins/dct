@@ -8,6 +8,7 @@ local class    = require("libs.namedclass")
 local dctutils = require("dct.utils")
 local vector   = require("dct.libs.vector")
 local Logger   = require("dct.libs.Logger").getByName("System")
+local settings = _G.dct.settings.server
 
 -- Only units that are not air defence and are firing
 -- weapons with HE warheads are considered
@@ -112,8 +113,10 @@ function WeaponsTracker:_update(time)
 	for _, wpn in pairs(impacts) do
 		self._theater:notify(dctutils.buildevent.impact(wpn))
 	end
-	Logger:info("'%s.update' exec time: %5.2fms",
-		self.__clsname, (os.clock()-tstart)*1000)
+	if settings.profile then
+		Logger:info("'%s.update' exec time: %5.2fms",
+			self.__clsname, (os.clock()-tstart)*1000)
+	end
 end
 
 function WeaponsTracker:update(time)

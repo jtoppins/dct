@@ -417,8 +417,10 @@ function Theater:exec(time)
 		end
 	end
 	self.qtimer:update()
-	Logger:debug("exec(); time taken: %4.2fms; cmds executed: %d",
-		self.qtimer.timeout*1000, cmdctr)
+	if settings.profile then
+		Logger:debug("exec(); time taken: %4.2fms; cmds executed: %d",
+			self.qtimer.timeout*1000, cmdctr)
+	end
 	return time + self.cmdqdelay
 end
 
