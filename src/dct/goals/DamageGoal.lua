@@ -26,6 +26,20 @@ local function get_scenery_id(id)
 	return { id_ = tonumber(id), }
 end
 
+-- counts the number of alive units in the group manually, because
+-- Group.getSize() can return an outdated value during death events
+local function get_group_size(grp)
+	local alive = 0
+	for _, unit in pairs(grp:getUnits()) do
+		-- Unit.getLife() uses a value lesser than 1 to indicate that
+		-- the unit is dead
+		if unit ~= nil and unit:getLife() >= 1 then
+			alive = alive + 1
+		end
+	end
+	return alive
+end
+
 local function getobject(objtype, name, init)
 	local switch = {
 		[enums.objtype.UNIT]   = Unit.getByName,
@@ -42,7 +56,7 @@ local function getobject(objtype, name, init)
 	local getlifefncs = {
 		[enums.objtype.UNIT]   = Unit.getLife,
 		[enums.objtype.STATIC] = StaticObject.getLife,
-		[enums.objtype.GROUP]  = Group.getSize,
+		[enums.objtype.GROUP]  = get_group_size,
 		[enums.objtype.SCENERY]= get_scenery_life,
 	}
 
