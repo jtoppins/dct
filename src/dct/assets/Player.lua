@@ -89,10 +89,18 @@ local function reset_slot(asset)
 			"use the F10 menu to get the briefing or find another.", msn:getID()),
 			20, false)
 	else
+		local missions = cmdr:getAvailableMissions(asset.ato)
+		local missionsfmt = {}
+		for type, count in pairs(missions) do
+			table.insert(missionsfmt, string.format("%s:  %d", type, count))
+		end
+		if next(missionsfmt) == nil then
+			table.insert(missionsfmt, "None")
+		end
 		trigger.action.outTextForGroup(asset.groupId,
 			"Welcome. Use the F10 Menu to get a theater update and "..
-			"request a mission.",
-			20, false)
+			"request a mission.\n\nAvailable missions:\n  "..
+			table.concat(missionsfmt, "\n  "), 20, false)
 	end
 	trigger.action.outTextForGroup(asset.groupId, notifymsg, 20, false)
 end

@@ -223,7 +223,7 @@ end
 --   meets the mission criteria
 --]]
 function Commander:requestMission(grpname, missiontype)
-	local assetmgr = require("dct.Theater").singleton():getAssetMgr()
+	local assetmgr = dct.Theater.singleton():getAssetMgr()
 	local pq = heapsort_tgtlist(self.tgtlist,
 		enum.missionTypeMap[missiontype], self.owner)
 
@@ -255,6 +255,40 @@ function Commander:getMission(id)
 	return self.missions[id]
 end
 
+--[[
+-- return the number of missions that can be assigned per given type
+--]]
+function Commander:getAvailableMissions(missionTypes)
+	local assetmgr = dct.theater:getAssetMgr()
+
+	-- map asset types to the given mission type names
+	local assetTypeMap = {}
+	for missionTypeName, missionTypeId in pairs(missionTypes) do
+		for assetType, _ in pairs(enum.missionTypeMap[missionTypeId]) do
+			assetTypeMap[assetType] = missionTypeName
+		end
+	end
+
+	local counts = {}
+
+	-- build a user-friendly mapping using the mission type names as keys
+	for name, assetType in pairs(self.tgtlist) do
+		local asset = assetmgr:getAsset(name)
+		if not asset:isDead() and not asset:isTargeted(self.owner) then
+			local missionType = assetTypeMap[assetType]
+			if missionType ~= nil then
+				counts[missionType] = counts[missionType] or 0
+				counts[missionType] = counts[missionType] + 1
+			end
+		end
+	end
+
+	return counts
+end
+
+--[[
+-- start tracking a given mission internally
+--]]
 function Commander:addMission(mission)
 	self.missions[mission:getID()] = mission
 	self.missionstats:inc(mission.type)
