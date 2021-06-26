@@ -108,7 +108,7 @@ function TheaterUpdateCmd:_execute(_, cmdr)
 		string.format("\n== Current Active Air Missions ==\n")
 	if next(update.missions) ~= nil then
 		for k,v in pairs(update.missions) do
-			msg = msg .. string.format("  %6s:  %2d\n", k, v)
+			msg = msg .. string.format("  %s:  %d\n", k, v)
 		end
 	else
 		msg = msg .. "  No Active Missions\n"
