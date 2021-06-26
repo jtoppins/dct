@@ -7,19 +7,15 @@
 local class    = require("libs.class")
 local enums    = require("dct.goals.enum")
 local BaseGoal = require("dct.goals.BaseGoal")
-local Logger   = dct.Logger.getByName("Goal")
-
-local function initial_scenery_life()
-	return 1
-end
+local Logger   = require("dct.libs.Logger").getByName("DamageGoal")
 
 local function get_scenery_life(obj)
-	if SceneryObject.isExist(obj) then
-		return SceneryObject.getLife(obj)
+	-- In case a scenery object cannot be acessed by the scripting engine yet,
+	-- return a placeholder value
+	if not SceneryObject.isExist(obj) then
+		return 1
 	end
-	-- Undamaged scenery objects don't "exist" yet in the MSE,
-	-- so we return a placeholder full health value
-	return initial_scenery_life()
+	return SceneryObject.getLife(obj)
 end
 
 local function get_scenery_id(id)
@@ -40,18 +36,12 @@ local function get_group_size(grp)
 	return alive
 end
 
-local function getobject(objtype, name, init)
+local function getobject(objtype, name)
 	local switch = {
 		[enums.objtype.UNIT]   = Unit.getByName,
 		[enums.objtype.STATIC] = StaticObject.getByName,
 		[enums.objtype.GROUP]  = Group.getByName,
 		[enums.objtype.SCENERY]= get_scenery_id,
-	}
-	local lifestartfncs = {
-		[enums.objtype.UNIT]   = Unit.getLife0,
-		[enums.objtype.STATIC] = StaticObject.getLife,
-		[enums.objtype.GROUP]  = Group.getInitialSize,
-		[enums.objtype.SCENERY]= initial_scenery_life,
 	}
 	local getlifefncs = {
 		[enums.objtype.UNIT]   = Unit.getLife,
@@ -65,9 +55,6 @@ local function getobject(objtype, name, init)
 		obj = switch[objtype](name)
 	end
 	local lifetbl = getlifefncs
-	if init then
-		lifetbl = lifestartfncs
-	end
 	return obj, lifetbl[objtype]
 end
 
@@ -82,23 +69,23 @@ function DamageGoal:__init(data)
 end
 
 function DamageGoal:_afterspawn()
-	self._maxlife = 1
-	local obj, getlife = getobject(self.objtype, self.name, true)
+	local obj, getlife = getobject(self.objtype, self.name)
 	if obj == nil then
-		Logger:error("DamageGoal:_afterspawn() - object doesn't exist")
+		Logger:error("_afterspawn() - object '%s' doesn't exist", self.name)
 		self:_setComplete()
 		return
 	end
 
 	local life = getlife(obj)
-	if life ~= nil and life == 0 and self.objtype == enums.objtype.UNIT then
-		self._maxlife = obj:getLife()
-		Logger:warn("DamageGoal:_afterspawn() - maxlife reported"..
-			" as 0 using life: "..self._maxlife)
-	else
-		self._maxlife = life or 2500
+	if life == nil or life < 1 then
+		Logger:error("_afterspawn() - object '%s' life value is nil or "..
+			"below 1: %s", tostring(life))
+		life = 1
 	end
-	Logger:debug("DamageGoal:_afterspawn() - goal:\n"..
+
+	self._maxlife = life
+
+	Logger:debug("_afterspawn() - goal: %s",
 		require("libs.json"):encode_pretty(self))
 end
 
@@ -106,15 +93,26 @@ end
 -- verify the lookup by name yields an object before using it
 function DamageGoal:checkComplete()
 	if self:isComplete() then return true end
+	local status = self:getStatus()
+
+	Logger:debug("checkComplete() - status: %.2f%%", status)
+
+	if status >= self._tgtdamage then
+		return self:_setComplete()
+	end
+end
+
+-- returns the completion percentage of the damage goal
+function DamageGoal:getStatus()
+	if self:isComplete() then return 100 end
 
 	local health = 0
-	local obj, getlife = getobject(self.objtype, self.name, false)
+	local obj, getlife = getobject(self.objtype, self.name)
 	if obj ~= nil then
 		health = getlife(obj)
 	end
 
-	Logger:debug(
-		"DamageGoal:checkComplete() - name: '%s'; health: %3.2f; maxlife: %d",
+	Logger:debug("getStatus() - name: '%s'; health: %.2f; maxlife: %.2f",
 		self.name, health, self._maxlife)
 
 	local damagetaken = (1 - (health/self._maxlife)) * 100
