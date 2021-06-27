@@ -50,7 +50,7 @@ local testmgrs = {
 			["Northing"] = 56789,
 		},
 		["precision"] = 3,
-		["expected"] = "DD GJ012567",
+		["expected"] = "DD GJ 012 567",
 	},
 }
 
@@ -63,7 +63,7 @@ local testlo = {
 		},
 		["precision"] = 3,
 		["format"] = utils.posfmt.MGRS,
-		["expected"] = "DD GJ012567",
+		["expected"] = "DD GJ 012 567",
 	},
 	[2] = {
 		["position"] = {

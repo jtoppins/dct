@@ -203,8 +203,13 @@ function utils.MGRStostring(mgrs, precision)
 
 	local divisor = 10^(5-precision)
 	local fmtstr  = "%0"..precision.."d"
-	return str .. string.format(fmtstr, (mgrs.Easting/divisor)) ..
-		string.format(fmtstr, (mgrs.Northing/divisor))
+
+	if precision == 0 then
+		return str
+	end
+
+	return str.." "..string.format(fmtstr, (mgrs.Easting/divisor))..
+		" "..string.format(fmtstr, (mgrs.Northing/divisor))
 end
 
 function utils.degrade_position(position, precision)
