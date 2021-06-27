@@ -117,15 +117,22 @@ utils.posfmt = {
 }
 
 function utils.LLtostring(lat, long, precision, fmt)
-	-- reduce the accuracy of the position to the precision specified
-	lat  = tonumber(string.format("%0"..(3+precision).."."..precision.."f",
-		lat))
-	long = tonumber(string.format("%0"..(3+precision).."."..precision.."f",
-		long))
-
 	local northing = "N"
 	local easting  = "E"
 	local degsym   = '°'
+
+	if lat < 0 then
+		northing = "S"
+	end
+
+	if long < 0 then
+		easting = "W"
+	end
+
+	-- reduce the accuracy of the position to the precision specified
+	local multiplier = math.pow(10, precision)
+	lat = math.floor(math.abs(lat) * multiplier) / multiplier
+	long = math.floor(math.abs(long) * multiplier) / multiplier
 
 	if fmt == utils.posfmt.DDM then
 		if precision > 1 then
@@ -149,17 +156,6 @@ function utils.LLtostring(lat, long, precision, fmt)
 	else
 		fmtstr = fmtstr.."."..precision.."f"
 	end
-
-	if lat < 0 then
-		northing = "S"
-	end
-
-	if long < 0 then
-		easting = "W"
-	end
-
-	lat  = math.abs(lat)
-	long = math.abs(long)
 
 	if fmt == utils.posfmt.DD then
 		return string.format(fmtstr..degsym, lat)..northing..
