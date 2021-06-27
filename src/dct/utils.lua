@@ -116,6 +116,14 @@ utils.posfmt = {
 	["MGRS"] = 4,
 }
 
+-- reduce the accuracy of the position to the precision specified
+function utils.degradeLL(lat, long, precision)
+	local multiplier = math.pow(10, precision)
+	lat  = math.modf(lat * multiplier) / multiplier
+	long = math.modf(long * multiplier) / multiplier
+	return lat, long
+end
+
 function utils.LLtostring(lat, long, precision, fmt)
 	local northing = "N"
 	local easting  = "E"
@@ -129,10 +137,9 @@ function utils.LLtostring(lat, long, precision, fmt)
 		easting = "W"
 	end
 
-	-- reduce the accuracy of the position to the precision specified
-	local multiplier = math.pow(10, precision)
-	lat = math.floor(math.abs(lat) * multiplier) / multiplier
-	long = math.floor(math.abs(long) * multiplier) / multiplier
+	lat, long = utils.degradeLL(lat, long, precision)
+	lat  = math.abs(lat)
+	long = math.abs(long)
 
 	local width
 	if fmt == utils.posfmt.DDM then
@@ -223,10 +230,7 @@ end
 
 function utils.degrade_position(position, precision)
 	local lat, long = coord.LOtoLL(position)
-	lat  = tonumber(string.format("%0"..(3+precision).."."..precision.."f",
-		lat))
-	long = tonumber(string.format("%0"..(3+precision).."."..precision.."f",
-		long))
+	lat, long = utils.degradeLL(lat, long, precision)
 	return coord.LLtoLO(lat, long, 0)
 end
 
