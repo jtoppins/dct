@@ -134,27 +134,32 @@ function utils.LLtostring(lat, long, precision, fmt)
 	lat = math.floor(math.abs(lat) * multiplier) / multiplier
 	long = math.floor(math.abs(long) * multiplier) / multiplier
 
+	local width
 	if fmt == utils.posfmt.DDM then
 		if precision > 1 then
 			precision = precision - 1
+			width = 3 + precision
 		else
 			precision = 0
+			width = 2
 		end
 	elseif fmt == utils.posfmt.DMS then
 		if precision > 2 then
 			precision = precision - 2
+			width = 3 + precision
 		else
 			precision = 0
+			width = 2
 		end
+	else
+		width = 2 + precision
 	end
 
-	local width  = 3 + precision
-	local fmtstr = "%0"..width
-
+	local fmtstr
 	if precision == 0 then
-		fmtstr = fmtstr.."d"
+		fmtstr = "%02.0f"
 	else
-		fmtstr = fmtstr.."."..precision.."f"
+		fmtstr = "%0"..width.."."..precision.."f"
 	end
 
 	if fmt == utils.posfmt.DD then
@@ -163,10 +168,15 @@ function utils.LLtostring(lat, long, precision, fmt)
 			string.format(fmtstr..degsym, long)..easting
 	end
 
+	-- we give the minutes and seconds a little push in case the division
+	-- from the truncation with this multiplication gives us a value ending
+	-- in .99999...
+	local tolerance = 1e-8
+
 	local latdeg   = math.floor(lat)
-	local latmind  = (lat - latdeg)*60
+	local latmind  = (lat - latdeg)*60 + tolerance
 	local longdeg  = math.floor(long)
-	local longmind = (long - longdeg)*60
+	local longmind = (long - longdeg)*60 + tolerance
 
 	if fmt == utils.posfmt.DDM then
 		return string.format("%02d"..degsym..fmtstr.."'", latdeg, latmind)..
@@ -177,9 +187,9 @@ function utils.LLtostring(lat, long, precision, fmt)
 	end
 
 	local latmin   = math.floor(latmind)
-	local latsecd  = (latmind - latmin)*60
+	local latsecd  = (latmind - latmin)*60 + tolerance
 	local longmin  = math.floor(longmind)
-	local longsecd = (longmind - longmin)*60
+	local longsecd = (longmind - longmin)*60 + tolerance
 
 	return string.format("%02d"..degsym.."%02d'"..fmtstr.."\"",
 			latdeg, latmin, latsecd)..
