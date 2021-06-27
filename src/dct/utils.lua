@@ -144,14 +144,17 @@ function utils.LLtostring(lat, long, precision, fmt)
 			width = 2
 		end
 	elseif fmt == utils.posfmt.DMS then
-		if precision > 2 then
+		if precision > 4 then
 			precision = precision - 2
+			width = 3 + precision
+		elseif precision > 2 then
+			precision = precision - 3
 			width = 3 + precision
 		else
 			precision = 0
 			width = 2
 		end
-	else
+	elseif fmt == utils.posfmt.DD then
 		width = 2 + precision
 	end
 
