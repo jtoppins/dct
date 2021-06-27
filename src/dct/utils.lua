@@ -124,6 +124,31 @@ function utils.degradeLL(lat, long, precision)
 	return lat, long
 end
 
+-- set up formatting args for the LL string
+local function getLLformatstr(precision, fmt)
+	local decimals = precision
+	if fmt == utils.posfmt.DDM then
+		if precision > 1 then
+			decimals = precision - 1
+		else
+			decimals = 0
+		end
+	elseif fmt == utils.posfmt.DMS then
+		if precision > 4 then
+			decimals = precision - 2
+		elseif precision > 2 then
+			decimals = precision - 3
+		else
+			decimals = 0
+		end
+	end
+	if decimals == 0 then
+		return "%02.0f"
+	else
+		return "%0"..(decimals+3).."."..decimals.."f"
+	end
+end
+
 function utils.LLtostring(lat, long, precision, fmt)
 	local northing = "N"
 	local easting  = "E"
@@ -141,36 +166,7 @@ function utils.LLtostring(lat, long, precision, fmt)
 	lat  = math.abs(lat)
 	long = math.abs(long)
 
-	local width
-	if fmt == utils.posfmt.DDM then
-		if precision > 1 then
-			precision = precision - 1
-			width = 3 + precision
-		else
-			precision = 0
-			width = 2
-		end
-	elseif fmt == utils.posfmt.DMS then
-		if precision > 4 then
-			precision = precision - 2
-			width = 3 + precision
-		elseif precision > 2 then
-			precision = precision - 3
-			width = 3 + precision
-		else
-			precision = 0
-			width = 2
-		end
-	elseif fmt == utils.posfmt.DD then
-		width = 2 + precision
-	end
-
-	local fmtstr
-	if precision == 0 then
-		fmtstr = "%02.0f"
-	else
-		fmtstr = "%0"..width.."."..precision.."f"
-	end
+	local fmtstr = getLLformatstr(precision, fmt)
 
 	if fmt == utils.posfmt.DD then
 		return string.format(fmtstr..degsym, lat)..northing..
