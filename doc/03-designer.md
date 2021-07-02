@@ -63,25 +63,27 @@ in many AAA FPS titles.
 
 **file location:** `<theater-root>/theater.goals`
 
-	time = 43200  -- 12 hours in seconds
-	blue = {
-		flag            = 45,
-		tickets         = 100,
-		player_cost     = 1,
-		modifier_reward = 0.5,
-		modifier_loss   = 0.2,
-	}
+```lua
+time = 43200  -- 12 hours in seconds
+blue = {
+	flag            = 45,
+	tickets         = 100,
+	player_cost     = 1,
+	modifier_reward = 0.5,
+	modifier_loss   = 0.2,
+}
 
-	neutral = {
-		flag    = 20,
-		tickets = 0,
-	}
+neutral = {
+	flag    = 20,
+	tickets = 0,
+}
 
-	red = {
-		flag       = 60,
-		tickets    = 200,
-		difficulty = "easy",
-	}
+red = {
+	flag       = 60,
+	tickets    = 200,
+	difficulty = "easy",
+}
+```
 
 #### Configuration Options
 
@@ -228,8 +230,10 @@ weapon in the mission.
 
 **file location:** `<theater-root>/settings/payloadlimits.cfg`
 
-	ag = 20
-	aa = 20
+```lua
+ag = 20
+aa = 20
+```
 
 #### Internal API
 
@@ -252,16 +256,18 @@ if they takeoff with a restricted loadout.
 
 **file location:** `<theater-root>/settings/restrictedweapons.cfg`
 
-	restrictedweapons = {
-		["AIM-120C"] = {
-			cost = 3,
-			category = "aa",
-		},
-		["GBU-12"] = {
-			cost = 15,
-			category = "ag",
-		},
-	}
+```lua
+restrictedweapons = {
+	["AIM-120C"] = {
+		cost = 3,
+		category = "aa",
+	},
+	["GBU-12"] = {
+		cost = 15,
+		category = "ag",
+	},
+}
+```
 
 #### Details
 
@@ -349,12 +355,14 @@ List of Valid Mission Types (case insensitive):
 
 **file location:** `<theater-root>/settings/ui.cfg`
 
-	gridfmt = {
-		["UH-1H"] = "ddm",
-	}
-	ato = {
-		["UH-1H"] = {"armedrecon", },
-	}
+```lua
+gridfmt = {
+	["UH-1H"] = "ddm",
+}
+ato = {
+	["UH-1H"] = {"armedrecon", },
+}
+```
 
 #### Internal API
 
@@ -381,14 +389,16 @@ regions cannot be nested.
 
 **file location:** `<theater-root>/Region 1/region.def`
 
-	name = "Test region"
-	priority = 10
-	limits = {
-		["ammodump"] = {
-			["min"] = 1,
-			["max"] = 2,
-		},
-	}
+```lua
+name = "Test region"
+priority = 10
+limits = {
+	["ammodump"] = {
+		["min"] = 1,
+		["max"] = 2,
+	},
+}
+```
 
 ### Attributes
 
@@ -419,14 +429,14 @@ it consists of keys that are the names of `assetType`\[[1][1]\] with the
 value being a table describing the min and max number of templates of that
 type that will be spawned.
 
-	...
-	limits = {
-		["ammodump"] = {
-			["min"] = 2,
-			["max"] = 4,
-		},
-	}
-	...
+```lua
+limits = {
+	["ammodump"] = {
+		["min"] = 2,
+		["max"] = 4,
+	},
+}
+```
 
 The spawning algorithm, from the sample above, will select at random a
 number between 2 and 4 inclusive as the maximum number(X) of ammodumps
@@ -502,9 +512,11 @@ file.
 
 **file location:** `<theater-root>/Region 1/template.dct`
 
-	objtype = "ammodump"
-	intel = 2
-	cost = 20
+```lua
+objtype = "ammodump"
+intel = 2
+cost = 20
+```
 
 _Note:_ This example assumes an associated STM file that will define the
 DCS game objects that make up an "ammo dump".
@@ -581,15 +593,18 @@ make certain parts of the message variable, the replacement fields are:
 For templates that are not associated with an STM file the format of
 `tpldata` follows:
 
-	tpldata = {
-	    # = {
-	      category = Unit.Category,
-	      countryid = id,
-	      data      = {
-	        # group def members
-	        dct_deathgoal = goalspec
-	      },
-	}}
+```lua
+tpldata = {
+	# = {
+		category  = Unit.Category,
+		countryid = id,
+		data      = {
+			# group def members
+			dct_deathgoal = goalspec
+		},
+	}
+}
+```
 
 `tpldata` is a LUA list where each list entry is as shown above; `category`,
 `countryid`, and `data`.
@@ -654,15 +669,15 @@ template. The definition is a list of scenery objects that should
 be included as part of the template, an example from the Persian Gulf
 map;
 
-	...
-	buildings = {
-		{
-			["name"] = "building 1",
-			["goal"] = "primary destroyed",
-			["id"]   = 109937143,
-		},
-	}
-	...
+```lua
+buildings = {
+	{
+		["name"] = "building 1",
+		["goal"] = "primary destroyed",
+		["id"]   = 109937143,
+	},
+}
+```
 
 Where `name` is the name of the scenery object (is arbitrary and only
 referenced in DCT for error reporting), `goal` conforms to the textual
@@ -869,10 +884,12 @@ attribute is defined.
 A table listing the cost limit for different ordinance groups, by default
 there is no limit. The format of the table is as follows:
 
-			["payloadlimits"]  = {
-				["ag"] = 20,
-				["aa"] = 10,
-			}
+```lua
+["payloadlimits"]  = {
+	["ag"] = 20,
+	["aa"] = 10,
+}
+```
 
 See [Payload Limits](#payload-limits) section for further details.
 
