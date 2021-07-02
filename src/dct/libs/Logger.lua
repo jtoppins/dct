@@ -39,7 +39,8 @@ function Logger:setLevel(lvl)
 end
 
 function Logger:error(msg)
-	env.error(string.format(self.fmtstr, self.name, msg), false)
+	env.error(string.format(self.fmtstr, self.name, msg),
+		settings.showErrors)
 end
 
 function Logger:warn(msg)

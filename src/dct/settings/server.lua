@@ -90,7 +90,11 @@ local function validate_server_config(cfgdata, tbl)
 			["name"] = "emptyslottimeout",
 			["type"] = "number",
 			["default"] = cfgdata.default["emptyslottimeout"],
-		},
+		}, {
+			["name"] = "showErrors",
+			["type"] = "boolean",
+			["default"] = cfgdata.default["showErrors"],
+		}
 	}
 	tbl.path = cfgdata.file
 	utils.checkkeys(keys, tbl)
@@ -138,6 +142,7 @@ local function servercfgs(config)
 				["statServerPort"] = 8095,
 				["dctid"] = "changeme",
 				["emptyslottimeout"] = 0, -- seconds
+				["showErrors"] = false,
 			},
 		},}, config)
 	return config
