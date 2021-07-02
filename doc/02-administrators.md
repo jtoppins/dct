@@ -247,3 +247,15 @@ same UDP server to centralize the data.
 
 Shows DCT script errors in a modal message box. Meant for development use only,
 as the game will be unresponsive until the message box is closed.
+
+#### `emptyslottimeout`
+
+ * _value:_ time in seconds
+ * _default:_ 0
+
+Sets how long an empty player slot can be before its mission is automatically
+aborted. A value of 0 means missions will only be aborted when the mission
+itself times out, while a positive value makes empty slots time out faster.
+
+Note that because the AssetManager runs every 2 minutes, the actual timeout
+value can only have a granularity of 2 minutes.
