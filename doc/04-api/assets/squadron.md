@@ -9,16 +9,17 @@ Example template definition.
 
 **file location:** `<theater-root>/Region 1/99thfs.dct`
 
-	objtype = "squadronplayer"
-	name = "99thFS"
-	coalition = 2
-	intel = 2
-	ato = {"CAP", "cas"}
-	payloadlimits = {
-		["ag"] = 20,
-		["aa"] = 5,
-	}
-
+```lua
+objtype = "squadronplayer"
+name = "99thFS"
+coalition = 2
+intel = 2
+ato = {"CAP", "cas"}
+payloadlimits = {
+	["ag"] = 20,
+	["aa"] = 5,
+}
+```
 
 ### AI Squadrons
 

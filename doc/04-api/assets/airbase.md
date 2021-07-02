@@ -9,22 +9,24 @@ Example template definition.
 
 **file location:** `<theater-root>/Region 1/senaki.dct`
 
-	objtype = "airbase"
-	name = "Senaki-Kolkhi"   -- must be the name that can be used in
-	                         -- Airbase.getByName(<name>)
-	coalition = 2
-	subordinates = {   -- all template names in this list must be defined
-	                   -- in the same region, all templates in this list
-	                   -- belonging to the same coalition (as defined
-	                   -- above) will be spawned; in this example the
-	                   -- "Blue" templates will be spawned.
-		"Batumi Airbase Defense Blue",
-		"Batumi Airbase Defense Red",
-		"99thFS Blue",
-		"43thFS Red",
-	}
-	recoverytype = "land"
-	takeofftype = "runway"
+```lua
+objtype = "airbase"
+name = "Senaki-Kolkhi"	-- must be the name that can be used in
+			-- Airbase.getByName(<name>)
+coalition = 2
+subordinates = {	-- all template names in this list must be defined
+			-- in the same region, all templates in this list
+			-- belonging to the same coalition (as defined
+			-- above) will be spawned; in this example the
+			-- "Blue" templates will be spawned.
+	"Batumi Airbase Defense Blue",
+	"Batumi Airbase Defense Red",
+	"99thFS Blue",
+	"43thFS Red",
+}
+recoverytype = "land"
+takeofftype = "runway"
+```
 
 ## Details
 
