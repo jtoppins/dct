@@ -122,7 +122,7 @@ end
 --    }}}
 --]]
 
-function STM.transform(stmdata, file)
+function STM.transform(stmdata)
 	local template   = {}
 	local lookupname =  function(name)
 		if name == nil then
@@ -135,20 +135,6 @@ function STM.transform(stmdata, file)
 		end
 		return newname
 	end
-	local trackUniqueCoalition = function(_, cntryid, _)
-		local side = coalition.getCountryCoalition(cntryid)
-		if template.coalition == nil then
-			template.coalition = side
-		end
-		assert(template.coalition == side, string.format(
-			"runtime error: invalid STM; country(%s) does not belong "..
-			"to '%s' coalition, country belongs to '%s' coalition; file: %s",
-			country.name[cntryid],
-			tostring(utils.getkey(coalition.side, template.coalition)),
-			tostring(utils.getkey(coalition.side, side)),
-			file))
-		return true
-	end
 
 	template.name    = lookupname(stmdata.name)
 	template.theater = lookupname(stmdata.theatre)
@@ -156,11 +142,9 @@ function STM.transform(stmdata, file)
 	template.tpldata = {}
 
 	for _, coa_data in pairs(stmdata.coalition) do
-		for _, grp in ipairs(STM.processCoalition(coa_data,
-				lookupname,
-				trackUniqueCoalition,
-				modifyStatic)) do
-			table.insert(template.tpldata, grp)
+		local groups = STM.processCoalition(coa_data, lookupname, nil, modifyStatic)
+		for _, group in ipairs(groups) do
+			table.insert(template.tpldata, group)
 		end
 	end
 	return template

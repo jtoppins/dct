@@ -26,9 +26,9 @@ local unit1 = Unit({
 
 local briefingtxt = "Package: #5720\n"..
 			"IFF Codes: M1(50), M3(5720)\n"..
-			"Target AO: 88°07.38'N 063°27.36'W (TOKYO)\n"..
+			"Target AO: 88°07.38'N 063°27.36'W (DALLAS)\n"..
 			"Briefing:\n"..
-			"We have reason to believe there is"..
+			"Reconnaissance elements have located"..
 			" a fuel storage facility at 88°07.38'N 063°27.36'W,"..
 			" East of Krasnodar-Center.\n\n"..
 			"Primary Objectives: Destroy the fuel tanks embedded in "..
