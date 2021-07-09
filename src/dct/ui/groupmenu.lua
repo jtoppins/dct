@@ -22,6 +22,7 @@ local enum    = require("dct.enum")
 local Logger  = dct.Logger.getByName("UI")
 local loadout = require("dct.systems.loadouts")
 local Theater = require("dct.Theater")
+local utils   = require("libs.utils")
 local addmenu = missionCommands.addSubMenuForGroup
 local addcmd  = missionCommands.addCommandForGroup
 
@@ -58,7 +59,7 @@ function menus.createMenu(asset)
 
 	local msnmenu = addmenu(gid, "Mission", nil)
 	local rqstmenu = addmenu(gid, "Request", msnmenu)
-	for k, v in pairs(asset.ato) do
+	for k, v in utils.sortedpairs(asset.ato) do
 		addcmd(gid, k, rqstmenu, Theater.playerRequest,
 			{
 				["name"]   = name,
