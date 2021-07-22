@@ -110,6 +110,11 @@ function DamageGoal:getStatus()
 	local obj, getlife = getobject(self.objtype, self.name)
 	if obj ~= nil then
 		health = getlife(obj)
+		if health == nil then
+			Logger:warn("getStatus() - object '%s' health value is nil",
+				self.name)
+			health = 0
+		end
 	end
 
 	Logger:debug("getStatus() - name: '%s'; health: %.2f; maxlife: %.2f",
