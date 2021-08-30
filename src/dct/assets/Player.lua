@@ -66,7 +66,10 @@ local function reset_slot(asset)
 		local sqdn = theater:getAssetMgr():getAsset(asset.squadron)
 		if sqdn then
 			asset._logger:debug("squadron overriding ato and payload")
-			asset.ato = sqdn:getATO()
+			local ato = sqdn:getATO()
+			if ato ~= nil then
+				asset.ato = ato
+			end
 			asset.payloadlimits = sqdn:getPayloadLimits()
 			asset._logger:debug("payloadlimits: %s",
 				require("libs.json"):encode_pretty(asset.payloadlimits))

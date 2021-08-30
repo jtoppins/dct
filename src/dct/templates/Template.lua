@@ -216,12 +216,18 @@ local function checkrecovery(keydata, tpl)
 end
 
 local function checkmsntype(keydata, tbl)
+	if tbl[keydata.name] == nil then
+		return true
+	end
+	if type(tbl[keydata.name]) ~= "table" then
+		return false, "value must be a table or nil"
+	end
 	local msnlist = {}
 	for _, msntype in pairs(tbl[keydata.name]) do
 		local msnstr = string.upper(msntype)
 		if type(msntype) ~= "string" or
 		   enum.missionType[msnstr] == nil then
-			return false
+			return false, "invalid mission type: "..tostring(msnstr)
 		end
 		msnlist[msnstr] = enum.missionType[msnstr]
 	end
@@ -375,9 +381,7 @@ local function getkeys(objtype)
 	if objtype == enum.assetType.SQUADRONPLAYER then
 		table.insert(keys, {
 			["name"]    = "ato",
-			["type"]    = "table",
-			["check"]   = checkmsntype,
-			["default"] = enum.missionType,
+			["check"]   = checkmsntype
 		})
 
 		table.insert(keys, {
