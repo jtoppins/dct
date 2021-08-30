@@ -72,6 +72,8 @@ local function reset_slot(asset)
 				require("libs.json"):encode_pretty(asset.payloadlimits))
 			asset._logger:debug("ato: %s",
 				require("libs.json"):encode_pretty(asset.ato))
+		else
+			asset._logger:warn("squadron does not exist, using default settings")
 		end
 	end
 	uimenu.createMenu(asset)
