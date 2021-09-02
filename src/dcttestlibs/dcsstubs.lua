@@ -18,6 +18,8 @@ function lfs.tempdir()
 end
 local class = require("libs.class")
 
+local logfile = io.open(lfs.dct_testdata .. utils.sep .. "dct_test.log", "a+")
+
 local dctcheck = {}
 dctcheck.spawngroups  = 0
 dctcheck.spawnunits   = 0
@@ -58,13 +60,19 @@ function env.getValueDictByKey(s)
 	return s
 end
 
+local function logToFile(msg)
+	logfile:write(os.date("%F %X ")..msg.."\n")
+end
+
 function env.warning(msg, _)
+	logToFile("WARN    "..msg)
 	print("WARN: "..msg)
 end
 function env.info(msg, _)
-	print("INFO: "..msg)
+	logToFile("INFO    "..msg)
 end
 function env.error(msg, _)
+	logToFile("ERROR   "..msg)
 	print("ERROR: "..msg)
 end
 _G.env = env

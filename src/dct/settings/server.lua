@@ -124,7 +124,7 @@ local function servercfgs(config)
 				utils.sep.."dct.cfg",
 			["validate"] = validate_server_config,
 			["default"] = {
-				["debug"]       = false,
+				["debug"]       = _G.DCT_TEST or false,
 				["profile"]     = false,
 				["statepath"]   =
 					lfs.writedir()..utils.sep..vars.theater.."_"..
