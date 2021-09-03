@@ -837,6 +837,11 @@ end
 function StaticObject:getLife()
 	return self.clife
 end
+
+function StaticObject:destroy()
+	dctcheck.spawnstatics = dctcheck.spawnstatics - 1
+	Object.destroy(self)
+end
 _G.StaticObject = StaticObject
 
 local Group = class(Coalition)
@@ -878,7 +883,8 @@ function Group:destroy()
 	for _, unit in pairs(self.units) do
 		unit:destroy()
 	end
-	Object.destory(self)
+	dctcheck.spawngroups = dctcheck.spawngroups - 1
+	Object.destroy(self)
 end
 
 function Group:getCategory()
