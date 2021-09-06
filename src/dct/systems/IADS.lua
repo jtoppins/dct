@@ -125,6 +125,7 @@ function IADS:disableSAM(site)
 	end
 
 	if inRange ~= true then
+		Logger:debug("disableSam(%s)", site.Name)
 		site.group:getController():setOption(
 			AI.Option.Ground.id.ALARM_STATE,
 			AI.Option.Ground.val.ALARM_STATE.GREEN)
@@ -134,13 +135,8 @@ function IADS:disableSAM(site)
 end
 
 function IADS:hideSAM(site)
-	if site == nil then
-		Logger:debug("IADS:hideSam: site is nil")
-		return
-	end
-	site.group:getController():setOption(
-		AI.Option.Ground.id.ALARM_STATE,
-		AI.Option.Ground.val.ALARM_STATE.GREEN)
+	Logger:debug("hideSam(%s)", site.Name)
+	site.group:enableEmission(false)
 	site.Enabled = false
 	return nil
 end
@@ -179,6 +175,8 @@ function IADS:enableSAM(site)
 		end
 	end
 
+	Logger:debug("enableSam(%s)", site.Name)
+	site.group:enableEmission(true)
 	site.group:getController():setOption(
 		AI.Option.Ground.id.ALARM_STATE,
 		AI.Option.Ground.val.ALARM_STATE.RED)
@@ -258,6 +256,8 @@ function IADS:EWRtrkFileBuild()
 					EWR.ARMDetected[targets.object:getName()] = targets.object
 					for _, SAM in pairs(EWR.SAMsControlled) do
 						if math.random(1,100) < EwrOffChance then
+							Logger:debug("%s received hide command from %s",
+								SAM.Name, EWR.Name)
 							self:magHide(SAM)
 						end
 					end
@@ -283,6 +283,7 @@ function IADS:SAMtrkFileBuild()
 					and SamArmDetect and not self:prevDetected(SAM, targets.object) then
 					SAM.ARMDetected[targets.object:getName()] = targets.object
 					if math.random(1,100) < SamOffChance then
+						Logger:debug("%s detected launch on radar", SAM.Name)
 						self:magHide(SAM)
 					end
 				end
@@ -341,7 +342,7 @@ function IADS:SAMCheckHidden()
 	end
 	for site, time in pairs(self.toHide) do
 		if time < 0 then
-			self.hideSAM(self:getSamByName(site))
+			self:hideSAM(self:getSamByName(site))
 			self.toHide[site] = nil
 		else
 			self.toHide[site] = time - 2
@@ -509,7 +510,8 @@ function IADS:onShot(event)
 			if WepDesc.guidance == Weapon.GuidanceType.RADAR_PASSIVE then
 				for _, SAM in pairs(self.SAMSites) do
 					if math.random(1,100) < ARMHidePct and
-						getDist(SAM.Location, WepPt) < RadioHideRng then
+					   getDist(SAM.Location, WepPt) < RadioHideRng then
+						Logger:debug("%s detected launch on radio", SAM.Name)
 						self:magHide(SAM)
 					end
 				end
@@ -585,7 +587,6 @@ function IADS:sysIADSEventHandler(event)
 		[world.event.S_EVENT_BIRTH]               = self.onBirth,
 	}
 	if relevents[event.id] == nil then
-		Logger:debug("sysIADSEventHandler - not relevent event: %d", event.id)
 		return
 	end
 	relevents[event.id](self, event)
