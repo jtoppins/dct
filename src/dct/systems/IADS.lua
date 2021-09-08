@@ -202,10 +202,11 @@ function IADS:disableAllSAMs()
 end
 
 function IADS:hideSAM(site)
-	Logger:debug("hideSam(%s)", site.Name)
-	site.group:enableEmission(false)
-	site.Enabled = false
-	return nil
+	if site ~= nil then
+		Logger:debug("hideSam(%s)", site.Name)
+		site.group:enableEmission(false)
+		site.Enabled = false
+	end
 end
 
 function IADS:associateSAMS()
