@@ -72,6 +72,13 @@ local function isARM(object)
 	       object:getDesc().guidance == Weapon.GuidanceType.RADAR_PASSIVE
 end
 
+local function getDetectedTargets(group)
+	if group == nil or not group:isExist() then
+		return {}
+	end
+	return group:getController():getDetectedTargets(Controller.Detection.RADAR)
+end
+
 local IADS = class()
 function IADS:__init(cmdr)
 	assert(cmdr, "value error: cmdr must be a non-nil value")
@@ -121,38 +128,6 @@ function IADS:rangeOfSAM(gp)
 	return maxRange
 end
 
-function IADS:disableSAM(site)
-	if not site.Enabled then
-		return nil
-	end
-
-	local inRange = false
-	if site.trkFiles then
-		for _, trk in pairs(site.trkFiles) do
-			if trk.Position and getDist(site.Location, trk.Position)
-				< (site.EngageRange * 1.15) then
-				inRange = true
-			end
-		end
-	end
-
-	if inRange ~= true then
-		Logger:debug("disableSam(%s)", site.Name)
-		site.group:getController():setOption(
-			AI.Option.Ground.id.ALARM_STATE,
-			AI.Option.Ground.val.ALARM_STATE.GREEN)
-		site.Enabled = false
-	end
-	return nil
-end
-
-function IADS:hideSAM(site)
-	Logger:debug("hideSam(%s)", site.Name)
-	site.group:enableEmission(false)
-	site.Enabled = false
-	return nil
-end
-
 local function ammoCheck(site)
 	local wpns = {
 		[Weapon.GuidanceType.RADAR_ACTIVE]      = true,
@@ -172,7 +147,7 @@ local function ammoCheck(site)
 end
 
 function IADS:enableSAM(site)
-	if site.Hidden or site.Enabled then
+	if site.Hidden or site.Enabled or not site.group:isExist() then
 		return
 	end
 
@@ -193,6 +168,43 @@ function IADS:enableSAM(site)
 		AI.Option.Ground.id.ALARM_STATE,
 		AI.Option.Ground.val.ALARM_STATE.RED)
 	site.Enabled = true
+end
+
+function IADS:disableSAM(site)
+	if not site.Enabled or not site.group:isExist() then
+		return
+	end
+
+	local inRange = false
+	if site.trkFiles then
+		for _, trk in pairs(site.trkFiles) do
+			if trk.Position ~= nil and
+			   getDist(site.Location, trk.Position) < (site.EngageRange * 1.15) then
+				inRange = true
+			end
+		end
+	end
+
+	if not inRange then
+		Logger:debug("disableSam(%s)", site.Name)
+		site.group:getController():setOption(
+			AI.Option.Ground.id.ALARM_STATE,
+			AI.Option.Ground.val.ALARM_STATE.GREEN)
+		site.Enabled = false
+	end
+end
+
+function IADS:disableAllSAMs()
+	for _, SAM in pairs(self.SAMSites) do
+		self:disableSAM(SAM)
+	end
+end
+
+function IADS:hideSAM(site)
+	Logger:debug("hideSam(%s)", site.Name)
+	site.group:enableEmission(false)
+	site.Enabled = false
+	return nil
 end
 
 function IADS:associateSAMS()
@@ -252,9 +264,7 @@ end
 
 function IADS:EWRtrkFileBuild()
 	for _, EWR in pairs(self.EWRSites) do
-		local det = EWR.EWRGroup:getController():getDetectedTargets(
-			Controller.Detection.RADAR)
-		for _, target in pairs(det) do
+		for _, target in pairs(getDetectedTargets(EWR.EWRGroup)) do
 			if isFlying(target.object) then
 				self:addtrkFile(EWR, target, "EWR")
 				if EwrArmDetect and
@@ -277,9 +287,7 @@ end
 
 function IADS:SAMtrkFileBuild()
 	for _, SAM in pairs(self.SAMSites) do
-		local det = SAM.group:getController():getDetectedTargets(
-			Controller.Detection.RADAR)
-		for _, target in pairs(det) do
+		for _, target in pairs(getDetectedTargets(SAM.group)) do
 			if isFlying(target.object) then
 				self:addtrkFile(SAM, target, "SAM")
 				if SamArmDetect and
@@ -299,9 +307,7 @@ end
 
 function IADS:AWACStrkFileBuild()
 	for _, AWACS in pairs(self.AewAC) do
-		local det = AWACS.AWACSGroup:getController():getDetectedTargets(
-			Controller.Detection.RADAR)
-		for _, target in pairs(det) do
+		for _, target in pairs(getDetectedTargets(AWACS.AWACSGroup)) do
 			if isFlying(target.object) then
 				self:addtrkFile(AWACS, target, "AWACS")
 			end
@@ -528,15 +534,9 @@ function IADS:onBirth(event)
 	local gp = event.initiator:getGroup()
 	self:checkGroupRole(gp)
 	self:associateSAMS()
-end
-
-function IADS:disableAllSAMs()
-	for _, SAM in pairs(self.SAMSites) do
-		SAM.group:getController():setOption(AI.Option.Ground.id.ALARM_STATE,
-			AI.Option.Ground.val.ALARM_STATE.GREEN)
-		SAM.Enabled = false
+	if self.SAMSites[gp:getName()] ~= nil then
+		self:disableSAM(self.SAMSites[gp:getName()])
 	end
-	return nil
 end
 
 function IADS:populateLists()
