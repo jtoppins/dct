@@ -68,7 +68,8 @@ local function isFlying(object)
 end
 
 local function isARM(object)
-	return object:getCategory() == Object.Category.WEAPON and
+	return object ~= nil and
+	       object:getCategory() == Object.Category.WEAPON and
 	       object:getDesc().guidance == Weapon.GuidanceType.RADAR_PASSIVE
 end
 
@@ -509,18 +510,14 @@ function IADS:onDeath(event)
 end
 
 function IADS:onShot(event)
-	if RadioDetect then
-		if event.weapon then
-			local ordnance = event.weapon
-			local WepPt = ordnance:getPoint()
-			local WepDesc = ordnance:getDesc()
-			if WepDesc.guidance == Weapon.GuidanceType.RADAR_PASSIVE then
-				for _, SAM in pairs(self.SAMSites) do
-					if math.random(1,100) < ARMHidePct and
-					   getDist(SAM.Location, WepPt) < RadioHideRng then
-						Logger:debug("%s detected launch on radio", SAM.Name)
-						self:magHide(SAM)
-					end
+	if RadioDetect and event.initiator:getCoalition() ~= self.owner then
+		if isARM(event.weapon) then
+			local WepPt = event.weapon:getPoint()
+			for _, SAM in pairs(self.SAMSites) do
+				if math.random(1,100) < ARMHidePct and
+					getDist(SAM.Location, WepPt) < RadioHideRng then
+					Logger:debug("%s detected launch on radio", SAM.Name)
+					self:magHide(SAM)
 				end
 			end
 		end
