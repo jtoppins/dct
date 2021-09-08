@@ -525,14 +525,16 @@ function IADS:onShot(event)
 end
 
 function IADS:onBirth(event)
-	if event.initiator:getCategory() ~= Object.Category.Unit then
+	if event.initiator:getCategory() ~= Object.Category.UNIT then
 		return
 	end
 	local gp = event.initiator:getGroup()
-	self:checkGroupRole(gp)
-	self:associateSAMS()
-	if self.SAMSites[gp:getName()] ~= nil then
-		self:disableSAM(self.SAMSites[gp:getName()])
+	local name = self:checkGroupRole(gp)
+	if name ~= nil then
+		self:associateSAMS()
+		if self.SAMSites[name] ~= nil then
+			self:disableSAM(self.SAMSites[name])
+		end
 	end
 end
 
@@ -582,9 +584,9 @@ end
 
 function IADS:sysIADSEventHandler(event)
 	local relevents = {
-		[world.event.S_EVENT_DEAD]                = self.onDeath,
-		[world.event.S_EVENT_SHOT]                = self.onShot,
-		[world.event.S_EVENT_BIRTH]               = self.onBirth,
+		[world.event.S_EVENT_DEAD]      = self.onDeath,
+		[world.event.S_EVENT_SHOT]      = self.onShot,
+		[world.event.S_EVENT_BIRTH]     = self.onBirth,
 	}
 	if relevents[event.id] == nil then
 		return
