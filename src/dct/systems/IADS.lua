@@ -223,7 +223,7 @@ function IADS:associateSAMS()
 	end
 end
 
-function IADS:magHide(site)
+function IADS:magnumHide(site)
 	if not pointDefense[site.Type] and not site.Hidden then
 		local randomTime = math.random(15,35)
 		self.toHide[site.Name] = randomTime
@@ -277,7 +277,7 @@ function IADS:EWRtrkFileBuild()
 						if math.random(1,100) < EwrOffChance then
 							Logger:debug("%s received hide command from %s",
 								SAM.Name, EWR.Name)
-							self:magHide(SAM)
+							self:magnumHide(SAM)
 						end
 					end
 				end
@@ -298,7 +298,7 @@ function IADS:SAMtrkFileBuild()
 					SAM.ARMDetected[target.object:getName()] = target.object
 					if math.random(1,100) < SamOffChance then
 						Logger:debug("%s detected launch on radar", SAM.Name)
-						self:magHide(SAM)
+						self:magnumHide(SAM)
 					end
 				end
 			end
@@ -518,7 +518,7 @@ function IADS:onShot(event)
 				if math.random(1,100) < ARMHidePct and
 					getDist(SAM.Location, WepPt) < RadioHideRng then
 					Logger:debug("%s detected launch on radio", SAM.Name)
-					self:magHide(SAM)
+					self:magnumHide(SAM)
 				end
 			end
 		end
