@@ -378,7 +378,7 @@ function IADS:BlinkSAM()
 end
 
 function IADS:checkGroupRole(gp)
-	if gp == nil then
+	if gp == nil or gp:getCoalition() ~= self.owner then
 		return
 	end
 	local isEWR = false
