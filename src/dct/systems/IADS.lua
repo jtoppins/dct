@@ -210,11 +210,9 @@ function IADS:associateSAMS()
 	for _, EWR in pairs(self.EWRSites) do
 		EWR.SAMsControlled = {}
 		for _, SAM in pairs(self.SAMSites) do
-			if SAM.group:getCoalition() == EWR.EWRGroup:getCoalition() then
-				if getDist3D(SAM.Location, EWR.Location) < EWRAssocRng then
-					EWR.SAMsControlled[SAM.Name] = SAM
-					SAM.ControlledBy[EWR.Name] = EWR
-				end
+			if getDist3D(SAM.Location, EWR.Location) < EWRAssocRng then
+				EWR.SAMsControlled[SAM.Name] = SAM
+				SAM.ControlledBy[EWR.Name] = EWR
 			end
 		end
 	end
@@ -230,13 +228,13 @@ function IADS:magnumHide(site)
 end
 
 function IADS:prevDetected(Sys, ARM)
-	for _, prev in pairs(Sys.ARMDetected) do
+	for id, prev in pairs(Sys.ARMDetected) do
 		if prev:isExist() then
 			if ARM:getName() == prev:getName() then
 				return true
 			end
 		else
-			prev = nil
+			Sys.ARMDetected[id] = nil
 		end
 	end
 end
@@ -273,8 +271,8 @@ function IADS:EWRtrkFileBuild()
 					EWR.ARMDetected[target.object:getName()] = target.object
 					for _, SAM in pairs(EWR.SAMsControlled) do
 						if math.random(1,100) < EwrOffChance then
-							Logger:debug("%s received hide command from %s",
-								SAM.Name, EWR.Name)
+							Logger:debug("'%s' detected ARM launch on radar; '%s' hiding",
+								EWR.Name, EWR.Name)
 							self:magnumHide(SAM)
 						end
 					end
@@ -295,7 +293,7 @@ function IADS:SAMtrkFileBuild()
 				   not self:prevDetected(SAM, target.object) then
 					SAM.ARMDetected[target.object:getName()] = target.object
 					if math.random(1,100) < SamOffChance then
-						Logger:debug("%s detected launch on radar", SAM.Name)
+						Logger:debug("'%s' detected ARM launch on radar", SAM.Name)
 						self:magnumHide(SAM)
 					end
 				end
@@ -516,7 +514,7 @@ function IADS:onShot(event)
 			for _, SAM in pairs(self.SAMSites) do
 				if math.random(1,100) < ARMHidePct and
 					getDist(SAM.Location, WepPt) < RadioHideRng then
-					Logger:debug("%s detected launch on radio", SAM.Name)
+					Logger:debug("'%s' detected ARM launch on radio", SAM.Name)
 					self:magnumHide(SAM)
 				end
 			end
