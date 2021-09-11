@@ -1,6 +1,7 @@
 local Logger      = require("dct.libs.Logger").getByName("IADS")
 local Command     = require("dct.Command")
 local class       = require("libs.class")
+local utils       = require("libs.utils")
 
 -- luacheck: max_cyclomatic_complexity 21, ignore 241
 -- luacheck: ignore 311
@@ -88,11 +89,7 @@ function IADS:__init(cmdr)
 	self.EWRSites = {}
 	self.AewAC    = {}
 	self.toHide   = {}
-	self.trkFiles = {
-		["SAM"] = {},
-		["EWR"] = {},
-		["AWACS"] = {},
-	}
+	self.trkFiles = {}
 
 	local theater = require("dct.Theater").singleton()
 	theater:addObserver(self.sysIADSEventHandler, self,
@@ -244,7 +241,7 @@ function IADS:prevDetected(Sys, ARM)
 	end
 end
 
-function IADS:addtrkFile(site, target, type)
+function IADS:addtrkFile(site, target)
 	local trkName = target.object.id_
 	site.trkFiles[trkName] = {}
 	site.trkFiles[trkName]["Name"] = trkName
@@ -261,14 +258,15 @@ function IADS:addtrkFile(site, target, type)
 	if site.Datalink then
 		site.trkFiles[trkName]["Datalink"] = true
 	end
-	self.trkFiles[type][trkName] = site.trkFiles[trkName]
+	self.trkFiles[trkName] =
+		utils.mergetables(self.trkFiles[trkName] or {}, site.trkFiles[trkName])
 end
 
 function IADS:EWRtrkFileBuild()
 	for _, EWR in pairs(self.EWRSites) do
 		for _, target in pairs(getDetectedTargets(EWR.EWRGroup)) do
 			if isFlying(target.object) then
-				self:addtrkFile(EWR, target, "EWR")
+				self:addtrkFile(EWR, target)
 				if EwrArmDetect and
 				   isARM(target.object) and
 				   not self:prevDetected(EWR, target.object) then
@@ -291,7 +289,7 @@ function IADS:SAMtrkFileBuild()
 	for _, SAM in pairs(self.SAMSites) do
 		for _, target in pairs(getDetectedTargets(SAM.group)) do
 			if isFlying(target.object) then
-				self:addtrkFile(SAM, target, "SAM")
+				self:addtrkFile(SAM, target)
 				if SamArmDetect and
 				   isARM(target.object) and
 				   not self:prevDetected(SAM, target.object) then
@@ -311,7 +309,7 @@ function IADS:AWACStrkFileBuild()
 	for _, AWACS in pairs(self.AewAC) do
 		for _, target in pairs(getDetectedTargets(AWACS.AWACSGroup)) do
 			if isFlying(target.object) then
-				self:addtrkFile(AWACS, target, "AWACS")
+				self:addtrkFile(AWACS, target)
 			end
 		end
 	end
@@ -449,6 +447,7 @@ function IADS:checkGroupRole(gp)
 			self.AewAC[gp:getName()] = {
 				["Name"] = gp:getName(),
 				["AWACSGroup"] = gp,
+				["Location"] = gp:getUnit(1):getPoint(),
 				["numAWACS"] = numAWACS,
 				["Datalink"] = hasDL,
 				["trkFiles"] = {},
@@ -560,7 +559,6 @@ function IADS:monitortrks()
 		for _, trk in pairs(EWR.trkFiles) do
 			if trkTimedOut(trk) then
 				EWR.trkFiles[trk.Name] = nil
-				self.trkFiles["EWR"][trk.Name] = nil
 			end
 		end
 	end
@@ -568,7 +566,6 @@ function IADS:monitortrks()
 		for _, trk in pairs(SAM.trkFiles) do
 			if trkTimedOut(trk) then
 				SAM.trkFiles[trk.Name] = nil
-				self.trkFiles["SAM"][trk.Name] = nil
 			end
 		end
 	end
@@ -576,8 +573,12 @@ function IADS:monitortrks()
 		for _, trk in pairs(AWACS.trkFiles) do
 			if trkTimedOut(trk) then
 				AWACS.trkFiles[trk.Name] = nil
-				self.trkFiles["AWACS"][trk.Name] = nil
 			end
+		end
+	end
+	for _, trk in pairs(self.trkFiles) do
+		if trkTimedOut(trk) then
+			self.trkFiles[trk.Name] = nil
 		end
 	end
 	return 2
