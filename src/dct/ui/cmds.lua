@@ -231,7 +231,7 @@ local MissionJoinCmd = class(MissionCmd)
 function MissionJoinCmd:__init(theater, data)
 	MissionCmd.__init(self, theater, data)
 	self.name = "MissionJoinCmd:"..data.name
-	self.missioncode = data.missioncode
+	self.missioncode = data.value
 	self.assetmgr = theater:getAssetMgr()
 end
 
@@ -248,8 +248,7 @@ function MissionJoinCmd:_execute(_, cmdr)
 
 	msn = cmdr:getMission(missioncode)
 	if msn == nil then
-		msg = string.format("No mission of ID(%s) available, use"..
-			" scratch pad to set id.", tostring(missioncode))
+		msg = string.format("No mission of ID(%s) available", tostring(missioncode))
 	else
 		msn:addAssigned(self.asset)
 		msg = string.format("Mission %s assigned, use F10 menu "..
