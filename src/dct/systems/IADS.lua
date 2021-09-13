@@ -92,20 +92,33 @@ function IADS:__init(cmdr)
 	self.trkFiles = {}
 
 	local theater = require("dct.Theater").singleton()
-	theater:addObserver(self.sysIADSEventHandler, self,
-		"iads.eventhandler")
-	theater:queueCommand(10, Command("iads.populateLists",
+	local prefix = string.format("iads[%s]",
+		utils.getkey(coalition.side, cmdr.owner))
+
+	theater:addObserver(
+		self.sysIADSEventHandler, self, prefix..".eventhandler")
+
+	-- Initialization
+	theater:queueCommand(10, Command(prefix..".populateLists",
 		self.populateLists, self))
-	theater:queueCommand(10, Command("iads.monitortrks",
-		self.monitortrks, self))
-	theater:queueCommand(10, Command("iads.SAMCheckHidden",
+	theater:queueCommand(15, Command(prefix..".disableAllSAMs",
+		self.disableAllSAMs, self))
+
+	-- Periodic
+	theater:queueCommand(10, Command(prefix..".timeoutTracks",
+		self.timeoutTracks, self))
+	theater:queueCommand(10, Command(prefix..".EWRtrkFileBuild",
+		self.EWRtrkFileBuild, self))
+	theater:queueCommand(10, Command(prefix..".SAMtrkFileBuild",
+		self.SAMtrkFileBuild, self))
+	theater:queueCommand(10, Command(prefix..".AWACStrkFileBuild",
+		self.AWACStrkFileBuild, self))
+	theater:queueCommand(10, Command(prefix..".SAMCheckHidden",
 		self.SAMCheckHidden, self))
-	theater:queueCommand(10, Command("iads.BlinkSAM",
+	theater:queueCommand(10, Command(prefix..".BlinkSAM",
 		self.BlinkSAM, self))
 	theater:queueCommand(10, Command("iads.EWRSAMOnRequest",
 		self.EWRSAMOnRequest, self))
-	theater:queueCommand(15, Command("iads.disableAllSAMs",
-		self.disableAllSAMs, self))
 end
 
 function IADS:getSamByName(name)
@@ -541,41 +554,37 @@ function IADS:populateLists()
 		self:checkGroupRole(gp)
 	end
 	self:associateSAMS()
-	return nil
 end
 
-local function trkTimedOut(trk)
-	local trkAge = timer.getAbsTime() - trk.LastDetected
-	return trkAge > trkMem or not isFlying(trk.Object)
+local function trkTimedOut(trk, time)
+	return time - trk.LastDetected > trkMem or not isFlying(trk.Object)
 end
 
-function IADS:monitortrks()
-	self:EWRtrkFileBuild()
-	self:SAMtrkFileBuild()
-	self:AWACStrkFileBuild()
+function IADS:timeoutTracks()
+	local time = timer.getAbsTime()
 	for _, EWR in pairs(self.EWRSites) do
 		for _, trk in pairs(EWR.trkFiles) do
-			if trkTimedOut(trk) then
+			if trkTimedOut(trk, time) then
 				EWR.trkFiles[trk.Name] = nil
 			end
 		end
 	end
 	for _, SAM in pairs(self.SAMSites) do
 		for _, trk in pairs(SAM.trkFiles) do
-			if trkTimedOut(trk) then
+			if trkTimedOut(trk, time) then
 				SAM.trkFiles[trk.Name] = nil
 			end
 		end
 	end
 	for _, AWACS in pairs(self.AewAC) do
 		for _, trk in pairs(AWACS.trkFiles) do
-			if trkTimedOut(trk) then
+			if trkTimedOut(trk, time) then
 				AWACS.trkFiles[trk.Name] = nil
 			end
 		end
 	end
 	for _, trk in pairs(self.trkFiles) do
-		if trkTimedOut(trk) then
+		if trkTimedOut(trk, time) then
 			self.trkFiles[trk.Name] = nil
 		end
 	end
