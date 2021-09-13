@@ -94,28 +94,49 @@ end
 
 function TheaterUpdateCmd:_execute(_, cmdr)
 	local update = cmdr:getTheaterUpdate()
-	local msg =
-		string.format("== Theater Threat Status ==\n") ..
-		string.format("  Force Str: %s\n",
-			human.strength(update.enemy.str))..
-		string.format("  Sea:    %s\n", human.threat(update.enemy.sea)) ..
-		string.format("  Air:    %s\n", human.airthreat(update.enemy.air)) ..
-		string.format("  ELINT:  %s\n", human.threat(update.enemy.elint))..
-		string.format("  SAM:    %s\n", human.threat(update.enemy.sam)) ..
-		string.format("\n== Friendly Force Info ==\n")..
-		string.format("  Force Str: %s\n",
-			human.strength(update.friendly.str))..
-		string.format("\n== Current Active Air Missions ==\n")
+	local available = cmdr:getAvailableMissions(self.asset.ato)
+	local recommended = cmdr:recommendMissionType(self.asset.ato)
+	local airbases = self.theater:getAssetMgr():filterAssets(
+		function(asset) return asset.type == enum.assetType.AIRBASE end)
+
+	local airbaseList = {}
+	for _, airbase in utils.sortedpairs(airbases) do
+		table.insert(airbaseList, string.format("%s: %s", airbase.name,
+			human.relationship(cmdr.owner, airbase.owner)))
+	end
+
+	local activeMsnList = {}
 	if next(update.missions) ~= nil then
-		for k,v in utils.sortedpairs(update.missions) do
-			msg = msg .. string.format("  %s:  %d\n", k, v)
+		for msntype, count in utils.sortedpairs(update.missions) do
+			table.insert(activeMsnList, string.format("%s:  %d", msntype, count))
 		end
 	else
-		msg = msg .. "  No Active Missions\n"
+		table.insert(activeMsnList, "None")
 	end
-	msg = msg .. string.format("\nRecommended Mission Type: %s\n",
-		utils.getkey(enum.missionType,
-			cmdr:recommendMissionType(self.asset.ato)) or "None")
+
+	local availableMsnList = {}
+	if next(available) ~= nil then
+		for msntype, count in utils.sortedpairs(available) do
+			table.insert(availableMsnList, string.format("%s:  %d", msntype, count))
+		end
+	else
+		table.insert(availableMsnList, "None")
+	end
+
+	local msg = "== Theater Status ==\n"..
+		string.format("Friendly Force Str: %s\n",
+			human.strength(update.friendly.str))..
+		string.format("Enemy Force Str: %s\n",
+			human.strength(update.enemy.str))..
+		string.format("\nAirbases:\n  %s\n",
+			table.concat(airbaseList, "\n  "))..
+		string.format("\nCurrent Active Air Missions:\n  %s\n",
+			table.concat(activeMsnList, "\n  "))..
+		string.format("\nAvailable missions:\n  %s\n",
+			table.concat(availableMsnList, "\n  "))..
+		string.format("\nRecommended Mission Type: %s",
+			utils.getkey(enum.missionType, recommended) or "None")
+
 	return msg
 end
 

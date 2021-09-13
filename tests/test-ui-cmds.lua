@@ -47,12 +47,14 @@ local testcmds = {
 			["type"]   = enum.uiRequestType.THEATERSTATUS,
 		},
 		["assert"]     = true,
-		["expected"]   = "== Theater Threat Status ==\n"..
-			"  Force Str: Nominal\n  Sea:    medium\n"..
-			"  Air:    parity\n  ELINT:  medium\n  SAM:    medium\n\n"..
-			"== Friendly Force Info ==\n  Force Str: Nominal\n\n"..
-			"== Current Active Air Missions ==\n  No Active Missions\n\n"..
-			"Recommended Mission Type: SEAD\n",
+		["expected"]   = "== Theater Status ==\n"..
+			"Friendly Force Str: Nominal\nEnemy Force Str: Nominal\n\n"..
+			"Airbases:\n  CVN-71 Theodore Roosevelt: Friendly\n  "..
+			"Krymsk: Hostile\n  Kutaisi: Friendly\n  Senaki-Kolkhi: Friendly\n\n"..
+			"Current Active Air Missions:\n  None\n\n"..
+			"Available missions:\n  "..
+			"OCA:  1\n  SEAD:  2\n  STRIKE:  3\n\n"..
+			"Recommended Mission Type: SEAD",
 	}, {
 		["data"] = {
 			["name"]   = grp:getName(),
@@ -70,12 +72,14 @@ local testcmds = {
 			["type"]   = enum.uiRequestType.THEATERSTATUS,
 		},
 		["assert"]     = true,
-		["expected"]   = "== Theater Threat Status ==\n"..
-			"  Force Str: Nominal\n  Sea:    medium\n"..
-			"  Air:    parity\n  ELINT:  medium\n  SAM:    medium\n\n"..
-			"== Friendly Force Info ==\n  Force Str: Nominal\n\n"..
-			"== Current Active Air Missions ==\n  STRIKE:  1\n\n"..
-			"Recommended Mission Type: SEAD\n",
+		["expected"]   = "== Theater Status ==\n"..
+			"Friendly Force Str: Nominal\nEnemy Force Str: Nominal\n\n"..
+			"Airbases:\n  CVN-71 Theodore Roosevelt: Friendly\n  "..
+			"Krymsk: Hostile\n  Kutaisi: Friendly\n  Senaki-Kolkhi: Friendly\n\n"..
+			"Current Active Air Missions:\n  STRIKE:  1\n\n"..
+			"Available missions:\n  "..
+			"OCA:  1\n  SEAD:  2\n  STRIKE:  2\n\n"..
+			"Recommended Mission Type: SEAD",
 	}, {
 		["data"] = {
 			["name"]   = grp:getName(),
