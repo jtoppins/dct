@@ -109,31 +109,6 @@ local invalidXpdrTbl = {
 	["7400"] = true,
 }
 
-local squawkMissionType = {
-	["SAR"]  = 0,
-	["SUPT"] = 1,
-	["A2A"]  = 2,
-	["SEAD"] = 3,
-	["SEA"]  = 4,
-	["A2G"]  = 5,
-}
-
-local function map_mission_type(msntype)
-	local sqwkcode
-	if msntype == enum.missionType.CAP then
-		sqwkcode = squawkMissionType.A2A
-	--elseif msntype == enum.missionType.SAR then
-	--	sqwkcode = squawkMissionType.SAR
-	--elseif msntype == enum.missionType.SUPPORT then
-	--	sqwkcode = squawkMissionType.SUPT
-	elseif msntype == enum.missionType.SEAD then
-		sqwkcode = squawkMissionType.SEAD
-	else
-		sqwkcode = squawkMissionType.A2G
-	end
-	return sqwkcode
-end
-
 --[[
 -- Generates a mission id as well as generating IFF codes for the
 -- mission.
@@ -146,7 +121,7 @@ end
 --]]
 function Commander:genMissionCodes(msntype)
 	local id
-	local m1 = map_mission_type(msntype)
+	local m1 = enum.squawkMissionType[msntype]
 	while true do
 		MISSION_ID = (MISSION_ID + 1) % 64
 		id = string.format("%01o%02o0", m1, MISSION_ID)

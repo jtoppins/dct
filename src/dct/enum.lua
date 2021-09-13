@@ -74,13 +74,23 @@ enum.assetTypePriority = {
 enum.missionInvalidID = 0
 
 enum.missionType = {
-	["CAS"]      = 1,
-	["CAP"]      = 2,
-	["STRIKE"]   = 3,
-	["SEAD"]     = 4,
-	["BAI"]      = 5,
-	["OCA"]      = 6,
+	["CAS"]        = 1,
+	["CAP"]        = 2,
+	["STRIKE"]     = 3,
+	["SEAD"]       = 4,
+	["BAI"]        = 5,
+	["OCA"]        = 6,
 	["ARMEDRECON"] = 7,
+}
+
+enum.squawkMissionType = {
+	[enum.missionType.CAP]        = 2,
+	[enum.missionType.SEAD]       = 3,
+	[enum.missionType.CAS]        = 5,
+	[enum.missionType.STRIKE]     = 5,
+	[enum.missionType.BAI]        = 5,
+	[enum.missionType.OCA]        = 5,
+	[enum.missionType.ARMEDRECON] = 5,
 }
 
 enum.assetClass = {
@@ -237,5 +247,10 @@ enum.event = {
 }
 
 enum.kickCode = require("dct.libs.kickinfo").kickCode
+
+for _, msntype in pairs(enum.missionType) do
+	assert(enum.squawkMissionType[msntype],
+		"not all mission types are mapped to squawk codes")
+end
 
 return enum
