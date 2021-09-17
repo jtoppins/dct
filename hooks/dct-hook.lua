@@ -382,7 +382,7 @@ end
 function DCTHooks:onSimulationResume()
 	log.write(facility, log.DEBUG, "onSimulationResume")
 	local dctenabled = do_rpc("server", rpc_get_flag(dctflag), "number")
-	if not DCS.isServer() or not dctenabled then
+	if not DCS.isServer() or dctenabled == 0 then
 		log.write(facility, log.DEBUG,
 			string.format("not DCT enabled; server(%s), enabled(%s)",
 				tostring(DCS.isServer()), tostring(dctenabled)))
