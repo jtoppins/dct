@@ -64,25 +64,25 @@ local function genLocationMethod()
 end
 
 local AssetLogger = namedclass("AssetLogger", Logger)
-function AssetLogger:__init(name, cls)
-	Logger.__init(self, name)
+function AssetLogger:__init(cls)
+	Logger.__init(self, cls.__clsname)
 	self.cls = cls
 end
 
 function AssetLogger:error(fmt, ...)
-	Logger.error(self, "%s(%s) - "..fmt, self.cls.__clsname, self.cls.name, ...)
+	Logger.error(self, "%s - "..fmt, self.cls.name, ...)
 end
 
 function AssetLogger:warn(fmt, ...)
-	Logger.warn(self, "%s(%s) - "..fmt, self.cls.__clsname, self.cls.name, ...)
+	Logger.warn(self, "%s - "..fmt, self.cls.name, ...)
 end
 
 function AssetLogger:info(fmt, ...)
-	Logger.info(self, "%s(%s) - "..fmt, self.cls.__clsname, self.cls.name, ...)
+	Logger.info(self, "%s - "..fmt, self.cls.name, ...)
 end
 
 function AssetLogger:debug(fmt, ...)
-	Logger.debug(self, "%s(%s) - "..fmt, self.cls.__clsname, self.cls.name, ...)
+	Logger.debug(self, "%s - "..fmt, self.cls.name, ...)
 end
 
 --[[
@@ -104,7 +104,7 @@ function AssetBase:__init(template)
 	if not self._eventhandlers then
 		self._eventhandlers = {}
 	end
-	self._logger = AssetLogger("Asset", self)
+	self._logger = AssetLogger(self)
 	Marshallable.__init(self)
 	Observable.__init(self)
 	self:_addMarshalNames({
