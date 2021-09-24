@@ -21,6 +21,7 @@ local rangeTbl = {
 	["Patriot STR"] = 100000,
 	["Roland ADS"] = 7500,
 	["HQ-7_STR_SP"] = 10000,
+	["RPC_5N62V"] = 135000,
 }
 -- Point defense units are not turned off when they detect an ARM
 local pointDefense = {
