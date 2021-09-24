@@ -93,7 +93,7 @@ function IADS:__init(cmdr)
 	self.trkFiles = {}
 
 	local theater = require("dct.Theater").singleton()
-	local prefix = string.format("iads[%s]",
+	local prefix = string.format("iads(%s)",
 		utils.getkey(coalition.side, cmdr.owner))
 
 	theater:addObserver(
