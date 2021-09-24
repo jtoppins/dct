@@ -335,9 +335,13 @@ function IADS:EWRSAMOnRequest()
 			for _, EWR in pairs(SAM.ControlledBy) do
 				for _, target in pairs(EWR.trkFiles) do
 					if target.Position and
-						getDist(SAM.Location, target.Position) < SAM.EngageRange then
+					   getDist(SAM.Location, target.Position) < SAM.EngageRange then
 						viableTarget = true
+						break
 					end
+				end
+				if viableTarget then
+					break
 				end
 			end
 			if viableTarget then
