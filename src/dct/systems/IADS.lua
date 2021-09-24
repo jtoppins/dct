@@ -126,18 +126,19 @@ function IADS:getSamByName(name)
 	return self.SAMSites[name]
 end
 
-function IADS:rangeOfSAM(gp)
+function IADS:getSAMRadar(gp)
 	local maxRange = 0
+	local radarUnit = nil
 	for _, unit in pairs(gp:getUnits()) do
-		if unit:hasAttribute("SAM TR") and
-			rangeTbl[unit:getTypeName()] then
-			local samRange  = rangeTbl[unit:getTypeName()]
-			if maxRange < samRange then
-				maxRange = samRange
+		local type = unit:getTypeName()
+		if unit:hasAttribute("SAM TR") and rangeTbl[type] ~= nil then
+			if rangeTbl[type] > maxRange then
+				maxRange = rangeTbl[type]
+				radarUnit = unit
 			end
 		end
 	end
-	return maxRange
+	return radarUnit, maxRange
 end
 
 local function ammoCheck(site)
@@ -184,26 +185,33 @@ end
 
 function IADS:disableSAM(site)
 	if not site.Enabled or not site.group:isExist() then
-		return
+		return false
 	end
 
-	local inRange = false
-	if site.trkFiles then
+	if site.trkFiles ~= nil then
 		for _, trk in pairs(site.trkFiles) do
 			if trk.Position ~= nil and
 			   getDist(site.Location, trk.Position) < (site.EngageRange * 1.15) then
-				inRange = true
+				-- A target is in engagement range
+				return false
 			end
 		end
 	end
 
-	if not inRange then
-		Logger:debug("disableSam(%s)", site.Name)
-		site.group:getController():setOption(
-			AI.Option.Ground.id.ALARM_STATE,
-			AI.Option.Ground.val.ALARM_STATE.GREEN)
-		site.Enabled = false
+	if site.PrimaryRadar ~= nil then
+		local _, target = site.PrimaryRadar:getRadar()
+		if target ~= nil then
+			-- Site is actively engaged with an enemy
+			return false
+		end
 	end
+
+	Logger:debug("disableSam(%s)", site.Name)
+	site.group:getController():setOption(
+		AI.Option.Ground.id.ALARM_STATE,
+		AI.Option.Ground.val.ALARM_STATE.GREEN)
+	site.Enabled = false
+	return true
 end
 
 function IADS:disableAllSAMs()
@@ -401,7 +409,6 @@ function IADS:checkGroupRole(gp)
 	local isSAM = false
 	local isAWACS = false
 	local hasDL = false
-	local samType
 	local numSAMRadars = 0
 	local numEWRRadars = 0
 	if gp:getCategory() == Group.Category.GROUND then
@@ -411,7 +418,6 @@ function IADS:checkGroupRole(gp)
 				numEWRRadars = numEWRRadars + 1
 			elseif unt:hasAttribute("SAM TR") then
 				isSAM = true
-				samType = unt:getTypeName()
 				numSAMRadars = numSAMRadars + 1
 			end
 			if unt:hasAttribute("Datalink") then
@@ -430,14 +436,17 @@ function IADS:checkGroupRole(gp)
 				["trkFiles"] = {},
 			}
 			return gp:getName()
-		elseif isSAM and self:rangeOfSAM(gp) then
+		end
+		local radar, range = self:getSAMRadar(gp)
+		if isSAM and range > 0 then
 			self.SAMSites[gp:getName()] = {
 				["Name"] = gp:getName(),
 				["group"] = gp,
-				["Type"] = samType,
+				["Type"] = radar:getTypeName(),
 				["Location"] = gp:getUnit(1):getPoint(),
 				["numSAMRadars"] = numSAMRadars,
-				["EngageRange"] = self:rangeOfSAM(gp),
+				["EngageRange"] = range,
+				["PrimaryRadar"] = radar,
 				["ControlledBy"] = {},
 				["Enabled"] = true,
 				["Hidden"] = false,
