@@ -160,6 +160,10 @@ function CheckPayloadCmd.buildSummary(costs)
 end
 
 function CheckPayloadCmd:_execute(_ --[[time]], _ --[[cmdr]])
+	if type(self.asset.inAir) == "function" and self.asset:inAir() then
+		return "Payload check is only allowed when landed at a friendly airbase"
+	end
+
 	local ok, totals = loadout.check(self.asset)
 	if ok then
 		return "Valid loadout, you may depart. Good luck!\n\n"
