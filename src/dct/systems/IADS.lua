@@ -198,7 +198,7 @@ function IADS:disableSAM(site)
 		end
 	end
 
-	if site.PrimaryRadar ~= nil then
+	if site.PrimaryRadar ~= nil and site.PrimaryRadar:isExist() then
 		local _, target = site.PrimaryRadar:getRadar()
 		if target ~= nil then
 			-- Site is actively engaged with an enemy
