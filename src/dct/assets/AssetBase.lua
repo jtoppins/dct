@@ -11,7 +11,7 @@ local namedclass = require("libs.namedclass")
 local utils    = require("libs.utils")
 local dctenum  = require("dct.enum")
 local dctutils = require("dct.utils")
-local Goal     = require("dct.Goal")
+local Goal     = require("dct.assets.DeathGoals")
 local Marshallable = require("dct.libs.Marshallable")
 local Observable   = require("dct.libs.Observable")
 local Logger   = require("dct.libs.Logger")
@@ -370,7 +370,6 @@ end
 function AssetBase.defaultgoal(static)
 	local goal = {}
 	goal.priority = Goal.priority.PRIMARY
-	goal.goaltype = Goal.goaltype.DAMAGE
 	goal.objtype  = Goal.objtype.GROUP
 	goal.value    = 90
 

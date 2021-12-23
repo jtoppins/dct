@@ -9,7 +9,7 @@ local class = require("libs.class")
 local utils = require("libs.utils")
 local enum  = require("dct.enum")
 local vector= require("dct.libs.vector")
-local Goal  = require("dct.Goal")
+local Goal  = require("dct.assets.DeathGoals")
 local STM   = require("dct.templates.STM")
 
 --[[
@@ -69,7 +69,6 @@ local function goalFromName(name, objtype)
 		goal.value = damage.INCAPACITATED
 	end
 	goal.objtype  = objtype
-	goal.goaltype = Goal.goaltype.DAMAGE
 	return goal
 end
 

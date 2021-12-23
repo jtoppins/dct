@@ -9,7 +9,7 @@
 require("math")
 local enum     = require("dct.enum")
 local utils    = require("libs.utils")
-local Goal     = require("dct.Goal")
+local Goal     = require("dct.assets.DeathGoals")
 local AssetBase = require("dct.assets.AssetBase")
 
 --[[
