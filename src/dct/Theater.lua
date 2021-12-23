@@ -77,7 +77,7 @@ end
 function Systems:_runsys(methodname, ...)
 	for sysname, sys in pairs(self._systems) do
 		if type(sys[methodname]) == "function" then
-			Logger:info("system calling "..sysname..":"..methodname)
+			Logger:info("system calling %s:%s", sysname, methodname)
 			sys[methodname](sys, ...)
 		end
 	end
@@ -113,15 +113,15 @@ local function isStateValid(state)
 	end
 
 	if state.theater ~= env.mission.theatre then
-		Logger:warn(string.format("isStateValid(); wrong theater; "..
-			"state: '%s'; mission: '%s'", state.theater, env.mission.theatre))
+		Logger:warn("isStateValid(); wrong theater; "..
+			"state: '%s'; mission: '%s'", state.theater, env.mission.theatre)
 		return false
 	end
 
 	if state.sortie ~= env.getValueDictByKey(env.mission.sortie) then
-		Logger:warn(string.format("isStateValid(); wrong sortie; "..
+		Logger:warn("isStateValid(); wrong sortie; "..
 			"state: '%s'; mission: '%s'", state.sortie,
-			env.getValueDictByKey(env.mission.sortie)))
+			env.getValueDictByKey(env.mission.sortie))
 		return false
 	end
 
@@ -342,12 +342,12 @@ end
 function Theater.playerRequest(data)
 	local self = Theater.singleton()
 	if data == nil then
-		Logger:error("playerRequest(); value error: data must be "..
-			"provided; "..debug.traceback())
+		Logger:error("playerRequest(); value error: data must be provided; %s",
+			debug.traceback())
 		return
 	end
 
-	Logger:debug("playerRequest(); Received player request: "..
+	Logger:debug("playerRequest(); Received player request: %s",
 		json:encode_pretty(data))
 
 	local playerasset = self:getAssetMgr():getAsset(data.name)
@@ -381,14 +381,14 @@ end
 --]]
 function Theater:queueCommand(delay, cmd)
 	if delay < self.cmdmindelay then
-		Logger:warn(string.format("queueCommand(); delay(%2.2f) less than "..
+		Logger:warn("queueCommand(); delay(%2.2f) less than "..
 			"schedular minimum(%2.2f), setting to schedular minumum",
-			delay, self.cmdmindelay))
+			delay, self.cmdmindelay)
 		delay = self.cmdmindelay
 	end
 	self.cmdq:push(timer.getTime() + delay, cmd)
-	Logger:debug(string.format("queueCommand(); cmd(%s) cmdq size: %d",
-		cmd.name, self.cmdq:size()))
+	Logger:debug("queueCommand(); cmd(%s), delay: %d, cmdq size: %d",
+		cmd.name, delay, self.cmdq:size())
 end
 
 function Theater:exec(time)
@@ -412,15 +412,15 @@ function Theater:exec(time)
 		cmdctr = cmdctr + 1
 		self.qtimer:update()
 		if self.qtimer:expired() then
-			Logger:debug(
-				string.format("exec(); quanta reached, quanta: %5.2fms",
-					self.quanta*1000))
+			Logger:debug("exec(); quanta reached, quanta: %5.2fms", self.quanta*1000)
 			break
 		end
 	end
 	self.qtimer:update()
-	Logger:debug(string.format("exec(); time taken: %4.2fms;"..
-		" cmds executed: %d", self.qtimer.timeout*1000, cmdctr))
+	if settings.profile then
+		Logger:debug("exec(); time taken: %4.2fms; cmds executed: %d",
+			self.qtimer.timeout*1000, cmdctr)
+	end
 	return time + self.cmdqdelay
 end
 

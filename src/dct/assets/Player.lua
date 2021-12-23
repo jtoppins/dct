@@ -54,9 +54,7 @@ local function on_birth(asset, event)
 	local grp = event.initiator:getGroup()
 	local id = grp:getID()
 	if asset.groupId ~= id then
-		asset._logger:warn(
-			string.format("asset.groupId(%d) != object:getID(%d)",
-				asset.groupId, id))
+		asset._logger:warn("asset.groupId(%d) != object:getID(%d)", asset.groupId, id)
 	end
 	asset.groupId = id
 end
@@ -64,15 +62,15 @@ end
 local function reset_slot(asset)
 	local theater = dct.Theater.singleton()
 	if asset.squadron then
-		asset._logger:debug("squadron set: "..asset.squadron)
+		asset._logger:debug("squadron set: %s", asset.squadron)
 		local sqdn = theater:getAssetMgr():getAsset(asset.squadron)
 		if sqdn then
 			asset._logger:debug("squadron overriding ato and payload")
 			asset.ato = sqdn:getATO()
 			asset.payloadlimits = sqdn:getPayloadLimits()
-			asset._logger:debug("payloadlimits: "..
+			asset._logger:debug("payloadlimits: %s",
 				require("libs.json"):encode_pretty(asset.payloadlimits))
-			asset._logger:debug("ato: "..
+			asset._logger:debug("ato: %s",
 				require("libs.json"):encode_pretty(asset.ato))
 		end
 	end
@@ -209,9 +207,8 @@ end
 
 function OccupiedState:onDCTEvent(asset, event)
 	local handler = self._eventhandlers[event.id]
-	asset._logger:debug(string.format(
-		"OccupiedState:onDCTEvent; event.id: %d, handler: %s",
-		event.id, tostring(handler)))
+	asset._logger:debug("OccupiedState:onDCTEvent; event.id: %d, handler: %s",
+		event.id, tostring(handler))
 	local state
 	if handler ~= nil then
 		state = handler(self, asset, event)
@@ -326,10 +323,10 @@ function Player:_completeinit(template)
 	self.payloadlimits = settings.payloadlimits
 	self.gridfmt    = settings.ui.gridfmt[self.unittype] or
 		dctutils.posfmt.DMS
-	self._logger:debug("airbase: "..tostring(self.airbase))
-	self._logger:debug("payloadlimits: "..
+	self._logger:debug("airbase: %s", tostring(self.airbase))
+	self._logger:debug("payloadlimits: %s",
 		require("libs.json"):encode_pretty(self.payloadlimits))
-	self._logger:debug("ato: "..
+	self._logger:debug("ato: %s",
 		require("libs.json"):encode_pretty(self.ato))
 end
 
@@ -365,8 +362,7 @@ end
 
 function Player:doEnable()
 	trigger.action.setUserFlag(self.name, self:isEnabled())
-	self._logger:debug(string.format("setting enable flag: %s",
-		tostring(self:isEnabled())))
+	self._logger:debug("setting enable flag: %s", tostring(self:isEnabled()))
 end
 
 function Player:update()
@@ -382,14 +378,12 @@ end
 function Player:handleBaseState(event)
 	if event.initiator.name == self.airbase then
 		self._operstate = event.state
-		self._logger:debug(string.format("setting operstate: %s",
-			tostring(event.state)))
+		self._logger:debug("setting operstate: %s", tostring(event.state))
 		self:doEnable()
 	else
-		self._logger:warn(string.format("received unknown event "..
-			"%s(%d) from initiator(%s)",
+		self._logger:warn("received unknown event %s(%d) from initiator(%s)",
 			require("libs.utils").getkey(dctenum.event, event.id),
-			event.id, event.initiator.name))
+			event.id, event.initiator.name)
 	end
 end
 
@@ -428,7 +422,7 @@ end
 function Player:kick(kickcode)
 	local flagname = build_kick_flagname(self.name)
 	trigger.action.setUserFlag(flagname, kickcode)
-	self._logger:debug(string.format("requesting kick: %s", flagname))
+	self._logger:debug("requesting kick: %s", flagname)
 end
 
 return Player

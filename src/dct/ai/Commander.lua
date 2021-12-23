@@ -209,13 +209,18 @@ function Commander:requestMission(grpname, missiontype)
 	if tgt == nil then
 		return nil
 	end
-	Logger:debug(string.format("requestMission() - tgt name: '%s'; "..
-		"isTargeted: %s", tgt.name, tostring(tgt:isTargeted())))
+	Logger:debug("requestMission() - tgt name: '%s'; isTargeted: %s",
+		tgt.name, tostring(tgt:isTargeted()))
 
 	local plan = { require("dct.ai.actions.KillTarget")(tgt) }
 	local mission = Mission(self, missiontype, tgt, plan)
 	mission:addAssigned(assetmgr:getAsset(grpname))
 	self:addMission(mission)
+
+	Logger:debug("requestMission() - assigned target '%s' to "..
+		"mission %d (codename: %s)", tgt.name,
+		mission.id, tgt.codename)
+
 	return mission
 end
 

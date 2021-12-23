@@ -3,6 +3,7 @@
 --]]
 
 local utils = require("libs.utils")
+_G.DCT_TEST = true
 
 local airbase_table = {
 	["Caucasus"] = {

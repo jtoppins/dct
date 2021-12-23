@@ -90,11 +90,9 @@ function StaticAsset:_removeDeathGoal(name, goal)
 		"value error: name must be provided")
 	assert(goal ~= nil, "value error: goal must be provided")
 
-	self._logger:debug(string.format("_removeDeathGoal() - obj name: %s",
-		name))
+	self._logger:debug("_removeDeathGoal() - obj name: %s", name)
 	if self:isDead() then
-		self._logger:error(string.format("_removeDeathGoal() called "..
-			"'%s' marked as dead", self.name))
+		self._logger:error("_removeDeathGoal() called '%s' marked as dead", self.name)
 		return
 	end
 
@@ -194,9 +192,8 @@ function StaticAsset:update()
 			self:_removeDeathGoal(name, goal)
 		end
 	end
-	self._logger:debug(string.format(
-		"update() - max goals: %d; cur goals: %d; checked: %d",
-		self._maxdeathgoals, self._curdeathgoals, cnt))
+	self._logger:debug("update() - max goals: %d; cur goals: %d; checked: %d",
+		self._maxdeathgoals, self._curdeathgoals, cnt)
 end
 
 function StaticAsset:handleDead(event)

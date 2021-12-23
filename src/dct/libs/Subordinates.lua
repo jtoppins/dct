@@ -47,8 +47,8 @@ function Subordinates:addSubordinate(asset)
 end
 
 function Subordinates:spawn_despawn(action)
-	Logger:debug(string.format("%s(%s):spawn_despawn(%s) called",
-		self.__clsname, self.name, action))
+	Logger:debug("%s(%s):spawn_despawn(%s) called",
+		self.__clsname, self.name, action)
 	local theater = dct.Theater.singleton()
 	for name, _ in pairs(self._subordinates) do
 		local asset = theater:getAssetMgr():getAsset(name)
@@ -65,10 +65,8 @@ function Subordinates:spawn_despawn(action)
 				asset[action](asset)
 			end
 		else
-			Logger:info(string.format(
-				"%s(%s):spawn_despawn - asset(%s) doesn't exist, "..
-				"removing subordinate",
-				self.__clsname, self.name, name))
+			Logger:info("%s(%s):spawn_despawn - asset(%s) doesn't exist, "..
+				"removing subordinate", self.__clsname, self.name, name)
 			self:removeSubordinate(name)
 		end
 	end

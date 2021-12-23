@@ -24,7 +24,7 @@ function KillTarget:onDCTEvent(event)
 	if event.id ~= dctenum.event.DCT_EVENT_DEAD then
 		return
 	end
-	self._logger:debug(self.__clsname..".onDCTEvent: target dead")
+	self._logger:debug("%s.onDCTEvent: target dead", self.__clsname)
 	self._complete = true
 	event.initiator:removeObserver(self)
 	return nil

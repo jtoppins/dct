@@ -11,6 +11,7 @@ fail=0
 
 DCT_DATA_ROOT=${DCT_DATA_ROOT:-${srcroot}/data}
 DCT_TEMPLATE_PATH=${DCT_TEMPLATE_PATH:-${srcroot}/../dcs-mission-oeo-templates}
+DCT_TEST_LOG="${DCT_DATA_ROOT}/dct_test.log"
 if ! test -d "${DCT_TEMPLATE_PATH}"; then
 	unset DCT_TEMPLATE_PATH
 fi
@@ -26,6 +27,7 @@ export DCT_TEMPLATE_PATH
 #echo "DCT template path: ${DCT_TEMPLATE_PATH}"
 
 cd "${base}"
+rm -f "${DCT_TEST_LOG}"
 if test $# -gt 0; then
 	tests="$@"
 else
@@ -34,6 +36,7 @@ fi
 
 for t in $tests; do
 	result="PASS"
+	echo "==== TEST: $t" >> "$DCT_TEST_LOG"
 	${LUA_EXEC} $(basename ${t})
 	if test $? -ne 0; then
 		result="FAIL"

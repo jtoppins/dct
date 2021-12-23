@@ -8,5 +8,10 @@
 !.luacheckrc
 !.github
 
+# ignore test artifacts
+data/*.orig
+data/*.new
+data/*.log
+
 # ignore release zip files
 *.zip

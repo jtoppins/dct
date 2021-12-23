@@ -239,3 +239,11 @@ The port number on which a UDP server is listening to receive server data.
 This is the ID by which this DCS server will be identified in UDP export
 messages. This is used to differentiate different servers that use the
 same UDP server to centralize the data.
+
+#### `showerrors`
+
+ * _value:_ boolean (true/false)
+ * _default:_ false
+
+Shows DCT script errors in a modal message box. Meant for development use only,
+as the game will be unresponsive until the message box is closed.

@@ -22,7 +22,7 @@ function ScratchPad:__init(theater)
 	self._scratchpad = {}
 	self._theater = theater
 	theater:addObserver(self.event, self, self.__clsname)
-	Logger:debug("init "..self.__clsname)
+	Logger:debug("init %s", self.__clsname)
 end
 
 function ScratchPad:get(id)

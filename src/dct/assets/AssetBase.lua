@@ -69,24 +69,20 @@ function AssetLogger:__init(name, cls)
 	self.cls = cls
 end
 
-function AssetLogger:error(msg)
-	local l = string.format("%s(%s) - ", self.cls.__clsname, self.cls.name)
-	Logger.error(self, l..msg)
+function AssetLogger:error(fmt, ...)
+	Logger.error(self, "%s(%s) - "..fmt, self.cls.__clsname, self.cls.name, ...)
 end
 
-function AssetLogger:warn(msg)
-	local l = string.format("%s(%s) - ", self.cls.__clsname, self.cls.name)
-	Logger.warn(self, l..msg)
+function AssetLogger:warn(fmt, ...)
+	Logger.warn(self, "%s(%s) - "..fmt, self.cls.__clsname, self.cls.name, ...)
 end
 
-function AssetLogger:info(msg)
-	local l = string.format("%s(%s) - ", self.cls.__clsname, self.cls.name)
-	Logger.info(self, l..msg)
+function AssetLogger:info(fmt, ...)
+	Logger.info(self, "%s(%s) - "..fmt, self.cls.__clsname, self.cls.name, ...)
 end
 
-function AssetLogger:debug(msg)
-	local l = string.format("%s(%s) - ", self.cls.__clsname, self.cls.name)
-	Logger.debug(self, l..msg)
+function AssetLogger:debug(fmt, ...)
+	Logger.debug(self, "%s(%s) - "..fmt, self.cls.__clsname, self.cls.name, ...)
 end
 
 --[[
@@ -332,6 +328,7 @@ function AssetBase:setDead(val)
 	local prev = self._dead
 	self._dead = val
 	if self._dead and prev ~= self._dead then
+		self._logger:debug("notifying asset death for "..self.name)
 		self:notify(dctutils.buildevent.dead(self))
 	end
 end
@@ -351,9 +348,8 @@ end
 --]]
 function AssetBase:onDCTEvent(event)
 	local handler = self._eventhandlers[event.id]
-	self._logger:debug(string.format(
-		"onDCTEvent(); event.id: %d, handler: %s",
-		event.id, tostring(handler)))
+	self._logger:debug("onDCTEvent(); event.id: %d, handler: %s",
+		event.id, tostring(handler))
 	if handler ~= nil then
 		handler(self, event)
 	end

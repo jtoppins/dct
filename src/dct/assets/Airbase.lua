@@ -165,7 +165,7 @@ end
 
 function OperationalState:update(asset)
 	-- TODO: create departures
-	asset._logger:warn("operational state: update called")
+	asset._logger:debug("operational state: update called")
 end
 
 function OperationalState:onDCTEvent(asset, event)
@@ -182,7 +182,7 @@ function OperationalState:onDCTEvent(asset, event)
 	--  * S_EVENT_HIT - no need to handle at this time
 	--  * S_EVENT_DEAD - no need to handle at this time
 	--]]
-	asset._logger:warn("operational state: onDCTEvent called event.id"..
+	asset._logger:debug("operational state: onDCTEvent called event.id"..
 		event.id)
 end
 
@@ -370,7 +370,7 @@ end
 function AirbaseAsset:generate(assetmgr, region)
 	self._logger:debug("generate called")
 	for _, tplname in ipairs(self._tplnames or {}) do
-		self._logger:debug("subordinate template: "..tplname)
+		self._logger:debug("subordinate template: %s", tplname)
 		local tpl = region:getTemplateByName(tplname)
 		assert(tpl, string.format("runtime error: airbase(%s) defines "..
 			"a subordinate template of name '%s', does not exist",
