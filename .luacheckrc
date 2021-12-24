@@ -6,6 +6,7 @@ max_line_length = 80
 max_cyclomatic_complexity = 10
 read_globals = {
 	-- common lua globals
+	"loadlib",
 	"lfs",
 	"md5",
 
