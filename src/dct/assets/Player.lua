@@ -133,7 +133,7 @@ function EmptyState:onDCTEvent(asset, event)
 end
 
 function OccupiedState:__init(inair)
-	self.inair = inair
+	self.inair = inair or false
 	self.loseticket = false
 	self.bleedctr = 0
 	self.bleedperiod = 5
@@ -141,9 +141,8 @@ function OccupiedState:__init(inair)
 	self._eventhandlers = {
 		[world.event.S_EVENT_BIRTH]             = self.handleSwitchOccupied,
 		[world.event.S_EVENT_TAKEOFF]           = self.handleTakeoff,
-		[world.event.S_EVENT_EJECTION]          = self.handleLoseTicket,
+		[world.event.S_EVENT_EJECTION]          = self.handleEjection,
 		[world.event.S_EVENT_DEAD]              = self.handleLoseTicket,
-		[world.event.S_EVENT_PILOT_DEAD]        = self.handleLoseTicket,
 		[world.event.S_EVENT_CRASH]             = self.handleLoseTicket,
 		[world.event.S_EVENT_LAND]              = self.handleLand,
 	}
@@ -253,6 +252,10 @@ function OccupiedState:handleLand(asset, event)
 	return nil
 end
 
+function OccupiedState:handleEjection()
+	self.ejection = true
+end
+
 function OccupiedState:handleLoseTicket(--[[asset, event]])
 	self.loseticket = true
 	return EmptyState(dctenum.kickCode.DEAD)
@@ -261,7 +264,7 @@ end
 function OccupiedState:handleSwitchOccupied(asset, event)
 	asset._logger:warn("player left slot, resetting state for birth event")
 	on_birth(asset, event)
-	return OccupiedState()
+	return OccupiedState(event.initiator:inAir())
 end
 
 --[[
