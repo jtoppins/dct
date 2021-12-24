@@ -6,28 +6,62 @@ require("dct")
 local utils = require("dct.utils")
 local json  = require("libs.json")
 
-local deg = '°'
+local formats = {
+	["DD"] = utils.posfmt.DD,
+	["DDM"] = utils.posfmt.DDM,
+	["DMS"] = utils.posfmt.DMS,
+}
+
 local testll = {
-	[1] = {
-		["lat"]  = 88.123,
-		["long"] = -63.456,
+	{
+		["lat"]  = 88.12345,
+		["long"] = -63.45678,
 		["precision"] = 0,
-		["format"] = utils.posfmt.DD,
-		["expected"] = "088"..deg.."N 063"..deg.."W",
-	},
-	[2] = {
-		["lat"]  = 88.123,
-		["long"] = -63.456,
+		["DD"] = "88°N 63°W",
+		["DDM"] = "88°00'N 063°00'W",
+		["DMS"] = "88°00'00\"N 063°00'00\"W",
+	}, {
+		["lat"]  = 88.12345,
+		["long"] = -63.45678,
+		["precision"] = 1,
+		["DD"] = "88.1°N 63.4°W",
+		["DDM"] = "88°06'N 063°24'W",
+		["DMS"] = "88°06'00\"N 063°24'00\"W",
+	}, {
+		["lat"]  = 88.12345,
+		["long"] = -63.45678,
+		["precision"] = 2,
+		["DD"] = "88.12°N 63.45°W",
+		["DDM"] = "88°07.2'N 063°27.0'W",
+		["DMS"] = "88°07'12\"N 063°27'00\"W",
+	}, {
+		["lat"]  = 88.12345,
+		["long"] = -63.45678,
 		["precision"] = 3,
-		["format"] = utils.posfmt.DDM,
-		["expected"] = "88"..deg.."07.38'N 063"..deg.."27.36'W",
-	},
-	[3] = {
-		["lat"]  = 88.123,
-		["long"] = -63.456,
+		["DD"] = "88.123°N 63.456°W",
+		["DDM"] = "88°07.38'N 063°27.36'W",
+		["DMS"] = "88°07'23\"N 063°27'22\"W",
+	}, {
+		["lat"]  = 88.12345,
+		["long"] = -63.45678,
+		["precision"] = 4,
+		["DD"] = "88.1234°N 63.4567°W",
+		["DDM"] = "88°07.404'N 063°27.402'W",
+		["DMS"] = "88°07'24.2\"N 063°27'24.1\"W",
+	}, {
+		["lat"]  = 88.12345,
+		["long"] = -63.45678,
 		["precision"] = 5,
-		["format"] = utils.posfmt.DMS,
-		["expected"] = "88"..deg.."07'22.800\"N 063"..deg.."27'21.600\"W",
+		["DD"] = "88.12345°N 63.45678°W",
+		["DDM"] = "88°07.4070'N 063°27.4068'W",
+		["DMS"] = "88°07'24.420\"N 063°27'24.408\"W",
+	}, {
+		["lat"]  = 88,
+		["long"] = -63,
+		["precision"] = 5,
+		["DD"] = "88.00000°N 63.00000°W",
+		["DDM"] = "88°00.0000'N 063°00.0000'W",
+		["DMS"] = "88°00'00.000\"N 063°00'00.000\"W",
 	},
 }
 
@@ -50,7 +84,7 @@ local testmgrs = {
 			["Northing"] = 56789,
 		},
 		["precision"] = 3,
-		["expected"] = "DD GJ012567",
+		["expected"] = "DD GJ 012 567",
 	},
 }
 
@@ -63,7 +97,7 @@ local testlo = {
 		},
 		["precision"] = 3,
 		["format"] = utils.posfmt.MGRS,
-		["expected"] = "DD GJ012567",
+		["expected"] = "DD GJ 012 567",
 	},
 	[2] = {
 		["position"] = {
@@ -73,7 +107,7 @@ local testlo = {
 		},
 		["precision"] = 5,
 		["format"] = utils.posfmt.DMS,
-		["expected"] = "88"..deg.."07'22.800\"N 063"..deg.."27'21.600\"W",
+		["expected"] = "88°07'22.800\"N 063°27'21.600\"W",
 	},
 }
 
@@ -121,11 +155,15 @@ local testcentroid = {
 }
 
 local function main()
-	for _, v in ipairs(testll) do
-		local str = utils.LLtostring(v.lat, v.long, v.precision, v.format)
-		assert(str == v.expected,
-			"utils.LLtostring() unexpected value; got: '"..str..
-			"'; expected: '"..v.expected.."'")
+	for _, coord in ipairs(testll) do
+		for fmtkey, fmt in pairs(formats) do
+			local str = utils.LLtostring(coord.lat, coord.long,
+				coord.precision, fmt)
+			assert(str == coord[fmtkey], string.format(
+				"utils.LLtostring() with %s (precision %d): "..
+				"unexpected value; got: '%s'; expected: '%s'",
+				fmtkey, coord.precision, str, tostring(coord[fmtkey])))
+		end
 	end
 	for _, v in ipairs(testmgrs) do
 		local str = utils.MGRStostring(v.mgrs, v.precision)

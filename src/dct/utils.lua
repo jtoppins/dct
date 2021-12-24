@@ -116,39 +116,43 @@ utils.posfmt = {
 	["MGRS"] = 4,
 }
 
-function utils.LLtostring(lat, long, precision, fmt)
-	-- reduce the accuracy of the position to the precision specified
-	lat  = tonumber(string.format("%0"..(3+precision).."."..precision.."f",
-		lat))
-	long = tonumber(string.format("%0"..(3+precision).."."..precision.."f",
-		long))
+-- reduce the accuracy of the position to the precision specified
+function utils.degradeLL(lat, long, precision)
+	local multiplier = math.pow(10, precision)
+	lat  = math.modf(lat * multiplier) / multiplier
+	long = math.modf(long * multiplier) / multiplier
+	return lat, long
+end
 
+-- set up formatting args for the LL string
+local function getLLformatstr(precision, fmt)
+	local decimals = precision
+	if fmt == utils.posfmt.DDM then
+		if precision > 1 then
+			decimals = precision - 1
+		else
+			decimals = 0
+		end
+	elseif fmt == utils.posfmt.DMS then
+		if precision > 4 then
+			decimals = precision - 2
+		elseif precision > 2 then
+			decimals = precision - 3
+		else
+			decimals = 0
+		end
+	end
+	if decimals == 0 then
+		return "%02.0f"
+	else
+		return "%0"..(decimals+3).."."..decimals.."f"
+	end
+end
+
+function utils.LLtostring(lat, long, precision, fmt)
 	local northing = "N"
 	local easting  = "E"
 	local degsym   = '°'
-
-	if fmt == utils.posfmt.DDM then
-		if precision > 1 then
-			precision = precision - 1
-		else
-			precision = 0
-		end
-	elseif fmt == utils.posfmt.DMS then
-		if precision > 2 then
-			precision = precision - 2
-		else
-			precision = 0
-		end
-	end
-
-	local width  = 3 + precision
-	local fmtstr = "%0"..width
-
-	if precision == 0 then
-		fmtstr = fmtstr.."d"
-	else
-		fmtstr = fmtstr.."."..precision.."f"
-	end
 
 	if lat < 0 then
 		northing = "S"
@@ -158,8 +162,11 @@ function utils.LLtostring(lat, long, precision, fmt)
 		easting = "W"
 	end
 
+	lat, long = utils.degradeLL(lat, long, precision)
 	lat  = math.abs(lat)
 	long = math.abs(long)
+
+	local fmtstr = getLLformatstr(precision, fmt)
 
 	if fmt == utils.posfmt.DD then
 		return string.format(fmtstr..degsym, lat)..northing..
@@ -167,10 +174,15 @@ function utils.LLtostring(lat, long, precision, fmt)
 			string.format(fmtstr..degsym, long)..easting
 	end
 
+	-- we give the minutes and seconds a little push in case the division
+	-- from the truncation with this multiplication gives us a value ending
+	-- in .99999...
+	local tolerance = 1e-8
+
 	local latdeg   = math.floor(lat)
-	local latmind  = (lat - latdeg)*60
+	local latmind  = (lat - latdeg)*60 + tolerance
 	local longdeg  = math.floor(long)
-	local longmind = (long - longdeg)*60
+	local longmind = (long - longdeg)*60 + tolerance
 
 	if fmt == utils.posfmt.DDM then
 		return string.format("%02d"..degsym..fmtstr.."'", latdeg, latmind)..
@@ -181,9 +193,9 @@ function utils.LLtostring(lat, long, precision, fmt)
 	end
 
 	local latmin   = math.floor(latmind)
-	local latsecd  = (latmind - latmin)*60
+	local latsecd  = (latmind - latmin)*60 + tolerance
 	local longmin  = math.floor(longmind)
-	local longsecd = (longmind - longmin)*60
+	local longsecd = (longmind - longmin)*60 + tolerance
 
 	return string.format("%02d"..degsym.."%02d'"..fmtstr.."\"",
 			latdeg, latmin, latsecd)..
@@ -203,16 +215,18 @@ function utils.MGRStostring(mgrs, precision)
 
 	local divisor = 10^(5-precision)
 	local fmtstr  = "%0"..precision.."d"
-	return str .. string.format(fmtstr, (mgrs.Easting/divisor)) ..
-		string.format(fmtstr, (mgrs.Northing/divisor))
+
+	if precision == 0 then
+		return str
+	end
+
+	return str.." "..string.format(fmtstr, (mgrs.Easting/divisor))..
+		" "..string.format(fmtstr, (mgrs.Northing/divisor))
 end
 
 function utils.degrade_position(position, precision)
 	local lat, long = coord.LOtoLL(position)
-	lat  = tonumber(string.format("%0"..(3+precision).."."..precision.."f",
-		lat))
-	long = tonumber(string.format("%0"..(3+precision).."."..precision.."f",
-		long))
+	lat, long = utils.degradeLL(lat, long, precision)
 	return coord.LLtoLO(lat, long, 0)
 end
 
