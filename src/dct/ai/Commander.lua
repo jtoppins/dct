@@ -129,7 +129,7 @@ function Commander:genMissionCodes(msntype)
 			break
 		end
 	end
-	local m1 = 8*digit1
+	local m1 = (8*digit1)+(enum.squawkMissionSubType[msntype] or 0)
 	local m3 = (512*digit1)+(MISSION_ID*8)
 	return { ["id"] = id, ["m1"] = m1, ["m3"] = m3, }
 end

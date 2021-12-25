@@ -93,6 +93,14 @@ enum.squawkMissionType = {
 	[enum.missionType.ARMEDRECON] = 5,
 }
 
+enum.squawkMissionSubType = {
+	[enum.missionType.STRIKE]     = 0,
+	[enum.missionType.OCA]        = 0,
+	[enum.missionType.BAI]        = 1,
+	[enum.missionType.ARMEDRECON] = 2,
+	[enum.missionType.CAS]        = 3,
+}
+
 enum.assetClass = {
 	["INITIALIZE"] = {
 		[enum.assetType.AMMODUMP]    = true,
