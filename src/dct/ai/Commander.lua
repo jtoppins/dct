@@ -111,7 +111,7 @@ local invalidXpdrTbl = {
 
 --[[
 -- Generates a mission id as well as generating IFF codes for the
--- mission.
+-- mission (in octal).
 --
 -- Returns: a table with the following:
 --   * id (string): is the mission ID
@@ -121,16 +121,16 @@ local invalidXpdrTbl = {
 --]]
 function Commander:genMissionCodes(msntype)
 	local id
-	local m1 = enum.squawkMissionType[msntype]
+	local digit1 = enum.squawkMissionType[msntype]
 	while true do
 		MISSION_ID = (MISSION_ID + 1) % 64
-		id = string.format("%01o%02o0", m1, MISSION_ID)
-		if invalidXpdrTbl[id] == nil and
-			self:getMission(id) == nil then
+		id = string.format("%01o%02o0", digit1, MISSION_ID)
+		if invalidXpdrTbl[id] == nil and self:getMission(id) == nil then
 			break
 		end
 	end
-	local m3 = (512*m1)+(MISSION_ID*8)
+	local m1 = 8*digit1
+	local m3 = (512*digit1)+(MISSION_ID*8)
 	return { ["id"] = id, ["m1"] = m1, ["m3"] = m3, }
 end
 
