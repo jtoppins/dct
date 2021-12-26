@@ -268,9 +268,13 @@ local irrelevants = {
 	[world.event.S_EVENT_BDA]                          = true,
 }
 
+local function errhandler(err)
+	Logger:error("protected call - %s", debug.traceback(err, 2))
+end
+
 -- DCS looks for this function in any table we register with the world
 -- event handler
-function Theater:onEvent(event)
+function Theater:_onEvent(event)
 	if irrelevants[event.id] ~= nil then
 		return
 	end
@@ -287,6 +291,10 @@ function Theater:onEvent(event)
 			end
 		end
 	end
+end
+
+function Theater:onEvent(event)
+	xpcall(function() self:_onEvent(event) end, errhandler)
 end
 
 function Theater:export(_)
@@ -401,13 +409,12 @@ function Theater:exec(time)
 		end
 
 		local cmd = self.cmdq:pop()
-		local ok, requeue = pcall(cmd.execute, cmd, time)
-		if ok then
-			if requeue ~= nil and type(requeue) == "number" then
-				self:queueCommand(requeue, cmd)
-			end
-		else
-			Logger:error("protected call - "..tostring(requeue))
+		local ok, requeue = xpcall(
+			function()
+				return cmd:execute(time)
+			end, errhandler)
+		if ok and type(requeue) == "number" then
+			self:queueCommand(requeue, cmd)
 		end
 		cmdctr = cmdctr + 1
 		self.qtimer:update()
