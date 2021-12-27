@@ -1,17 +1,12 @@
 local Logger      = require("dct.libs.Logger").getByName("IADS")
 local Command     = require("dct.Command")
 local class       = require("libs.class")
+local utils       = require("libs.utils")
 
 -- luacheck: max_cyclomatic_complexity 21, ignore 241
 -- luacheck: ignore 311
-local trkFiles = {
-	["SAM"] = {},
-	["EWR"] = {},
-	["AWACS"] = {},
-}
 
--- Ranges at which SAM sites are
--- considered close enough to activate in meters
+-- Ranges at which SAM sites are considered close enough to activate, in meters
 local rangeTbl = {
 	["Kub 1S91 str"] = 52000,
 	["S-300PS 40B6M tr"] =  100000,
@@ -26,9 +21,14 @@ local rangeTbl = {
 	["Patriot STR"] = 100000,
 	["Roland ADS"] = 7500,
 	["HQ-7_STR_SP"] = 10000,
+	["RPC_5N62V"] = 120000,
 }
--- If true IADS script is active
---local IADSEnable = true
+-- Point defense units are not turned off when they detect an ARM
+local pointDefense = {
+	["Tor 9A331"] = true,
+}
+
+-- IADS settings
 -- 1 = radio detection of ARM launch on, 0 = radio detection of ARM launch off
 local RadioDetect = true
 -- 1 = EWR detection of ARMs on, 0 = EWR detection of ARMs off
@@ -65,6 +65,23 @@ local function getDist3D(point1, point2)
 	return math.sqrt(dX*dX + dZ*dZ + dY*dY)
 end
 
+local function isFlying(object)
+	return object ~= nil and object:isExist() and object:inAir()
+end
+
+local function isARM(object)
+	return object ~= nil and
+	       object:getCategory() == Object.Category.WEAPON and
+	       object:getDesc().guidance == Weapon.GuidanceType.RADAR_PASSIVE
+end
+
+local function getDetectedTargets(group)
+	if group == nil or not group:isExist() then
+		return {}
+	end
+	return group:getController():getDetectedTargets(Controller.Detection.RADAR)
+end
+
 local IADS = class()
 function IADS:__init(cmdr)
 	assert(cmdr, "value error: cmdr must be a non-nil value")
@@ -73,72 +90,55 @@ function IADS:__init(cmdr)
 	self.EWRSites = {}
 	self.AewAC    = {}
 	self.toHide   = {}
+	self.trkFiles = {}
 
 	local theater = require("dct.Theater").singleton()
-	theater:addObserver(self.sysIADSEventHandler, self,
-		"iads.eventhandler")
-	theater:queueCommand(10, Command("iads.populateLists",
+	local prefix = string.format("iads(%s)",
+		utils.getkey(coalition.side, cmdr.owner))
+
+	theater:addObserver(
+		self.sysIADSEventHandler, self, prefix..".eventhandler")
+
+	-- Initialization
+	theater:queueCommand(10, Command(prefix..".populateLists",
 		self.populateLists, self))
-	theater:queueCommand(10, Command("iads.monitortrks",
-		self.monitortrks, self))
-	theater:queueCommand(10, Command("iads.SAMCheckHidden",
+	theater:queueCommand(15, Command(prefix..".disableAllSAMs",
+		self.disableAllSAMs, self))
+
+	-- Periodic
+	theater:queueCommand(10, Command(prefix..".timeoutTracks",
+		self.timeoutTracks, self))
+	theater:queueCommand(10, Command(prefix..".EWRtrkFileBuild",
+		self.EWRtrkFileBuild, self))
+	theater:queueCommand(10, Command(prefix..".SAMtrkFileBuild",
+		self.SAMtrkFileBuild, self))
+	theater:queueCommand(10, Command(prefix..".AWACStrkFileBuild",
+		self.AWACStrkFileBuild, self))
+	theater:queueCommand(10, Command(prefix..".SAMCheckHidden",
 		self.SAMCheckHidden, self))
-	theater:queueCommand(10, Command("iads.BlinkSAM",
+	theater:queueCommand(10, Command(prefix..".BlinkSAM",
 		self.BlinkSAM, self))
 	theater:queueCommand(10, Command("iads.EWRSAMOnRequest",
 		self.EWRSAMOnRequest, self))
-	theater:queueCommand(15, Command("iads.disableAllSAMs",
-		self.disableAllSAMs, self))
 end
 
 function IADS:getSamByName(name)
 	return self.SAMSites[name]
 end
 
-function IADS:rangeOfSAM(gp)
+function IADS:getSAMRadar(gp)
 	local maxRange = 0
+	local radarUnit = nil
 	for _, unit in pairs(gp:getUnits()) do
-		if unit:hasAttribute("SAM TR") and
-			rangeTbl[unit:getTypeName()] then
-			local samRange  = rangeTbl[unit:getTypeName()]
-			if maxRange < samRange then
-				maxRange = samRange
+		local type = unit:getTypeName()
+		if unit:hasAttribute("SAM TR") and rangeTbl[type] ~= nil then
+			if rangeTbl[type] > maxRange then
+				maxRange = rangeTbl[type]
+				radarUnit = unit
 			end
 		end
 	end
-	return maxRange
-end
-
-function IADS:disableSAM(site)
-	if not site.Enabled then
-		return nil
-	end
-
-	local inRange = false
-	if site.trkFiles then
-		for _, trk in pairs(site.trkFiles) do
-			if trk.Position and getDist(site.Location, trk.Position)
-				< (site.EngageRange * 1.15) then
-				inRange = true
-			end
-		end
-	end
-
-	if inRange ~= true then
-		site.group:getController():setOption(
-			AI.Option.Ground.id.ALARM_STATE,
-			AI.Option.Ground.val.ALARM_STATE.GREEN)
-		site.Enabled = false
-	end
-	return nil
-end
-
-function IADS:hideSAM(site)
-	site.group:getController():setOption(
-		AI.Option.Ground.id.ALARM_STATE,
-		AI.Option.Ground.val.ALARM_STATE.GREEN)
-	site.Enabled = false
-	return nil
+	return radarUnit, maxRange
 end
 
 local function ammoCheck(site)
@@ -160,7 +160,7 @@ local function ammoCheck(site)
 end
 
 function IADS:enableSAM(site)
-	if site.Hidden or site.Enabled then
+	if site.Hidden or site.Enabled or not site.group:isExist() then
 		return
 	end
 
@@ -175,18 +175,64 @@ function IADS:enableSAM(site)
 		end
 	end
 
+	Logger:debug("enableSam(%s)", site.Name)
+	site.group:enableEmission(true)
 	site.group:getController():setOption(
 		AI.Option.Ground.id.ALARM_STATE,
 		AI.Option.Ground.val.ALARM_STATE.RED)
 	site.Enabled = true
 end
 
+function IADS:disableSAM(site)
+	if not site.Enabled or not site.group:isExist() then
+		return false
+	end
+
+	if site.trkFiles ~= nil then
+		for _, trk in pairs(site.trkFiles) do
+			if trk.Position ~= nil and
+			   getDist(site.Location, trk.Position) < (site.EngageRange * 1.15) then
+				-- A target is in engagement range
+				return false
+			end
+		end
+	end
+
+	if site.PrimaryRadar ~= nil and site.PrimaryRadar:isExist() then
+		local _, target = site.PrimaryRadar:getRadar()
+		if target ~= nil then
+			-- Site is actively engaged with an enemy
+			return false
+		end
+	end
+
+	Logger:debug("disableSam(%s)", site.Name)
+	site.group:getController():setOption(
+		AI.Option.Ground.id.ALARM_STATE,
+		AI.Option.Ground.val.ALARM_STATE.GREEN)
+	site.Enabled = false
+	return true
+end
+
+function IADS:disableAllSAMs()
+	for _, SAM in pairs(self.SAMSites) do
+		self:disableSAM(SAM)
+	end
+end
+
+function IADS:hideSAM(site)
+	if site ~= nil then
+		Logger:debug("hideSam(%s)", site.Name)
+		site.group:enableEmission(false)
+		site.Enabled = false
+	end
+end
+
 function IADS:associateSAMS()
 	for _, EWR in pairs(self.EWRSites) do
 		EWR.SAMsControlled = {}
 		for _, SAM in pairs(self.SAMSites) do
-			if SAM.group:getCoalition() == EWR.EWRGroup:getCoalition()
-				and getDist3D(SAM.Location, EWR.Location) < EWRAssocRng then
+			if getDist3D(SAM.Location, EWR.Location) < EWRAssocRng then
 				EWR.SAMsControlled[SAM.Name] = SAM
 				SAM.ControlledBy[EWR.Name] = EWR
 			end
@@ -194,8 +240,8 @@ function IADS:associateSAMS()
 	end
 end
 
-function IADS:magHide(site)
-	if site.Type ~= "Tor 9A331" and not site.Hidden then
+function IADS:magnumHide(site)
+	if not pointDefense[site.Type] and not site.Hidden then
 		local randomTime = math.random(15,35)
 		self.toHide[site.Name] = randomTime
 		site.HiddenTime = math.random(65,100)+randomTime
@@ -204,57 +250,52 @@ function IADS:magHide(site)
 end
 
 function IADS:prevDetected(Sys, ARM)
-	for _, prev in pairs(Sys.ARMDetected) do
+	for id, prev in pairs(Sys.ARMDetected) do
 		if prev:isExist() then
 			if ARM:getName() == prev:getName() then
 				return true
 			end
 		else
-			prev = nil
+			Sys.ARMDetected[id] = nil
 		end
 	end
 end
 
-function IADS:addtrkFile(site, targets)
-	if targets.object:isExist() then
-		local trkName = targets.object.id_
-		site.trkFiles[trkName] = {}
-		site.trkFiles[trkName]["Name"] = trkName
-		site.trkFiles[trkName]["Object"] = targets.object
-		site.trkFiles[trkName]["LastDetected"] = timer.getAbsTime()
-		if targets.distance then
-			site.trkFiles[trkName]["Position"] = targets.object:getPoint()
-			site.trkFiles[trkName]["Velocity"] = targets.object:getVelocity()
-		end
-		if targets.type then
-			site.trkFiles[trkName]["Category"] = targets.object:getCategory()
-			site.trkFiles[trkName]["Type"] = targets.object:getTypeName()
-		end
-		if site.Datalink then
-			site.trkFiles[trkName]["Datalink"] = true
-		end
+function IADS:addtrkFile(site, target)
+	local trkName = target.object.id_
+	site.trkFiles[trkName] = {}
+	site.trkFiles[trkName]["Name"] = trkName
+	site.trkFiles[trkName]["Object"] = target.object
+	site.trkFiles[trkName]["LastDetected"] = timer.getAbsTime()
+	if target.distance then
+		site.trkFiles[trkName]["Position"] = target.object:getPoint()
+		site.trkFiles[trkName]["Velocity"] = target.object:getVelocity()
 	end
+	if target.type then
+		site.trkFiles[trkName]["Category"] = target.object:getCategory()
+		site.trkFiles[trkName]["Type"] = target.object:getTypeName()
+	end
+	if site.Datalink then
+		site.trkFiles[trkName]["Datalink"] = true
+	end
+	self.trkFiles[trkName] =
+		utils.mergetables(self.trkFiles[trkName] or {}, site.trkFiles[trkName])
 end
 
 function IADS:EWRtrkFileBuild()
 	for _, EWR in pairs(self.EWRSites) do
-		local det = EWR.EWRGroup:getController():getDetectedTargets(
-			Controller.Detection.RADAR)
-		for _, targets in pairs(det) do
-			if targets.object and targets.object:isExist()
-				and targets.object:inAir() then
-				local trkName = targets.object.id_
-				self:addtrkFile(EWR, targets)
-				trkFiles["EWR"][trkName] = EWR.trkFiles[trkName]
-				if targets.object:getCategory() == Object.Category.WEAPON
-					and targets.object:getDesc().guidance ==
-						Weapon.GuidanceType.RADAR_PASSIVE
-					and EwrArmDetect and
-						not self:prevDetected(EWR, targets.object) then
-					EWR.ARMDetected[targets.object:getName()] = targets.object
+		for _, target in pairs(getDetectedTargets(EWR.EWRGroup)) do
+			if isFlying(target.object) then
+				self:addtrkFile(EWR, target)
+				if EwrArmDetect and
+				   isARM(target.object) and
+				   not self:prevDetected(EWR, target.object) then
+					EWR.ARMDetected[target.object:getName()] = target.object
 					for _, SAM in pairs(EWR.SAMsControlled) do
 						if math.random(1,100) < EwrOffChance then
-							self:magHide(SAM)
+							Logger:debug("'%s' detected ARM launch on radar; '%s' hiding",
+								EWR.Name, EWR.Name)
+							self:magnumHide(SAM)
 						end
 					end
 				end
@@ -266,20 +307,16 @@ end
 
 function IADS:SAMtrkFileBuild()
 	for _, SAM in pairs(self.SAMSites) do
-		local det = SAM.group:getController():getDetectedTargets(
-			Controller.Detection.RADAR)
-		for _, targets in pairs(det) do
-			if targets.object and targets.object:isExist()
-				and targets.object:inAir() then
-				local trkName = targets.object.id_
-				self:addtrkFile(SAM, targets)
-				trkFiles["SAM"][trkName] = SAM.trkFiles[trkName]
-				if targets.object:getCategory() == Object.Category.WEAPON
-					and targets.object:getDesc().guidance == Weapon.GuidanceType.RADAR_PASSIVE
-					and SamArmDetect and not self:prevDetected(SAM, targets.object) then
-					SAM.ARMDetected[targets.object:getName()] = targets.object
+		for _, target in pairs(getDetectedTargets(SAM.group)) do
+			if isFlying(target.object) then
+				self:addtrkFile(SAM, target)
+				if SamArmDetect and
+				   isARM(target.object) and
+				   not self:prevDetected(SAM, target.object) then
+					SAM.ARMDetected[target.object:getName()] = target.object
 					if math.random(1,100) < SamOffChance then
-						self:magHide(SAM)
+						Logger:debug("'%s' detected ARM launch on radar", SAM.Name)
+						self:magnumHide(SAM)
 					end
 				end
 			end
@@ -290,14 +327,9 @@ end
 
 function IADS:AWACStrkFileBuild()
 	for _, AWACS in pairs(self.AewAC) do
-		local det = AWACS.AWACSGroup:getController():getDetectedTargets(
-			Controller.Detection.RADAR)
-		for _, targets in pairs(det) do
-			if targets.object and targets.object:isExist()
-				and targets.object:inAir() then
-				local trkName = targets.object.id_
-				self:addtrkFile(AWACS, targets)
-				trkFiles["AWACS"][trkName] = AWACS.trkFiles[trkName]
+		for _, target in pairs(getDetectedTargets(AWACS.AWACSGroup)) do
+			if isFlying(target.object) then
+				self:addtrkFile(AWACS, target)
 			end
 		end
 	end
@@ -311,9 +343,13 @@ function IADS:EWRSAMOnRequest()
 			for _, EWR in pairs(SAM.ControlledBy) do
 				for _, target in pairs(EWR.trkFiles) do
 					if target.Position and
-						getDist(SAM.Location, target.Position) < SAM.EngageRange then
+					   getDist(SAM.Location, target.Position) < SAM.EngageRange then
 						viableTarget = true
+						break
 					end
+				end
+				if viableTarget then
+					break
 				end
 			end
 			if viableTarget then
@@ -337,7 +373,7 @@ function IADS:SAMCheckHidden()
 	end
 	for site, time in pairs(self.toHide) do
 		if time < 0 then
-			self.hideSAM(self:getSamByName(site))
+			self:hideSAM(self:getSamByName(site))
 			self.toHide[site] = nil
 		else
 			self.toHide[site] = time - 2
@@ -366,24 +402,22 @@ function IADS:BlinkSAM()
 end
 
 function IADS:checkGroupRole(gp)
-	if gp == nil then
+	if gp == nil or gp:getCoalition() ~= self.owner then
 		return
 	end
 	local isEWR = false
 	local isSAM = false
 	local isAWACS = false
 	local hasDL = false
-	local samType
 	local numSAMRadars = 0
 	local numEWRRadars = 0
-	if gp:getCategory() == 2 then
+	if gp:getCategory() == Group.Category.GROUND then
 		for _, unt in pairs(gp:getUnits()) do
 			if unt:hasAttribute("EWR") then
 				isEWR = true
 				numEWRRadars = numEWRRadars + 1
 			elseif unt:hasAttribute("SAM TR") then
 				isSAM = true
-				samType = unt:getTypeName()
 				numSAMRadars = numSAMRadars + 1
 			end
 			if unt:hasAttribute("Datalink") then
@@ -402,14 +436,17 @@ function IADS:checkGroupRole(gp)
 				["trkFiles"] = {},
 			}
 			return gp:getName()
-		elseif isSAM and self:rangeOfSAM(gp) then
+		end
+		local radar, range = self:getSAMRadar(gp)
+		if isSAM and range > 0 then
 			self.SAMSites[gp:getName()] = {
 				["Name"] = gp:getName(),
 				["group"] = gp,
-				["Type"] = samType,
+				["Type"] = radar:getTypeName(),
 				["Location"] = gp:getUnit(1):getPoint(),
 				["numSAMRadars"] = numSAMRadars,
-				["EngageRange"] = self:rangeOfSAM(gp),
+				["EngageRange"] = range,
+				["PrimaryRadar"] = radar,
 				["ControlledBy"] = {},
 				["Enabled"] = true,
 				["Hidden"] = false,
@@ -420,7 +457,7 @@ function IADS:checkGroupRole(gp)
 			}
 			return gp:getName()
 		end
-	elseif gp:getCategory() == 0 then
+	elseif gp:getCategory() == Group.Category.AIRPLANE then
 		local numAWACS = 0
 		for _, unt in pairs(gp:getUnits()) do
 			if unt:hasAttribute("AWACS") then
@@ -435,6 +472,7 @@ function IADS:checkGroupRole(gp)
 			self.AewAC[gp:getName()] = {
 				["Name"] = gp:getName(),
 				["AWACSGroup"] = gp,
+				["Location"] = gp:getUnit(1):getPoint(),
 				["numAWACS"] = numAWACS,
 				["Datalink"] = hasDL,
 				["trkFiles"] = {},
@@ -445,8 +483,8 @@ function IADS:checkGroupRole(gp)
 end
 
 function IADS:onDeath(event)
-	if event.initiator:getCategory() == Object.Category.UNIT
-		and event.initiator:getGroup() then
+	if event.initiator:getCategory() == Object.Category.UNIT and
+	   event.initiator:getGroup() ~= nil then
 		local eventUnit = event.initiator
 		local eventGroup = event.initiator:getGroup()
 		for _, SAM in pairs(self.SAMSites) do
@@ -497,17 +535,14 @@ function IADS:onDeath(event)
 end
 
 function IADS:onShot(event)
-	if RadioDetect then
-		if event.weapon then
-			local ordnance = event.weapon
-			local WepPt = ordnance:getPoint()
-			local WepDesc = ordnance:getDesc()
-			if WepDesc.guidance == Weapon.GuidanceType.RADAR_PASSIVE then
-				for _, SAM in pairs(self.SAMSites) do
-					if math.random(1,100) < ARMHidePct and
-						getDist(SAM.Location, WepPt) < RadioHideRng then
-						self:magHide(SAM)
-					end
+	if RadioDetect and event.initiator:getCoalition() ~= self.owner then
+		if isARM(event.weapon) then
+			local WepPt = event.weapon:getPoint()
+			for _, SAM in pairs(self.SAMSites) do
+				if math.random(1,100) < ARMHidePct and
+					getDist(SAM.Location, WepPt) < RadioHideRng then
+					Logger:debug("'%s' detected ARM launch on radio", SAM.Name)
+					self:magnumHide(SAM)
 				end
 			end
 		end
@@ -515,21 +550,17 @@ function IADS:onShot(event)
 end
 
 function IADS:onBirth(event)
-	if event.initiator:getCategory() ~= Object.Category.Unit then
+	if event.initiator:getCategory() ~= Object.Category.UNIT then
 		return
 	end
 	local gp = event.initiator:getGroup()
-	self:checkGroupRole(gp)
-	self:associateSAMS()
-end
-
-function IADS:disableAllSAMs()
-	for _, SAM in pairs(self.SAMSites) do
-		SAM.group:getController():setOption(AI.Option.Ground.id.ALARM_STATE,
-			AI.Option.Ground.val.ALARM_STATE.GREEN)
-		SAM.Enabled = false
+	local name = self:checkGroupRole(gp)
+	if name ~= nil then
+		self:associateSAMS()
+		if self.SAMSites[name] ~= nil then
+			self:disableSAM(self.SAMSites[name])
+		end
 	end
-	return nil
 end
 
 function IADS:populateLists()
@@ -537,38 +568,38 @@ function IADS:populateLists()
 		self:checkGroupRole(gp)
 	end
 	self:associateSAMS()
-	return nil
 end
 
-function IADS:monitortrks()
-	self:EWRtrkFileBuild()
-	self:SAMtrkFileBuild()
-	self:AWACStrkFileBuild()
+local function trkTimedOut(trk, time)
+	return time - trk.LastDetected > trkMem or not isFlying(trk.Object)
+end
+
+function IADS:timeoutTracks()
+	local time = timer.getAbsTime()
 	for _, EWR in pairs(self.EWRSites) do
 		for _, trk in pairs(EWR.trkFiles) do
-			if ((timer.getAbsTime() - trk.LastDetected) > trkMem or
-				(not trk.Object:isExist()) or (not trk.Object:inAir())) then
+			if trkTimedOut(trk, time) then
 				EWR.trkFiles[trk.Name] = nil
-				trkFiles.EWR[trk.Name] = nil
 			end
 		end
 	end
 	for _, SAM in pairs(self.SAMSites) do
 		for _, trk in pairs(SAM.trkFiles) do
-			if ((timer.getAbsTime() - trk.LastDetected) > trkMem or
-				(not trk.Object:isExist()) or (not trk.Object:inAir())) then
+			if trkTimedOut(trk, time) then
 				SAM.trkFiles[trk.Name] = nil
-				trkFiles.SAM[trk.Name] = nil
 			end
 		end
 	end
 	for _, AWACS in pairs(self.AewAC) do
 		for _, trk in pairs(AWACS.trkFiles) do
-			if ((timer.getAbsTime() - trk.LastDetected) > trkMem or
-				(not trk.Object:isExist()) or (not trk.Object:inAir())) then
+			if trkTimedOut(trk, time) then
 				AWACS.trkFiles[trk.Name] = nil
-				trkFiles.AWACS[trk.Name] = nil
 			end
+		end
+	end
+	for _, trk in pairs(self.trkFiles) do
+		if trkTimedOut(trk, time) then
+			self.trkFiles[trk.Name] = nil
 		end
 	end
 	return 2
@@ -576,12 +607,11 @@ end
 
 function IADS:sysIADSEventHandler(event)
 	local relevents = {
-		[world.event.S_EVENT_DEAD]                = self.onDeath,
-		[world.event.S_EVENT_SHOT]                = self.onShot,
-		[world.event.S_EVENT_BIRTH]               = self.onBirth,
+		[world.event.S_EVENT_DEAD]      = self.onDeath,
+		[world.event.S_EVENT_SHOT]      = self.onShot,
+		[world.event.S_EVENT_BIRTH]     = self.onBirth,
 	}
 	if relevents[event.id] == nil then
-		Logger:debug("sysIADSEventHandler - not relevent event: %d", event.id)
 		return
 	end
 	relevents[event.id](self, event)
