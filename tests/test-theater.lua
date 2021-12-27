@@ -91,6 +91,7 @@ end
 
 
 local function main()
+	local startdate = os.date("!*t")
 	local playergrp = Group(4, {
 		["id"] = 9,
 		["name"] = "VMFA251 - Enfield 1-1",
@@ -108,6 +109,7 @@ local function main()
 
 	local theater = dct.Theater()
 	_G.dct.theater = theater
+	theater.startdate = startdate
 	theater:exec(50)
 	local expected = 32
 	assert(dctcheck.spawngroups == expected,
@@ -144,6 +146,7 @@ local function main()
 
 	local newtheater = dct.Theater()
 	_G.dct.theater = newtheater
+	theater.startdate = startdate
 	newtheater:exec(50)
 	local name = "Test region_1_Abu Musa Ammo Dump"
 	-- verify the units read in do not include the asset we killed off

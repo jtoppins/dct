@@ -52,19 +52,21 @@ a dct.cfg in each instance._
 The below is a valid example of the `dct.cfg` configuration file. Where
 text in `<>` represent a variable instead of a constant.
 
-	debug = false
-	profile = false
-	--statepath = "<dcs-saved-games>/<theater-name>_<sortie-name>.state"
-	--theaterpath = "<dcs-saved-games>/DCT/theaters/<theater-name>_<sortie-name>"
-	schedfreq = 2
-	tgtfps = 75
-	percentTimeAllowed = .3
-	period = -1
-	logger = {}
-	whitelists = {}
-	statServerHostname = "localhost"
-	statServerPort = 8095
-	dctid = "changeme"
+```lua
+debug = false
+profile = false
+--statepath = "<dcs-saved-games>/<theater-name>_<sortie-name>.state"
+--theaterpath = "<dcs-temp-directory>/DCT/theaters/theater"
+schedfreq = 2
+tgtfps = 75
+percentTimeAllowed = .3
+period = -1
+logger = {}
+whitelists = {}
+statServerHostname = "localhost"
+statServerPort = 8095
+dctid = "changeme"
+```
 
 ### Options
 
@@ -194,16 +196,18 @@ restart its mission, this does not reset the saved state of the mission.
 
  A example of how to define a whitelist:
 
-	whitelist = {
-		["admin"] = {
-			"ucid-1",
-			"ucid-2",
-		},
-		["observer"] = {
-			"ucid-3",
-			"ucid-4",
-		},
-	}
+```lua
+whitelist = {
+	["admin"] = {
+		"ucid-1",
+		"ucid-2",
+	},
+	["observer"] = {
+		"ucid-3",
+		"ucid-4",
+	},
+}
+```
 
 Role specific slot types:
 
@@ -247,3 +251,15 @@ same UDP server to centralize the data.
 
 Shows DCT script errors in a modal message box. Meant for development use only,
 as the game will be unresponsive until the message box is closed.
+
+#### `emptyslottimeout`
+
+ * _value:_ time in seconds
+ * _default:_ 0
+
+Sets how long an empty player slot can be before its mission is automatically
+aborted. A value of 0 means missions will only be aborted when the mission
+itself times out, while a positive value makes empty slots time out faster.
+
+Note that because the AssetManager runs every 2 minutes, the actual timeout
+value can only have a granularity of 2 minutes.

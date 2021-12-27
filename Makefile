@@ -2,13 +2,14 @@ MAKEFLAGS  := --no-print-directory
 SRCPATH    := $(CURDIR)
 BUILDPATH  ?= $(CURDIR)/build
 VERSION    ?= $(shell git describe)
-LUALIBSVER := 5
+LUALIBSVER := 6
 LUALIBSAR  := v$(LUALIBSVER).zip
 LUALIBSURL := https://github.com/jtoppins/lua-libs/archive/$(LUALIBSAR)
 LUALIBSDIR := lua-libs-$(LUALIBSVER)
 
 .PHONY: check build
 check:
+	rm -f $(SRCPATH)/data/*.state
 	@$(MAKE) -C tests
 
 build:

@@ -66,7 +66,6 @@ function utils.time(dcsabstime)
 		["hour"]  = 0,
 		["min"]   = 0,
 		["sec"]   = 0,
-		["isdst"] = false,
 	})
 	return time + dcsabstime
 end

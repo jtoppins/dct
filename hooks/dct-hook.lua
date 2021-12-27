@@ -382,7 +382,7 @@ end
 function DCTHooks:onSimulationResume()
 	log.write(facility, log.DEBUG, "onSimulationResume")
 	local dctenabled = do_rpc("server", rpc_get_flag(dctflag), "number")
-	if not DCS.isServer() or not dctenabled then
+	if not DCS.isServer() or dctenabled == 0 then
 		log.write(facility, log.DEBUG,
 			string.format("not DCT enabled; server(%s), enabled(%s)",
 				tostring(DCS.isServer()), tostring(dctenabled)))
@@ -476,8 +476,9 @@ end
 
 -- Returns: true - allows slot change, false - denies change
 function DCTHooks:onPlayerTryChangeSlot(playerid, _, slotid)
+	local pass = nil
 	if not self:isEnabled() then
-		return
+		return pass
 	end
 
 	local slot   = self.slots[slotid]
@@ -486,7 +487,7 @@ function DCTHooks:onPlayerTryChangeSlot(playerid, _, slotid)
 	local reason
 
 	if slot == nil then
-		return true
+		return pass
 	end
 
 	if special_unit_role_types[slot.role] ~= nil then
@@ -515,8 +516,9 @@ function DCTHooks:onPlayerTryChangeSlot(playerid, _, slotid)
 			playerid, net.get_server_id())
 		net.send_chat_to(string.format("  reason: %s", reason),
 			playerid, net.get_server_id())
+		return false
 	end
-	return rc
+	return pass
 end
 
 function DCTHooks:sendheartbeat()
