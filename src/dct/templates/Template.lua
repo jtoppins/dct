@@ -468,8 +468,6 @@ function Template:__init(data)
 	self.fromFile = nil
 end
 
-Template.checklocation = checklocation
-
 -- checks if either there is a manually defined coalition,
 -- or if all units in the template are of the same coalition
 local function validateCoalition(tpl)
