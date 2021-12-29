@@ -47,7 +47,8 @@ function PlayerSlots:__init(theater)
 				["coalition"] = side,
 				["cost"]      = theater:getTickets():getPlayerCost(side),
 				["desc"]      = "Player group",
-				["tpldata"]   = grp,
+				["location"]  = { ["x"] = grp.data.x, ["y"] = grp.data.y, },
+				["tpldata"]   = { [1] = grp, },
 			}))
 			theater:getAssetMgr():add(asset)
 			cnt = cnt + 1

@@ -320,12 +320,12 @@ function Player:_completeinit(template)
 	AssetBase._completeinit(self, template)
 	-- we assume all slots in a player group are the same
 	self._tpldata   = template:copyData()
-	self.unittype   = self._tpldata.data.units[1].type
+	self.unittype   = self._tpldata[1].data.units[1].type
 	self.cmdpending = false
-	self.groupId    = self._tpldata.data.groupId
+	self.groupId    = self._tpldata[1].data.groupId
 	self.squadron   = self.name:match("(%w+)(.+)")
-	self.airbase    = dctutils.airbaseId2Name(airbaseId(self._tpldata))
-	self.parking    = airbaseParkingId(self._tpldata)
+	self.airbase    = dctutils.airbaseId2Name(airbaseId(self._tpldata[1]))
+	self.parking    = airbaseParkingId(self._tpldata[1])
 	self.ato        = settings.ui.ato[self.unittype] or
 		dctenum.missionType
 	self.payloadlimits = settings.payloadlimits

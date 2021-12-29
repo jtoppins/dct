@@ -9,8 +9,6 @@
 --]]
 
 local enum     = require("dct.enum")
-local dctutils = require("dct.utils")
-local vector   = require("dct.libs.vector")
 local DCSObjects = require("dct.assets.DCSObjects")
 
 local StaticAsset = require("libs.namedclass")("StaticAsset", DCSObjects)
@@ -38,18 +36,6 @@ function StaticAsset.assettypes()
 		enum.assetType.FOB,
 		enum.assetType.LOGISTICS,
 	}
-end
-
-function StaticAsset:getLocation()
-	if self._location == nil then
-		local vec2, n
-		for _, grp in pairs(self._assets) do
-			vec2, n = dctutils.centroid2D(grp.data, vec2, n)
-		end
-		vec2.z = nil
-		self._location = vector.Vector3D(vec2, land.getHeight(vec2)):raw()
-	end
-	return DCSObjects.getLocation(self)
 end
 
 return StaticAsset

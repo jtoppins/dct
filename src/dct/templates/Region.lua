@@ -62,6 +62,20 @@ local function processlinks(keydata, tbl)
 	return true
 end
 
+local function checklocation(keydata, tpl)
+	local loc = tpl[keydata.name]
+
+	for _, val in pairs({"x", "y"}) do
+		if loc[val] == nil or type(loc[val]) ~= "number" then
+			return false, "location defined in template is invalid"
+		end
+	end
+	local vec2 = vector.Vector2D(loc)
+	tpl[keydata.name] =
+		vector.Vector3D(vec2, land.getHeight(vec2:raw())):raw()
+	return true
+end
+
 local function loadMetadata(self, regiondefpath)
 	Logger:debug("=> regiondefpath: "..regiondefpath)
 	local keys = {
@@ -75,7 +89,7 @@ local function loadMetadata(self, regiondefpath)
 			["name"] = "location",
 			["type"] = "table",
 			["default"] = {},
-			["check"] = Template.checklocation
+			["check"] = checklocation
 		}, {
 			["name"] = "limits",
 			["type"] = "table",

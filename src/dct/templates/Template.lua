@@ -235,19 +235,36 @@ local function checkmsntype(keydata, tbl)
 	return true
 end
 
-local function checklocation(keydata, tbl)
-	local loc = tbl[keydata.name]
-	if next(tbl[keydata.name]) == nil then
-		tbl[keydata.name] = nil
-		return true
+local function calclocation(tpl)
+	local vec2, n
+	for _, grp in pairs(tpl.tpldata) do
+		vec2, n = require("dct.utils").centroid2D(grp.data, vec2, n)
 	end
+	vec2.z = nil
+	return vec2
+end
+
+local function checklocation(keydata, tpl)
+	local loc = tpl[keydata.name]
+
+	if loc == nil or next(loc) == nil then
+		if tpl.objtype == enum.assetType.AIRBASE or
+		   tpl.objtype == enum.assetType.SQUADRONPLAYER then
+			return true
+		end
+		if tpl.tpldata == nil or next(tpl.tpldata) == nil then
+			return false, "no location and no DCS units defined"
+		end
+		loc = calclocation(tpl)
+	end
+
 	for _, val in pairs({"x", "y"}) do
 		if loc[val] == nil or type(loc[val]) ~= "number" then
-			return false
+			return false, "location defined in template is invalid"
 		end
 	end
-	local vec2 = vector.Vector2D(tbl[keydata.name])
-	tbl[keydata.name] =
+	local vec2 = vector.Vector2D(loc)
+	tpl[keydata.name] =
 		vector.Vector3D(vec2, land.getHeight(vec2:raw())):raw()
 	return true
 end
@@ -270,6 +287,9 @@ local function getkeys(objtype)
 		[enum.assetType.AIRSPACE]       = true,
 		[enum.assetType.AIRBASE]        = true,
 		[enum.assetType.SQUADRONPLAYER] = true,
+		-- player groups do have tpldata, it is here as we do not
+		-- want to remove any data from the template definition
+		[enum.assetType.PLAYERGROUP]    = true,
 	}
 	local defaultintel = 0
 	if objtype == enum.assetType.AIRBASE then
@@ -346,19 +366,9 @@ local function getkeys(objtype)
 
 	if objtype == enum.assetType.AIRSPACE then
 		table.insert(keys, {
-			["name"]  = "location",
-			["type"]  = "table",
-			["check"] = checklocation,})
-		table.insert(keys, {
 			["name"]  = "radius",
 			["type"]  = "number",
 			["default"] = 55560,})
-	else
-		table.insert(keys, {
-			["name"]    = "location",
-			["type"]    = "table",
-			["default"] = {},
-			["check"]   = checklocation,})
 	end
 
 	if objtype == enum.assetType.AIRBASE then
@@ -398,7 +408,15 @@ local function getkeys(objtype)
 			["type"]  = "table",
 			["default"] = {},
 		})
-   end
+	end
+
+	-- calculate the location of a template after everything else has
+	-- been validated. Must be the last check made.
+	table.insert(keys, {
+		["name"]    = "location",
+		["check"]   = checklocation,
+	})
+
 	return keys
 end
 
@@ -445,11 +463,8 @@ function Template:__init(data)
 	self.hasDeathGoals = false
 	utils.mergetables(self, utils.deepcopy(data))
 	self:validate()
-	self.checklocation = nil
 	self.fromFile = nil
 end
-
-Template.checklocation = checklocation
 
 function Template:validate()
 	utils.checkkeys({ [1] = {
