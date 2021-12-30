@@ -1,7 +1,6 @@
 region = {
 	["name"] = "Krasnodar",
 	["priority"] = 10,
-	["location"] = { x = 19695.256648279, y = 362381.31643785, },
 	["limits"] = 	{
 		["fueldump"] = 		{
 			["min"] = 1,

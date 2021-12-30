@@ -1,6 +1,5 @@
 name = "BlackSea"
 priority = 30
-location = { x = -343565.90226497, y = 504579.59151324, }
 limits = 	{
 	["airbase"] = 		{
 		["min"] = 1,

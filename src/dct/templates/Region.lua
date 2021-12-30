@@ -74,6 +74,7 @@ local function loadMetadata(self, regiondefpath)
 		}, {
 			["name"] = "location",
 			["type"] = "table",
+			["default"] = {},
 			["check"] = Template.checklocation
 		}, {
 			["name"] = "limits",
