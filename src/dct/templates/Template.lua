@@ -110,15 +110,15 @@ local function overrideGroupOptions(grp, idx, tpl)
 		if grp[k] ~= nil then grp[k] = v end
 	end
 
-	local goaltype = Goal.objtype.GROUP
+	local objtype = Goal.objtype.GROUP
 	if grp.category == Unit.Category.STRUCTURE then
-		goaltype = Goal.objtype.STATIC
+		objtype = Goal.objtype.STATIC
 	end
 
 	grp.data.groupId = nil
 	grp.data.unitId  = nil
 	grp.data.start_time = 0
-	grp.data.dct_deathgoal = goalFromName(grp.data.name, goaltype)
+	grp.data.dct_deathgoal = goalFromName(grp.data.name, objtype)
 	if grp.data.dct_deathgoal ~= nil then
 		tpl.hasDeathGoals = true
 	end
