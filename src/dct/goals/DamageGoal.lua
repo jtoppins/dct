@@ -9,15 +9,6 @@ local enums    = require("dct.goals.enum")
 local BaseGoal = require("dct.goals.BaseGoal")
 local Logger   = require("dct.libs.Logger").getByName("DamageGoal")
 
-local function get_scenery_life(obj)
-	-- In case a scenery object cannot be acessed by the scripting engine yet,
-	-- return a placeholder value
-	if not SceneryObject.isExist(obj) then
-		return 1
-	end
-	return SceneryObject.getLife(obj)
-end
-
 local function get_scenery_id(id)
 	return { id_ = tonumber(id), }
 end
@@ -37,25 +28,21 @@ local function get_group_size(grp)
 end
 
 local function getobject(objtype, name)
-	local switch = {
-		[enums.objtype.UNIT]   = Unit.getByName,
-		[enums.objtype.STATIC] = StaticObject.getByName,
-		[enums.objtype.GROUP]  = Group.getByName,
-		[enums.objtype.SCENERY]= get_scenery_id,
+	local getobj = {
+		[enums.objtype.UNIT]    = Unit.getByName,
+		[enums.objtype.STATIC]  = StaticObject.getByName,
+		[enums.objtype.GROUP]   = Group.getByName,
+		[enums.objtype.SCENERY] = get_scenery_id,
 	}
 	local getlifefncs = {
-		[enums.objtype.UNIT]   = Unit.getLife,
-		[enums.objtype.STATIC] = StaticObject.getLife,
-		[enums.objtype.GROUP]  = get_group_size,
-		[enums.objtype.SCENERY]= get_scenery_life,
+		[enums.objtype.UNIT]    = Unit.getLife,
+		[enums.objtype.STATIC]  = StaticObject.getLife,
+		[enums.objtype.GROUP]   = get_group_size,
+		[enums.objtype.SCENERY] = SceneryObject.getLife,
 	}
 
-	local obj = nil
-	if switch[objtype] ~= nil then
-		obj = switch[objtype](name)
-	end
-	local lifetbl = getlifefncs
-	return obj, lifetbl[objtype]
+	local obj = getobj[objtype](name)
+	return obj, getlifefncs[objtype]
 end
 
 local DamageGoal = class(BaseGoal)
@@ -70,20 +57,21 @@ end
 
 function DamageGoal:_afterspawn()
 	local obj, getlife = getobject(self.objtype, self.name)
-	if obj == nil then
-		Logger:error("_afterspawn() - object '%s' doesn't exist", self.name)
+	if obj == nil or not Object.isExist(obj) and not Group.isExist(obj) then
+		Logger:error("_afterspawn() - object '%s' doesn't exist, presumed dead",
+			self.name)
 		self:_setComplete()
 		return
 	end
 
 	local life = getlife(obj)
 	if life == nil or life < 1 then
-		Logger:error("_afterspawn() - object '%s' life value is nil or "..
-			"below 1: %s", tostring(life))
-		life = 1
+		Logger:error("_afterspawn() - object '%s' initial life value is nil or "..
+			"below 1: %s", tostring(self.name), tostring(life))
+		self._maxlife = 1
+	else
+		self._maxlife = life
 	end
-
-	self._maxlife = life
 
 	Logger:debug("_afterspawn() - goal: %s",
 		require("libs.json"):encode_pretty(self))
