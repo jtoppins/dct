@@ -1,6 +1,6 @@
 objtype = "airbase"
 name = "CVN-71 Theodore Roosevelt"
-coalition = 2
+coalition = "blue"
 subordinates = {
 	"VF102",
 }

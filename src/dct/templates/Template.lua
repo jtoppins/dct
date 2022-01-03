@@ -285,7 +285,6 @@ local function getkeys(objtype)
 			["type"]  = "string",
 		}, {
 			["name"]  = "coalition",
-			["type"]  = "number",
 			["check"] = checkside,
 		}, {
 			["name"]    = "uniquenames",
