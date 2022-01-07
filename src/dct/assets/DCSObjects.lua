@@ -120,10 +120,6 @@ local function handle_dead(self, event)
 		checkgoal(self, grpname)
 	else
 		self._assets[unitname].data.dct_dead = true
-		if self._assets[unitname].category == enum.UNIT_CAT_SCENERY then
-			dct.Theater.singleton():getSystem(
-				"dct.systems.bldgPersist"):addObject(unitname)
-		end
 		checkgoal(self, unitname)
 	end
 

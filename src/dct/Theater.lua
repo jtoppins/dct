@@ -41,7 +41,6 @@ function Systems:__init()
 		"dct.assets.AssetManager",
 		"dct.ui.scratchpad",
 		"dct.systems.tickets",
-		"dct.systems.bldgPersist",
 		"dct.systems.weaponstracking",
 		"dct.systems.blasteffects",
 		"dct.systems.playerslots",

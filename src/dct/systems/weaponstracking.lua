@@ -59,6 +59,15 @@ function DCTWeapon:getDesc()
 	return self.desc
 end
 
+function DCTWeapon:getWarheadPower()
+	local types = {
+		[Weapon.WarheadType.AP] = "mass",
+		[Weapon.WarheadType.HE] = "explosiveMass",
+		[Weapon.WarheadType.SHAPED_CHARGE] = "shapedExplosiveMass",
+	}
+	return self.desc.warhead[types[self.desc.warhead.type]]
+end
+
 function DCTWeapon:getImpactPoint()
 	return self.impactpt
 end
