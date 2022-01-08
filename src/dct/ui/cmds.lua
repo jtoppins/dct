@@ -194,9 +194,9 @@ end
 
 local function briefingmsg(msn, asset)
 	local tgtinfo = msn:getTargetInfo()
+	local iff = msn:getIFFCodes(asset)
 	local msg = string.format("Package: #%s\n", msn:getID())..
-		string.format("IFF Codes: M1(%02o), M3(%04o)\n",
-			msn.iffcodes.m1, msn.iffcodes.m3)..
+		string.format("IFF Codes: M1(%s), M3(%s)\n", iff.m1, iff.m3)..
 		string.format("%s: %s (%s)\n",
 			human.locationhdr(msn.type),
 			dctutils.fmtposition(

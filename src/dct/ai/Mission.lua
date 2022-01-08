@@ -185,6 +185,8 @@ function Mission:__init(cmdr, missiontype, tgt, plan)
 	self:_setComplete(false)
 	self.state = PrepState()
 	self.state:enter(self)
+	self._assignedIds = {}
+	self._lastAssignedId = 0
 
 	-- compose the briefing at mission creation to represent
 	-- known intel the pilots were given before departing
@@ -223,6 +225,10 @@ function Mission:addAssigned(asset)
 		return
 	end
 	table.insert(self.assigned, asset.name)
+	if self._assignedIds[asset.name] == nil then
+		self._assignedIds[asset.name] = self._lastAssignedId
+		self._lastAssignedId = self._lastAssignedId + 1
+	end
 	Logger:debug("Mission %d: addAssigned(%s)", self.id, asset.name)
 	asset.missionid = self:getID()
 end
@@ -329,6 +335,16 @@ end
 function Mission:addTime(time)
 	self.state:timeextend(time)
 	return time
+end
+
+function Mission:getIFFCodes(asset)
+	local assignedId = 0
+	if asset ~= nil then
+		assignedId = (self._assignedIds[asset.name] or 0) % 8
+	end
+	local m1 = string.format("%o", self.iffcodes.m1)
+	local m3 = string.format("%o", self.iffcodes.m3 + assignedId)
+	return { ["m1"] = m1, ["m3"] = m3 }
 end
 
 function Mission:getDescription(fmt)
