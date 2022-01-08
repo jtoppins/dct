@@ -10,6 +10,8 @@ local enum     = require("dct.enum")
 local dctutils = require("dct.utils")
 local Command  = require("dct.Command")
 local Observable = require("dct.libs.Observable")
+local Marshallable = require("dct.libs.Marshallable")
+local STM = require("dct.templates.STM")
 
 local assetpaths = {
 	"dct.assets.Airbase",
@@ -19,11 +21,48 @@ local assetpaths = {
 	"dct.assets.StaticAsset",
 }
 
+local function append_units(units, grp, logger)
+	for _, unit in ipairs(grp.units or {}) do
+		local u = {}
+		u.name = unit.name
+		u.category = grp.category
+		u.dead = false
+
+		if units[u.name] ~= nil then
+			logger:error("multiple same named miz placed objects"..
+				" exist: "..u.name)
+		end
+		units[u.name] = u
+	end
+end
+
+local function not_player_group(grp, _, _)
+	local isplayer = dctutils.isplayergroup(grp)
+	return not isplayer
+end
+
+local function get_miz_units(logger)
+	local units = {}
+	for _, coa_data in pairs(env.mission.coalition) do
+		local grps = STM.processCoalition(coa_data,
+			nil, not_player_group, nil)
+		for _, grp in ipairs(grps) do
+			append_units(units, grp, logger)
+		end
+	end
+	return units
+end
+
 local AssetManager = require("libs.namedclass")("AssetManager",
-	Observable)
+	Observable, Marshallable)
 function AssetManager:__init(theater)
+	Marshallable.__init(self)
 	Observable.__init(self,
 		require("dct.libs.Logger").getByName("AssetManager"))
+	self:_addMarshalNames({
+		"_mizobjs",
+	})
+
 	self.updaterate = 120
 	-- The master list of assets, regardless of side, indexed by name.
 	-- Means Asset names must be globally unique.
@@ -33,6 +72,7 @@ function AssetManager:__init(theater)
 	-- remember all spawned Asset classes will need to register the names
 	-- of their DCS objects with 'something', this will be the something.
 	self._object2asset = {}
+	self._mizobjs = get_miz_units(self._logger)
 	self._spawnq = {}
 	self._factoryclasses = {}
 	for _, path in ipairs(assetpaths) do
@@ -155,7 +195,12 @@ function AssetManager:update()
 end
 
 local function handleDead(self, event)
-	self._object2asset[tostring(event.initiator:getName())] = nil
+	local objname = event.initiator:getName()
+	self._object2asset[tostring(objname)] = nil
+
+	if self._mizobjs[objname] ~= nil then
+		self._mizobjs[objname].dead = true
+	end
 end
 
 local function handleAssetDeath(self, event)
@@ -235,9 +280,8 @@ function AssetManager:onDCSEvent(event)
 end
 
 function AssetManager:marshal()
-	local tbl = {
-		["assets"] = {},
-	}
+	local tbl = Marshallable.marshal(self) or {}
+	tbl.assets = {}
 
 	for name, asset in pairs(self._assetset) do
 		if type(asset.marshal) == "function" and not asset:isDead() then
@@ -257,6 +301,13 @@ function AssetManager:unmarshal(data)
 			self._spawnq[asset.name] = true
 		end
 	end
+
+	for _, unit in pairs(data._mizobjs) do
+		local u = self._mizobjs[unit.name]
+		if u ~= nil then
+			u.dead = unit.dead
+		end
+	end
 end
 
 function AssetManager:postinit()
@@ -264,6 +315,19 @@ function AssetManager:postinit()
 		self:getAsset(assetname):spawn(true)
 	end
 	self._spawnq = {}
+
+	for _, unit in pairs(self._mizobjs) do
+		if unit.dead then
+			local func = Unit.getByName
+			if unit.category == Unit.Category.STRUCTURE then
+				func = StaticObject.getByName
+			end
+			local U = func(unit.name)
+			if U then
+				U:destroy()
+			end
+		end
+	end
 end
 
 return AssetManager

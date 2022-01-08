@@ -6,26 +6,20 @@
 
 local class    = require("libs.namedclass")
 local enum     = require("dct.enum")
+local dctutils = require("dct.utils")
 local STM      = require("dct.templates.STM")
 local Template = require("dct.templates.Template")
 local Logger   = dct.Logger.getByName("Systems")
 
 local function isPlayerGroup(grp, _, _)
-	local slotcnt = 0
-	for _, unit in ipairs(grp.units) do
-		if unit.skill == "Client" then
-			slotcnt = slotcnt + 1
-		end
+	local isplayer, slotcnt = dctutils.isplayergroup(grp)
+
+	if isplayer and slotcnt > 1 then
+		Logger:warn(string.format("DCT requires 1 slot groups. Group "..
+			"'%s' of type a/c (%s) has more than one player slot.",
+			grp.name, grp.units[1].type))
 	end
-	if slotcnt > 0 then
-		if slotcnt > 1 then
-			Logger:warn(string.format("DCT requires 1 slot groups. Group "..
-				"'%s' of type a/c (%s) has more than one player slot.",
-				grp.name, grp.units[1].type))
-		end
-		return true
-	end
-	return false
+	return isplayer
 end
 
 local PlayerSlots = class("PlayerSlots")
