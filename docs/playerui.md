@@ -1,3 +1,9 @@
+---
+layout: default
+title: Player UI
+nav_order: 3
+---
+
 # Players
 
 This section describes the custom UI players can interact with.
@@ -144,7 +150,7 @@ player can request a mission other than when one is already assigned.
 
 ##### Join
 
-Uses the scratchpad to join a mission already in existance. The system
+Uses the scratchpad to join a mission already in existence. The system
 will verify the joining player's airframe is allowed fly the type of
 mission being joined.
 
@@ -220,5 +226,5 @@ Pushes the timeout of the mission by 30 minutes.
 
 ##### Abort
 
-Aborting only aborts for the requestor, once all members of a mission have
+Aborting only aborts for the requester, once all members of a mission have
 aborted the mission it is then retired.

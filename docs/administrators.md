@@ -1,3 +1,9 @@
+---
+layout: default
+title: Administrators
+nav_order: 4
+---
+
 # Administrators
 
 Administration is relatively straight forward. This section will walk
@@ -6,7 +12,7 @@ you through installation and configuration.
 ## Installation
 
 DCT is distributed as a standard DCS module. You can download the
-[latest release](https://github.com/jtoppins/dct/releases/latest)
+[latest release]({{ site.release_link }})
 zip file and copy the `DCT` folder contained in the zip file to your
 DCS saved games directory and place in;
 

@@ -1,37 +1,66 @@
-## Welcome to GitHub Pages
+---
+layout: default
+title: Home
+nav_order: 1
+permalink: /
+---
 
-You can use the [editor on GitHub](https://github.com/jtoppins/dct/edit/master/docs/index.md) to maintain and preview the content for your website in Markdown files.
+# Dynamic Campaign Tools (DCT)
 
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
+Mission scripting framework for persistent Digital Combat Simulator (DCS)
+missions.
 
-### Markdown
+Provide a set of tools to allow mission designers to easily create scenarios
+for persistent dynamic campaigns within the DCS game world.
 
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
+**D**ynamic **C**ampaign **T**ools relies on content that can be built
+directly in the mission editor, these individuals need little to no
+programming skills to provide content to a DCT enabled mission.
 
-```markdown
-Syntax highlighted code block
+Scenarios are created through a theater definition consisting of templates,
+created in the Mission Editor and configuration files. There is an initial
+learning curve but it is no more difficult than initially learning the DCS
+Mission Editor.
 
-# Header 1
-## Header 2
-### Header 3
+## Quick Start Guide
 
-- Bulleted
-- List
+See our documentation [here](quick-start.md).
 
-1. Numbered
-2. List
+## Features and Capabilities
 
-**Bold** and _Italic_ and `Code` text
+* **Mission Creation**
+  - uses static templates for quicker asset creation
+  - no large .miz to manage just place player slots
+  - theater and region organization to control spawning
+    and placement
+  - settings to customize how you want your campaign to
+    play
 
-[Link](url) and ![Image](src)
-```
+* **Game Play**
+  - Focus on more goal based gameplay vs. "air quake"
+  - mission system used by AI and players
+  - ticket system to track win/loss critera
+  - Integrated Air Defense per faction
+  - Weapon point buy system for players to limit kinds and
+    types of payloads
+  - Bomb blast effects enhancement and weapon impact system
 
-For more details see [Basic writing and formatting syntax](https://docs.github.com/en/github/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax).
+* **Technical**
+  - Built for large scale scenarios
+  - **Persistent campaign progress across server restarts**
 
-### Jekyll Themes
+## Contribution Guide
 
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/jtoppins/dct/settings/pages). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
+Contributions can be made with a github pull request but features and/or
+changes need to be discussed first. Code is licensed under LGPLv3 and
+contributions must be licensed under the same. For any issues or feature
+requests please use the issue tracker and file a new issue. Please make sure to
+provide as much detail about the problem or feature as possible. New
+development is done in feature branches which are eventually merged into
+`master`, base your features and fixes off `master`.
 
-### Support or Contact
+## Contact Us
 
-Having trouble with Pages? Check out our [documentation](https://docs.github.com/categories/github-pages-basics/) or [contact support](https://support.github.com/contact) and we’ll help you sort it out.
+You can join the VMFA-169 [discord]({{ site.discord_link }}) if you
+would like to discuss DCT topics. The channel is
+`#dynamic-campaign-tools-discussion`.

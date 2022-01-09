@@ -1,3 +1,10 @@
+---
+layout: default
+title: Campaign Designer
+nav_order: 5
+---
+
+
 # Campaign Designer
 
 ## Overview
