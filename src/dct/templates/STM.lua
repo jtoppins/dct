@@ -5,7 +5,7 @@
 -- class knows how to deal with.
 --]]
 
-local utils = require("libs.utils")
+local utils    = require("libs.utils")
 
 local categorymap = {
 	["HELICOPTER"] = 'HELICOPTER',
@@ -122,7 +122,7 @@ end
 --    }}}
 --]]
 
-function STM.transform(stmdata)
+function STM.transform(stmdata, file)
 	local template   = {}
 	local lookupname =  function(name)
 		if name == nil then
@@ -139,6 +139,7 @@ function STM.transform(stmdata)
 	template.name    = lookupname(stmdata.name)
 	template.theater = lookupname(stmdata.theatre)
 	template.desc    = lookupname(stmdata.desc)
+	template.file    = file
 	template.tpldata = {}
 
 	for _, coa_data in pairs(stmdata.coalition) do

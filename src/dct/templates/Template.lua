@@ -479,23 +479,25 @@ local function validateCoalition(tpl)
 				local groupCoalition = coalition.getCountryCoalition(grp.countryid)
 				tpl.coalition = tpl.coalition or groupCoalition
 				assert(tpl.coalition == groupCoalition, string.format(
-					"template '%s' contains mixed coalitions; one group belongs to "..
+					"'%s': template contains mixed coalitions; one group belongs to "..
 					"country '%s', which is in the '%s' coalition, "..
 					"but another group in the template is in the '%s' coalition\n"..
 					"note: coalition checks are made according to the .miz, not the .stm\n"..
 					"note: if this is intentional, consider setting the coalition "..
-					"manually in the .dct",
+					"manually in the .dct\nfile: %s",
 					tpl.name,
 					country.name[grp.countryid],
 					utils.getkey(coalition.side, groupCoalition),
-					utils.getkey(coalition.side, tpl.coalition)
+					utils.getkey(coalition.side, tpl.coalition),
+					tpl.file or "unknown"
 				))
 			end
 		end
 	end
 	assert(tpl.coalition ~= nil, string.format(
-		"cannot determine the coalition of template '%s' because it has no units; "..
-		"please set it manually in the .dct", tpl.name))
+		"'%s': cannot determine the coalition of template because it has no units; "..
+		"please set it manually in the .dct\nfile: %s",
+		tpl.name, tpl.file or "unknown"))
 end
 
 function Template:validate()
