@@ -111,11 +111,11 @@ local function main()
 	_G.dct.theater = theater
 	theater.startdate = startdate
 	theater:exec(50)
-	local expected = 32
+	local expected = 34
 	assert(dctcheck.spawngroups == expected,
 		string.format("group spawn broken; expected(%d), got(%d)",
 		expected, dctcheck.spawngroups))
-	expected = 29
+	expected = 36
 	assert(dctcheck.spawnstatics == expected,
 		string.format("static spawn broken; expected(%d), got(%d)",
 		expected, dctcheck.spawnstatics))
