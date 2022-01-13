@@ -9,7 +9,7 @@ on:
     - master
 
 env:
-  PACKAGES: make zip wget
+  PACKAGES: make zip unzip wget
 
 jobs:
   build:
@@ -28,9 +28,14 @@ jobs:
     - name: Build Mod
       run: make build
 
+    # GitHub will zip whatever we give it, even if it's already a zip,
+    # so we unzip the build and upload its contents to avoid double-zipping
+    - name: Unzip Data
+      run: unzip DCT-${{ env.VERSION }}.zip -d build
+
     - name: Upload Build Artifact
       uses: actions/upload-artifact@v2
       with:
         name: DCT-${{ env.VERSION }}
-        path: ./DCT-${{ env.VERSION }}.zip
+        path: build/
         retention-days: 14
