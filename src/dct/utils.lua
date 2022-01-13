@@ -38,7 +38,6 @@ function utils.isalive(grpname)
 	return (grp and grp:isExist() and grp:getSize() > 0)
 end
 
-
 function utils.interp(s, tab)
 	return (s:gsub('(%b%%)', function(w) return tab[w:sub(2,-2)] or w end))
 end
@@ -64,6 +63,19 @@ function utils.airbaseId2Name(id)
 		end
 	end
 	return airbase_id2name_map[id]
+end
+
+function utils.isplayergroup(grp)
+	local slotcnt = 0
+	for _, unit in ipairs(grp.units) do
+		if unit.skill == "Client" then
+			slotcnt = slotcnt + 1
+		end
+	end
+	if slotcnt > 0 then
+		return true, slotcnt
+	end
+	return false
 end
 
 function utils.time(dcsabstime)
