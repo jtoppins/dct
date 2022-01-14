@@ -3,7 +3,7 @@
 local vector = require("dct.libs.vector")
 
 local function main()
-    local a = vector.Vector2D({x=5,y=5})
+	local a = vector.Vector2D({x=5,y=5})
 	local b = vector.Vector2D({x=3,y=3})
 	local c = vector.Vector2D({x=3,y=3})
 
