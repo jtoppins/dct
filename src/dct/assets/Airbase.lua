@@ -1,65 +1,5 @@
 --[[
 -- SPDX-License-Identifier: LGPL-3.0
---
--- Represents an Airbase.
---
--- AirbaseAsset<AssetBase, Subordinates>:
---
--- airbase events
--- * an object taken out, could effect;
---   - parking
---   - base resources
---   - runway operation
---
--- airbase has;
---  - resources for aircraft weapons
---
--- MVP - Phase 1:
---  - enable/disable player slots
---  - parking in use by players
---
--- MVP - Phase 2:
---  - runway destruction
---  - parking in use by AI or players
---  - spawn AI flights
---
--- Events:
---   * DCT_EVENT_HIT
---     An airbase has potentially been bombed and we need to check
---     for runway damage, ramp, etc damage.
---   * S_EVENT_TAKEOFF
---     An aircraft has taken off from the airbase, we need to
---     remove parking reservations
---   * S_EVENT_LAND
---     An aircraft has landed at the base, no specific action we
---     need to take?
---   * S_EVENT_HIT
---     Any action we need to take from getting a hit event from DCS?
---     Yes if the ship is damaged we should probably disable flight
---     operations for a period of time.
---   * S_EVENT_DEAD
---     Can an airbase even die? Yes if it is a ship.
---   * S_EVENT_BASE_CAPTURED
---     This event has problems should we listen to it?
---
--- Emitted Events:
---   * DCT_EVENT_DEAD
---     Notify listeners when dead
---   * DCT_EVENT_OPERATIONAL
---     signals the base is in an operational state or not
---
--- Player Class and Hooks:
---    The player class and hooks will need to be modified so that a third
---    state is listened to, the states are;
---    spawned - the asset has been spawned, the owning airbase upon
---              despawning will despawn all player slots
---    kicked  - if a player in the slot should be kicked from the slot
---    oper    - if the slot is operational, meaning the slot has been
---              spawned but for some reason the slot cannot be spawned
---              into
---
---   The Player class will need to listen various events and then
---   determine if those events render the slot non-operational.
 --]]
 
 local class         = require("libs.namedclass")
@@ -70,82 +10,193 @@ local Subordinates  = require("dct.libs.Subordinates")
 local AssetBase     = require("dct.assets.AssetBase")
 local Marshallable  = require("dct.libs.Marshallable")
 local State         = require("dct.libs.State")
+local vector        = require("dct.libs.vector")
+
+--- @class Runway
+-- Represents a runway object and its state for an airbase.
+--
+-- @field name Name of the runway
+-- @field points points describing the four corners of the runway
+-- @field AB 2D vector from point A to B
+-- @field BC 2D vector from point B to C
+-- @field dotAB vector dot product of AB * AB
+-- @field dotBC vector dot product of BC * BC
+-- @field life life left for the runway
+-- @field max_life total starting life of the runway
+local Runway = class("Runway")
+function Runway:__init(rwy, health, dmgthreshold)
+	local center = vector.Vector2D(rwy.position)
+	local theta = rwy.course * -1
+	local v1 = vector.Vector2D.create(math.cos(theta), math.sin(theta))
+	local v2 = vector.Vector2D.create(-v1.y, v1.x)
+
+	v1 = (rwy.length / 2) * v1
+	v2 = (rwy.width / 2) * v2
+
+	self.name   = rwy.name
+	self.points = {
+		center + v1 + v2,
+		center - v1 + v2,
+		center - v1 - v2,
+		center + v1 - v2,
+	}
+	self.AB     = self.points[1] - self.points[2]
+	self.BC     = self.points[2] - self.points[3]
+	self.dotAB  = vector.dot(self.AB,self.AB)
+	self.dotBC  = vector.dot(self.BC,self.BC)
+	self.threshold = dmgthreshold
+	self.life  = health
+	self.max_life = health
+end
+
+--- Check if runway was hit by a bomb that landed close by.
+-- An impact point M is only inside runway area defined by points
+-- A, B, & C if and only if (IFF);
+--    0 <= dot(AB,AM) <= dot(AB,AB) && 0 <= dot(BC,BM) <= dot(BC,BC)
+-- reference: https://stackoverflow.com/a/2763387
+--
+-- @param p point to test
+-- @return bool true if point p is inside bound of runway
+function Runway:contains(p)
+	local M = vector.Vector2D(p)
+	local AM = self.points[1] - M
+	local BM = self.points[2] - M
+	local dotAM = vector.dot(self.AB, AM)
+	local dotBM = vector.dot(self.BC, BM)
+
+	if (0 <= dotAM <= self.dotAB) and
+	   (0 <= dotBM <= self.dotBC) then
+		return true
+	end
+	return false
+end
+
+--- Is the Runway capable of supporting aircraft.
+-- @return bool true if able to support takeoffs and landings
+function Runway:isOperational()
+	return (self.life / self.max_life) >= self.threshold
+end
+
+--- Has the runway been repaired.
+-- @return bool true if runway is repaired
+function Runway:isRepaired()
+	return self.life >= self.max_life
+end
+
+--- Apply any damage the bomb inflicts to the runway.
+-- @param impact the impact event triggered by the bomb
+-- @return nil
+function Runway:doDamage(impact)
+	-- TODO: define bomb damage in some better way
+	local DAMAGE = 20
+	if self:contains(impact.point) and
+	   impact.initiator.desc.warhead.explosiveMass >= 75 then
+		self.life = dctutils.clamp(self.life - DAMAGE, 0,
+			self.max_life)
+	end
+end
+
+--- Account for how much the runway has been repaired over the elapsed
+-- time and the given repair rate.
+--
+-- @param elapsed amount of time in seconds time has passed
+-- @param rate repair rate per minute
+function Runway:doRepair(elapsed, rate)
+	local repair = (elapsed / 60) * rate
+	local health = self.life + repair
+	self.life = dctutils.clamp(health, 0, self.max_life)
+end
 
 local statetypes = {
 	["OPERATIONAL"] = 1,
 	["REPAIRING"]   = 2,
-	["CAPTURED"]    = 3,
+	["TERMINAL"]    = 3,
 }
 
---[[
--- CapturedState - terminal state
---  * enter: set airbase dead
---]]
-local CapturedState = class("Captured", State, Marshallable)
-function CapturedState:__init()
+--- @class TerminalState
+-- End state for an Airbase. The Airbase will be marked as dead, and
+-- all listeners notified of the Airbase's death.
+--
+-- Transitions:
+--   * enter: set airbase dead
+--
+-- @field type type of state
+local TerminalState = class("Terminal", State, Marshallable)
+function TerminalState:__init()
 	Marshallable.__init(self)
-	self.type = statetypes.CAPTURED
+	self.type = statetypes.TERMINAL
 	self:_addMarshalNames({"type",})
 end
 
-function CapturedState:enter(asset)
+function TerminalState:enter(asset)
 	asset._logger:debug("airbase captured - entering captured state")
 	asset:despawn()
 	asset:setDead(true)
 end
 
---[[
--- RepairingState - airbase repairing
---  * enter: start repair timer
---  * transition: on timer expire move to Operational
---  * transition: on capture event move to Captured
---  * event: on DCT_EVENT_HIT extend repair timer (not implemented yet)
---]]
+--- @class OperationalState
+--
+-- Transitions:
+--   * enter: notify airbase operational
+--   * exit: notify airbase not operational
+--   * transition: to RepairingState on runway hit and no runways operational
+--   * transition: to TerminalState on DCT capture event
 local OperationalState = class("Operational", State, Marshallable)
+
+--- @class RepairingState
+--
+-- Transitions:
+--   * enter: start repair timer
+--   * transition: on all runways repaired to OperationalState
+--   * transition: on capture event move to TerminalState
 local RepairingState = class("Repairing", State, Marshallable)
 function RepairingState:__init()
 	Marshallable.__init(self)
 	self.type = statetypes.REPAIRING
-	self.timeout = 12*60*60 -- 12 hour repair time
-	self.ctime   = timer.getAbsTime()
-	self:_addMarshalNames({"type", "timeout",})
+	self:_addMarshalNames({"type",})
 end
 
--- TODO: if we want to make the repair timer variable we can do that
--- via the enter function and set the timeout based on a variable
--- stored in the airbase asset
+function RepairingState:enter(asset)
+	self.timer = require("dct.libs.Timer")(nil, timer.getAbsTime)
+	self.timer:start()
+end
 
-function RepairingState:update(_ --[[asset]])
-	local time = timer.getAbsTimer()
-	self.timeout = self.timeout - (time - self.ctime)
-	self.ctime = time
-
-	if self.timeout <= 0 then
-		return OperationalState()
+--- Repair the runways over a period of time. Runways can only be
+-- repaired sequentially and the first runway damaged will continue
+-- to be repaired before the next in the sequence is repaired.
+--
+-- @param airbase the airbase to look at
+-- @param timespent time elapsed since last repair credited
+-- @return bool true if airbase repair is complete
+local function repair(ab, timespent)
+	for _, rwy in ipairs(ab._runways) do
+		if not rwy:isRepaired() then
+			rwy:doRepair(timespent, ab.repairrate)
+			return false
+		end
 	end
-	return nil
+	return true
+end
+
+function RepairingState:update(asset)
+	self.timer:update()
+	local timespent = self.timer:reset()
+	local state = nil
+	if repair(asset, timespent) then
+		state = OperationalState()
+	end
+	return state
 end
 
 function RepairingState:onDCTEvent(asset, event)
 	local state = nil
 	if event.id == dctenum.event.DCT_EVENT_CAPTURED and
 	   event.target.name == asset.name then
-		state = CapturedState()
+		state = TerminalState()
 	end
-	-- TODO: listen for hit events and extend the repair timer
 	return state
 end
 
---[[
--- OperationalState - airbase does things
---  * enter: reset runway health
---  * enter: notify airbase operational
---  * exit: notify airbase not operational
---  * transition: to Repairing on runway hit
---  * transition: to Captured on DCT capture event
---  * update:
---    - do AI departures
---]]
 function OperationalState:__init()
 	Marshallable.__init(self)
 	self.type = statetypes.OPERATIONAL
@@ -153,7 +204,6 @@ function OperationalState:__init()
 end
 
 function OperationalState:enter(asset)
-	asset:resetDamage()
 	if asset:isSpawned() then
 		asset:notify(dctutils.buildevent.operational(asset, true))
 	end
@@ -169,21 +219,15 @@ function OperationalState:update(asset)
 end
 
 function OperationalState:onDCTEvent(asset, event)
-	--[[
-	-- TODO: write this event handler
-	-- events to handle:
-	--  * DCT_EVENT_HIT - call airbase:checkHit(); returns: bool, func
-	--    - track if runway hit; 50% of the runway must be hit w/
-	--      500lb bombs or larger to knock it out, we can track this
-	--      by splitting the runway up into 10 smaller rectangles,
-	--      then keep a list of which sections have been hit
-	--  * S_EVENT_TAKEOFF - call airbase:processDeparture(); returns: none
-	--  * S_EVENT_LAND - no need to handle
-	--  * S_EVENT_HIT - no need to handle at this time
-	--  * S_EVENT_DEAD - no need to handle at this time
-	--]]
-	asset._logger:debug("operational state: onDCTEvent called event.id"..
-		event.id)
+	local state = nil
+	if event.id == dctenum.event.DCT_EVENT_IMPACT and
+	   not asset:isOperational() then
+		state = RepairingState()
+	elseif event.id == dctenum.event.DCT_EVENT_CAPTURED and
+		event.target.name == asset.name then
+		state = TerminalState()
+	end
+	return state
 end
 
 local allowedtpltypes = {
@@ -194,7 +238,7 @@ local allowedtpltypes = {
 local statemap = {
 	[statetypes.OPERATIONAL] = OperationalState,
 	[statetypes.REPAIRING]   = RepairingState,
-	[statetypes.CAPTURED]    = CapturedState,
+	[statetypes.TERMINAL]    = TerminalState,
 }
 
 local function associate_slots(ab)
@@ -232,19 +276,137 @@ local function associate_slots(ab)
 	end
 end
 
+local function process_runways(self, ab)
+	local rwys = ab:getRunways() or {}
+
+	self._runways = {}
+	for _, rwy in pairs(rwys) do
+		local R = Runway(rwy, self.runwayspec.health,
+			self.runwayspec.threshold)
+		R.life = self._rwyhealth[rwy.name] or self.runwayspec.health
+		table.insert(self._runways, R)
+	end
+	self._rwyhealth = nil
+end
+
+--- Replacement function for AssetBase.getLocation for ships.
+--
+-- @param self DCT Airbase object
+-- @return vec3 of the airbase's location
+local function get_location(self)
+	local dcsab = Airbase.getByName(self.name)
+	if dcsab ~= nil then
+		self._location = dcsab:getPoint()
+	end
+	return AssetBase.getLocation(self)
+end
+
+local function check_impact(self, event)
+	for _, rwy in ipairs(self._runways) do
+		rwy:doDamage(event)
+	end
+end
+
+--- Represents an Airbase within the DCT framework.
+--
+-- Features:
+--   * enable/disable player slots
+--   * parking in use by players and AI
+--   * runway/infrastructure destruction
+--   * spawn AI flights
+--
+-- Events:
+--   Handled outside of a particular state
+--   * S_EVENT_DEAD set asset as dead as underlying DCS object is dead
+--   * S_EVENT_LAND schedule a/c cleanup
+--   * DCT_EVENT_IMPACT distribute damage; if damage limit met
+--         transition to Repairing
+--
+-- States:
+--   * Operational
+--     - enter: notify airbase operational
+--     - exit: notify airbase not operational
+--     - transition: to Repairing on damage limit met
+--     - transition: to Captured on DCT capture event
+--     - update: do AI departures
+--
+--   * Repairing
+--     - enter: start repair timer
+--     - transition: on timer expire move to Operational
+--     - transition: on capture event move to Captured
+--     - event: on DCT_EVENT_IMPACT distribute damage
+--
+--   * Captured
+--     - enter: set airbase dead
+--
+-- airbase events
+--   * an object taken out, could effect;
+--     - parking
+--     - base resources
+--     - runway operation
+--
+-- airbase has;
+--   * resources for aircraft weapons
+--
+-- Events:
+--   * DCT_EVENT_IMPACT
+--     Needs to be handled regardless of state.
+--     An airbase has potentially been bombed and we need to check
+--     for runway damage, ramp, etc damage.
+--   * S_EVENT_TAKEOFF
+--     An aircraft has taken off from the airbase, we need to
+--     remove parking reservations
+--   * S_EVENT_LAND
+--     An aircraft has landed at the base, no specific action we
+--     need to take?
+--   * S_EVENT_HIT
+--     Any action we need to take from getting a hit event from DCS?
+--     Yes if the ship is damaged we should probably disable flight
+--     operations for a period of time.
+--   * S_EVENT_DEAD
+--     Can an airbase even die? Yes if it is a ship.
+--     What about aircraft that die on the airport? We need to know this
+--     to remove parking reservations.
+--   * S_EVENT_BASE_CAPTURED
+--     This event has problems should we listen to it?
+--
+-- Emitted Events:
+--   * DCT_EVENT_DEAD
+--     Notify listeners when dead
+--   * DCT_EVENT_OPERATIONAL
+--     signals the base is in an operational state or not
+--
+-- Player Class and Hooks:
+--    The player class and hooks will need to be modified so that a third
+--    state is listened to, the states are;
+--    spawned - the asset has been spawned, the owning airbase upon
+--              despawning will despawn all player slots
+--    kicked  - if a player in the slot should be kicked from the slot
+--    oper    - if the slot is operational, meaning the slot has been
+--              spawned but for some reason the slot cannot be spawned
+--              into
+--
+--   The Player class will need to listen various events and then
+--   determine if those events render the slot non-operational.
 local AirbaseAsset = class("Airbase", AssetBase, Subordinates)
 function AirbaseAsset:__init(template)
+	self._eventhandlers = {
+		[dctenum.event.DCT_EVENT_IMPACT] = check_impact,
+	}
 	Subordinates.__init(self)
 	self._departures = PriorityQueue()
 	self._parking_occupied = {}
+	self._rwyhealth = {}
+	self._runways = {}
 	AssetBase.__init(self, template)
 	self:_addMarshalNames({
 		"_tplnames",
 		"_subordinates",
 		"takeofftype",
 		"recoverytype",
+		"runwayspec",
+		"repairrate",
 	})
-	self._eventhandlers = nil
 end
 
 function AirbaseAsset.assettypes()
@@ -258,7 +420,8 @@ function AirbaseAsset:_completeinit(template)
 	self._tplnames    = template.subordinates
 	self.takeofftype  = template.takeofftype
 	self.recoverytype = template.recoverytype
-	self._tpldata = self._tpldata or {}
+	self.runwayspec   = template.runway
+	self.repairrate   = template.repairrate
 	self.state = OperationalState()
 	self.state:enter(self)
 end
@@ -272,6 +435,15 @@ function AirbaseAsset:_setup()
 	end
 	self._abcategory = dcsab:getDesc().airbaseCategory
 	self._location = dcsab:getPoint()
+	if self._abcategory == Airbase.Category.AIRDROME then
+		process_runways(self, dcsab)
+	elseif self._abcategory == Airbase.Category.SHIP then
+		self.getLocation = get_location
+	end
+end
+
+function AirbaseAsset:getObjectNames()
+	return { self.name, }
 end
 
 local function filterPlayerGroups(sublist)
@@ -290,6 +462,10 @@ function AirbaseAsset:marshal()
 		return nil
 	end
 
+	tbl._rwyhealth = {}
+	for _, rwy in ipairs(self._runways) do
+		tbl._rwyhealth[rwy.name] = rwy.life
+	end
 	tbl._subordinates = filterPlayerGroups(self._subordinates)
 	tbl.state = self.state:marshal()
 	return tbl
@@ -302,9 +478,6 @@ function AirbaseAsset:unmarshal(data)
 	-- unmarshaled due to how the Marshallable object works
 	self.state = State.factory(statemap, data.state.type)
 	self.state:unmarshal(data.state)
-end
-
-function AirbaseAsset:resetDamage()
 end
 
 --[[
@@ -347,6 +520,7 @@ function AirbaseAsset:update()
 end
 
 function AirbaseAsset:onDCTEvent(event)
+	AssetBase.onDCTEvent(self, event)
 	local newstate = self.state:onDCTEvent(self, event)
 	if newstate ~= nil then
 		self.state:exit(self)
@@ -355,16 +529,38 @@ function AirbaseAsset:onDCTEvent(event)
 	end
 end
 
+--- Determines if an Airbase is operational and can sortie aircraft.
+-- An Airbase is operational IFF it is spawned, in the operational
+-- state, and has at least one operational runway if the airbase has
+-- runways.
 function AirbaseAsset:isOperational()
-	return self:isSpawned() and self.state.type == statetypes.OPERATIONAL
+	local c = self:isSpawned() and
+		self.state.type == statetypes.OPERATIONAL
+
+	if c and next(self._runways) then
+		local cnt = 0
+		for _, rwy in ipairs(self._runways) do
+			if rwy:isOperational() then
+				cnt = cnt + 1
+			end
+		end
+		c = c and (cnt >= 1)
+	end
+	return c
 end
 
 function AirbaseAsset:getStatus()
 	local g = 0
+	local life = 0
+	local max_life = 0
 	if self:isOperational() then
-		g = 1
+		for _, rwy in ipairs(self._runways) do
+			life = life + rwy.life
+			max_life = max_life + rwy.max_life
+		end
+		g = life / max_life
 	end
-	return math.floor((1 - g) * 100)
+	return math.ceil((1 - g) * 100)
 end
 
 function AirbaseAsset:generate(assetmgr, region)
@@ -390,7 +586,6 @@ function AirbaseAsset:generate(assetmgr, region)
 end
 
 function AirbaseAsset:spawn(ignore)
-	self._logger:debug("spawn called")
 	if not ignore and self:isSpawned() then
 		self._logger:error("runtime bug - already spawned")
 		return

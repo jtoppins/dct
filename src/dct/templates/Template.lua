@@ -216,6 +216,20 @@ local function checkrecovery(keydata, tpl)
 	return false
 end
 
+local function checkrunway(keydata, tpl)
+	local keys = {
+		{
+			["name"]  = "health",
+			["type"]  = "number",
+		}, {
+			["name"]  = "threshold",
+			["type"]  = "number",
+		},
+	}
+	utils.checkkeys(keys, tpl[keydata.name])
+	return true
+end
+
 local function checkmsntype(keydata, tbl)
 	if tbl[keydata.name] == nil then
 		return true
@@ -386,6 +400,17 @@ local function getkeys(objtype)
 			["type"]    = "string",
 			["default"] = "terminal",
 			["check"]   = checkrecovery,})
+		table.insert(keys, {
+			["name"]    = "repairrate",
+			["type"]    = "number",})
+		table.insert(keys, {
+			["name"]    = "runway",
+			["type"]    = "table",
+			["default"] = {
+				["health"]    = 100,
+				["threshold"] = .5,
+			},
+			["check"]   = checkrunway,})
 	end
 
 	if objtype == enum.assetType.SQUADRONPLAYER then

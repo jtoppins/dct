@@ -775,6 +775,10 @@ function Airbase:getParking(_ --[[available]])
 	return self.parking
 end
 
+function Airbase:getRunways()
+	return self.runways
+end
+
 function Airbase:getCallsign()
 	return self.callsign
 end

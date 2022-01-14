@@ -220,13 +220,16 @@ function AssetManager:doOneObject(obj, event)
 		return
 	end
 
+	-- airbase assets register object names at the unit level so we
+	-- must see if an asset cares about unit names so the airbase
+	-- can handle the ship dying.
 	local name = tostring(obj:getName())
-	if obj.className_ ~= "Airbase" and
-	   obj:getCategory() == Object.Category.UNIT then
+	local asset = self:getAssetByDCSObject(name)
+	if asset == nil then
 		name = obj:getGroup():getName()
+		asset = self:getAssetByDCSObject(name)
 	end
 
-	local asset = self:getAssetByDCSObject(name)
 	if asset == nil then
 		self._logger:debug("onDCSEvent - asset doesn't exist, name: %s", name)
 		self._object2asset[name] = nil

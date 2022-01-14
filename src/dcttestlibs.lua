@@ -71,6 +71,59 @@ for abid, name in pairs(airbase_table[env.mission.theatre] or {}) do
 	newab.name = name
 	newab.id = abid
 	newab.exists = true
+	newab.parking = {
+		{
+			["TO_AC"] = false,
+			["Term_Index_0"] = -1,
+			["Term_Type"] = 68,
+			["fDistToRW"] = 451.77697753906,
+			["Term_Index"] = 56,
+			["vTerminalPos"] = {
+				["y"] = 20.010303497314,
+				["x"] = -7676.2456054688,
+				["z"] = 293953.5625,
+			},
+		}, {
+			["TO_AC"] = false,
+			["Term_Index_0"] = -1,
+			["Term_Type"] = 104,
+			["fDistToRW"] = 1477.7482910156,
+			["Term_Index"] = 55,
+			["vTerminalPos"] = {
+				["y"] = 20.010303497314,
+				["x"] = -7178.9565429688,
+				["z"] = 294729.28125,
+			},
+		},
+	}
+	newab.runways = {
+		{
+			["course"] = -1.597741484642,
+			["Name"] = 8,
+			["position"] = {
+				["y"] = 952.94458007813,
+				["x"] = -360507.1875,
+				["z"] = -75590.0703125,
+			},
+			["length"] = 1859.3155517578,
+			["width"] = 60,
+		}, {
+			["course"] = -2.5331676006317,
+			["Name"] = 26,
+			["position"] = {
+				["y"] = 952.94458007813,
+				["x"] = -359739.875,
+				["z"] = -75289.5078125,
+			},
+			["length"] = 1859.3155517578,
+			["width"] = 60,
+		},
+	}
+	newab.desc = {}
+	newab.desc.airbaseCategory = Airbase.Category.AIRDROME
+	newab.desc.typeName = name
+	newab.desc.displayName = name
+	newab.desc.attributes = {}
 	local wairport = warehouses.airports[abid]
 	if wairport then
 		newab.coalition = coalition.side[wairport.coalition]
@@ -91,6 +144,11 @@ local function processCategory(tbl, coa)
 					["exists"] = true,
 					["coalition"] = coalition.side[string.upper(coa)],
 				}
+				newab.desc = {}
+				newab.desc.airbaseCategory = Airbase.Category.SHIP
+				newab.desc.typeName = unit.type
+				newab.desc.displayName = unit.type
+				newab.desc.attributes = {}
 				Airbase(newab)
 			end
 		end
