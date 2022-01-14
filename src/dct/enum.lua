@@ -206,6 +206,12 @@ enum.weaponCategory = {
 	["AG"] = 2,
 }
 
+enum.AirbaseRecovery = {
+	["TERMINAL"] = 1,
+	["LAND"]     = 2,
+	["TAXI"]     = 3,
+}
+
 enum.WPNINFCOST = 5000
 enum.UNIT_CAT_SCENERY = Unit.Category.STRUCTURE + 1
 

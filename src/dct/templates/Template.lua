@@ -195,7 +195,7 @@ local function checktakeoff(keydata, tpl)
 		["parking"] = AI.Task.WaypointType.TAKEOFF_PARKING,
 	}
 
-	local val = allowed[tpl[keydata.name]]
+	local val = allowed[string.lower(tpl[keydata.name])]
 	if val then
 		tpl[keydata.name] = val
 		return true
@@ -204,13 +204,9 @@ local function checktakeoff(keydata, tpl)
 end
 
 local function checkrecovery(keydata, tpl)
-	local allowed = {
-		["terminal"] = true,
-		["land"]     = true,
-		["taxi"]     = true,
-	}
-
-	if allowed[tpl[keydata.name]] then
+	local val = enum.AirbaseRecovery[string.upper(tpl[keydata.name])]
+	if val then
+		tpl[keydata.name] = val
 		return true
 	end
 	return false
@@ -402,7 +398,8 @@ local function getkeys(objtype)
 			["check"]   = checkrecovery,})
 		table.insert(keys, {
 			["name"]    = "repairrate",
-			["type"]    = "number",})
+			["type"]    = "number",
+			["default"] = 1,})
 		table.insert(keys, {
 			["name"]    = "runway",
 			["type"]    = "table",

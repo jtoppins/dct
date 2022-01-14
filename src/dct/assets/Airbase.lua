@@ -10,6 +10,7 @@ local Subordinates  = require("dct.libs.Subordinates")
 local AssetBase     = require("dct.assets.AssetBase")
 local Marshallable  = require("dct.libs.Marshallable")
 local State         = require("dct.libs.State")
+local Command       = require("dct.Command")
 local vector        = require("dct.libs.vector")
 
 --- @class Runway
@@ -156,7 +157,7 @@ function RepairingState:__init()
 	self:_addMarshalNames({"type",})
 end
 
-function RepairingState:enter(asset)
+function RepairingState:enter(--[[asset]])
 	self.timer = require("dct.libs.Timer")(nil, timer.getAbsTime)
 	self.timer:start()
 end
@@ -200,6 +201,7 @@ end
 function OperationalState:__init()
 	Marshallable.__init(self)
 	self.type = statetypes.OPERATIONAL
+	self._departures = PriorityQueue()
 	self:_addMarshalNames({"type", })
 end
 
@@ -213,9 +215,24 @@ function OperationalState:exit(asset)
 	asset:notify(dctutils.buildevent.operational(asset, false))
 end
 
-function OperationalState:update(asset)
-	-- TODO: create departures
-	asset._logger:debug("operational state: update called")
+-- check if we have any departures to do, we only do one departure
+-- per run of this function to allow for separation of flights.
+function OperationalState:update(--[[asset]])
+	if self._departures:empty() then
+		return
+	end
+
+	local time = timer.getAbsTime()
+	local name, prio = self._departures:peek()
+	if time < prio then
+		return
+	end
+
+	self._departures:pop()
+	local flight = dct.Theater.singleton():getAssetMgr():getAsset(name)
+	if flight then
+		flight:spawn()
+	end
 end
 
 function OperationalState:onDCTEvent(asset, event)
@@ -228,6 +245,11 @@ function OperationalState:onDCTEvent(asset, event)
 		state = TerminalState()
 	end
 	return state
+end
+
+function OperationalState:addFlight(flight, delay)
+	delay = delay or 5
+	self._departures:push(timer.getAbsTime() + delay, flight.name)
 end
 
 local allowedtpltypes = {
@@ -309,6 +331,26 @@ end
 
 local function handle_dead(self, _--[[event]])
 	self:setDead(true)
+end
+
+local function delete_plane(unitname)
+	local unit = Unit.getByName(unitname)
+	if unit then
+		unit.destroy()
+	end
+end
+
+local function schedule_plane_removal(ab, event)
+	local theater = dct.Theater.singleton()
+	local delay = 10
+
+	if dctenum.AirbaseRecovery.LAND == ab.recoverytype then
+		delay = 2
+	elseif dctenum.AirbaseRecovery.TAXI == ab.recoverytype then
+		delay = 60*2
+	end
+	theater:queueCommand(delay, Command("delete_plane",
+		delete_plane, event.initiator:getName()))
 end
 
 --- Represents an Airbase within the DCT framework.
@@ -397,9 +439,9 @@ function AirbaseAsset:__init(template)
 	self._eventhandlers = {
 		[dctenum.event.DCT_EVENT_IMPACT] = check_impact,
 		[world.event.S_EVENT_DEAD]       = handle_dead,
+		[world.event.S_EVENT_LAND]       = schedule_plane_removal,
 	}
 	Subordinates.__init(self)
-	self._departures = PriorityQueue()
 	self._parking_occupied = {}
 	self._rwyhealth = {}
 	self._runways = {}
@@ -485,35 +527,15 @@ function AirbaseAsset:unmarshal(data)
 	self.state:unmarshal(data.state)
 end
 
---[[
--- check if we have any departures to do, we only do one departure
--- per run of this function to allow for separation of flights.
-function AirbaseAsset:_doOneDeparture()
-	if self._departures:empty() then
-		return
-	end
-
-	local time = timer.getAbsTime()
-	local name, prio = self._departures:peek()
-	if time < prio then
-		return
-	end
-
-	self._departures:pop()
-	local flight = dct.Theater.singleton():getAssetMgr():getAsset(name)
-	-- TODO: need some way to spawn the flight with the data from the
-	-- airbase
-	local wpt1 = self:_buildWaypoint(flight:getAircraftType())
-	flight:spawn(false, wpt1)
-	self:addObserver(flight)
-end
-
 function AirbaseAsset:addFlight(flight, delay)
-	assert(flight, self.__clsname..":addFlight - flight required")
-	local delay = delay or 0
-	self._departures:push(timer.getAbsTime() + delay, flight.name)
+	if self.state.type ~= statetypes.OPERATIONAL then
+		return false
+	end
+	self.state:addFlight(flight, delay)
+	-- TODO: add code to reserve parking
+	self:addObserver(flight.onDCTEvent, flight, flight.name)
+	return true
  end
---]]
 
 function AirbaseAsset:update()
 	local newstate = self.state:update(self)
