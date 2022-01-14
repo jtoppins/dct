@@ -307,6 +307,10 @@ local function check_impact(self, event)
 	end
 end
 
+local function handle_dead(self, _--[[event]])
+	self:setDead(true)
+end
+
 --- Represents an Airbase within the DCT framework.
 --
 -- Features:
@@ -392,6 +396,7 @@ local AirbaseAsset = class("Airbase", AssetBase, Subordinates)
 function AirbaseAsset:__init(template)
 	self._eventhandlers = {
 		[dctenum.event.DCT_EVENT_IMPACT] = check_impact,
+		[world.event.S_EVENT_DEAD]       = handle_dead,
 	}
 	Subordinates.__init(self)
 	self._departures = PriorityQueue()
