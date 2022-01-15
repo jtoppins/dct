@@ -14,6 +14,7 @@ local dctutils = require("dct.utils")
 local Goal     = require("dct.assets.DeathGoals")
 local Marshallable = require("dct.libs.Marshallable")
 local Observable   = require("dct.libs.Observable")
+local Subordinates = require("dct.libs.Subordinates")
 local Logger   = require("dct.libs.Logger")
 local settings = dct.settings
 
@@ -87,11 +88,13 @@ end
 -- @field name [string] name of the asset
 -- @field codename [string] single word code name of the asset, used in
 --   briefings to players
-local AssetBase = namedclass("AssetBase", Marshallable, Observable)
+local AssetBase = namedclass("AssetBase", Marshallable, Observable,
+	Subordinates)
 function AssetBase:__init(template)
 	self._logger = AssetLogger(self)
 	Marshallable.__init(self)
 	Observable.__init(self)
+	Subordinates.__init(self)
 	self._eventhandlers = self._eventhandlers or {}
 	self._spawned    = false
 	self._dead       = false
@@ -107,7 +110,9 @@ function AssetBase:__init(template)
 		}
 	end
 
+	self:_addMarshalNames(Subordinates.getNames())
 	self:_addMarshalNames({
+		"_tplnames",
 		"_spawned",
 		"_dead",
 		"_intel",
@@ -145,6 +150,7 @@ function AssetBase:_completeinit(template)
 		self._logger:error("Template(%s) has nil 'desc' field",
 			template.name)
 	end
+	self._tplnames = template.subordinates or {}
 	self._location = template.location
 	self.ignore   = template.ignore
 	self.owner    = template.coalition
@@ -214,6 +220,10 @@ function AssetBase:unmarshal(data)
 	self._initcomplete = true
 end
 
+function AssetBase:generateFilter(--[[tpl]])
+	return true
+end
+
 --[[
 -- Called with a region is generated.
 -- Params:
@@ -221,7 +231,20 @@ end
 --   - region: reference to calling region
 -- Returns: none, might generate new Assets though
 --]]
-function AssetBase:generate(_ --[[assetmgr, region]])
+function AssetBase:generate(assetmgr, region)
+	self._logger:debug("generate called")
+	for _, tplname in ipairs(self._tplnames) do
+		self._logger:debug("subordinate template: %s", tplname)
+		local tpl = region:getTemplateByName(tplname)
+		if tpl == nil then
+			self._logger:error("defines a subordinate template of name "..
+				"'%s', does not exist", tplname)
+		elseif self:generateFilter(tpl) then
+			local asset = assetmgr:factory(tpl.objtype)(tpl)
+			assetmgr:add(asset)
+			self:addSubordinate(asset)
+		end
+	end
 end
 
 --[[
@@ -306,13 +329,20 @@ function AssetBase:isDead()
 	return self._dead
 end
 
---[[
--- Sets if the object should be thought of as dead or not
--- Returns: none
---]]
+--- Sets if the object should be thought of as dead or not
+-- @return none
 function AssetBase:setDead(val)
 	assert(type(val) == "boolean", "value error: val must be of type bool")
 	local prev = self._dead
+	local assetmgr = dct.Theater.singleton():getAssetMgr()
+
+	for name, _ in pairs(self._subordinates) do
+		local asset = assetmgr:getAsset(name)
+		if asset then
+			asset:setDead(val)
+		end
+	end
+
 	self._dead = val
 	if self._dead and prev ~= self._dead then
 		self._logger:debug("notifying asset death for "..self.name)
@@ -350,20 +380,43 @@ function AssetBase:isSpawned()
 	return self._spawned
 end
 
---[[
--- Spawn any DCS objects associated with this asset.
--- Returns: none
---]]
-function AssetBase:spawn(_ --[[ignore]])
+function AssetBase:spawn_despawn(action, ignore)
+	self._logger:debug(":spawn_despawn(%s) called", action)
+	local assetmgr = dct.Theater.singleton():getAssetMgr()
+	for name, _ in pairs(self._subordinates) do
+		local asset = assetmgr:getAsset(name)
+		if asset then
+			if action == "spawn" then
+				-- have the subordinate asset observe the parent
+				self:addObserver(asset.onDCTEvent, asset, asset.name)
+				-- have the parent observe the subordinate
+				asset:addObserver(self.onSubEvent, self, self.name)
+				if not asset:isSpawned() then
+					asset[action](asset, ignore)
+				end
+			else
+				asset[action](asset)
+			end
+		else
+			self._logger:info(":spawn_despawn - asset(%s) doesn't exist, "..
+				"removing subordinate", name)
+			self:removeSubordinate(name)
+		end
+	end
+end
+
+--- Spawn any DCS objects associated with this asset.
+-- @return none
+function AssetBase:spawn(ignore)
+	self:spawn_despawn("spawn", ignore)
 	self._spawned = true
 end
 
---[[
--- Remove any DCS objects associated with this asset from the game world.
+--- Remove any DCS objects associated with this asset from the game world.
 -- The method used should result in no DCS events being triggered.
--- Returns: none
---]]
+-- @return none
 function AssetBase:despawn()
+	self:spawn_despawn("despawn")
 	self._spawned = false
 end
 

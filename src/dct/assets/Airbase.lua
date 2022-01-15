@@ -6,7 +6,6 @@ local class         = require("libs.namedclass")
 local PriorityQueue = require("libs.containers.pqueue")
 local dctenum       = require("dct.enum")
 local dctutils      = require("dct.utils")
-local Subordinates  = require("dct.libs.Subordinates")
 local AssetBase     = require("dct.assets.AssetBase")
 local Marshallable  = require("dct.libs.Marshallable")
 local State         = require("dct.libs.State")
@@ -252,11 +251,6 @@ function OperationalState:addFlight(flight, delay)
 	self._departures:push(timer.getAbsTime() + delay, flight.name)
 end
 
-local allowedtpltypes = {
-	[dctenum.assetType.BASEDEFENSE]    = true,
-	[dctenum.assetType.SQUADRONPLAYER] = true,
-}
-
 local statemap = {
 	[statetypes.OPERATIONAL] = OperationalState,
 	[statetypes.REPAIRING]   = RepairingState,
@@ -434,21 +428,18 @@ end
 --
 --   The Player class will need to listen various events and then
 --   determine if those events render the slot non-operational.
-local AirbaseAsset = class("Airbase", AssetBase, Subordinates)
+local AirbaseAsset = class("Airbase", AssetBase)
 function AirbaseAsset:__init(template)
 	self._eventhandlers = {
 		[dctenum.event.DCT_EVENT_IMPACT] = check_impact,
 		[world.event.S_EVENT_DEAD]       = handle_dead,
 		[world.event.S_EVENT_LAND]       = schedule_plane_removal,
 	}
-	Subordinates.__init(self)
 	self._parking_occupied = {}
 	self._rwyhealth = {}
 	self._runways = {}
 	AssetBase.__init(self, template)
 	self:_addMarshalNames({
-		"_tplnames",
-		"_subordinates",
 		"takeofftype",
 		"recoverytype",
 		"runwayspec",
@@ -464,7 +455,6 @@ end
 
 function AirbaseAsset:_completeinit(template)
 	AssetBase._completeinit(self, template)
-	self._tplnames    = template.subordinates
 	self.takeofftype  = template.takeofftype
 	self.recoverytype = template.recoverytype
 	self.runwayspec   = template.runway
@@ -590,26 +580,13 @@ function AirbaseAsset:getStatus()
 	return math.ceil((1 - g) * 100)
 end
 
-function AirbaseAsset:generate(assetmgr, region)
-	self._logger:debug("generate called")
-	for _, tplname in ipairs(self._tplnames or {}) do
-		self._logger:debug("subordinate template: %s", tplname)
-		local tpl = region:getTemplateByName(tplname)
-		assert(tpl, string.format("runtime error: airbase(%s) defines "..
-			"a subordinate template of name '%s', does not exist",
-			self.name, tplname))
-		assert(allowedtpltypes[tpl.objtype],
-			string.format("runtime error: airbase(%s) defines "..
-				"a subordinate template of name '%s' and type: %d ;"..
-				"not supported type", self.name, tplname, tpl.objtype))
-		if tpl.coalition == self.owner then
-			tpl.airbase = self.name
-			tpl.location = tpl.location or self:getLocation()
-			local asset = assetmgr:factory(tpl.objtype)(tpl)
-			assetmgr:add(asset)
-			self:addSubordinate(asset)
-		end
+function AirbaseAsset:generateFilter(tpl)
+	if tpl.coalition ~= self.owner then
+		return false
 	end
+	tpl.airbase = self.name
+	tpl.location = tpl.location or self:getLocation()
+	return true
 end
 
 function AirbaseAsset:spawn(ignore)
@@ -618,17 +595,11 @@ function AirbaseAsset:spawn(ignore)
 		return
 	end
 	associate_slots(self)
-	self:spawn_despawn("spawn")
-	AssetBase.spawn(self)
+	AssetBase.spawn(self, ignore)
 
 	if self:isOperational() then
 		self:notify(dctutils.buildevent.operational(self, true))
 	end
-end
-
-function AirbaseAsset:despawn()
-	self:spawn_despawn(self, "despawn")
-	AssetBase.despawn(self)
 end
 
 return AirbaseAsset
