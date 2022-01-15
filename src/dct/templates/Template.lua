@@ -353,6 +353,14 @@ local function getkeys(objtype)
 		},
 	}
 
+	if objtype ~= enum.assetType.AIRSPACE then
+		table.insert(keys, {
+			["name"]  = "subordinates",
+			["type"]  = "table",
+			["default"] = {},
+		})
+	end
+
 	if notpldata[objtype] == nil then
 		table.insert(keys, {
 			["name"]    = "buildings",
@@ -373,9 +381,6 @@ local function getkeys(objtype)
 	end
 
 	if objtype == enum.assetType.AIRBASE then
-		table.insert(keys, {
-			["name"]  = "subordinates",
-			["type"]  = "table", })
 		table.insert(keys, {
 			["name"]    = "takeofftype",
 			["type"]    = "string",

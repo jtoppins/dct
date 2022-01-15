@@ -7,8 +7,6 @@
 --]]
 
 local class = require("libs.class")
-local AssetBase = require("dct.assets.AssetBase")
-local Logger = dct.Logger.getByName("Asset")
 
 local Subordinates = class()
 function Subordinates:__init()
@@ -18,21 +16,10 @@ function Subordinates:__init()
 	end
 end
 
-function Subordinates:setDead(val)
-	local assetmgr = dct.Theater.singleton():getAssetMgr()
-	for name, _ in pairs(self._subordinates) do
-		local asset = assetmgr:getAsset(name)
-		if asset then
-			asset:setDead(val)
-		end
-	end
-	AssetBase.setDead(self, val)
-end
-
---[[
--- Process a DCS or DCT event associated w/ an asset.
--- Returns: none
---]]
+--- Process a DCS or DCT event.
+--
+-- @param event the event to process
+-- @return none
 function Subordinates:onSubEvent(event)
 	local handler = self._subeventhandlers[event.id]
 	if handler ~= nil then
@@ -40,36 +27,14 @@ function Subordinates:onSubEvent(event)
 	end
 end
 
-function Subordinates:addSubordinate(asset)
-	assert(asset ~= nil and asset:isa(AssetBase),
-		"value error: 'asset' must be a super class of AssetBase")
-	self._subordinates[asset.name] = asset.type
+function Subordinates.getNames()
+	return { "_subordinates", }
 end
 
-function Subordinates:spawn_despawn(action)
-	Logger:debug("%s(%s):spawn_despawn(%s) called",
-		self.__clsname, self.name, action)
-	local theater = dct.Theater.singleton()
-	for name, _ in pairs(self._subordinates) do
-		local asset = theater:getAssetMgr():getAsset(name)
-		if asset then
-			if action == "spawn" then
-				-- have the subordinate asset observe the parent
-				self:addObserver(asset.onDCTEvent, asset, asset.name)
-				-- have the parent observe the subordinate
-				asset:addObserver(self.onSubEvent, self, self.name)
-				if not asset:isSpawned() then
-					asset[action](asset)
-				end
-			else
-				asset[action](asset)
-			end
-		else
-			Logger:info("%s(%s):spawn_despawn - asset(%s) doesn't exist, "..
-				"removing subordinate", self.__clsname, self.name, name)
-			self:removeSubordinate(name)
-		end
-	end
+function Subordinates:addSubordinate(obj)
+	assert(obj ~= nil,
+		"value error: 'obj' must not be nil")
+	self._subordinates[obj.name] = true
 end
 
 function Subordinates:removeSubordinate(name)
