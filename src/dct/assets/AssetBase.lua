@@ -122,7 +122,6 @@ function AssetBase:__init(template)
 		"codename",
 		"cost",
 		"ignore",
-		"regenerate",
 	})
 
 	self._initcomplete = false
@@ -147,7 +146,6 @@ function AssetBase:_completeinit(template)
 			template.name)
 	end
 	self._location = template.location
-	self.regenerate = template.regenerate
 	self.ignore   = template.ignore
 	self.owner    = template.coalition
 	self.rgnname  = template.regionname

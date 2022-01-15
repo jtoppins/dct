@@ -145,6 +145,7 @@ function DCSObjects:__init(template)
 	self:_addMarshalNames({
 		"_hasDeathGoals",
 		"_maxdeathgoals",
+		"regenerate",
 	})
 end
 
@@ -152,6 +153,7 @@ function DCSObjects:_completeinit(template)
 	AssetBase._completeinit(self, template)
 	self._hasDeathGoals = template.hasDeathGoals
 	self._tpldata       = template:copyData()
+	self.regenerate     = template.regenerate
 end
 
 --[[
