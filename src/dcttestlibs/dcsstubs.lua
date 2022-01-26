@@ -768,6 +768,7 @@ function Unit:__init(objdata, group, pname)
 		group:_addUnit(self)
 	end
 	self.pname = pname
+	objdata.unitId = self:getID()
 end
 Unit.Category = {
 	["AIRPLANE"]    = 0,
@@ -819,6 +820,7 @@ function StaticObject:__init(objdata)
 	objdata.category = Object.Category.STATIC
 	Coalition.__init(self, objdata)
 	self.clife = self.desc.life
+	objdata.unitId = self:getID()
 end
 
 StaticObject.Category = {
@@ -866,6 +868,7 @@ function Group:__init(unitcnt, objdata)
 	self.getVelocity = nil
 	self.inair = nil
 	self.inAir = nil
+	objdata.groupId = self:getID()
 end
 
 Group.Category = {
