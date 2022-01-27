@@ -105,6 +105,16 @@ function TheaterUpdateCmd:__init(theater, data)
 	self.name = "TheaterUpdateCmd:"..data.name
 end
 
+local function addAirbases(allAirbases, outList, side, ownerFilter)
+	for _, airbase in utils.sortedpairs(allAirbases) do
+		if airbase.owner == ownerFilter then
+			table.insert(outList, string.format("%s: %s",
+				human.relationship(side, airbase.owner),
+				airbase.name))
+		end
+	end
+end
+
 function TheaterUpdateCmd:_execute(_, cmdr)
 	local update = cmdr:getTheaterUpdate()
 	local available = cmdr:getAvailableMissions(self.asset.ato)
@@ -113,10 +123,11 @@ function TheaterUpdateCmd:_execute(_, cmdr)
 		function(asset) return asset.type == enum.assetType.AIRBASE end)
 
 	local airbaseList = {}
-	for _, airbase in utils.sortedpairs(airbases) do
-		table.insert(airbaseList, string.format("%s: %s", airbase.name,
-			human.relationship(cmdr.owner, airbase.owner)))
+	if cmdr.owner ~= coalition.side.NEUTRAL then
+		addAirbases(airbases, airbaseList, cmdr.owner, cmdr.owner)
 	end
+	addAirbases(airbases, airbaseList, cmdr.owner, coalition.side.NEUTRAL)
+	addAirbases(airbases, airbaseList, cmdr.owner, dctutils.getenemy(cmdr.owner))
 
 	local activeMsnList = {}
 	if next(update.missions) ~= nil then
