@@ -29,7 +29,7 @@ build:
 		cd $(BUILDPATH)/DEMO/demomiz; \
 		cp -a $(SRCPATH)/data/mission/* .; \
 		cp $(SRCPATH)/mission/* l10n/DEFAULT/; \
-		zip -r "../dct-demo-mission.zip" .; \
+		zip -r "../dct-demo-mission.miz" .; \
 		cd ..; \
 		rm -rf demomiz)
 	cp $(SRCPATH)/README.md $(BUILDPATH)/

@@ -1,3 +1,10 @@
+---
+layout: default
+title: Home
+nav_order: 1
+permalink: /
+---
+
 # Dynamic Campaign Tools (DCT)
 
 Mission scripting framework for persistent Digital Combat Simulator (DCS)
@@ -15,14 +22,14 @@ created in the Mission Editor and configuration files. There is an initial
 learning curve but it is no more difficult than initially learning the DCS
 Mission Editor.
 
-## Getting Started
+## Quick Start Guide
 
-See our documentation [here](https://jtoppins.github.io/dct/quick-start).
+See our documentation [here](quick-start.md).
 
-## Features
+## Features and Capabilities
 
 * **Mission Creation**
-  - uses static templates for reusable asset creation
+  - uses static templates for quicker asset creation
   - no large .miz to manage just place player slots
   - theater and region organization to control spawning
     and placement
@@ -44,17 +51,16 @@ See our documentation [here](https://jtoppins.github.io/dct/quick-start).
 
 ## Contribution Guide
 
-See our [documentation](https://jtoppins.github.io/dct/), in sort contributions
-can be made with a github pull request but features and/or changes need to be
-discussed first. Code is licensed under LGPLv3 and contributions must be
-licensed under the same. For any issues or feature requests please use the
-issue tracker and file a new issue. Please make sure to provide as much detail
-about the problem or feature as possible. New development is done in feature
-branches which are eventually merged into `master`, base your features and
-fixes off `master`.
+Contributions can be made with a github pull request but features and/or
+changes need to be discussed first. Code is licensed under LGPLv3 and
+contributions must be licensed under the same. For any issues or feature
+requests please use the issue tracker and file a new issue. Please make sure to
+provide as much detail about the problem or feature as possible. New
+development is done in feature branches which are eventually merged into
+`master`, base your features and fixes off `master`.
 
 ## Contact Us
 
-You can join the VMFA-169 discord(https://discord.gg/6z8uERVW5Y) if you
+You can join the VMFA-169 [discord]({{ site.discord_link }}) if you
 would like to discuss DCT topics. The channel is
 `#dynamic-campaign-tools-discussion`.
