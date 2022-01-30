@@ -72,6 +72,12 @@ function Commander:__init(theater, side)
 	self.tgtlist      = {}
 	self.aifreq       = 2*60 -- 2 minutes in seconds
 
+	-- Cache valid mission IDs in random order
+	self.missionIds = {}
+	for i = 0, 63 do
+		table.insert(self.missionIds, math.random(#self.missionIds + 1), i)
+	end
+
 	theater:queueCommand(120, Command(
 		"Commander("..tostring(self.owner)..").startIADS",
 		self.startIADS, self))
@@ -152,7 +158,6 @@ function Commander:getTheaterUpdate()
 	return theaterUpdate
 end
 
-local MISSION_ID = math.random(1,63)
 local invalidXpdrTbl = {
 	["7700"] = true,
 	["7600"] = true,
@@ -171,18 +176,19 @@ local invalidXpdrTbl = {
 --  If 'nil' is returned no valid mission id could be generated.
 --]]
 function Commander:genMissionCodes(msntype)
-	local id
+	local missionId, fmtId
 	local digit1 = enum.squawkMissionType[msntype]
-	while true do
-		MISSION_ID = (MISSION_ID + 1) % 64
-		id = string.format("%01o%02o0", digit1, MISSION_ID)
-		if invalidXpdrTbl[id] == nil and self:getMission(id) == nil then
+	for _, id in ipairs(self.missionIds) do
+		fmtId = string.format("%01o%02o0", digit1, id)
+		if invalidXpdrTbl[fmtId] == nil and self:getMission(fmtId) == nil then
+			missionId = id
 			break
 		end
 	end
+	assert(missionId ~= nil, "cannot generate mission: no valid ids left")
 	local m1 = (8*digit1)+(enum.squawkMissionSubType[msntype] or 0)
-	local m3 = (512*digit1)+(MISSION_ID*8)
-	return { ["id"] = id, ["m1"] = m1, ["m3"] = m3, }
+	local m3 = (512*digit1)+(missionId*8)
+	return { ["id"] = fmtId, ["m1"] = m1, ["m3"] = m3, }
 end
 
 --[[

@@ -25,11 +25,11 @@ local unit1 = Unit({
 	},
 }, grp, "bobplayer")
 
-local briefingtxt = "Package: #5720\n"..
-			"IFF Codes: M1(50), M3(5720)\n"..
-			"Target AO: 88°07.38'N 063°27.36'W (DENVER)\n"..
+local briefingtxt = "Package: #5170\n"..
+			"IFF Codes: M1(50), M3(5170)\n"..
+			"Target AO: 88°07.38'N 063°27.36'W (DUBLIN)\n"..
 			"Briefing:\n"..
-			"Reconnaissance elements have located"..
+			"Satellite imaging has found"..
 			" a fuel storage facility at 88°07.38'N 063°27.36'W,"..
 			" East of Krasnodar-Center.\n\n"..
 			"Primary Objectives: Destroy the fuel tanks embedded in "..
@@ -62,7 +62,7 @@ local testcmds = {
 			["value"]  = enum.missionType.STRIKE,
 		},
 		["assert"]     = true,
-		["expected"]   = "Mission 5720 assigned, use F10 menu to "..
+		["expected"]   = "Mission 5170 assigned, use F10 menu to "..
 			"see this briefing again\n"..
 			briefingtxt.."\n\n"..
 			"BDA: 0% complete\n\n"..
@@ -95,7 +95,7 @@ local testcmds = {
 		},
 		["assert"]     = true,
 		["expected"]   = "Mission State: Preparing\n"..
-			"Package: 5720\n"..
+			"Package: 5170\n"..
 			"Timeout: 2016-06-21 12:30z (in 90 mins)\n"..
 			"BDA: 0% complete\n\n"..
 			assignedPilots
@@ -132,7 +132,7 @@ local testcmds = {
 		["modelTime"]  = 300,
 		["assert"]     = true,
 		["expected"]   = "Mission State: Preparing\n"..
-			"Package: 5720\n"..
+			"Package: 5170\n"..
 			"Timeout: 2016-06-21 12:32z (in 87 mins)\n"..
 			"BDA: 0% complete\n\n"..
 			assignedPilots
@@ -143,7 +143,7 @@ local testcmds = {
 			["value"]  = enum.missionAbortType.ABORT,
 		},
 		["assert"]     = true,
-		["expected"]   = "Mission 5720 aborted",
+		["expected"]   = "Mission 5170 aborted",
 	}, {
 		-- Allowed payload
 		["data"] = {
