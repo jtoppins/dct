@@ -27,7 +27,7 @@ local samsite = {
 	"PONTIAC",
 	"PORSCHE",
 	"SAAB",
-	"SEAT",
+	-- "SEAT",
 	"SUBARU",
 	"TESLA",
 	"TRIUMPH",
