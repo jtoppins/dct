@@ -120,11 +120,6 @@ function utils.centroid2D(point, pcentroid, n)
 	return vector.Vector2D(c), n1
 end
 
--- returns a value guaranteed to be between min and max, inclusive.
-function utils.clamp(x, min, max)
-    return math.min(math.max(x, min), max)
-end
-
 -- add a random value between +/- sigma to val and return
 function utils.addstddev(val, sigma)
     return val + math.random(-sigma, sigma)
