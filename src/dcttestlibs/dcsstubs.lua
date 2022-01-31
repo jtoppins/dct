@@ -282,6 +282,21 @@ AI.Skill = {
 	"EXCELLENT",
 }
 
+--[[
+ROE Descriptions:
+WEAPON_FREE -
+	AI will engage any enemy group it detects. Target prioritization is
+	based based on the threat of the target.
+OPEN_FIRE_WEAPON_FREE -
+	AI will engage any enemy group it detects, but will prioritize targets
+	specified in the groups tasking.
+OPEN_FIRE -
+	AI will engage only targets specified in its taskings.
+RETURN_FIRE -
+	AI will only engage threats that shoot first.
+WEAPON_HOLD -
+	AI will hold fire under all circumstances.
+--]]
 AI.Option = {
 	["Air"] = {
 		["id"] = {
@@ -300,6 +315,11 @@ AI.Option = {
 			["PROHIBIT_AG"]             = 17,
 			["MISSILE_ATTACK"]          = 18,
 			["PROHIBIT_WP_PASS_REPORT"] = 19,
+			["OPTION_RADIO_USAGE_CONTACT"] = 21,
+			["OPTION_RADIO_USAGE_ENGAGE"] = 22,
+			["OPTION_RADIO_USAGE_KILL"] = 23,
+			["JETT_TANKS_IF_EMPTY"]     = 25,
+			["FORCED_ATTACK"]           = 26,
 		},
 		["val"] = {
 			["ROE"] = {
@@ -350,6 +370,10 @@ AI.Option = {
 			["DISPERSE_ON_ATTACK"] = 8,
 			["ALARM_STATE"]        = 9,
 			["ENGAGE_AIR_WEAPONS"] = 20,
+			["AC_ENGAGEMENT_RANGE_RESTRICTION"] = 24,
+			["RESTRICT_AAA_MIN"]   = 27,
+			["RESTRICT_TARGETS"]   = 28,
+			["RESTRICT_AAA_MAX"]   = 29,
 		},
 		["val"] = {
 			["ALARM_STATE"] = {
@@ -362,17 +386,28 @@ AI.Option = {
 				["RETURN_FIRE"] = 3,
 				["WEAPON_HOLD"] = 4,
 			},
+			["RESTRICT_TARGETS"] = {
+				["ANY"] = 0,
+				["AIR"] = 1,
+				["GND"] = 2,
+			},
 		},
 	},
 	["Naval"] = {
 		["id"] = {
 			["ROE"] = 0,
+			["ALARM_STATE"] = 9,
 		},
 		["val"] = {
 			["ROE"] = {
 				["OPEN_FIRE"]   = 2,
 				["RETURN_FIRE"] = 3,
 				["WEAPON_HOLD"] = 4,
+			},
+			["ALARM_STATE"] = {
+				["AUTO"]  = 0,
+				["GREEN"] = 1,
+				["RED"]   = 2,
 			},
 		},
 	},

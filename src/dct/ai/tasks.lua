@@ -179,7 +179,7 @@ end
 
 function tasks.command.setCallsign(callname, num)
 	local params = {
-		["callname"] = check.range(callname, 1, 18),
+		["callname"] = check.range(callname, 1, 20),
 		["number"]   = check.range(num, 1, 9),
 	}
 	return create_task_tbl('SetCallsign', params),
