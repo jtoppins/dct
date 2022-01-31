@@ -81,6 +81,14 @@ function Vector2D:magnitude()
 	return math.sqrt(self.x^2 + self.y^2)
 end
 
+-- standard right-hand rule rotation counter-clockwise for positive values of
+-- theta.
+function Vector2D:rotate(theta)
+	local x = self.x * math.cos(theta) - self.y * math.sin(theta)
+	local y = self.x * math.sin(theta) + self.y * math.cos(theta)
+	self.x = x
+	self.y = y
+end
 
 -- 3D Vector Math
 --
