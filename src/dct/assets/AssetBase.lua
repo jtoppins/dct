@@ -74,19 +74,19 @@ function AssetLogger:debug(fmt, ...)
 	Logger.debug(self, "%s - "..fmt, self.cls.name, ...)
 end
 
---[[
-AssetBase:
-	attributes(public, read-only):
-	- type - [number] asset type
-	- briefing - [string] briefing text used when displaying the briefing
-	             to players
-	- owner - [number] the coalition the asset belongs to
-	- rgnname - [string] the region name the asset is in
-	- tplname - [string] the template name the asset was created from
-	- name - [string] name of the asset
-	- codename - [string] single word code name of the asset, used in
-	             briefings to players
---]]
+--- @class AssetBase
+-- Base class for an asset, which is the base object in DCT when
+-- interacting with DCS objects.
+--
+-- @field type [number] asset type
+-- @field briefing [string] briefing text used when displaying the briefing
+--   to players
+-- @field owner [number] the coalition the asset belongs to
+-- @field rgnname [string] region name the asset is in
+-- @field tplname [string] template name the asset was created from
+-- @field name [string] name of the asset
+-- @field codename [string] single word code name of the asset, used in
+--   briefings to players
 local AssetBase = namedclass("AssetBase", Marshallable, Observable)
 function AssetBase:__init(template)
 	self._logger = AssetLogger(self)

@@ -132,6 +132,15 @@ local function handle_dead(self, event)
 	end
 end
 
+--- @class DCSObjects
+-- Provides a common API for interacting with underlying DCS groups.
+--
+-- @field _maxdeathgoals maximum death goals ever had by the asset
+-- @field _curdeathgoals current active death goals
+-- @field _deathgoals list of current death goals
+-- @field _assets list of asset groups composing the asset
+-- @field _hasDeathGoals
+-- @field _tpldata template data representing the asset
 local DCSObjects = require("libs.namedclass")("DCSObjects", AssetBase)
 function DCSObjects:__init(template)
 	self._maxdeathgoals = 0
@@ -199,6 +208,26 @@ function DCSObjects:update()
 	end
 	self._logger:debug("update() - max goals: %d; cur goals: %d; "..
 		"checked: %d", self._maxdeathgoals, self._curdeathgoals, cnt)
+end
+
+--- Iterate over DCS groups associated with this asset.
+-- @param filter a function used to filter the groups returned by the
+--   iterator, filter must return true to exclude the group from being
+--   iterated over.
+-- @return an iterator to be used in a for loop
+function DCSObjects:iterate(filter)
+	local function fnext(state, index)
+		local idx = index
+		local grp
+		repeat
+			idx, grp = next(state, idx)
+			if grp == nil then
+				return nil
+			end
+		until(filter(grp))
+		return idx, grp
+	end
+	return fnext, self._assets, nil
 end
 
 local dctkeys = {
