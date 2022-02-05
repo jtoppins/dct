@@ -14,6 +14,7 @@ local dctutils = require("dct.utils")
 local Goal     = require("dct.assets.DeathGoals")
 local Marshallable = require("dct.libs.Marshallable")
 local Observable   = require("dct.libs.Observable")
+local DCTEvents = require("dct.libs.DCTEvents")
 local Logger   = require("dct.libs.Logger")
 local settings = dct.settings
 
@@ -87,12 +88,13 @@ end
 -- @field name [string] name of the asset
 -- @field codename [string] single word code name of the asset, used in
 --   briefings to players
-local AssetBase = namedclass("AssetBase", Marshallable, Observable)
+local AssetBase = namedclass("AssetBase", Marshallable, Observable,
+	DCTEvents)
 function AssetBase:__init(template)
 	self._logger = AssetLogger(self)
 	Marshallable.__init(self)
 	Observable.__init(self)
-	self._eventhandlers = self._eventhandlers or {}
+	DCTEvents.__init(self)
 	self._spawned    = false
 	self._dead       = false
 	self._targeted   = {}
@@ -327,19 +329,6 @@ end
 --]]
 function AssetBase:getObjectNames()
 	return {}
-end
-
---[[
--- Process a DCS event associated w/ this asset.
--- Returns: none
---]]
-function AssetBase:onDCTEvent(event)
-	local handler = self._eventhandlers[event.id]
-	self._logger:debug("onDCTEvent(); event.id: %d, handler: %s",
-		event.id, tostring(handler))
-	if handler ~= nil then
-		handler(self, event)
-	end
 end
 
 --[[

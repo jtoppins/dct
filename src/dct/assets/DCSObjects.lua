@@ -147,10 +147,8 @@ function DCSObjects:__init(template)
 	self._curdeathgoals = 0
 	self._deathgoals    = {}
 	self._assets        = {}
-	self._eventhandlers = utils.mergetables({
-		[world.event.S_EVENT_DEAD] = handle_dead,
-	}, self._eventhandlers)
 	AssetBase.__init(self, template)
+	self:_overridehandlers({[world.event.S_EVENT_DEAD] = handle_dead,})
 	self:_addMarshalNames({
 		"_hasDeathGoals",
 		"_maxdeathgoals",
