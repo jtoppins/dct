@@ -27,6 +27,10 @@ function Timer:__init(timeout, timefunc)
 	self.curtime = nil
 end
 
+function Timer:started()
+	return self.curtime ~= nil
+end
+
 function Timer:start()
 	self.curtime = self.timefunc()
 end
