@@ -110,9 +110,10 @@ function DamageGoal:getStatus()
 
 	local damagetaken = (1 - (health/self._maxlife)) * 100
 	if damagetaken > self._tgtdamage then
-		return self:_setComplete()
+		self:_setComplete()
+		return 100
 	end
-	return false
+	return damagetaken
 end
 
 return DamageGoal
