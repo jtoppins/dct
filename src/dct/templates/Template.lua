@@ -237,7 +237,7 @@ end
 
 local function checklocation(keydata, tbl)
 	local loc = tbl[keydata.name]
-	if next(tbl[keydata.name]) == nil then
+	if tbl[keydata.name] == nil or next(tbl[keydata.name]) == nil then
 		tbl[keydata.name] = nil
 		return true
 	end
@@ -356,8 +356,6 @@ local function getkeys(objtype)
 	else
 		table.insert(keys, {
 			["name"]    = "location",
-			["type"]    = "table",
-			["default"] = {},
 			["check"]   = checklocation,})
 	end
 
