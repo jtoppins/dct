@@ -9,6 +9,7 @@ base=$(dirname $0)
 srcroot="${cwd}/${base}/.."
 fail=0
 
+DCT_THEATER="Caucasus_dctdemo"
 DCT_SRC_ROOT="${srcroot}"
 DCT_DATA_ROOT="${DCT_DATA_ROOT:-${srcroot}/data}"
 DCT_TEMPLATE_PATH="${DCT_TEMPLATE_PATH:-${srcroot}/../dcs-mission-oeo-templates}"
@@ -40,6 +41,8 @@ fi
 for t in $tests; do
 	result="PASS"
 	echo "==== TEST: $t" >> "$DCT_TEST_LOG"
+	rm -f "${DCT_DATA_ROOT}/${DCT_THEATER}.state"
+	rm -f "${DCT_DATA_ROOT}"/*.state
 	${LUA_EXEC} $(basename ${t})
 	if test $? -ne 0; then
 		result="FAIL"
