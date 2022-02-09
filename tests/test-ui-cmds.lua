@@ -65,6 +65,7 @@ local testcmds = {
 		["expected"]   = "Mission 5720 assigned, use F10 menu to "..
 			"see this briefing again\n"..
 			briefingtxt.."\n\n"..
+			"BDA: 0% complete\n\n"..
 			assignedPilots
 	}, {
 		["data"] = {

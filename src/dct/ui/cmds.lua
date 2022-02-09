@@ -284,11 +284,13 @@ function MissionJoinCmd:_execute(_, cmdr)
 	if msn == nil then
 		msg = string.format("No mission of ID(%s) available", tostring(missioncode))
 	else
+		local tgtinfo = msn:getTargetInfo()
 		msn:addAssigned(self.asset)
 		msg = string.format("Mission %s assigned, use F10 menu "..
 			"to see this briefing again\n", msn:getID())
-		msg = msg..briefingmsg(msn, self.asset)
-		msg = msg.."\n\nAssigned Pilots:\n"..assignedPilots(msn, self.assetmgr)
+		msg = msg..briefingmsg(msn, self.asset).."\n\n"
+		msg = msg..string.format("BDA: %d%% complete\n\n", tgtinfo.status)
+		msg = msg.."Assigned Pilots:\n"..assignedPilots(msn, self.assetmgr)
 		human.drawTargetIntel(msn, self.asset.groupId, false)
 	end
 	return msg
@@ -318,9 +320,11 @@ function MissionRqstCmd:_execute(_, cmdr)
 		msg = string.format("No %s missions available.",
 			human.missiontype(self.missiontype))
 	else
+		local tgtinfo = msn:getTargetInfo()
 		msg = string.format("Mission %s assigned, use F10 menu "..
 			"to see this briefing again\n", msn:getID())
 		msg = msg..briefingmsg(msn, self.asset)
+		msg = msg..string.format("\n\nBDA: %d%% complete", tgtinfo.status)
 		msg = msg.."\n\nAssigned Pilots:\n"..assignedPilots(msn, self.assetmgr)
 		human.drawTargetIntel(msn, self.asset.groupId, false)
 	end
