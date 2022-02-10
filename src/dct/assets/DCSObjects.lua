@@ -208,12 +208,17 @@ function DCSObjects:update()
 		"checked: %d", self._maxdeathgoals, self._curdeathgoals, cnt)
 end
 
+local function no_filter()
+	return false
+end
+
 --- Iterate over DCS groups associated with this asset.
 -- @param filter a function used to filter the groups returned by the
 --   iterator, filter must return true to exclude the group from being
 --   iterated over.
 -- @return an iterator to be used in a for loop
 function DCSObjects:iterate(filter)
+	filter = filter or no_filter
 	local function fnext(state, index)
 		local idx = index
 		local grp
@@ -226,6 +231,29 @@ function DCSObjects:iterate(filter)
 		return idx, grp
 	end
 	return fnext, self._assets, nil
+end
+
+function DCSObjects:iterateUnits(filter)
+	filter = filter or no_filter
+	local units = {}
+	local function fnext(state, index)
+		local idx = index
+		local unit
+		repeat
+			idx, unit = next(state, idx)
+			if unit == nil then
+				return nil
+			end
+		until(filter(unit))
+		return idx, unit
+	end
+
+	for _, grp in self:iterate() do
+		for _, unit in ipairs(grp.data.units or {}) do
+			table.insert(units, unit)
+		end
+	end
+	return fnext, units, nil
 end
 
 local dctkeys = {
