@@ -160,11 +160,10 @@ function AssetManager:getAssetByDCSObject(dcsObjName)
 end
 
 --[[
--- filterAssets - return all asset names matching `filter`
--- filter(asset)
---   returns true if the filter matches and the asset name should be kept
--- Return: a table with asset names as keys. Will always returns a table,
---   even if it is empty
+-- filterAssets - return all assets matching filter function
+-- arg: filter
+--   Return a truthy value for assets that should be returned by this function
+-- Returns a list of matched assets, even if empty
 --]]
 function AssetManager:filterAssets(filter)
 	checklib.func(filter)
@@ -172,9 +171,10 @@ function AssetManager:filterAssets(filter)
 	local list = {}
 	for name, asset in pairs(self._assetset) do
 		if filter(asset) then
-			list[name] = true
+			list[name] = asset
 		end
 	end
+
 	return list
 end
 
