@@ -10,6 +10,7 @@ LUALIBSDIR := lua-libs-$(LUALIBSVER)
 
 .PHONY: check build
 check:
+	luacheck -q hooks mission scripts src tests
 	rm -f $(SRCPATH)/data/*.state
 	@$(MAKE) -C tests
 
