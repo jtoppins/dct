@@ -137,6 +137,7 @@ function Theater:__init()
 	self:setTimings(settings.schedfreq, settings.tgtfps,
 		settings.percentTimeAllowed)
 	self.statef    = false
+	self.initdone  = false
 	self.qtimer    = require("dct.libs.Timer")(self.quanta, os.clock)
 	self.cmdq      = containers.PriorityQueue()
 	self.cmdrs     = {}
@@ -205,6 +206,8 @@ function Theater:loadOrGenerate()
 		Logger:info("generating new theater")
 		self:_runsys("generate")
 	end
+
+	self.initdone = true
 end
 
 function Theater:delayedInit()
@@ -284,14 +287,19 @@ function Theater:_onEvent(event)
 	fixup_airbase(event)
 	self:notify(event)
 	if event.id == world.event.S_EVENT_MISSION_END then
-		-- Only delete the state if there is an end mission event
+		-- Only delete the active state if there is an end mission event
 		-- and tickets are complete, otherwise when a server is
 		-- shutdown gracefully the state will be deleted.
 		if self:getTickets():isComplete() then
+			-- Save the now-ended state with a timestamped filename
+			self:export(nil, os.time())
 			local ok, err = os.remove(settings.statepath)
 			if not ok then
 				Logger:error("unable to remove statefile; "..err)
 			end
+		elseif self.initdone then
+			-- Save the state for reloading after a server restart
+			self:export()
 		end
 	end
 end
@@ -301,15 +309,21 @@ function Theater:onEvent(event)
 	       dctutils.errhandler(Logger))
 end
 
-function Theater:export(_)
+function Theater:export(_, suffix)
+	local path = settings.statepath
 	local statefile
 	local msg
 
-	statefile, msg = io.open(settings.statepath, "w+")
+	if suffix ~= nil then
+		local noext, ext = string.match(path, "^(.+)(%.[^/\\]+)$")
+		path = noext.."_"..tostring(suffix)..ext
+	end
+
+	statefile, msg = io.open(path, "w+")
 
 	if statefile == nil then
-		Logger:error("export(); unable to open '"..
-			settings.statepath.."'; msg: "..tostring(msg))
+		Logger:error("export(); unable to open '"..path..
+			"'; msg: "..tostring(msg))
 		return self.savestatefreq
 	end
 
