@@ -8,20 +8,14 @@ permalink: /quick-start
 # Quick Start Guide
 
 1. **Download:** [latest release]({{ site.release_link }})
-2. **Unzip** downloaded release
-3. **Install** the `DCT` folder to your DCS mod folder `<dcs-saved-games>/Mods/tech`
-   - _Note:_ If the path does not exist just create it. If installed properly DCT
-     will be displayed as a module in the game's module manager.
-4. **Install hooks** by moving `HOOKS/dct-hook.lua` to the hooks directory in your
-   DCS Saved Games folder.
-5. **Install Demo** by moving both the `DCT` and `Config` folders in the `DEMO`
-   folder to your DCS saved games folder. Move the demo mission `dct-demo-mission.miz`
-   to where you store your missions.
-6. **Prepare DCS** by removing the following lines of
-   your `DCS World\Scripts\MissionScripting.lua` file.
-   - **WARNING:** unsanitizing your server's environment could leave it open to data
-     loss or corruption of your system if you run a mission or scripts you do not
-     understand.
+2. **Unzip** downloaded release into your `Saved Games\DCS` folder
+    - **NOTE:** if updating DCT, do not replace the Config folder!
+3. **Prepare DCS** by deleting the marked lines in your
+  `Program Files\DCS World\Scripts\MissionScripting.lua` file to allow DCT to read settings
+  and save the state file.
+    - **WARNING:** this will allow any mission or server you play on to access the internet
+    and modify your files, allowing a malicious mission to download and install viruses.
+    **Restore the file or repair the game before running any untrusted missions!**
 
 ```diff
   --Initialization script for the Mission lua Environment (SSE)
@@ -43,10 +37,10 @@ permalink: /quick-start
 -   sanitizeModule('io')
 -   sanitizeModule('lfs')
 -   _G['require'] = nil
--   _G['loadlib'] = nil
-    _G['package'] = nil
+-   _G['package'] = nil
   end
 ```
-7. **Launch the game** and run the demo mission in a multiplayer session.
+
+4. **Launch the game** and run the demo mission in a multiplayer session.
    - _Note:_ It will take at least 20 seconds for all the templates to spawn.
    During this time player slots will be locked.
