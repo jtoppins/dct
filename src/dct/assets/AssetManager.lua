@@ -34,7 +34,7 @@ function AssetManager:__init(theater)
 
 	theater:addObserver(self.onDCSEvent, self, "AssetManager.onDCSEvent")
 	theater:queueCommand(self.updaterate,
-		Command(self.__clsname..".update", self.update, self))
+		Command(self.__clsname..".update", self.update, self), true)
 end
 
 function AssetManager:remove(asset)

@@ -155,7 +155,7 @@ function Theater:__init()
 	self:queueCommand(5, Command(self.__clsname..".delayedInit",
 		self.delayedInit, self))
 	self:queueCommand(100, Command(self.__clsname..".export",
-		self.export, self))
+		self.export, self), true)
 	self.singleton = nil
 	self.playerRequest = nil
 end
