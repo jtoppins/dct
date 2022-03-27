@@ -16,10 +16,17 @@ local Commander   = require("dct.ai.Commander")
 local Logger      = dct.Logger.getByName("Theater")
 local settings    = dct.settings.server
 local STATE_VERSION = "4"
+local RESETFILE = lfs.writedir()..require("libs.utils").sep.."reset.txt"
 
 
 --- tests if a state table is valid
 local function isStateValid(state)
+	if io.open(RESETFILE) ~= nil then
+		Logger:info("isStateValid(); state reset requested by file")
+		os.remove(RESETFILE)
+		return false
+	end
+
 	if state == nil then
 		Logger:info("isStateValid(); state object nil")
 		return false
