@@ -58,6 +58,7 @@ local function on_birth(asset, event)
 		asset._logger:warn("asset.groupId(%d) != object:getID(%d)", asset.groupId, id)
 	end
 	asset.groupId = id
+	asset.inair = event.initiator:inAir()
 end
 
 local function reset_slot(asset)
@@ -151,11 +152,10 @@ function EmptyState:onDCTEvent(asset, event)
 		return nil
 	end
 	on_birth(asset, event)
-	return OccupiedState(event.initiator:inAir())
+	return OccupiedState()
 end
 
-function OccupiedState:__init(inair)
-	self.inair = inair or false
+function OccupiedState:__init()
 	self.loseticket = false
 	self.bleedctr = 0
 	self.bleedperiod = 5
@@ -176,6 +176,7 @@ function OccupiedState:enter(asset)
 end
 
 function OccupiedState:exit(asset)
+	asset.inair = false
 	if self.loseticket then
 		asset:setDead(true)
 	end
@@ -185,7 +186,7 @@ function OccupiedState:_bleed(asset)
 	local theater = dct.Theater.singleton()
 	local tickets = theater:getTickets()
 	if not (tickets:getConfig(asset.owner).bleed and
-		self.inair == true) then
+		asset.inair == true) then
 		return nil
 	end
 
@@ -239,7 +240,7 @@ end
 
 function OccupiedState:handleTakeoff(asset, _ --[[event]])
 	self.loseticket = true
-	self.inair = true
+	asset.inair = true
 	local ok = loadout.check(asset)
 	if not ok then
 		trigger.action.outTextForGroup(asset.groupId,
@@ -265,7 +266,7 @@ function OccupiedState:handleLand(asset, event)
 	if (airbase and airbase.owner == asset.owner) or
 	   event.place:getName() == asset.airbase then
 		self.loseticket = false
-		self.inair = false
+		asset.inair = false
 		trigger.action.outTextForGroup(asset.groupId,
 			"Welcome home. You are able to safely disconnect"..
 			" without costing your side tickets.",
@@ -286,7 +287,7 @@ end
 function OccupiedState:handleSwitchOccupied(asset, event)
 	asset._logger:warn("player left slot, resetting state for birth event")
 	on_birth(asset, event)
-	return OccupiedState(event.initiator:inAir())
+	return OccupiedState()
 end
 
 --[[
@@ -294,10 +295,10 @@ end
 --]]
 local Player = class("Player", AssetBase)
 function Player:__init(template)
-	AssetBase.__init(self, template)
 	self.inair = false
 	self._operstate = false
 	self.missionid = dctenum.missionInvalidID
+	AssetBase.__init(self, template)
 	trigger.action.setUserFlag(self.name, false)
 	trigger.action.setUserFlag(build_kick_flagname(self.name),
 		dctenum.kickCode.NOKICK)
@@ -367,7 +368,6 @@ function Player:isDead()
 end
 
 function Player:inAir()
-	self.inair = self.state.inair or false
 	return self.inair
 end
 
