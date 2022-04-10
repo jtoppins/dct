@@ -34,6 +34,7 @@
 
 require("math")
 local class   = require("libs.namedclass")
+local utils   = require("libs.utils")
 local dctenum = require("dct.enum")
 local dctutils= require("dct.utils")
 local AssetBase = require("dct.assets.AssetBase")
@@ -84,17 +85,33 @@ local function reset_slot(asset)
 	local msn  = cmdr:getAssigned(asset)
 
 	if msn then
-		trigger.action.outTextForGroup(asset.groupId,
-			"Welcome. A mission is already assigned to this slot, "..
-			"use the F10 menu to get the briefing or find another.",
+		trigger.action.outTextForGroup(asset.groupId, string.format(
+			"Welcome. Mission %d is already assigned to this slot, "..
+			"use the F10 menu to get the briefing or find another.", msn:getID()),
 			20, false)
 	else
+		local missions = cmdr:getAvailableMissions(asset.ato)
+		local missionsfmt = {}
+		for type, count in utils.sortedpairs(missions) do
+			table.insert(missionsfmt, string.format("%s:  %d", type, count))
+		end
+		if next(missionsfmt) == nil then
+			table.insert(missionsfmt, "None")
+		end
+		local recommended = cmdr:recommendMissionType(asset.ato)
 		trigger.action.outTextForGroup(asset.groupId,
 			"Welcome. Use the F10 Menu to get a theater update and "..
-			"request a mission.",
-			20, false)
+			"request a mission.\n\nAvailable missions:\n  "..
+			table.concat(missionsfmt, "\n  ")..
+			"\n\nRecommended Mission Type: "..
+			(utils.getkey(dctenum.missionType, recommended) or "None"), 20, false)
 	end
 	trigger.action.outTextForGroup(asset.groupId, notifymsg, 20, false)
+
+	if not asset:isEnabled() then
+		trigger.action.outTextForGroup(asset.groupId, "Warning: you have spawned "..
+			"in a disabled slot, slot blocker potentially broken.", 20, false)
+	end
 end
 
 local OccupiedState = class("OccupiedState", State)
@@ -415,6 +432,31 @@ end
 function Player:despawn()
 	AssetBase.despawn(self)
 	self:doEnable()
+end
+
+-- Calls a given function on the unit if available, otherwise
+-- returns nil if the player's aircraft has despawned
+function Player:_callOnUnit(fn)
+	local grp = Group.getByName(self.name)
+	if grp ~= nil then
+		local unit = grp:getUnit(1)
+		if unit ~= nil then
+			return fn(unit)
+		end
+	end
+	return nil
+end
+
+function Player:getPlayerName()
+	return self:_callOnUnit(Unit.getPlayerName)
+end
+
+function Player:getAircraftName()
+	local desc = self:_callOnUnit(Unit.getDesc)
+	if desc ~= nil then
+		return desc["displayName"] or "Unknown Aircraft"
+	end
+	return nil
 end
 
 --[[

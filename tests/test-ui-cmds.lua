@@ -20,15 +20,16 @@ local unit1 = Unit({
 	["exists"] = true,
 	["desc"] = {
 		["typeName"] = "FA-18C_hornet",
+		["displayName"] = "F/A-18C Hornet",
 		["attributes"] = {},
 	},
 }, grp, "bobplayer")
 
-local briefingtxt = "Package: #5720\n"..
-			"IFF Codes: M1(50), M3(5720)\n"..
-			"Target AO: 88°07.38'N 063°27.36'W (DALLAS)\n"..
+local briefingtxt = "Package: #5170\n"..
+			"IFF Codes: M1(50), M3(5170)\n"..
+			"Target AO: 88°07.38'N 063°27.36'W (DUBLIN)\n"..
 			"Briefing:\n"..
-			"Reconnaissance elements have located"..
+			"We have reason to believe there is"..
 			" a fuel storage facility at 88°07.38'N 063°27.36'W,"..
 			" East of Krasnodar-Center.\n\n"..
 			"Primary Objectives: Destroy the fuel tanks embedded in "..
@@ -37,6 +38,8 @@ local briefingtxt = "Package: #5720\n"..
 			"Recommended Pilots: 2\n\n"..
 			"Recommended Ordnance: Pilot discretion."
 
+local assignedPilots = "Assigned Pilots:\nbobplayer (F/A-18C Hornet)"
+
 local testcmds = {
 	{
 		["data"] = {
@@ -44,12 +47,14 @@ local testcmds = {
 			["type"]   = enum.uiRequestType.THEATERSTATUS,
 		},
 		["assert"]     = true,
-		["expected"]   = "== Theater Threat Status ==\n"..
-			"  Force Str: Nominal\n  Sea:    medium\n"..
-			"  Air:    parity\n  ELINT:  medium\n  SAM:    medium\n\n"..
-			"== Friendly Force Info ==\n  Force Str: Nominal\n\n"..
-			"== Current Active Air Missions ==\n  No Active Missions\n\n"..
-			"Recommended Mission Type: SEAD\n",
+		["expected"]   = "== Theater Status ==\n"..
+			"Friendly Force Str: Nominal\nEnemy Force Str: Nominal\n\n"..
+			"Airbases:\n  Friendly: CVN-71 Theodore Roosevelt\n  "..
+			"Friendly: Kutaisi\n  Friendly: Senaki-Kolkhi\n  Hostile: Krymsk\n\n"..
+			"Current Active Air Missions:\n  None\n\n"..
+			"Available missions:\n  "..
+			"OCA:  1\n  SEAD:  2\n  STRIKE:  3\n\n"..
+			"Recommended Mission Type: SEAD",
 	}, {
 		["data"] = {
 			["name"]   = grp:getName(),
@@ -57,20 +62,25 @@ local testcmds = {
 			["value"]  = enum.missionType.STRIKE,
 		},
 		["assert"]     = true,
-		["expected"]   = "Mission 5720 assigned, use F10 menu to "..
-			"see this briefing again\n"..briefingtxt,
+		["expected"]   = "Mission 5170 assigned, use F10 menu to "..
+			"see this briefing again\n"..
+			briefingtxt.."\n\n"..
+			"BDA: 0% complete\n\n"..
+			assignedPilots
 	}, {
 		["data"] = {
 			["name"]   = grp:getName(),
 			["type"]   = enum.uiRequestType.THEATERSTATUS,
 		},
 		["assert"]     = true,
-		["expected"]   = "== Theater Threat Status ==\n"..
-			"  Force Str: Nominal\n  Sea:    medium\n"..
-			"  Air:    parity\n  ELINT:  medium\n  SAM:    medium\n\n"..
-			"== Friendly Force Info ==\n  Force Str: Nominal\n\n"..
-			"== Current Active Air Missions ==\n  STRIKE:   1\n\n"..
-			"Recommended Mission Type: SEAD\n",
+		["expected"]   = "== Theater Status ==\n"..
+			"Friendly Force Str: Nominal\nEnemy Force Str: Nominal\n\n"..
+			"Airbases:\n  Friendly: CVN-71 Theodore Roosevelt\n  "..
+			"Friendly: Kutaisi\n  Friendly: Senaki-Kolkhi\n  Hostile: Krymsk\n\n"..
+			"Current Active Air Missions:\n  STRIKE:  1\n\n"..
+			"Available missions:\n  "..
+			"OCA:  1\n  SEAD:  2\n  STRIKE:  2\n\n"..
+			"Recommended Mission Type: SEAD",
 	}, {
 		["data"] = {
 			["name"]   = grp:getName(),
@@ -85,9 +95,10 @@ local testcmds = {
 		},
 		["assert"]     = true,
 		["expected"]   = "Mission State: Preparing\n"..
-			"Package: 5720\n"..
+			"Package: 5170\n"..
 			"Timeout: 2016-06-21 12:30z (in 90 mins)\n"..
-			"BDA: 0% complete\n",
+			"BDA: 0% complete\n\n"..
+			assignedPilots
 	}, {
 		["data"] = {
 			["name"]   = grp:getName(),
@@ -121,9 +132,10 @@ local testcmds = {
 		["modelTime"]  = 300,
 		["assert"]     = true,
 		["expected"]   = "Mission State: Preparing\n"..
-			"Package: 5720\n"..
+			"Package: 5170\n"..
 			"Timeout: 2016-06-21 12:32z (in 87 mins)\n"..
-			"BDA: 0% complete\n",
+			"BDA: 0% complete\n\n"..
+			assignedPilots
 	}, {
 		["data"] = {
 			["name"]   = grp:getName(),
@@ -131,7 +143,7 @@ local testcmds = {
 			["value"]  = enum.missionAbortType.ABORT,
 		},
 		["assert"]     = true,
-		["expected"]   = "Mission 5720 aborted",
+		["expected"]   = "Mission 5170 aborted",
 	}, {
 		-- Allowed payload
 		["data"] = {

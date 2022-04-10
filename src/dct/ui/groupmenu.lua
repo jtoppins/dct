@@ -18,12 +18,14 @@
 --   object creation.
 --]]
 
-local enum    = require("dct.enum")
-local Logger  = dct.Logger.getByName("UI")
-local loadout = require("dct.systems.loadouts")
-local Theater = require("dct.Theater")
-local addmenu = missionCommands.addSubMenuForGroup
-local addcmd  = missionCommands.addCommandForGroup
+local enum     = require("dct.enum")
+local Theater  = require("dct.Theater")
+local loadout  = require("dct.systems.loadouts")
+local utils    = require("libs.utils")
+local msncodes = require("dct.ui.missioncodes")
+local Logger   = dct.Logger.getByName("UI")
+local addmenu  = missionCommands.addSubMenuForGroup
+local addcmd   = missionCommands.addCommandForGroup
 
 local menus = {}
 function menus.createMenu(asset)
@@ -58,7 +60,7 @@ function menus.createMenu(asset)
 
 	local msnmenu = addmenu(gid, "Mission", nil)
 	local rqstmenu = addmenu(gid, "Request", msnmenu)
-	for k, v in pairs(asset.ato) do
+	for k, v in utils.sortedpairs(asset.ato) do
 		addcmd(gid, k, rqstmenu, Theater.playerRequest,
 			{
 				["name"]   = name,
@@ -67,11 +69,16 @@ function menus.createMenu(asset)
 			})
 	end
 
-	addcmd(gid, "Join", msnmenu, Theater.playerRequest,
+	local joinmenu = addmenu(gid, "Join", msnmenu)
+	addcmd(gid, "Use Scratch Pad Value", joinmenu, Theater.playerRequest,
 		{
 			["name"]   = name,
 			["type"]   = enum.uiRequestType.MISSIONJOIN,
+			["value"]  = nil,
 		})
+
+	local codemenu = addmenu(gid, "Input Code (F1-F10)", joinmenu)
+	msncodes.addMissionCodes(gid, name, codemenu)
 
 	addcmd(gid, "Briefing", msnmenu, Theater.playerRequest,
 		{

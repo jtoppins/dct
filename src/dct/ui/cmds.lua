@@ -5,7 +5,7 @@
 --]]
 
 require("os")
-local class    = require("libs.class")
+local class    = require("libs.namedclass")
 local utils    = require("libs.utils")
 local enum     = require("dct.enum")
 local dctutils = require("dct.utils")
@@ -14,7 +14,7 @@ local Command  = require("dct.Command")
 local Logger   = dct.Logger.getByName("UI")
 local loadout  = require("dct.systems.loadouts")
 
-local UICmd = class(Command)
+local UICmd = class("UICmd", Command)
 function UICmd:__init(theater, data)
 	assert(theater ~= nil, "value error: theater required")
 	assert(data ~= nil, "value error: data required")
@@ -35,6 +35,15 @@ function UICmd:isAlive()
 	return dctutils.isalive(self.asset.name)
 end
 
+function UICmd:_print(msg, isError)
+	if isError and _G.DCT_TEST then
+		return
+	end
+	assert(msg ~= nil and type(msg) == "string", "msg must be a string")
+	trigger.action.outTextForGroup(self.asset.groupId, msg,
+		self.displaytime, self.displayclear)
+end
+
 function UICmd:uicmd(time)
 	-- only process commands from live players unless they are abort
 	-- commands
@@ -45,16 +54,20 @@ function UICmd:uicmd(time)
 		return nil
 	end
 
-	local cmdr = self.theater:getCommander(self.asset.owner)
-	local msg  = self:_execute(time, cmdr)
-	assert(msg ~= nil and type(msg) == "string", "msg must be a string")
-	trigger.action.outTextForGroup(self.asset.groupId, msg,
-		self.displaytime, self.displayclear)
-	self.asset.cmdpending = false
-	return nil
+	xpcall(function()
+		local cmdr = self.theater:getCommander(self.asset.owner)
+		local msg  = self:_execute(time, cmdr)
+		self.asset.cmdpending = false
+		self:_print(msg)
+	end, function(err)
+		self.asset.cmdpending = false
+		self:_print("F10 menu command failed to execute, please report a bug", true)
+		error(string.format(
+			"\nui command failed: %s - %s", self.__clsname, tostring(err)))
+	end)
 end
 
-local ScratchPadDisplay = class(UICmd)
+local ScratchPadDisplay = class("ScratchPadDisplay", UICmd)
 function ScratchPadDisplay:__init(theater, data)
 	UICmd.__init(self, theater, data)
 	self.name = "ScratchPadDisplay:"..data.name
@@ -66,7 +79,7 @@ function ScratchPadDisplay:_execute(_, _)
 	return msg
 end
 
-local ScratchPadSet = class(UICmd)
+local ScratchPadSet = class("ScratchPadSet", UICmd)
 function ScratchPadSet:__init(theater, data)
 	UICmd.__init(self, theater, data)
 	self.name = "ScratchPadSet:"..data.name
@@ -86,40 +99,72 @@ function ScratchPadSet:_execute(_, _)
 	return msg
 end
 
-local TheaterUpdateCmd = class(UICmd)
+local TheaterUpdateCmd = class("TheaterUpdateCmd", UICmd)
 function TheaterUpdateCmd:__init(theater, data)
 	UICmd.__init(self, theater, data)
 	self.name = "TheaterUpdateCmd:"..data.name
 end
 
+local function addAirbases(allAirbases, outList, side, ownerFilter)
+	for _, airbase in utils.sortedpairs(allAirbases) do
+		if airbase.owner == ownerFilter then
+			table.insert(outList, string.format("%s: %s",
+				human.relationship(side, airbase.owner),
+				airbase.name))
+		end
+	end
+end
+
 function TheaterUpdateCmd:_execute(_, cmdr)
 	local update = cmdr:getTheaterUpdate()
-	local msg =
-		string.format("== Theater Threat Status ==\n") ..
-		string.format("  Force Str: %s\n",
-			human.strength(update.enemy.str))..
-		string.format("  Sea:    %s\n", human.threat(update.enemy.sea)) ..
-		string.format("  Air:    %s\n", human.airthreat(update.enemy.air)) ..
-		string.format("  ELINT:  %s\n", human.threat(update.enemy.elint))..
-		string.format("  SAM:    %s\n", human.threat(update.enemy.sam)) ..
-		string.format("\n== Friendly Force Info ==\n")..
-		string.format("  Force Str: %s\n",
-			human.strength(update.friendly.str))..
-		string.format("\n== Current Active Air Missions ==\n")
+	local available = cmdr:getAvailableMissions(self.asset.ato)
+	local recommended = cmdr:recommendMissionType(self.asset.ato)
+	local airbases = self.theater:getAssetMgr():filterAssets(
+		function(asset) return asset.type == enum.assetType.AIRBASE end)
+
+	local airbaseList = {}
+	if cmdr.owner ~= coalition.side.NEUTRAL then
+		addAirbases(airbases, airbaseList, cmdr.owner, cmdr.owner)
+	end
+	addAirbases(airbases, airbaseList, cmdr.owner, coalition.side.NEUTRAL)
+	addAirbases(airbases, airbaseList, cmdr.owner, dctutils.getenemy(cmdr.owner))
+
+	local activeMsnList = {}
 	if next(update.missions) ~= nil then
-		for k,v in pairs(update.missions) do
-			msg = msg .. string.format("  %6s:  %2d\n", k, v)
+		for msntype, count in utils.sortedpairs(update.missions) do
+			table.insert(activeMsnList, string.format("%s:  %d", msntype, count))
 		end
 	else
-		msg = msg .. "  No Active Missions\n"
+		table.insert(activeMsnList, "None")
 	end
-	msg = msg .. string.format("\nRecommended Mission Type: %s\n",
-		utils.getkey(enum.missionType,
-			cmdr:recommendMissionType(self.asset.ato)) or "None")
+
+	local availableMsnList = {}
+	if next(available) ~= nil then
+		for msntype, count in utils.sortedpairs(available) do
+			table.insert(availableMsnList, string.format("%s:  %d", msntype, count))
+		end
+	else
+		table.insert(availableMsnList, "None")
+	end
+
+	local msg = "== Theater Status ==\n"..
+		string.format("Friendly Force Str: %s\n",
+			human.strength(update.friendly.str))..
+		string.format("Enemy Force Str: %s\n",
+			human.strength(update.enemy.str))..
+		string.format("\nAirbases:\n  %s\n",
+			table.concat(airbaseList, "\n  "))..
+		string.format("\nCurrent Active Air Missions:\n  %s\n",
+			table.concat(activeMsnList, "\n  "))..
+		string.format("\nAvailable missions:\n  %s\n",
+			table.concat(availableMsnList, "\n  "))..
+		string.format("\nRecommended Mission Type: %s",
+			utils.getkey(enum.missionType, recommended) or "None")
+
 	return msg
 end
 
-local CheckPayloadCmd = class(UICmd)
+local CheckPayloadCmd = class("CheckPayloadCmd", UICmd)
 function CheckPayloadCmd:__init(theater, data)
 	UICmd.__init(self, theater, data)
 	self.name = "CheckPayloadCmd:"..data.name
@@ -160,6 +205,10 @@ function CheckPayloadCmd.buildSummary(costs)
 end
 
 function CheckPayloadCmd:_execute(_ --[[time]], _ --[[cmdr]])
+	if type(self.asset.inAir) == "function" and self.asset:inAir() then
+		return "Payload check is only allowed when landed at a friendly airbase"
+	end
+
 	local ok, totals = loadout.check(self.asset)
 	if ok then
 		return "Valid loadout, you may depart. Good luck!\n\n"
@@ -171,7 +220,7 @@ function CheckPayloadCmd:_execute(_ --[[time]], _ --[[cmdr]])
 	end
 end
 
-local MissionCmd = class(UICmd)
+local MissionCmd = class("MissionCmd", UICmd)
 function MissionCmd:__init(theater, data)
 	UICmd.__init(self, theater, data)
 	self.erequest = true
@@ -208,14 +257,31 @@ local function briefingmsg(msn, asset)
 	return msg
 end
 
-local MissionJoinCmd = class(MissionCmd)
+local function assignedPilots(msn, assetmgr)
+	local pilots = {}
+	for _, name in pairs(msn:getAssigned()) do
+		local asset = assetmgr:getAsset(name)
+		if asset:isa(require("dct.assets.Player")) then
+			local playerName = asset:getPlayerName()
+			if playerName then
+				local aircraft = asset:getAircraftName()
+				table.insert(pilots, string.format("%s (%s)", playerName, aircraft))
+			end
+		end
+	end
+	return table.concat(pilots, "\n")
+end
+
+local MissionJoinCmd = class("MissionJoinCmd", MissionCmd)
 function MissionJoinCmd:__init(theater, data)
 	MissionCmd.__init(self, theater, data)
 	self.name = "MissionJoinCmd:"..data.name
+	self.missioncode = data.value
+	self.assetmgr = theater:getAssetMgr()
 end
 
 function MissionJoinCmd:_execute(_, cmdr)
-	local missioncode = self.asset.scratchpad or 0
+	local missioncode = self.missioncode or self.asset.scratchpad or 0
 	local msn = cmdr:getAssigned(self.asset)
 	local msg
 
@@ -227,24 +293,27 @@ function MissionJoinCmd:_execute(_, cmdr)
 
 	msn = cmdr:getMission(missioncode)
 	if msn == nil then
-		msg = string.format("No mission of ID(%s) available, use"..
-			" scratch pad to set id.", tostring(missioncode))
+		msg = string.format("No mission of ID(%s) available", tostring(missioncode))
 	else
+		local tgtinfo = msn:getTargetInfo()
 		msn:addAssigned(self.asset)
 		msg = string.format("Mission %s assigned, use F10 menu "..
 			"to see this briefing again\n", msn:getID())
-		msg = msg..briefingmsg(msn, self.asset)
+		msg = msg..briefingmsg(msn, self.asset).."\n\n"
+		msg = msg..string.format("BDA: %d%% complete\n\n", tgtinfo.status)
+		msg = msg.."Assigned Pilots:\n"..assignedPilots(msn, self.assetmgr)
 		human.drawTargetIntel(msn, self.asset.groupId, false)
 	end
 	return msg
 end
 
-local MissionRqstCmd = class(MissionCmd)
+local MissionRqstCmd = class("MissionRqstCmd", MissionCmd)
 function MissionRqstCmd:__init(theater, data)
 	MissionCmd.__init(self, theater, data)
 	self.name = "MissionRqstCmd:"..data.name
 	self.missiontype = data.value
 	self.displaytime = 120
+	self.assetmgr = theater:getAssetMgr()
 end
 
 function MissionRqstCmd:_execute(_, cmdr)
@@ -262,16 +331,19 @@ function MissionRqstCmd:_execute(_, cmdr)
 		msg = string.format("No %s missions available.",
 			human.missiontype(self.missiontype))
 	else
+		local tgtinfo = msn:getTargetInfo()
 		msg = string.format("Mission %s assigned, use F10 menu "..
 			"to see this briefing again\n", msn:getID())
 		msg = msg..briefingmsg(msn, self.asset)
+		msg = msg..string.format("\n\nBDA: %d%% complete", tgtinfo.status)
+		msg = msg.."\n\nAssigned Pilots:\n"..assignedPilots(msn, self.assetmgr)
 		human.drawTargetIntel(msn, self.asset.groupId, false)
 	end
 	return msg
 end
 
 
-local MissionBriefCmd = class(MissionCmd)
+local MissionBriefCmd = class("MissionBriefCmd", MissionCmd)
 function MissionBriefCmd:__init(theater, data)
 	MissionCmd.__init(self, theater, data)
 	self.name = "MissionBriefCmd:"..data.name
@@ -283,10 +355,11 @@ function MissionBriefCmd:_mission(_, _, msn)
 end
 
 
-local MissionStatusCmd = class(MissionCmd)
+local MissionStatusCmd = class("MissionStatusCmd", MissionCmd)
 function MissionStatusCmd:__init(theater, data)
 	MissionCmd.__init(self, theater, data)
 	self.name = "MissionStatusCmd:"..data.name
+	self.assetmgr = theater:getAssetMgr()
 end
 
 function MissionStatusCmd:_mission(_, _, msn)
@@ -305,13 +378,14 @@ function MissionStatusCmd:_mission(_, _, msn)
 		string.format("Timeout: %s (in %d mins)\n",
 			os.date("%F %Rz", dctutils.zulutime(timeout)),
 			minsleft)..
-		string.format("BDA: %d%% complete\n", tgtinfo.status)
+		string.format("BDA: %d%% complete\n\n", tgtinfo.status)..
+		string.format("Assigned Pilots:\n")..assignedPilots(msn, self.assetmgr)
 
 	return msg
 end
 
 
-local MissionAbortCmd = class(MissionCmd)
+local MissionAbortCmd = class("MissionAbortCmd", MissionCmd)
 function MissionAbortCmd:__init(theater, data)
 	MissionCmd.__init(self, theater, data)
 	self.name = "MissionAbortCmd:"..data.name
@@ -339,7 +413,7 @@ function MissionAbortCmd:_mission(_ --[[time]], _, msn)
 end
 
 
-local MissionRolexCmd = class(MissionCmd)
+local MissionRolexCmd = class("MissionRolexCmd", MissionCmd)
 function MissionRolexCmd:__init(theater, data)
 	MissionCmd.__init(self, theater, data)
 	self.name = "MissionRolexCmd:"..data.name
@@ -352,7 +426,7 @@ function MissionRolexCmd:_mission(_, _, msn)
 end
 
 
-local MissionCheckinCmd = class(MissionCmd)
+local MissionCheckinCmd = class("MissionCheckinCmd", MissionCmd)
 function MissionCheckinCmd:__init(theater, data)
 	self.name = "MissionCheckinCmd:"..data.name
 	MissionCmd.__init(self, theater, data)
@@ -364,7 +438,7 @@ function MissionCheckinCmd:_mission(time, _, msn)
 end
 
 
-local MissionCheckoutCmd = class(MissionCmd)
+local MissionCheckoutCmd = class("MissionCheckoutCmd", MissionCmd)
 function MissionCheckoutCmd:__init(theater, data)
 	MissionCmd.__init(self, theater, data)
 	self.name = "MissionCheckoutCmd:"..data.name

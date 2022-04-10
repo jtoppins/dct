@@ -72,6 +72,12 @@ function Commander:__init(theater, side)
 	self.tgtlist      = {}
 	self.aifreq       = 2*60 -- 2 minutes in seconds
 
+	-- Cache valid mission IDs in random order
+	self.missionIds = {}
+	for i = 0, 63 do
+		table.insert(self.missionIds, math.random(#self.missionIds + 1), i)
+	end
+
 	theater:queueCommand(120, Command(
 		"Commander("..tostring(self.owner)..").startIADS",
 		self.startIADS, self))
@@ -152,7 +158,6 @@ function Commander:getTheaterUpdate()
 	return theaterUpdate
 end
 
-local MISSION_ID = math.random(1,63)
 local invalidXpdrTbl = {
 	["7700"] = true,
 	["7600"] = true,
@@ -171,18 +176,19 @@ local invalidXpdrTbl = {
 --  If 'nil' is returned no valid mission id could be generated.
 --]]
 function Commander:genMissionCodes(msntype)
-	local id
+	local missionId, fmtId
 	local digit1 = enum.squawkMissionType[msntype]
-	while true do
-		MISSION_ID = (MISSION_ID + 1) % 64
-		id = string.format("%01o%02o0", digit1, MISSION_ID)
-		if invalidXpdrTbl[id] == nil and self:getMission(id) == nil then
+	for _, id in ipairs(self.missionIds) do
+		fmtId = string.format("%01o%02o0", digit1, id)
+		if invalidXpdrTbl[fmtId] == nil and self:getMission(fmtId) == nil then
+			missionId = id
 			break
 		end
 	end
+	assert(missionId ~= nil, "cannot generate mission: no valid ids left")
 	local m1 = (8*digit1)+(enum.squawkMissionSubType[msntype] or 0)
-	local m3 = (512*digit1)+(MISSION_ID*8)
-	return { ["id"] = id, ["m1"] = m1, ["m3"] = m3, }
+	local m3 = (512*digit1)+(missionId*8)
+	return { ["id"] = fmtId, ["m1"] = m1, ["m3"] = m3, }
 end
 
 --[[
@@ -223,7 +229,7 @@ end
 --   meets the mission criteria
 --]]
 function Commander:requestMission(grpname, missiontype)
-	local assetmgr = require("dct.Theater").singleton():getAssetMgr()
+	local assetmgr = dct.Theater.singleton():getAssetMgr()
 	local pq = heapsort_tgtlist(self.tgtlist,
 		enum.missionTypeMap[missiontype], self.owner)
 
@@ -255,6 +261,40 @@ function Commander:getMission(id)
 	return self.missions[id]
 end
 
+--[[
+-- return the number of missions that can be assigned per given type
+--]]
+function Commander:getAvailableMissions(missionTypes)
+	local assetmgr = dct.theater:getAssetMgr()
+
+	-- map asset types to the given mission type names
+	local assetTypeMap = {}
+	for missionTypeName, missionTypeId in pairs(missionTypes) do
+		for assetType, _ in pairs(enum.missionTypeMap[missionTypeId]) do
+			assetTypeMap[assetType] = missionTypeName
+		end
+	end
+
+	local counts = {}
+
+	-- build a user-friendly mapping using the mission type names as keys
+	for name, assetType in pairs(self.tgtlist) do
+		local asset = assetmgr:getAsset(name)
+		if not asset:isDead() and not asset:isTargeted(self.owner) then
+			local missionType = assetTypeMap[assetType]
+			if missionType ~= nil then
+				counts[missionType] = counts[missionType] or 0
+				counts[missionType] = counts[missionType] + 1
+			end
+		end
+	end
+
+	return counts
+end
+
+--[[
+-- start tracking a given mission internally
+--]]
 function Commander:addMission(mission)
 	self.missions[mission:getID()] = mission
 	self.missionstats:inc(mission.type)

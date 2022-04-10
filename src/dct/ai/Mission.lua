@@ -220,6 +220,15 @@ function Mission:getAssigned()
 	return utils.shallowclone(self.assigned)
 end
 
+local function friendlyName(asset)
+	local playerName = asset.getPlayerName and asset:getPlayerName()
+	if playerName ~= nil then
+		return string.format('Player "%s"', playerName)
+	else
+		return string.format('Unit "%s"', tostring(asset.name))
+	end
+end
+
 function Mission:addAssigned(asset)
 	if self:isMember(asset.name) then
 		return
@@ -231,6 +240,16 @@ function Mission:addAssigned(asset)
 	end
 	Logger:debug("Mission %d: addAssigned(%s)", self.id, asset.name)
 	asset.missionid = self:getID()
+
+	local msg = string.format("%s has joined your mission", friendlyName(asset))
+	for _, assigned in pairs(self.assigned) do
+		if assigned ~= asset.name then
+			local grp = Group.getByName(assigned)
+			if grp ~= nil then
+				trigger.action.outTextForGroup(grp:getID(), msg, 20, false)
+			end
+		end
+	end
 end
 
 function Mission:removeAssigned(asset)
@@ -241,6 +260,14 @@ function Mission:removeAssigned(asset)
 	table.remove(self.assigned, i)
 	Logger:debug("Mission %d: removeAssigned(%s)", self.id, asset.name)
 	asset.missionid = enum.misisonInvalidID
+
+	local msg = string.format("%s has left your mission", friendlyName(asset))
+	for _, assigned in pairs(self.assigned) do
+		local grp = Group.getByName(assigned)
+		if grp ~= nil then
+			trigger.action.outTextForGroup(grp:getID(), msg, 20, false)
+		end
+	end
 end
 
 --[[

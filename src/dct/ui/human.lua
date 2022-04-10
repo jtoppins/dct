@@ -104,4 +104,14 @@ function human.removeIntel(msn, grpid)
 	end
 end
 
+function human.relationship(side1, side2)
+	if side1 == side2 then
+		return "Friendly"
+	elseif dctutils.getenemy(side1) == side2 then
+		return "Hostile"
+	else
+		return "Neutral"
+	end
+end
+
 return human
