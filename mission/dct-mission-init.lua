@@ -10,11 +10,11 @@
 --]]
 
 do
-	if not lfs or not io or not os or not require or not loadlib then
+	if not lfs or not io or not os or not require or not package then
 		local assertmsg = "DCT requires DCS mission scripting environment"..
 			" to be modified, the file needing to be changed can be found"..
 			" at $DCS_ROOT\\Scripts\\MissionScripting.lua. Comment out"..
-			" the removal of lfs, io, os, 'require' and 'loadlib'."..
+			" the removal of lfs, io, os, 'require' and 'package'."..
 			" *WARNING:* Running an unsanitized environment can open the"..
 			" system up to unauthorized file-system writes, only run"..
 			" DCS missions which you trust."
