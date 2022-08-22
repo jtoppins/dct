@@ -67,12 +67,11 @@ local function dctexists()
 end
 
 local function singleside()
-	Template.fromFile({["name"] = "test", ["priority"] = 500},
+	local t = Template.fromFile({["name"] = "test", ["priority"] = 500},
 		lfs.writedir()..utils.sep.."test.dct",
 		lfs.writedir()..utils.sep.."test-both-sides.stm")
+	assert(t:isValid() == true)
 end
-
---local json = require("")
 
 local function main()
 	local rname = "testregion"
@@ -85,6 +84,8 @@ local function main()
 			},
 			lfs.writedir()..utils.sep..data.name..".dct",
 			lfs.writedir()..utils.sep..data.name..".stm")
+
+		assert(t:isValid(), "bad template")
 
 		-- test: group values read
 		for grpname, value in pairs(data.groups) do
@@ -103,8 +104,9 @@ local function main()
 
 		-- test: template type is as expected
 		assert(t.objtype == data.objtype,
-			data.name.." unexpected objtype, read: "..t.objtype..
-			"; expected: "..data.objtype)
+			tostring(data.name).." unexpected objtype, read: "..
+			tostring(t.objtype).."; expected: "..
+			tostring(data.objtype))
 
 		-- test: death goals
 		assert(t.hasDeathGoals == data.hasDeathGoals,
@@ -119,7 +121,7 @@ local function main()
 
 	-- test: verify all groups in a template belong to the same side,
 	-- as template can only belong to a single side
-	assert(xpcall(singleside, nil) == false, "template check containing"..
+	assert(xpcall(singleside, nil) == false, "template check containing "..
 			"both sides failed")
 
 	return 0

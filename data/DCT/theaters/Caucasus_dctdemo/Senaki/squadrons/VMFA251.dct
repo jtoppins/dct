@@ -1,4 +1,5 @@
 objtype = "squadronplayer"
 name = "VMFA251"
-coalition = 2
+coalition = "blue"
 ato = {"CAP", "STRIKE", "SEAD", "OCA",}
+airbase = "Kutaisi"

@@ -208,7 +208,7 @@ local function associate_slots(ab)
 	-- without resetting the campaign state.
 	local region = regionmgr:getRegion(ab.rgnname)
 	local tpl = region:getTemplateByName(ab.tplname)
-	for _, name in ipairs(tpl.players) do
+	for _, name in ipairs(tpl.players or {}) do
 		local asset = assetmgr:getAsset(name)
 		if asset and asset.airbase == nil then
 			asset.airbase = ab.name

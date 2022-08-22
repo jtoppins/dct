@@ -949,6 +949,10 @@ function Unit.getByName(name)
 	return objects[Object.Category.UNIT][name]
 end
 
+function Unit.getDescByName(--[[typename]])
+	return objdefaults.desc
+end
+
 function Unit:getLife()
 	return self.clife
 end

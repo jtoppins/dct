@@ -5,6 +5,7 @@
 --]]
 
 local class    = require("libs.namedclass")
+local utils    = require("libs.utils")
 local enum     = require("dct.enum")
 local dctutils = require("dct.libs.utils")
 local STM      = require("dct.templates.STM")
@@ -38,7 +39,8 @@ function PlayerSlots:__init(theater)
 				["name"]      = grp.data.name,
 				["regionname"]= "theater",
 				["regionprio"]= 1000,
-				["coalition"] = side,
+				["coalition"] = utils.getkey(coalition.side,
+							     side),
 				["cost"]      = theater:getTickets():getPlayerCost(side),
 				["desc"]      = "Player group",
 				["location"]  = { ["x"] = grp.data.x, ["y"] = grp.data.y, },

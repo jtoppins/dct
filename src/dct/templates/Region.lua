@@ -268,8 +268,18 @@ Region.DOMAIN = DOMAIN
 Region.STATUS = STATUS
 
 function Region:addTemplate(tpl)
-	assert(self._templates[tpl.name] == nil,
-		"duplicate template '"..tpl.name.."' defined; "..tostring(tpl.path))
+	if not tpl:isValid() then
+		-- we do not need to log anything as the Template class will
+		-- have done this for us.
+		return
+	end
+
+	if self._templates[tpl.name] ~= nil then
+		Logger:error(string.format("duplicate template '%s' "..
+			     "defined; %s", tpl.name, tostring(tpl.filedct)))
+		return
+	end
+
 	if tpl.theater ~= env.mission.theatre then
 		Logger:warn(string.format(
 			"Region(%s):Template(%s) not for map(%s):template(%s)"..

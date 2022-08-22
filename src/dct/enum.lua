@@ -6,6 +6,12 @@
 
 local enum = {}
 
+enum.airbaserecovery = {
+	["TERMINAL"] = 1,
+	["LAND"]     = 2,
+	["TAXI"]     = 3,
+}
+
 enum.assetType = {
 	-- control zones
 	["KEEPOUT"]     = 1,
