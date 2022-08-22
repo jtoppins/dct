@@ -239,7 +239,7 @@ end
 local function calclocation(tpl)
 	local vec2, n
 	for _, grp in pairs(tpl.tpldata) do
-		vec2, n = require("dct.utils").centroid2D(grp.data, vec2, n)
+		vec2, n = require("dct.libs.utils").centroid2D(grp.data, vec2, n)
 	end
 	vec2.z = nil
 	return vec2

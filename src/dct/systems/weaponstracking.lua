@@ -5,7 +5,7 @@
 --]]
 
 local class    = require("libs.namedclass")
-local dctutils = require("dct.utils")
+local dctutils = require("dct.libs.utils")
 local vector   = require("dct.libs.vector")
 local Logger   = require("dct.libs.Logger").getByName("System")
 local settings = _G.dct.settings.server

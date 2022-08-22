@@ -7,10 +7,10 @@
 local utils      = require("libs.utils")
 local containers = require("libs.containers")
 local enum       = require("dct.enum")
-local dctutils   = require("dct.utils")
+local dctutils   = require("dct.libs.utils")
 local Mission    = require("dct.ai.Mission")
 local Stats      = require("dct.libs.Stats")
-local Command    = require("dct.Command")
+local Command    = require("dct.libs.Command")
 local Logger     = dct.Logger.getByName("Commander")
 
 local function add_target(pq, tgt, owner, filterlist)

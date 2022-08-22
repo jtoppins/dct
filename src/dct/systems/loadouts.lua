@@ -7,7 +7,7 @@
 
 require("lfs")
 local enum     = require("dct.enum")
-local dctutils = require("dct.utils")
+local dctutils = require("dct.libs.utils")
 local settings = _G.dct.settings
 
 local isAAMissile = {

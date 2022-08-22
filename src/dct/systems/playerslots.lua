@@ -6,7 +6,7 @@
 
 local class    = require("libs.namedclass")
 local enum     = require("dct.enum")
-local dctutils = require("dct.utils")
+local dctutils = require("dct.libs.utils")
 local STM      = require("dct.templates.STM")
 local Template = require("dct.templates.Template")
 local Logger   = dct.Logger.getByName("Systems")

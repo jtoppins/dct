@@ -162,7 +162,7 @@ function tasks.command.createTACAN(callsign, channel, mode,
 				   name, aa, bearing, mobile)
 	local bcntype = aienum.BEACON.TYPE.TACAN
 	local system = aienum.BEACON.SYSTEM.TACAN
-	local freq = require("dct.utils").calcTACANFreq(channel, mode)
+	local freq = require("dct.libs.utils").calcTACANFreq(channel, mode)
 	local extra = {}
 
 	extra.channel = channel

@@ -1,5 +1,5 @@
 local Logger      = require("dct.libs.Logger").getByName("IADS")
-local Command     = require("dct.Command")
+local Command     = require("dct.libs.Command")
 local class       = require("libs.class")
 local utils       = require("libs.utils")
 
