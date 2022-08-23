@@ -72,6 +72,7 @@ local factKey = {
 	["AMMOGUN"]       = "ammogun",
 	["AMMOAA"]        = "ammoAA",
 	["AMMOAG"]        = "ammoAG",
+	["FUEL"]          = "fuel",
 }
 
 --- An abstract container generalizing a property of a fact.
@@ -146,6 +147,7 @@ NodeFact.nodeType = {
 	["INVALID"]    = 0,
 	["RALLYPOINT"] = 1, -- a node that can be retreated to
 	["STATION"]    = 2, -- a guard position
+	["HOMEBASE"]   = 3,
 }
 
 --- Some sort of disturbance the Agent detects that can trigger an change
