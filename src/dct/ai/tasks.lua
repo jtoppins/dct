@@ -123,6 +123,40 @@ function tasks.command.activateBeacon(freq, bcntype, system, callsign,
 		aienum.TASKTYPE.COMMAND
 end
 
+function tasks.command.deactivateBeacon(bcntype)
+	local bcn = bcntype or aienum.BEACON.DEACTIVATE.ALL
+	return create_task_tbl(bcn), aienum.TASKTYPE.COMMAND
+end
+
+function tasks.command.activateACLS(unit, name)
+	local params = {}
+	params.unitId = unit:getID()
+	params.name   = name
+	return create_task_tbl('ActivateACLS', params),
+		aienum.TASKTYPE.COMMAND
+end
+
+function tasks.command.activateICLS(unit, chan, name)
+	local params = {}
+	params.type    = aienum.BEACON.TYPE.ICLS_GLIDESLOPE
+	params.channel = check.range(chan, 1, 20)
+	params.unitId  = unit:getID()
+	params.name    = name
+
+	return create_task_tbl('ActivateICLS', params),
+		aienum.TASKTYPE.COMMAND
+end
+
+function tasks.command.activateLink4(unit, freq, name)
+	local params = {}
+	params.unitId    = unit:getID()
+	params.frequency = check.number(freq)
+	params.name      = name
+
+	return create_task_tbl('ActivateLink4', params),
+		aienum.TASKTYPE.COMMAND
+end
+
 function tasks.command.createTACAN(callsign, channel, mode,
 							  name, aa, bearing, mobile)
 	local bcntype = aienum.BEACON.TYPE.TACAN
@@ -158,10 +192,6 @@ function tasks.command.createTACAN(callsign, channel, mode,
 
 	return tasks.command.activateBeacon(freq, bcntype, system, callsign,
 		name, extra)
-end
-
-function tasks.command.deactivateBeacon()
-	return create_task_tbl('DeactivateBeacon'), aienum.TASKTYPE.COMMAND
 end
 
 function tasks.command.eplrs(enable)
@@ -296,6 +326,8 @@ function tasks.task.follow(gid, pos, wptidx)
 	if wptidx then
 		params.lastWptIndexFlag = true
 		params.listWptIndex     = check.number(wptidx)
+	else
+		params.lastWptIndexFlag = false
 	end
 	return create_task_tbl('Follow', params), aienum.TASKTYPE.TASK
 end
@@ -312,6 +344,14 @@ function tasks.task.escort(gid, pos, engagedist, tgtlist, wptidx)
 	task.id                       = 'Escort'
 	task.params.engagementDistMax = check.number(engagedist)
 	task.params.targetTypes       = check.table(tgtlist)
+	return task, tasktype
+end
+
+function tasks.task.escortGround(gid, pos, orbitdist, tgtlist, wptidx)
+	local task, tasktype = tasks.task.escort(gid, pos, orbitdist,
+						 tgtlist, wptidx)
+
+	task.id = 'GroundEscort'
 	return task, tasktype
 end
 
