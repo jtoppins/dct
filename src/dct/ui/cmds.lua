@@ -12,7 +12,7 @@ local dctutils = require("dct.libs.utils")
 local human    = require("dct.ui.human")
 local Command  = require("dct.libs.Command")
 local Logger   = dct.Logger.getByName("UI")
-local loadout  = require("dct.systems.loadouts")
+local loadout  = require("dct.ui.loadouts")
 
 local UICmd = class("UICmd", Command)
 function UICmd:__init(theater, data)

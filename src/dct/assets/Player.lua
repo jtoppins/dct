@@ -39,7 +39,7 @@ local dctenum = require("dct.enum")
 local dctutils= require("dct.libs.utils")
 local AssetBase = require("dct.assets.AssetBase")
 local uimenu  = require("dct.ui.groupmenu")
-local loadout = require("dct.systems.loadouts")
+local loadout = require("dct.ui.loadouts")
 local State   = require("dct.libs.State")
 local settings = _G.dct.settings
 

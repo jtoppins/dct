@@ -18,10 +18,10 @@
 --   object creation.
 --]]
 
+local utils    = require("libs.utils")
 local enum     = require("dct.enum")
 local Theater  = require("dct.Theater")
-local loadout  = require("dct.systems.loadouts")
-local utils    = require("libs.utils")
+local loadout  = require("dct.ui.loadouts")
 local msncodes = require("dct.ui.missioncodes")
 local Logger   = dct.Logger.getByName("UI")
 local addmenu  = missionCommands.addSubMenuForGroup
