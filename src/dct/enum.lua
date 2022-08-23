@@ -211,47 +211,20 @@ enum.UNIT_CAT_SCENERY = Unit.Category.STRUCTURE + 1
 
 local eventbase = world.event.S_EVENT_MAX + 2000
 enum.event = {
-	["DCT_EVENT_DEAD"] = eventbase + 1,
-		--[[
-		-- DEAD definition:
-		--   id = id of this event
-		--   initiator = asset sending the death notification
-		--]]
-	["DCT_EVENT_HIT"]  = eventbase + 2,
-		--[[
-		-- HIT definition:
-		--   id = id of this event
-		--   initiator = DCT asset that was hit
-		--   weapon = DCTWeapon object
-		--]]
-	["DCT_EVENT_OPERATIONAL"] = eventbase + 3,
-		--[[
-		-- OPERATIONAL definition:
-		--   id = id of this event
-		--   initiator = base sending the operational notification
-		--   state = of the base, true == operational
-		--]]
-	["DCT_EVENT_CAPTURED"] = eventbase + 4,
-		--[[
-		-- CAPTURED definition:
-		--   id = id of this event
-		--   initiator = object that initiated the capture
-		--   target = the base that has been captured
-		--]]
-	["DCT_EVENT_IMPACT"] = eventbase + 5,
-		--[[
-		-- IMPACT definition:
-		--   id = id of the event
-		--   initiator = DCTWeapon class causing the impact
-		--   point = impact point
-		--]]
-	["DCT_EVENT_ADD_ASSET"] = eventbase + 6,
-		--[[
-		-- ADD_ASSET definition:
-		--  A new asset was added to the asset manager.
-		--   id = id of this event
-		--   initiator = asset being added
-		--]]
+	["DCT_EVENT_DEAD"]           = eventbase + 1,
+	["DCT_EVENT_HIT"]            = eventbase + 2,
+	["DCT_EVENT_OPERATIONAL"]    = eventbase + 3,
+	["DCT_EVENT_CAPTURED"]       = eventbase + 4,
+	["DCT_EVENT_IMPACT"]         = eventbase + 5,
+	["DCT_EVENT_ADD_ASSET"]      = eventbase + 6,
+	["DCT_EVENT_GOAL_COMPLETE"]  = eventbase + 7,
+	["DCT_EVENT_MISSION_START"]  = eventbase + 8,
+	["DCT_EVENT_MISSION_UPDATE"] = eventbase + 9,
+	["DCT_EVENT_MISSION_DONE"]   = eventbase + 10,
+	["DCT_EVENT_MISSION_JOIN"]   = eventbase + 11,
+	["DCT_EVENT_MISSION_LEAVE"]  = eventbase + 12,
+	["DCT_EVENT_PLAYER_KICK"]    = eventbase + 13,
+	["DCT_EVENT_PLAYER_JOIN"]    = eventbase + 14,
 }
 
 enum.kickCode = require("dct.libs.kickinfo").kickCode
