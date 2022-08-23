@@ -1,16 +1,19 @@
---[[
--- SPDX-License-Identifier: LGPL-3.0
+--- SPDX-License-Identifier: LGPL-3.0
 --
 -- Creates a container for managing region objects.
---]]
 
-local utils = require("libs.utils")
-local dctenum = require("dct.enum")
-local vector = require("dct.libs.vector")
+local utils        = require("libs.utils")
+local dctenum      = require("dct.enum")
+local vector       = require("dct.libs.vector")
 local Marshallable = require("dct.libs.Marshallable")
-local Region = require("dct.templates.Region")
+local Region       = require("dct.templates.Region")
 local settings = dct.settings.server
 
+--- @class RegionManager
+-- Keeps a collection of Region classes and allows for easy lookup
+-- of a Region within the collection.
+--
+-- @field regions holds the table of regions indexed by Region.name
 local RegionManager = require("libs.namedclass")("RegionManager",
 	Marshallable)
 function RegionManager:__init(theater)
@@ -25,16 +28,26 @@ function RegionManager:getRegion(name)
 	return self.regions[name]
 end
 
+function RegionManager:addRegion(region)
+	self.regions[region.name] = region
+end
+
+function RegionManager:iterate()
+	return next, self.regions, nil
+end
+
+--- Loads all regions defined in the theater.
 function RegionManager:loadRegions()
 	for filename in lfs.dir(settings.theaterpath) do
 		if filename ~= "." and filename ~= ".." and
-			filename ~= ".git" and filename ~= "settings" then
+		   filename ~= ".git" and filename ~= "settings" then
 			local fpath = settings.theaterpath..utils.sep..filename
 			local fattr = lfs.attributes(fpath)
 			if fattr.mode == "directory" then
-				local r = Region(fpath)
-				assert(self.regions[r.name] == nil, "duplicate regions " ..
-					"defined for theater: " .. settings.theaterpath)
+				local r = Region.fromFile(fpath)
+				assert(self.regions[r.name] == nil,
+				       "duplicate regions defined for "..
+				       "theater: " .. settings.theaterpath)
 				self.regions[r.name] = r
 			end
 		end
@@ -72,6 +85,8 @@ function RegionManager:generate()
 	self:validateEdges()
 end
 
+-- TODO: with the new approach to referencing templates I am not sure Regions
+-- need to store any data.
 function RegionManager:marshal()
 	local tbl = {}
 	tbl.regions = {}

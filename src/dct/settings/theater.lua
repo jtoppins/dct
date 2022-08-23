@@ -124,14 +124,20 @@ local function validate_blast_effects(cfgdata, tbl)
 	return newtbl
 end
 
---[[
+local function validate_agents(cfgdata, tbl)
+	local newtbl = {}
+
+	newtbl = utils.mergetables(newtbl, cfgdata.default)
+	newtbl = utils.mergetables(newtbl, tbl)
+	return newtbl
+end
+
 -- We have a few levels of configuration:
 -- 	* server defined config file; <dcs-saved-games>/Config/dct.cfg
 -- 	* theater defined configuration; <theater-path>/settings/<config-files>
 -- 	* default config values
 -- simple algorithm; assign the defaults, then apply the server and
 -- theater configs
---]]
 local function theatercfgs(config)
 	local defaultpayload = {}
 	for _,v in pairs(enum.weaponCategory) do
@@ -199,6 +205,12 @@ local function theatercfgs(config)
 				utils.sep.."blasteffects.cfg",
 			["validate"] = validate_blast_effects,
 			["default"] = require("dct.data.blasteffects"),
+		}, {
+			["name"] = "agents",
+			["file"] = config.server.theaterpath..utils.sep..
+				"settings"..utils.sep.."agents.cfg",
+			["validate"] = validate_agents,
+			["default"] = require("dct.data.agents"),
 		},
 	}
 

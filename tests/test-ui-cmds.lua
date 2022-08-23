@@ -140,7 +140,7 @@ local testcmds = {
 		["data"] = {
 			["name"]   = grp:getName(),
 			["type"]   = enum.uiRequestType.MISSIONABORT,
-			["value"]  = enum.missionAbortType.ABORT,
+			["value"]  = enum.missionResult.ABORT,
 		},
 		["assert"]     = true,
 		["expected"]   = "Mission 5170 aborted",

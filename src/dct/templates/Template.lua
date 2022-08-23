@@ -8,11 +8,12 @@ local utils    = require("libs.utils")
 local dctenum  = require("dct.enum")
 local dctutils = require("dct.libs.utils")
 local STM      = require("dct.templates.STM")
+local Agent    = require("dct.assets.Agent")
 local Logger   = dct.Logger.getByName("Template")
 
 local norenametype = {
 	[dctenum.assetType.SQUADRONPLAYER] = true,
-	[dctenum.assetType.PLAYERGROUP]    = true,
+	[dctenum.assetType.PLAYER]         = true,
 	[dctenum.assetType.AIRBASE]        = true,
 }
 
@@ -30,7 +31,7 @@ local norenametype = {
 local checkers = {
 	require("dct.templates.checkers.CheckCommon")(),
 	require("dct.templates.checkers.CheckTpldata")(),
-	--require("dct.templates.checkers.CheckAgent")(),
+	require("dct.templates.checkers.CheckAgent")(),
 	require("dct.templates.checkers.CheckAirbase")(),
 	require("dct.templates.checkers.CheckSquadron")(),
 	require("dct.templates.checkers.CheckCoalition")(),
@@ -217,19 +218,32 @@ end
 --
 -- @return the object created
 function Template:createObject()
-	return self:_create(genName(self),
+	return Agent.create(genName(self),
 			    self.objtype,
 			    self.coalition,
-			    self:genDesc(),
-			    self)
+			    self:genDesc())
 end
 
-function Template:copyData()
-	local copy = utils.deepcopy(self.tpldata)
-	if self.uniquenames == true then
-		makeNamesUnique(copy)
+--- Generate any subordinate assets that are defined in the template.
+--
+-- @param region the Region instance to look up template names
+-- @param assetmgr the AssetManager instance to store generated assets
+-- @param parent asset object
+function Template:generate(region, assetmgr, parent)
+	for _, name in ipairs(self.subordinates) do
+		local tpl = region:getTemplateByName(name)
+
+		if tpl then
+			local sub = tpl:createObject()
+
+			sub:setParent(parent)
+			parent:addSubordinate(sub)
+			-- have subordinate observe the parent
+			parent:addObserver(sub.onDCTEvent, sub, sub.name)
+			assetmgr:add(sub)
+			tpl:generate(region, assetmgr, sub)
+		end
 	end
-	return copy
 end
 
 --- is the Template valid, a Template can fail validation without killing

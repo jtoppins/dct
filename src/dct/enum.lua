@@ -1,10 +1,22 @@
---[[
--- SPDX-License-Identifier: LGPL-3.0
+--- SPDX-License-Identifier: LGPL-3.0
 --
 -- Define some basic global enumerations for DCT.
---]]
 
 local enum = {}
+
+enum.geomtype = {
+	["CIRCLE"]    = 1,
+	["RECTANGLE"] = 2,
+	["POLYGON"]   = 3,
+}
+
+enum.objtype = {
+	["UNIT"]    = 1,
+	["STATIC"]  = 2,
+	["GROUP"]   = 3,
+	["SCENERY"] = 4,
+	["AGENT"]   = 5,
+}
 
 enum.airbaserecovery = {
 	["TERMINAL"] = 1,
@@ -12,72 +24,58 @@ enum.airbaserecovery = {
 	["TAXI"]     = 3,
 }
 
+-- this is really the template type, it has no bearing on the underlying
+-- object used
 enum.assetType = {
-	-- control zones
-	["KEEPOUT"]     = 1,
+	["INVALID"]     = 0,
+	-- resource types
+	["AMMODUMP"]    = 1,
+	["FUELDUMP"]    = 2,
+	["PORT"]        = 3,
+	["FACILITY"]    = 4,
+	["BUNKER"]      = 4,
+	["CHECKPOINT"]  = 4,
+	["FACTORY"]     = 4,
+	["C2"]          = 5,
+	["FOB"]         = 6,
 
-	-- strategic types
-	["AMMODUMP"]    = 2,
-	["FUELDUMP"]    = 3,
-	["C2"]          = 4,
-	["EWR"]         = 5,
-	["MISSILE"]     = 6,
-	["OCA"]         = 7,
-	["PORT"]        = 8,
-	["SAM"]         = 9,
-	["FACILITY"]    = 10,
+	-- strategic assets
+	["MISSILE"]     = 10,
+	["OCA"]         = 11,
 
-	-- bases
-	["BASEDEFENSE"] = 11,
+	-- air defense
+	["BASEDEFENSE"] = 20,
+	["EWR"]         = 21,
+	["SAM"]         = 22,
+	["SHORAD"]      = 23,
 
-	-- tactical
-	["JTAC"]        = 12,
-	["LOGISTICS"]   = 13,
-	["SEA"]         = 14,
+	-- HQ's / bases
+	["AIRBASE"]        = 31,
+	["SQUADRONPLAYER"] = 32,
+	["SQUADRON"]       = 32,
 
-	-- extended type set
-	["BUNKER"]      = 15,
-	["CHECKPOINT"]  = 16,
-	["FACTORY"]     = 17,
-	["AIRSPACE"]    = 18,
-	["SHORAD"]      = 19,
-	["AIRBASE"]     = 20,
-	["PLAYERGROUP"] = 21,
-	["SPECIALFORCES"] = 22,
-	["FOB"]           = 23,
-	["SQUADRONPLAYER"]= 24,
+	-- tactical land
+	["GROUND"]        = 41,
+	["LOGISTICS"]     = 41,
+	["SPECIALFORCES"] = 41,
+	["JTAC"]          = 42,
+
+	-- tactical sea
+	["SEA"]         = 51,
+	["CV"]          = 52,
+
+	-- tactical air
+	["AIRPLANE"]    = 61,
+	["HELO"]        = 62,
+
+	-- players
+	["PLAYER"]      = 71,
+
+	-- control primitives
+	["SCRIPT"]      = 101,  -- no agent is associated, it is just a
+				-- template that spawns DCS objects
+	["NODE"]        = 102,
 }
-
---[[
--- We use a min-heap so priority is in reverse numerical order,
--- a higher number is lower priority
---]]
-enum.assetTypePriority = {
-	[enum.assetType.AIRSPACE]    = 10,
-	[enum.assetType.JTAC]        = 10,
-	[enum.assetType.EWR]         = 20,
-	[enum.assetType.SAM]         = 20,
-	[enum.assetType.C2]          = 30,
-	[enum.assetType.AMMODUMP]    = 40,
-	[enum.assetType.FUELDUMP]    = 40,
-	[enum.assetType.MISSILE]     = 50,
-	[enum.assetType.SEA]         = 50,
-	[enum.assetType.BASEDEFENSE] = 60,
-	[enum.assetType.OCA]         = 70,
-	[enum.assetType.PORT]        = 70,
-	[enum.assetType.LOGISTICS]   = 70,
-	[enum.assetType.AIRBASE]     = 70,
-	[enum.assetType.SHORAD]      = 100,
-	[enum.assetType.FACILITY]    = 100,
-	[enum.assetType.BUNKER]      = 100,
-	[enum.assetType.CHECKPOINT]  = 100,
-	[enum.assetType.SPECIALFORCES] = 100,
-	[enum.assetType.FOB]         = 100,
-	[enum.assetType.FACTORY]     = 100,
-	[enum.assetType.KEEPOUT]     = 10000,
-}
-
-enum.missionInvalidID = 0
 
 enum.missionType = {
 	["CAS"]        = 1,
@@ -107,6 +105,11 @@ enum.squawkMissionSubType = {
 	[enum.missionType.CAS]        = 3,
 }
 
+for _, msntype in pairs(enum.missionType) do
+	assert(enum.squawkMissionType[msntype],
+		"not all mission types are mapped to squawk codes")
+end
+
 enum.assetClass = {
 	["INITIALIZE"] = {
 		[enum.assetType.AMMODUMP]    = true,
@@ -125,7 +128,6 @@ enum.assetClass = {
 		[enum.assetType.AIRBASE]     = true,
 		[enum.assetType.SPECIALFORCES] = true,
 		[enum.assetType.FOB]           = true,
-		[enum.assetType.AIRSPACE]      = true,
 		[enum.assetType.LOGISTICS]     = true,
 	},
 	-- strategic list is used in calculating ownership of a region
@@ -145,51 +147,39 @@ enum.assetClass = {
 		[enum.assetType.AIRBASE]     = true,
 		[enum.assetType.FOB]         = true,
 	},
-	-- agents never get serialized to the state file
 	["AGENTS"] = {
-		[enum.assetType.PLAYERGROUP] = true,
-	}
+	},
+	["HEADQUARTERS"] = {
+		--[enum.assetType.SQUADRON] = true,
+	},
 }
 
 enum.missionTypeMap = {
-	[enum.missionType.STRIKE] = {
-		[enum.assetType.AMMODUMP]   = true,
-		[enum.assetType.FUELDUMP]   = true,
-		[enum.assetType.C2]         = true,
-		[enum.assetType.MISSILE]    = true,
-		[enum.assetType.PORT]       = true,
-		[enum.assetType.FACILITY]   = true,
-		[enum.assetType.BUNKER]     = true,
-		[enum.assetType.CHECKPOINT] = true,
-		[enum.assetType.FACTORY]    = true,
-	},
-	[enum.missionType.SEAD] = {
-		[enum.assetType.EWR]        = true,
-		[enum.assetType.SAM]        = true,
-	},
-	[enum.missionType.OCA] = {
-		[enum.assetType.OCA]        = true,
-		[enum.assetType.AIRBASE]    = true,
-	},
-	[enum.missionType.BAI] = {
-		[enum.assetType.LOGISTICS]  = true,
-	},
-	[enum.missionType.CAS] = {
-		[enum.assetType.JTAC]       = true,
-	},
-	[enum.missionType.CAP] = {
-		[enum.assetType.AIRSPACE]   = true,
-	},
-	[enum.missionType.ARMEDRECON] = {
-		[enum.assetType.SPECIALFORCES] = true,
-		[enum.assetType.FOB]           = true,
-	},
+	[enum.assetType.AMMODUMP]	= enum.missionType.STRIKE,
+	[enum.assetType.FUELDUMP]	= enum.missionType.STRIKE,
+	[enum.assetType.C2]		= enum.missionType.STRIKE,
+	[enum.assetType.MISSILE]	= enum.missionType.STRIKE,
+	[enum.assetType.PORT]		= enum.missionType.STRIKE,
+	[enum.assetType.FACILITY]	= enum.missionType.STRIKE,
+	[enum.assetType.BUNKER]		= enum.missionType.STRIKE,
+	[enum.assetType.CHECKPOINT]	= enum.missionType.STRIKE,
+	[enum.assetType.FACTORY]	= enum.missionType.STRIKE,
+	[enum.assetType.EWR]		= enum.missionType.SEAD,
+	[enum.assetType.SAM]		= enum.missionType.SEAD,
+	[enum.assetType.SHORAD]		= enum.missionType.SEAD,
+	[enum.assetType.OCA]		= enum.missionType.OCA,
+	[enum.assetType.AIRBASE]	= enum.missionType.OCA,
+	[enum.assetType.LOGISTICS]	= enum.missionType.BAI,
+	[enum.assetType.JTAC]		= enum.missionType.CAS,
+	[enum.assetType.SPECIALFORCES]	= enum.missionType.ARMEDRECON,
+	[enum.assetType.FOB]		= enum.missionType.ARMEDRECON,
+	[enum.assetType.SEA]		= enum.missionType.SEA,
 }
 
-enum.missionAbortType = {
-	["ABORT"]    = 0,
-	["COMPLETE"] = 1,
-	["TIMEOUT"]  = 2,
+enum.missionResult = {
+	["ABORT"]   = 0,
+	["TIMEOUT"] = 1,
+	["SUCCESS"] = 2,
 }
 
 enum.uiRequestType = {
@@ -205,6 +195,7 @@ enum.uiRequestType = {
 	["SCRATCHPADSET"]   = 10,
 	["CHECKPAYLOAD"]    = 11,
 	["MISSIONJOIN"]     = 12,
+	["REQUESTREARM"]    = 13,
 }
 
 enum.weaponCategory = {
@@ -234,10 +225,5 @@ enum.event = {
 }
 
 enum.kickCode = require("dct.libs.kickinfo").kickCode
-
-for _, msntype in pairs(enum.missionType) do
-	assert(enum.squawkMissionType[msntype],
-		"not all mission types are mapped to squawk codes")
-end
 
 return enum

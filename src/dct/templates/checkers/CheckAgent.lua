@@ -38,7 +38,19 @@ function CheckAgent:check(data)
 		return true
 	end
 
-	return Check.check(self, data)
+	local ok, key, msg = Check.check(self, data)
+	if not ok then
+		return ok, key, msg
+	end
+
+	local defaults = dct.settings.agents[data.objtype]
+
+	for k, _ in pairs(self.options) do
+		if next(data[k]) == nil then
+			data[k] = defaults[k]
+		end
+	end
+	return true
 end
 
 return CheckAgent

@@ -81,7 +81,7 @@ local function main()
 	theater.startdate = startdate
 
 	dctstubs.setModelTime(50)
-	theater:exec(60)
+	theater:exec(50)
 	local expected = 34
 	assert(dctcheck.spawngroups == expected,
 		string.format("group spawn broken; expected(%d), got(%d)",
@@ -90,16 +90,6 @@ local function main()
 	assert(dctcheck.spawnstatics == expected,
 		string.format("static spawn broken; expected(%d), got(%d)",
 		expected, dctcheck.spawnstatics))
-
-	--[[ TODO: test ATO once support is added for squadron
-	local restriction =
-		theater:getATORestrictions(coalition.side.BLUE, "A-10C")
-	local validtbl = { ["BAI"] = 5, ["CAS"] = 1, ["STRIKE"] = 3,
-		["ARMEDRECON"] = 7,}
-	for k, v in pairs(restriction) do
-		assert(validtbl[k] == v, "ATO Restriction error")
-	end
-	--]]
 
 	-- kill off some units
 	for _, eventdata in ipairs(events) do
@@ -117,10 +107,13 @@ local function main()
 
 	dct.Logger.getByName("Theater"):info("++++ create new theater +++++")
 
+	dctstubs.setModelTime(0)
 	local newtheater = dct.Theater()
 	dct.theater = newtheater
 	theater.startdate = startdate
-	newtheater:exec(60)
+	dctstubs.setModelTime(50)
+	newtheater:exec(50)
+
 	local name = "Test region_1_Abu Musa Ammo Dump"
 	-- verify the units read in do not include the asset we killed off
 	assert(newtheater:getAssetMgr():getAsset(name) == nil,
@@ -154,8 +147,8 @@ local function main()
 	cmd:execute(400)
 
 	local playercnt = 0
-	for _, asset in pairs(theater:getAssetMgr()._assetset) do
-		if asset.type == enum.assetType.PLAYERGROUP then
+	for _, asset in newtheater:getAssetMgr():iterate() do
+		if asset.type == enum.assetType.PLAYER then
 			playercnt = playercnt + 1
 		end
 	end

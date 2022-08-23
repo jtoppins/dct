@@ -1,19 +1,13 @@
---[[
--- SPDX-License-Identifier: LGPL-3.0
+--- SPDX-License-Identifier: LGPL-3.0
 --
 -- Provides functions to define and manage death goals
 -- for DCS objects tracked by assets.
---]]
 
 local class = require("libs.class")
+local dctenum = require("dct.enum")
 local Logger = require("dct.libs.Logger").getByName("DeathGoal")
 
-local objtype = {
-	["UNIT"]    = 1,
-	["STATIC"]  = 2,
-	["GROUP"]   = 3,
-	["SCENERY"] = 4,
-}
+local objtype = dctenum.objtype
 
 local priority = {
 	["PRIMARY"]   = 1,
@@ -59,8 +53,8 @@ local DamageGoal = class()
 function DamageGoal:__init(data)
 	assert(type(data.value) == 'number',
 		"value error: data.value must be a number")
-	assert(data.value >= 0 and data.value <= 100,
-		"value error: data.value must be between 0 and 100")
+	assert(data.value >= 0 and data.value <= 1,
+		"value error: data.value must be between 0 and 1")
 	self.priority   = data.priority or priority.PRIMARY
 	self.objtype    = data.objtype
 	self.name       = data.name
@@ -117,9 +111,6 @@ function DamageGoal:onSpawn()
 	else
 		self._maxlife = life
 	end
-
-	Logger:debug("onSpawn() - goal: %s",
-		require("libs.json"):encode_pretty(self))
 end
 
 -- cannot be called until after the object is spawned
@@ -141,7 +132,7 @@ function DamageGoal:checkComplete()
 	end
 
 	local status = self:getStatus()
-	Logger:debug("checkComplete() - status: %.2f%%", status)
+	Logger:debug("checkComplete() - status: %.2f", status)
 
 	if status >= self._tgtdamage then
 		return self:_setComplete()
@@ -149,15 +140,13 @@ function DamageGoal:checkComplete()
 	return false
 end
 
---[[--
--- Get the percentage damage taken by the tracked DCS object.
--- Return a number between 0 and 100.
+--- Get the percentage damage taken by the tracked DCS object.
+-- Return a number between 0 and 1.
 --
--- @return: percentage damage taken by the DCS object
---]]
+-- @return: damage taken by the DCS object
 function DamageGoal:getStatus()
 	if self:isComplete() then
-		return 100
+		return 1
 	end
 
 	local health = 0
@@ -172,7 +161,7 @@ function DamageGoal:getStatus()
 	end
 	Logger:debug("getStatus() - name: '%s'; health: %.2f; maxlife: %.2f",
 		self.name, health, self._maxlife)
-	return (1 - (health/self._maxlife)) * 100
+	return 1 - (health/self._maxlife)
 end
 
 --[[
@@ -203,5 +192,16 @@ end
 
 Goal.priority = priority
 Goal.objtype  = objtype
+function Goal.defaultgoal(static)
+	local goal = {}
+	goal.priority = Goal.priority.PRIMARY
+	goal.objtype  = Goal.objtype.GROUP
+	goal.value    = 0.90
+
+	if static then
+		goal.objtype = Goal.objtype.STATIC
+	end
+	return goal
+end
 
 return Goal

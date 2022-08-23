@@ -261,6 +261,14 @@ function utils.trimTypeName(typename)
 	end
 end
 
+function utils.build_kick_flagname(name)
+	return name.."_kick"
+end
+
+utils.notifymsg =
+	"Please read the loadout limits in the briefing and "..
+	"use the F10 Menu to validate your loadout before departing."
+
 function utils.calcTACANFreq(chan, mode)
 	local aienum = require("dct.ai.enum")
 	check.range(chan, 1, 126)

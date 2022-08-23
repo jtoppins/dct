@@ -9,6 +9,7 @@ base=$(dirname $0)
 srcroot="${cwd}/${base}/.."
 fail=0
 
+DCT_SRC_ROOT="${srcroot}"
 DCT_DATA_ROOT=${DCT_DATA_ROOT:-${srcroot}/data}
 DCT_TEMPLATE_PATH=${DCT_TEMPLATE_PATH:-${srcroot}/../dcs-mission-oeo-templates}
 DCT_TEST_LOG="${DCT_DATA_ROOT}/dct_test.log"
@@ -23,6 +24,7 @@ export LUA_PATH
 export DCT_DATA_ROOT
 export DCT_TEMPLATE_PATH
 export DCT_TEST_LOG
+export DCT_SRC_ROOT
 #echo "lua-path: ${LUA_PATH}"
 #echo "DCT data root: ${DCT_DATA_ROOT}"
 #echo "DCT template path: ${DCT_TEMPLATE_PATH}"

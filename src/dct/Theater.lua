@@ -80,8 +80,8 @@ function Systems:__init()
 		"dct.systems.tickets",
 		"dct.systems.weaponstracking",
 		"dct.systems.blasteffects",
-		"dct.systems.playerslots",
 		"dct.templates.RegionManager",
+		"dct.systems.playerslots",
 	}
 
 	for _, syspath in ipairs(systems) do
@@ -211,7 +211,7 @@ function Theater:delayedInit()
 	-- TODO: temporary, spawn all generated assets
 	-- eventually we will want to spawn only a set of assets
 	for _, asset in self:getAssetMgr():iterate() do
-		if asset.type ~= dctenum.assetType.PLAYERGROUP and
+		if asset.type ~= dctenum.assetType.PLAYER and
 		   not asset:isSpawned() then
 			asset:spawn()
 		end

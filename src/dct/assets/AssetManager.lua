@@ -1,25 +1,15 @@
---[[
--- SPDX-License-Identifier: LGPL-3.0
+--- SPDX-License-Identifier: LGPL-3.0
 --
 -- Provides functions to define and manage Assets.
---]]
 
 local checklib = require("libs.check")
-local utils    = require("libs.utils")
-local enum     = require("dct.enum")
+local dctenum  = require("dct.enum")
 local dctutils = require("dct.libs.utils")
 local Command  = require("dct.libs.Command")
 local Observable = require("dct.libs.Observable")
 local Marshallable = require("dct.libs.Marshallable")
 local STM = require("dct.templates.STM")
-
-local assetpaths = {
-	"dct.assets.Airbase",
-	"dct.assets.Airspace",
-	"dct.assets.Player",
-	"dct.assets.Squadron",
-	"dct.assets.StaticAsset",
-}
+local Agent = require("dct.assets.Agent")
 
 local function append_units(units, grp, logger)
 	for _, unit in ipairs(grp.units or {}) do
@@ -63,7 +53,7 @@ function AssetManager:__init(theater)
 		"_mizobjs",
 	})
 
-	self.updaterate = 120
+	self.updaterate = 2
 	-- The master list of assets, regardless of side, indexed by name.
 	-- Means Asset names must be globally unique.
 	self._assetset = {}
@@ -74,27 +64,10 @@ function AssetManager:__init(theater)
 	self._object2asset = {}
 	self._mizobjs = get_miz_units(self._logger)
 	self._spawnq = {}
-	self._factoryclasses = {}
-	for _, path in ipairs(assetpaths) do
-		local obj = require(path)
-		for _, assettype in ipairs(obj.assettypes()) do
-			assert(self._factoryclasses[assettype] == nil,
-				"object already registered for type: "..
-				utils.getkey(enum.assetType, assettype))
-			self._factoryclasses[assettype] = obj
-		end
-	end
 
 	theater:addObserver(self.onDCSEvent, self, "AssetManager.onDCSEvent")
 	theater:queueCommand(self.updaterate,
 		Command(self.__clsname..".update", self.update, self))
-end
-
-function AssetManager:factory(assettype)
-	local asset = self._factoryclasses[assettype]
-	assert(asset, "unsupported asset type: "..
-		utils.getkey(enum.assetType, assettype))
-	return asset
 end
 
 function AssetManager:remove(asset)
@@ -111,6 +84,8 @@ function AssetManager:remove(asset)
 	for _, objname in pairs(asset:getObjectNames()) do
 		self._object2asset[objname] = nil
 	end
+
+	asset:destroy()
 end
 
 function AssetManager:add(asset)
@@ -144,9 +119,6 @@ function AssetManager:getAsset(name)
 end
 
 function AssetManager:iterate()
-	if next(self._assetset) == nil then
-		return function() end, nil, nil
-	end
 	return next, self._assetset, nil
 end
 
@@ -159,17 +131,16 @@ function AssetManager:getAssetByDCSObject(dcsObjName)
 	return self._assetset[assetname]
 end
 
---[[
--- filterAssets - return all assets matching filter function
--- arg: filter
---   Return a truthy value for assets that should be returned by this function
--- Returns a list of matched assets, even if empty
---]]
+--- return all assets matching filter function
+--
+-- @param filter Return a truthy value for assets that should be
+--  returned by this function
+-- @return a list of matched assets, even if empty
 function AssetManager:filterAssets(filter)
 	checklib.func(filter)
 
 	local list = {}
-	for name, asset in pairs(self._assetset) do
+	for name, asset in self:iterate() do
 		if filter(asset) then
 			list[name] = asset
 		end
@@ -180,7 +151,7 @@ end
 
 function AssetManager:update()
 	local deletionq = {}
-	for _, asset in pairs(self._assetset) do
+	for _, asset in self:iterate() do
 		if type(asset.update) == "function" then
 			asset:update()
 		end
@@ -212,7 +183,7 @@ end
 
 local handlers = {
 	[world.event.S_EVENT_DEAD] = handleDead,
-	[enum.event.DCT_EVENT_DEAD] = handleAssetDeath,
+	[dctenum.event.DCT_EVENT_DEAD] = handleAssetDeath,
 }
 
 function AssetManager:doOneObject(obj, event)
@@ -248,7 +219,7 @@ function AssetManager:onDCSEvent(event)
 		[world.event.S_EVENT_EJECTION]        = true,
 		[world.event.S_EVENT_HIT]             = true,
 		[world.event.S_EVENT_DEAD]            = true,
-		[enum.event.DCT_EVENT_DEAD]           = true,
+		[dctenum.event.DCT_EVENT_DEAD]        = true,
 		--[world.event.S_EVENT_UNIT_LOST]     = true,
 	}
 	local objmap = {
@@ -259,7 +230,8 @@ function AssetManager:onDCSEvent(event)
 	}
 
 	if not relevents[event.id] then
-		self._logger:debug("onDCSEvent - not relevant event: %s", tostring(event.id))
+		self._logger:debug("onDCSEvent - not relevant event: %s",
+			tostring(event.id))
 		return
 	end
 
@@ -283,7 +255,7 @@ function AssetManager:marshal()
 	local tbl = Marshallable.marshal(self) or {}
 	tbl.assets = {}
 
-	for name, asset in pairs(self._assetset) do
+	for name, asset in self:iterate() do
 		if type(asset.marshal) == "function" and not asset:isDead() then
 			tbl.assets[name] = asset:marshal()
 		end
@@ -293,8 +265,7 @@ end
 
 function AssetManager:unmarshal(data)
 	for _, assettbl in pairs(data.assets) do
-		local assettype = assettbl.type
-		local asset = self:factory(assettype)()
+		local asset = Agent()
 		asset:unmarshal(assettbl)
 		self:add(asset)
 		if asset:isSpawned() then

@@ -1,8 +1,6 @@
---[[
--- SPDX-License-Identifier: LGPL-3.0
+--- SPDX-License-Identifier: LGPL-3.0
 --
 -- Defines the Region class.
---]]
 
 require("lfs")
 require("math")
@@ -41,7 +39,7 @@ local function processlimits(_, tbl)
 		if typenum == nil then
 			Logger:warn("invalid asset type '"..key..
 				"' found in limits definition in file: "..
-				tbl.defpath or "nil")
+				tbl.regiondef or "nil")
 		else
 			limits[typenum] = data
 		end
@@ -76,46 +74,43 @@ local function checklocation(keydata, tpl)
 	return true
 end
 
-local function loadMetadata(self, regiondefpath)
-	Logger:debug("=> regiondefpath: "..regiondefpath)
-	local keys = {
-		{
-			["name"] = "name",
-			["type"] = "string",
-		}, {
-			["name"] = "priority",
-			["type"] = "number",
-		}, {
-			["name"] = "location",
-			["type"] = "table",
-			["default"] = {},
-			["check"] = checklocation
-		}, {
-			["name"] = "limits",
-			["type"] = "table",
-			["default"] = {},
-			["check"] = processlimits,
-		}, {
-			["name"] = "altitude_floor",
-			["type"] = "number",
-			["default"] = 914.4, -- meters; 3000ft msl
-		}, {
-			["name"] = "links",
-			["type"] = "table",
-			["check"] = processlinks,
-			["default"] = {},
-		}
-	}
+local validationdata = {
+	{
+		["name"] = "name",
+		["type"] = "string",
+	}, {
+		["name"] = "priority",
+		["type"] = "number",
+	}, {
+		["name"] = "location",
+		["type"] = "table",
+		["default"] = {},
+		["check"] = checklocation
+	}, {
+		["name"] = "limits",
+		["type"] = "table",
+		["default"] = {},
+		["check"] = processlimits,
+	}, {
+		["name"] = "altitude_floor",
+		["type"] = "number",
+		["default"] = 914.4, -- meters; 3000ft msl
+	}, {
+		["name"] = "links",
+		["type"] = "table",
+		["check"] = processlinks,
+		["default"] = {},
+	}, {
+		["name"] = "builtin",
+		["type"] = "boolean",
+		["default"] = false,
+	},
+}
 
-	local region = utils.readlua(regiondefpath)
-	if region.region then
-		region = region.region
-	end
-	region.defpath = regiondefpath
-	region.path = regiondefpath
-	utils.checkkeys(keys, region)
-	region.path = nil
-	utils.mergetables(self, region)
+local function validate(data)
+	Logger:debug("=> regiondefpath: "..tostring(data.regiondef))
+	utils.checkkeys(validationdata, data)
+	return true
 end
 
 local function getTemplates(self, basepath)
@@ -182,17 +177,15 @@ local function addAndSpawnAsset(self, name, assetmgr)
 		return nil
 	end
 
-	local mgr = dct.Theater.singleton():getAssetMgr()
-	local asset = mgr:factory(tpl.objtype)(tpl, self)
+	local asset = tpl:createObject()
 	assetmgr:add(asset)
-	asset:generate(assetmgr, self)
-	local d = vector.distance(vector.Vector2D(self:getPoint()),
-		vector.Vector2D(asset:getLocation()))
-	self.radius = math.max(self.radius, d)
+	tpl:generate(self, assetmgr, asset)
+	--local d = vector.distance(vector.Vector2D(self:getPoint()),
+	--	vector.Vector2D(asset:getLocation()))
+	--self.radius = math.max(self.radius, d)
 	return asset
 end
 
---[[
 --  Region class
 --    base class that reads in a region definition.
 --
@@ -234,17 +227,24 @@ end
 --        * limits - a table defining the minimum and maximum number of
 --              assets to spawn from a given asset type
 --              [<objtype>] = { ["min"] = <num>, ["max"] = <num>, }
---]]
-local Region = class("Region", Marshallable)
-function Region:__init(regionpath)
-	Marshallable.__init(self)
-	self:_addMarshalNames({
-		"location",
-		"links",
-		"radius",
-	})
 
-	self.path          = regionpath
+-- TODO: allow campaign designers the ability to mark which regions are
+-- "enabled" when a new theater is generated. Only enabled regions will
+-- generate initial assets. As the campaign progresses regions can be
+-- enabled dynamically.
+-- TODO: allow campaign designers the ability to mark which regions are
+-- "start" regions. That way player slots will only be spawned in those
+-- regions.
+local Region = class("Region", Marshallable)
+function Region:__init(data)
+	Marshallable.__init(self)
+
+	self._valid = validate(data)
+	if not self._valid then
+		return
+	end
+
+	utils.mergetables(self, data)
 	self._templates    = {}
 	self._tpltypes     = {}
 	self._exclusions   = {}
@@ -257,15 +257,36 @@ function Region:__init(regionpath)
 	self.radius        = 25
 	self.DOMAIN        = nil
 	self.STATUS        = nil
+	self.fromFile      = nil
 
-	Logger:debug("=> regionpath: "..regionpath)
-	loadMetadata(self, regionpath..utils.sep.."region.def")
-	getTemplates(self, self.path)
+	self:_addMarshalNames({
+		"location",
+		"links",
+		"radius",
+	})
+
+	Logger:debug("=> regionpath: "..tostring(self.path))
+	if not self.builtin then
+		getTemplates(self, self.path)
+	end
 	Logger:debug("'"..self.name.."' Loaded")
 end
 
 Region.DOMAIN = DOMAIN
 Region.STATUS = STATUS
+
+function Region.fromFile(path)
+	local deffile = path..utils.sep.."region.def"
+	local region = utils.readlua(deffile)
+
+	if region.region then
+		region = region.region
+	end
+
+	region.path = path
+	region.regiondef = deffile
+	return Region(region)
+end
 
 function Region:addTemplate(tpl)
 	if not tpl:isValid() then
@@ -281,9 +302,8 @@ function Region:addTemplate(tpl)
 	end
 
 	if tpl.theater ~= env.mission.theatre then
-		Logger:warn(string.format(
-			"Region(%s):Template(%s) not for map(%s):template(%s)"..
-			" - ignoring",
+		Logger:warn(string.format("Region(%s):Template(%s) not "..
+			"for map(%s):template(%s) - ignoring",
 			self.name, tpl.name, env.mission.theatre, tpl.theater))
 		return
 	end
@@ -323,7 +343,7 @@ function Region:_generate(assetmgr, objtype, names)
 
 	for i, tpl in ipairs(names) do
 		if tpl.kind ~= tplkind.EXCLUSION and
-			self._templates[tpl.name].spawnalways == true then
+		   self._templates[tpl.name].spawnalways == true then
 			addAndSpawnAsset(self, tpl.name, assetmgr)
 			table.remove(names, i)
 			limits.current = 1 + limits.current

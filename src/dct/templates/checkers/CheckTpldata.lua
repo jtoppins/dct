@@ -179,7 +179,7 @@ local notpldata = {
 	[dctenum.assetType.SQUADRONPLAYER]    = true,
 	-- player groups do have tpldata, it is here as we do not
 	-- want to remove any data from the template definition
-	[dctenum.assetType.PLAYERGROUP] = true,
+	[dctenum.assetType.PLAYER] = true,
 }
 
 function CheckTpldata:check(data)

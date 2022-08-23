@@ -25,8 +25,6 @@ function Observable:addObserver(func, obj, name)
 	name = name or "unknown"
 
 	if self._observers[obj] ~= nil then
-		self._logger:error("'"..name.."' obj("..tostring(obj)..
-			") already set - skipping "..debug.traceback())
 		return
 	end
 	self._logger:debug("adding handler(%s)", name)
