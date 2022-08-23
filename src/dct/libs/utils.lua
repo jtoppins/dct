@@ -120,11 +120,6 @@ function utils.centroid2D(point, pcentroid, n)
 	return vector.Vector2D(c), n1
 end
 
--- add a random value between +/- sigma to val and return
-function utils.addstddev(val, sigma)
-    return val + math.random(-sigma, sigma)
-end
-
 utils.posfmt = {
 	["DD"]   = 1,
 	["DDM"]  = 2,
