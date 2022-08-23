@@ -598,7 +598,15 @@ world.event = {
 	S_EVENT_TRIGGER_ZONE                 = 35,
 	S_EVENT_LANDING_QUALITY_MARK         = 36,
 	S_EVENT_BDA                          = 37,
-	S_EVENT_MAX                          = 38,
+	S_EVENT_AI_ABORT_MISSION             = 38,
+	S_EVENT_DAYNIGHT                     = 39,
+	S_EVENT_FLIGHT_TIME                  = 40,
+	S_EVENT_PLAYER_SELF_KILL_PILOT       = 41,
+	S_EVENT_PLAYER_CAPUTRE_AIRFIELD      = 42,
+	S_EVENT_EMERGENCY_LANDING            = 43,
+	S_EVENT_UNIT_CREATE_TASK             = 44,
+	S_EVENT_UNIT_DELETE_TASK             = 45,
+	S_EVENT_MAX                          = 46,
 }
 
 function world.addEventHandler(obj)
