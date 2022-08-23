@@ -307,21 +307,6 @@ AI.Skill = {
 	"EXCELLENT",
 }
 
---[[
-ROE Descriptions:
-WEAPON_FREE -
-	AI will engage any enemy group it detects. Target prioritization is
-	based based on the threat of the target.
-OPEN_FIRE_WEAPON_FREE -
-	AI will engage any enemy group it detects, but will prioritize targets
-	specified in the groups tasking.
-OPEN_FIRE -
-	AI will engage only targets specified in its taskings.
-RETURN_FIRE -
-	AI will only engage threats that shoot first.
-WEAPON_HOLD -
-	AI will hold fire under all circumstances.
---]]
 AI.Option = {
 	["Air"] = {
 		["id"] = {
@@ -343,10 +328,27 @@ AI.Option = {
 			["OPTION_RADIO_USAGE_CONTACT"] = 21,
 			["OPTION_RADIO_USAGE_ENGAGE"] = 22,
 			["OPTION_RADIO_USAGE_KILL"] = 23,
+			-- OPTION_RADIO_* value: attribute list
 			["JETT_TANKS_IF_EMPTY"]     = 25,
 			["FORCED_ATTACK"]           = 26,
 		},
 		["val"] = {
+			-- ROE Descriptions:
+			-- WEAPON_FREE -
+			--     AI will engage any enemy group it detects.
+			--     Target prioritization is based based on the
+			--     threat of the target.
+			-- OPEN_FIRE_WEAPON_FREE -
+			--     AI will engage any enemy group it detects,
+			--     but will prioritize targets specified in the
+			--     groups tasking.
+			-- OPEN_FIRE -
+			--     AI will engage only targets specified in its
+			--     taskings.
+			-- RETURN_FIRE -
+			--     AI will only engage threats that shoot first.
+			-- WEAPON_HOLD -
+			--     AI will hold fire under all circumstances.
 			["ROE"] = {
 				["WEAPON_FREE"]           = 0,
 				["OPEN_FIRE_WEAPON_FREE"] = 1,
@@ -379,6 +381,25 @@ AI.Option = {
 				["USE_IF_DETECTED_LOCK_BY_RADAR"] = 2,
 				["ALWAYS_USE"]                    = 3,
 			},
+			-- Missile Attack option descriptsion:
+			-- Max Range:
+			--     AI will engage at the maximum range of the
+			--     missile they intend to fire.
+			-- NEZ Range:
+			--     AI will engage once within the No Escape Zone
+			--     for a given target.
+			-- Halfway Rmax to NEZ:
+			--     The AI will fire their missile halfway between
+			--     the Rmax and No Escape Zone for the given
+			--     target.
+			-- Target threat estimated:
+			--     AI will engage based on the possible threat
+			--     the enemy target could provide. For example if
+			--     the target is an F-15C the AI is likely to
+			--     engage it at longer ranges than a C-130.
+			-- Random Range:
+			--     AI will first engage at a random distance
+			--     between NEZ and Max range.
 			["MISSILE_ATTACK"] = {
 				["MAX_RANGE"]         = 0,
 				["NEZ_RANGE"]         = 1,
