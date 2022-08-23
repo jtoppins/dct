@@ -86,6 +86,7 @@ local factKey = {
 	["LOSETICKET"]    = "loseticket",
 	["HEALTH"]        = "health",
 	["DEPARTURE"]     = "departure",
+	["FUEL"]          = "fuel",
 }
 
 local attrmt = {}
@@ -176,6 +177,7 @@ NodeFact.nodeType = {
 	["RALLYPOINT"] = 1, -- a node that can be retreated to
 	["STATION"]    = 2, -- a guard position
 	["PARKING"]    = 3, -- a parking spot at an airbase
+	["HOMEBASE"]   = 4,
 }
 
 --- Some sort of disturbance the Agent detects that can trigger an change

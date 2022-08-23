@@ -31,6 +31,7 @@ local checkers = {
 	require("dct.templates.checkers.CheckPlayer")(),
 	require("dct.templates.checkers.CheckTpldata")(),
 	require("dct.templates.checkers.CheckCoalition")(),
+	require("dct.templates.checkers.CheckAircraft")(),
 	require("dct.templates.checkers.CheckLocation")(),
 }
 
