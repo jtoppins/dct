@@ -417,6 +417,8 @@ function Agent:getTemplate()
 end
 
 --- Get a copy of the Agent's description table.
+-- TODO: get the total description table for the Agent including the
+-- backing Template items.
 function Agent:getDesc()
 	return utils.deepcopy(self.desc)
 end
@@ -430,6 +432,15 @@ end
 function Agent:getDescKey(key)
 	local val = self.desc[key]
 
+	if val == nil then
+		local T = self:getTemplate()
+
+		if T == nil then
+			return nil
+		end
+
+		val = T[key]
+	end
 	return val
 end
 

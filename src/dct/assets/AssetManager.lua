@@ -177,7 +177,7 @@ end
 local function handleAssetDeath(self, event)
 	local asset = event.initiator
 	dct.Theater.singleton():getTickets():loss(asset.owner,
-		asset.cost, false)
+		asset:getDescKey("cost"), false)
 	self:notify(event)
 end
 
