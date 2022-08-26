@@ -21,12 +21,6 @@ template. Allowed values can be found in `assetType` table.]],
 			["description"] =
 			"",
 		},
-		["regionname"] = {
-			["agent"] = true,
-			["type"] = Check.valuetype.STRING,
-			["description"] =
-			"",
-		},
 		["uniquenames"] = {
 			["default"] = false,
 			["type"] = Check.valuetype.BOOL,
@@ -52,10 +46,6 @@ template. Allowed values can be found in `assetType` table.]],
 			["type"] = Check.valuetype.INT,
 			["description"] =
 			"",
-		},
-		["regionprio"] = {
-			["type"] = Check.valuetype.INT,
-			["nodoc"] = true,
 		},
 		["intel"] = {
 			["default"] = 0,

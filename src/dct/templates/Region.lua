@@ -139,7 +139,7 @@ local function getTemplates(self, basepath)
 					stmpath = nil
 				end
 				self:addTemplate(
-					Template.fromFile(self, fpath, stmpath))
+					Template.fromFile(fpath, stmpath))
 			end
 		end
 	end
@@ -288,6 +288,7 @@ function Region:addTemplate(tpl)
 		return
 	end
 
+	tpl:joinRegion(self)
 	Logger:debug("  + add template: "..tpl.name)
 	self._templates[tpl.name] = tpl
 	if tpl.exclusion ~= nil then

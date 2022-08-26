@@ -114,8 +114,8 @@ local function overrideGroupOptions(grp, idx, tpl)
 		tpl.hasDeathGoals = true
 	end
 	local side = coalition.getCountryCoalition(grp.countryid)
-	grp.data.name = string.format("%s_%s %d %s %d",
-		tpl.regionname, tpl.name, side,
+	grp.data.name = string.format("%s %d %s %d",
+		tpl.name, side,
 		utils.getkey(Unit.Category, grp.category), idx)
 
 	for i, unit in ipairs(grp.data.units or {}) do

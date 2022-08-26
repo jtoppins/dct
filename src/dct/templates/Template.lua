@@ -48,6 +48,17 @@ local function makeNamesUnique(data)
 	end
 end
 
+--- prepend all group and unit names with the region name the Template
+-- belongs to.
+local function add_region_name_to_objects(data, regionname)
+	for _, grp in ipairs(data or {}) do
+		grp.data.name = tostring(regionname).."_"..grp.data.name
+		for _, v in ipairs(grp.data.units or {}) do
+			v.name = tostring(regionname).."_"..v.name
+		end
+	end
+end
+
 --- select a location description used in generating mission briefings for
 -- players.
 local function genLocationMethod()
@@ -118,6 +129,7 @@ local function validate(data)
 
 		utils.mergetables(copyoptions, checker:agentOptions())
 	end
+	utils.mergetables(copyoptions, {["regionname"] = true,})
 	data.agentDescKeys = copyoptions
 	return true
 end
@@ -142,6 +154,7 @@ function Template:__init(data)
 
 	-- merge data into template
 	utils.mergetables(self, utils.deepcopy(data))
+	self._joinedregion = false
 end
 
 --- Read the .dct and optionally the .stm files for a given Template into
@@ -153,8 +166,7 @@ end
 -- @param stmfile [optional] the file path of the .stm file describing the
 --          template
 -- @return a Template object
-function Template.fromFile(region, dctfile, stmfile)
-	assert(region ~= nil, "region is required")
+function Template.fromFile(dctfile, stmfile)
 	assert(dctfile ~= nil, "dctfile is required")
 
 	local template = utils.readlua(dctfile)
@@ -162,11 +174,11 @@ function Template.fromFile(region, dctfile, stmfile)
 	if template.metadata then
 		template = template.metadata
 	end
-	template.regionname = region.name
-	template.regionprio = region.priority
+
 	if template.desc == "false" then
 		template.desc = nil
 	end
+
 	if stmfile ~= nil then
 		-- call order matters here as we want items in the dct file
 		-- to override items defined in the stm file.
@@ -208,6 +220,20 @@ end
 -- is valid.
 function Template:isValid()
 	return self._valid
+end
+
+function Template:joinRegion(region)
+	if self._joinedregion then
+		return
+	end
+
+	self.regionname = region.name
+	self.regionprio = region.priority
+
+	if norenametype[self.objtype] == nil then
+		add_region_name_to_objects(self.tpldata, region.name)
+	end
+	self._joinedregion = true
 end
 
 --- Generate the description table from the Template. Is usually given
