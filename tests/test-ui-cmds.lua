@@ -216,9 +216,12 @@ local testcmds = {
 }
 
 local function main()
+	local modeltime = 50
 	local theater = dct.Theater()
-	_G.dct.theater = theater
-	theater:exec(50)
+
+	dct.theater = theater
+	dctstubs.setModelTime(modeltime)
+	theater:exec(modeltime)
 	theater:onEvent({
 		["id"]        = world.event.S_EVENT_BIRTH,
 		["initiator"] = unit1,

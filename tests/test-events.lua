@@ -25,40 +25,7 @@ local testcases = {
 	},
 }
 
-local function createEvent(eventdata, player)
-	local event = {}
-	local objref
-
-	if eventdata.object.objtype == Object.Category.UNIT then
-		objref = Unit.getByName(eventdata.object.name)
-	elseif eventdata.object.objtype == Object.Category.STATIC then
-		objref = StaticObject.getByName(eventdata.object.name)
-	elseif eventdata.object.objtype == Object.Category.GROUP then
-		objref = Group.getByName(eventdata.object.name)
-	else
-		assert(false, "other object types not supported")
-	end
-
-	assert(objref, "objref is nil")
-	event.id = eventdata.id
-	event.time = 2345
-	if event.id == world.event.S_EVENT_DEAD then
-		event.initiator = objref
-		objref.clife = 0
-	elseif event.id == world.event.S_EVENT_HIT then
-		event.initiator = player
-		event.weapon = nil
-		event.target = objref
-		objref.clife = objref.clife - eventdata.object.life
-	else
-		assert(false, "other event types not supported: "..tostring(event.id))
-	end
-	return event
-end
-
 local function main()
-	local t = dct.Theater()
-	dct.theater = t
 	local playergrp = Group(4, {
 		["id"] = 15,
 		["name"] = "99thFS Uzi 34",
@@ -73,9 +40,22 @@ local function main()
 		},
 	}, playergrp, "bobplayer")
 
-	t:exec(50)
+	dct.init()
+	dctstubs.setModelTime(50)
+	dctstubs.runSched()
+
+	local expected = 34
+	assert(dctcheck.spawngroups == expected,
+		string.format("group spawn broken; expected(%d), got(%d)",
+		expected, dctcheck.spawngroups))
+	expected = 36
+	assert(dctcheck.spawnstatics == expected,
+		string.format("static spawn broken; expected(%d), got(%d)",
+		expected, dctcheck.spawnstatics))
+
 	for _, data in ipairs(testcases) do
-		t:onEvent(createEvent(data.event, player1))
+		dctstubs.runEventHandlers(dctstubs.createEvent(data.event,
+							       player1))
 	end
 	return 0
 end

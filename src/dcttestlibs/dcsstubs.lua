@@ -57,6 +57,38 @@ function dctstubs.runEventHandlers(event)
 	end
 end
 
+function dctstubs.createEvent(eventdata, player)
+	local event = {}
+	local objref
+
+	if eventdata.object.objtype == Object.Category.UNIT then
+		objref = Unit.getByName(eventdata.object.name)
+	elseif eventdata.object.objtype == Object.Category.STATIC then
+		objref = StaticObject.getByName(eventdata.object.name)
+	elseif eventdata.object.objtype == Object.Category.GROUP then
+		objref = Group.getByName(eventdata.object.name)
+	else
+		assert(false, "other object types not supported")
+	end
+
+	assert(objref, "objref is nil")
+	event.id = eventdata.id
+	event.time = 2345
+	if event.id == world.event.S_EVENT_DEAD then
+		event.initiator = objref
+		objref.clife = 0
+	elseif event.id == world.event.S_EVENT_HIT then
+		event.initiator = player
+		event.weapon = nil
+		event.target = objref
+		objref.clife = objref.clife - eventdata.object.life
+	else
+		assert(false, "other event types not supported: "..
+			tostring(event.id))
+	end
+	return event
+end
+
 _G.dctstubs = dctstubs
 
 -- DCS Singletons
@@ -842,6 +874,32 @@ end
 
 function Airbase:getParking(_ --[[available]])
 	return self.parking
+end
+
+function Airbase:getRunways()
+	return {
+		{
+			["course"] = -1.597741484642,
+			["Name"] = 8,
+			["position"] = {
+				["y"] = 952.94458007813,
+				["x"] = -360507.1875,
+				["z"] = -75590.0703125,
+			},
+			["length"] = 1859.3155517578,
+			["width"] = 60,
+		}, {
+			["course"] = -2.5331676006317,
+			["Name"] = 26,
+			["position"] = {
+				["y"] = 952.94458007813,
+				["x"] = -359739.875,
+				["z"] = -75289.5078125,
+			},
+			["length"] = 1859.3155517578,
+			["width"] = 60,
+		},
+	}
 end
 
 function Airbase:getCallsign()
