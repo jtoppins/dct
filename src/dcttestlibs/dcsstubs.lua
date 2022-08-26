@@ -1,8 +1,6 @@
---[[
--- SPDX-License-Identifier: LGPL-3.0
+--- SPDX-License-Identifier: LGPL-3.0
 --
 -- Provides DCS stubs for the mission scripting environment.
---]]
 
 require("os")
 local utils = require("libs.utils")
@@ -27,6 +25,39 @@ dctcheck.spawngroups  = 0
 dctcheck.spawnunits   = 0
 dctcheck.spawnstatics = 0
 _G.dctcheck = dctcheck
+
+local dctstubs = {}
+dctstubs.model_time = 0
+dctstubs.schedfunctbl = {}
+dctstubs.eventhandlers = {}
+
+function dctstubs.setModelTime(time)
+	dctstubs.model_time = time
+end
+
+function dctstubs.addModelTime(time)
+	dctstubs.model_time = dctstubs.model_time + time
+end
+
+function dctstubs.runSched()
+	for func, data in pairs(dctstubs.schedfunctbl) do
+		if dctstubs.model_time > data.time then
+			data.time = func(data.arg, dctstubs.model_time)
+			if not (data.time ~= nil and
+				type(data.time) == "number") then
+				dctstubs.schedfunctbl[func] = nil
+			end
+		end
+	end
+end
+
+function dctstubs.runEventHandlers(event)
+	for obj, _ in pairs(dctstubs.eventhandlers) do
+		obj:onEvent(event)
+	end
+end
+
+_G.dctstubs = dctstubs
 
 -- DCS Singletons
 --
@@ -74,9 +105,8 @@ end
 _G.env = env
 
 local timer = {}
-local model_time = 0
 function timer.getTime()
-	return model_time
+	return dctstubs.model_time
 end
 function timer.getTime0()
 	--- 15:00:00 mission start time
@@ -85,11 +115,10 @@ end
 function timer.getAbsTime()
 	return timer.getTime() + timer.getTime0()
 end
+
 function timer.scheduleFunction(fn, arg, time)
-	fn(arg, time)
-end
-function timer.stub_setTime(time)
-	model_time = time
+	dctstubs.schedfunctbl[fn] = {["arg"] = arg, ["time"] = time}
+	return fn
 end
 _G.timer = timer
 
@@ -571,8 +600,17 @@ world.event = {
 	S_EVENT_BDA                          = 37,
 	S_EVENT_MAX                          = 38,
 }
-function world.addEventHandler(_)
+
+function world.addEventHandler(obj)
+	assert(type(obj.onEvent) == "function", "registering an object with "..
+		"no .onEvent function")
+	dctstubs.eventhandlers[obj] = true
 end
+
+function world.removeEventHandler(obj)
+	dctstubs.eventhandlers[obj] = nil
+end
+
 function world.getAirbases()
 	local tbl = {}
 	for _, obj in pairs(objects[Object.Category.BASE]) do
@@ -624,6 +662,12 @@ function Controller:setOption(--[[id, value]])
 end
 
 function Controller:setOnOff(--[[value]])
+end
+
+function Controller:setAltitude(--[[alt, keep, alttype]])
+end
+
+function Controller:setSpeed(--[[speed, keep]])
 end
 
 function Controller:knowTarget(--[[object, type, distance]])

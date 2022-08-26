@@ -226,7 +226,7 @@ local function main()
 
 	for _, v in ipairs(testcmds) do
 		if v.modelTime ~= nil then
-			timer.stub_setTime(v.modelTime)
+			dctstubs.setModelTime(v.modelTime)
 		end
 		if v.ammo ~= nil then
 			unit1.ammo = v.ammo
