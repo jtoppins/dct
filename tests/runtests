@@ -22,6 +22,7 @@ LUA_PATH="${LUA_PATH};;"
 export LUA_PATH
 export DCT_DATA_ROOT
 export DCT_TEMPLATE_PATH
+export DCT_TEST_LOG
 #echo "lua-path: ${LUA_PATH}"
 #echo "DCT data root: ${DCT_DATA_ROOT}"
 #echo "DCT template path: ${DCT_TEMPLATE_PATH}"
@@ -43,6 +44,7 @@ for t in $tests; do
 		fail=1
 	fi
 	echo "${result}: ${t}"
+	echo "++++ Result: ${result}: $t" >> "$DCT_TEST_LOG"
 done
 cd "${cwd}"
 exit ${fail}
