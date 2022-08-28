@@ -3,15 +3,29 @@
 local dctenum = require("dct.enum")
 
 local statics = {
-	["sensors"] = {},
-	["actions"] = {},
-	["goals"]   = {},
+	["sensors"] = {
+		["DCSObjectsSensor"] = 0,
+		["PlanningSensor"]   = 0,
+	},
+	["actions"] = {
+		["GroundIdle"]       = 1,
+	},
+	["goals"]   = {
+		["Idle"]             = 1,
+	},
 }
 
 local airdefense = {
-	["sensors"] = {},
-	["actions"] = {},
-	["goals"]   = {},
+	["sensors"] = {
+		["DCSObjectsSensor"] = 0,
+		["PlanningSensor"]   = 0,
+	},
+	["actions"] = {
+		["GroundIdle"]       = 1,
+	},
+	["goals"]   = {
+		["Idle"]             = 1,
+	},
 }
 
 local groundunits = airdefense

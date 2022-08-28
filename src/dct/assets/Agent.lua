@@ -366,8 +366,10 @@ function Agent:goals()
 	return goals
 end
 
---- Trigger the Agent to replan
+--- Trigger the Agent to replan, set the idle state to false as
+-- we are doing something.
 function Agent:replan()
+	self:WS():get(WS.ID.IDLE).value = false
 	self._plan = nil
 end
 

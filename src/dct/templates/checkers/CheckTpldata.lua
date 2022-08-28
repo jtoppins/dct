@@ -171,6 +171,12 @@ function CheckTpldata:__init()
 			["description"] =
 			"",
 		},
+		["hasDeathGoals"] = {
+			["nodoc"] = true,
+			["agent"] = true,
+			["default"] = false,
+			["type"] = Check.valuetype.BOOL,
+		},
 	})
 end
 
