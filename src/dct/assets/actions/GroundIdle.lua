@@ -7,7 +7,7 @@ local GroundIdle = require("libs.namedclass")("GroundIdle", WS.Action)
 function GroundIdle:__init(agent)
 	WS.Action.__init(self, agent, 1, {}, {
 		WS.Property(WS.ID.IDLE, true),
-	})
+	}, 100)
 end
 
 function GroundIdle:enter()
