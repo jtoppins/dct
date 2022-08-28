@@ -37,14 +37,34 @@ local checkers = {
 	require("dct.templates.checkers.CheckLocation")(),
 }
 
+local function rename(name, regionname, unique)
+	local n = name
+
+	if type(regionname) == "string" then
+		n = tostring(regionname).."_"..n
+	end
+
+	if unique then
+		n = n.." #"..dct.Theater.singleton():getcntr()
+	end
+	return n
+end
+
+local function rename_group(grp, regionname, unique)
+	if grp.category == dctenum.UNIT_CAT_SCENERY then
+		return
+	end
+
+	grp.data.name = rename(grp.data.name, regionname, unique)
+	for _, v in ipairs(grp.data.units or {}) do
+		v.name = rename(v.name, regionname, unique)
+	end
+end
+
 --- make all group and unit names unique.
 local function makeNamesUnique(data)
 	for _, grp in ipairs(data or {}) do
-		grp.data.name = grp.data.name.." #"..
-			dct.Theater.singleton():getcntr()
-		for _, v in ipairs(grp.data.units or {}) do
-			v.name = v.name.." #"..dct.Theater.singleton():getcntr()
-		end
+		rename_group(grp, nil, true)
 	end
 end
 
@@ -52,10 +72,7 @@ end
 -- belongs to.
 local function add_region_name_to_objects(data, regionname)
 	for _, grp in ipairs(data or {}) do
-		grp.data.name = tostring(regionname).."_"..grp.data.name
-		for _, v in ipairs(grp.data.units or {}) do
-			v.name = tostring(regionname).."_"..v.name
-		end
+		rename_group(grp, regionname, false)
 	end
 end
 
