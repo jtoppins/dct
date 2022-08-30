@@ -46,7 +46,7 @@ local landingvalues = {
 local CheckAirbase = class("CheckAirbase", Check)
 function CheckAirbase:__init()
 	Check.__init(self, "Airbase", {
-		["takeofftype"] = {
+		["takeoff"] = {
 			["default"] = "inair",
 			["type"]    = Check.valuetype.VALUES,
 			["values"]  = takeoffvalues,
@@ -54,7 +54,7 @@ function CheckAirbase:__init()
 	"This allows the mission designer to specify how AI aircraft will"..
 	"depart the field. The possible options are:",
 		},
-		["recoverytype"] = {
+		["recovery"] = {
 			["default"] = "terminal",
 			["type"]    = Check.valuetype.VALUES,
 			["values"]  = landingvalues,
@@ -75,6 +75,7 @@ function CheckAirbase:check(data)
 		return true
 	end
 
+	-- TODO: add support for carriers
 	return Check.check(self, data)
 end
 

@@ -47,14 +47,28 @@ local agents = {
 	[dctenum.assetType.GROUND]      = groundunits,
 	[dctenum.assetType.JTAC]        = groundunits,
 	[dctenum.assetType.AIRBASE]     = {
-		["sensors"] = {},
-		["actions"] = {},
-		["goals"] = {},
+		["sensors"] = {
+			["PlanningSensor"]   = 0,
+			["RunwaySensor"]     = 0,
+		},
+		["actions"] = {
+			["RunwayRepair"]     = 1,
+		},
+		["goals"]   = {
+			["Idle"]             = 1,
+			["Heal"]             = 1,
+		},
 	},
 	[dctenum.assetType.CV]          = {
-		["sensors"] = {},
-		["actions"] = {},
-		["goals"] = {},
+		["sensors"] = {
+			["MissionSensor"]    = 0,
+			["PlanningSensor"]   = 0,
+		},
+		["actions"] = {
+		},
+		["goals"] = {
+			["Idle"]             = 1,
+		},
 	},
 	[dctenum.assetType.SQUADRON]    = {
 		["sensors"] = {},
