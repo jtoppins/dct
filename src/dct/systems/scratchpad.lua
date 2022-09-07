@@ -4,7 +4,8 @@
 -- addition of the F10 menu is handled outside this module.
 
 local class  = require("libs.namedclass")
-local Logger = require("dct.libs.Logger").getByName("UI")
+local WS     = require("dct.assets.worldstate")
+local Logger = dct.Logger.getByName("UI")
 
 local function sanatize(txt)
 	if type(txt) ~= "string" then
@@ -41,8 +42,10 @@ function ScratchPad:event(event)
 		return
 	end
 
-	local playerasset = self._theater:getAssetMgr():getAsset(name)
-	playerasset.scratchpad = sanatize(event.text)
+	local player = self._theater:getAssetMgr():getAsset(name)
+	player:setFact(self, WS.Facts.factKey.SCRATCHPAD,
+		       WS.Facts.Value(WS.Facts.factType.SCRATCHPAD,
+				      sanatize(event.text)))
 	self:set(event.idx, nil)
 	trigger.action.removeMark(event.idx)
 end

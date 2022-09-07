@@ -7,10 +7,11 @@ local class    = require("libs.namedclass")
 local utils    = require("libs.utils")
 local enum     = require("dct.enum")
 local dctutils = require("dct.libs.utils")
-local human    = require("dct.ui.human")
 local Command  = require("dct.libs.Command")
-local Logger   = dct.Logger.getByName("UI")
+local WS       = require("dct.assets.worldstate")
+local human    = require("dct.ui.human")
 local loadout  = require("dct.ui.loadouts")
+local Logger   = dct.Logger.getByName("UI")
 
 local UICmd = class("UICmd", Command)
 function UICmd:__init(theater, data)
@@ -26,7 +27,6 @@ function UICmd:__init(theater, data)
 	self.asset        = asset
 	self.type         = data.type
 	self.displaytime  = 30
-	self.displayclear = true
 end
 
 function UICmd:isAlive()
@@ -38,8 +38,8 @@ function UICmd:_print(msg, isError)
 		return
 	end
 	assert(msg ~= nil and type(msg) == "string", "msg must be a string")
-	trigger.action.outTextForGroup(self.asset.groupId, msg,
-		self.displaytime, self.displayclear)
+	self.asset:setFact(self, nil,
+			   WS.Facts.PlayerMsg(msg, self.displaytime))
 end
 
 function UICmd:uicmd(time)
@@ -47,21 +47,24 @@ function UICmd:uicmd(time)
 	-- commands
 	if not self:isAlive() and
 	   self.type ~= enum.uiRequestType.MISSIONABORT then
-		Logger:debug("UICmd thinks player is dead, ignore cmd; %s", debug.traceback())
-		self.asset.cmdpending = false
+		Logger:debug("UICmd thinks player is dead, ignore cmd; %s",
+			     debug.traceback())
+		self.asset:setFact(self, WS.Facts.factType.CMDPENDING, nil)
 		return nil
 	end
 
 	xpcall(function()
 		local cmdr = self.theater:getCommander(self.asset.owner)
 		local msg  = self:_execute(time, cmdr)
-		self.asset.cmdpending = false
+		self.asset:setFact(self, WS.Facts.factType.CMDPENDING, nil)
 		self:_print(msg)
 	end, function(err)
-		self.asset.cmdpending = false
-		self:_print("F10 menu command failed to execute, please report a bug", true)
+		self.asset:setFact(self, WS.Facts.factType.CMDPENDING, nil)
+		self:_print("F10 menu command failed to execute, please "..
+			    "report a bug", true)
 		error(string.format(
-			"\nui command failed: %s - %s", self.__clsname, tostring(err)))
+			"\nui command failed: %s - %s", self.__clsname,
+			tostring(err)))
 	end)
 end
 
@@ -73,8 +76,14 @@ function ScratchPadDisplay:__init(theater, data)
 end
 
 function ScratchPadDisplay:_execute(_, _)
-	local msg = string.format("Scratch Pad: '%s'",
-		tostring(self.asset.scratchpad))
+	local fact = self.asset:getFact(WS.Facts.factKey.SCRATCHPAD)
+	local msg = "Scratch Pad: "
+
+	if fact then
+		msg = msg .. tostring(fact.value.value)
+	else
+		msg = msg .. "nil"
+	end
 	return msg
 end
 
@@ -89,7 +98,8 @@ function ScratchPadSet:_execute(_, _)
 	local mrkid = human.getMarkID()
 	local pos   = Group.getByName(self.asset.name):getUnit(1):getPoint()
 
-	self.theater:getSystem("dct.ui.scratchpad"):set(mrkid, self.asset.name)
+	self.theater:getSystem("dct.systems.scratchpad"):set(mrkid,
+							     self.asset.name)
 	trigger.action.markToGroup(mrkid, "edit me", pos,
 		self.asset.groupId, false)
 	local msg = "Look on F10 MAP for user mark with contents \"edit me"..
@@ -282,9 +292,19 @@ function MissionJoinCmd:__init(theater, data)
 end
 
 function MissionJoinCmd:_execute(_, cmdr)
-	local missioncode = self.missioncode or self.asset.scratchpad or 0
+	local fact = self.asset:getFact(WS.Facts.factKey.SCRATCHPAD)
 	local msn = cmdr:getAssigned(self.asset)
+	local scratchpad
+	local missioncode
 	local msg
+
+	if fact then
+		scratchpad = fact.value.value
+	else
+		scratchpad = 0
+	end
+
+	missioncode = self.missioncode or scratchpad
 
 	if msn then
 		msg = string.format("You have mission %s already assigned, "..

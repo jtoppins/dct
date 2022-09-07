@@ -91,15 +91,15 @@ end
 
 function PlayerSensor:handleBirth(event)
 	if not self:isEnabled() then
-		local grp = event.initiator:getGroup()
-		trigger.action.outTextForGroup(grp:getID(),
+		self.agent:setFact(self, WS.Facts.factKey.BLOCKSLOT,
+				   WS.Facts.PlayerMsg(
 			"Warning: you have spawned in a disabled "..
-			"slot, slot blocker potentially broken.",
-			20, false)
-		return
+			"slot, slot blocker potentially broken.", 20))
 	end
 
 	self.ejection = false
+	self.agent:setFact(self, WS.Facts.factKey.LOSETICKET,
+		WS.Facts.Value(WS.Facts.factType.LOSETICKET, false))
 	self:postFact(self._keyjoin, WS.Facts.Event(
 		dctutils.buildevent.playerJoin(event.initiator:getName())))
 end
@@ -113,7 +113,8 @@ function PlayerSensor:handleTakeoff(--[[event]])
 		return
 	end
 
-	self.agent.desc.loseticket = true
+	self.agent:setFact(self, WS.Facts.factKey.LOSETICKET,
+		WS.Facts.Value(WS.Facts.factType.LOSETICKET, true))
 	self.agent:WS():get(WS.ID.INAIR).value = true
 end
 
@@ -130,12 +131,13 @@ function PlayerSensor:handleLand(event)
 
 	self.agent:WS():get(WS.ID.INAIR).value = false
 	if (airbase and airbase.owner == self.agent.owner) or
-	   event.place:getName() == self.agent.desc.airbase then
-		self.agent.desc.loseticket = false
-		trigger.action.outTextForGroup(self.agent.desc.groupId,
+	   event.place:getName() == self.agent:getDescKey("airbase") then
+		self.agent:setFact(self, WS.Facts.factKey.LOSETICKET,
+			WS.Facts.Value(WS.Facts.factType.LOSETICKET, false))
+		self.agent:setFact(self, WS.Facts.factKey.LANDSAFE,
+				   WS.Facts.PlayerMsg(
 			"Welcome home. You are able to safely disconnect"..
-			" without costing your side tickets.",
-			20, true)
+			" without costing your side tickets.", 20))
 	end
 end
 
@@ -149,13 +151,14 @@ function PlayerSensor:handleEjection(event)
 end
 
 function PlayerSensor:handleLoseTicket(--[[event]])
-	self.agent.desc.loseticket = true
+	self.agent:setFact(self, WS.Facts.factKey.LOSETICKET,
+		WS.Facts.Value(WS.Facts.factType.LOSETICKET, true))
 	self:postFact(self._keykick, WS.Facts.Event(
 		dctutils.buildevent.playerKick(dctenum.kickCode.DEAD, self)))
 end
 
 function PlayerSensor:handleBaseState(event)
-	if event.initiator.name ~= self.agent.desc.airbase then
+	if event.initiator.name ~= self.agent:getDescKey("airbase") then
 		self.agent._logger:warn(
 			"received unknown event %s(%d) from initiator(%s)",
 			utils.getkey(dctenum.event, event.id),

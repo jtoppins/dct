@@ -63,21 +63,23 @@ function PlayerKick:enter()
 	local flagname = dctutils.build_kick_flagname(self.agent.name)
 	local msg = reasons[self.fact.event.code] or
 		"You have been kicked from the slot for an unknown reason."
-	local fact = self.agent:getFact(self.factkey)
+	local kickfact = self.agent:getFact(self.factkey)
+	local losefact = self.agent:getFact(WS.Facts.factKey.LOSETICKET)
 
-	trigger.action.outTextForGroup(self.agent.desc.groupId, msg, 20, true)
-	trigger.action.setUserFlag(flagname, self.fact.event.code or
+	self.agent:setFact(self, WS.Facts.factKey.KICK,
+			   WS.Facts.PlayerMsg(msg, 20))
+	trigger.action.setUserFlag(flagname, self.kickfact.event.code or
 		dctenum.kickCode.UNKNOWN)
 	self.agent._logger:debug("requesting kick: %s; reason: %d",
-		flagname, self.fact.event.code)
+		flagname, self.kickfact.event.code)
 
-	if self.agent.desc.loseticket then
+	if losefact and losefact.value.value then
 		self.agent:setDead(true)
 	end
 
 	-- tell the player sensor the agent has sync'ed its state
-	fact.event.psensor:setSync(true)
-	fact.event.psensor:doEnable()
+	kickfact.event.psensor:setSync(true)
+	kickfact.event.psensor:doEnable()
 
 	-- clear all facts from agent
 	self.factkey = nil

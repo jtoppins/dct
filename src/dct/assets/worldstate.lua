@@ -50,8 +50,24 @@ local factType = {
 	["HEALTH"]      = 6, -- Value
 	["AMMO"]        = 7, -- Value
 	["CARGO"]       = 8, -- objref (SmartObject)
+	["PLAYERMSG"]   = 9, -- msg object
+	["LOSETICKET"]  = 10, -- Value
+	["CMDPENDING"]  = 11, -- Value
+	["SCRATCHPAD"]  = 12, -- Value
 }
 
+--- Unique fact keys that represents data that should only exist
+-- once in the agent's memory
+local factKey = {
+	["WELCOMMISSION"] = "welcomemission",
+	["WELCOME"]       = "welcome",
+	["KICK"]          = "kick",
+	["BLOCKSLOT"]     = "blockslot",
+	["LANDSAFE"]      = "landsafe",
+	["CMDPENDING"]    = "cmdpending",
+	["SCRATCHPAD"]    = "scratchpad",
+	["LOSETICKET"]    = "loseticket",
+}
 
 --- @class Attribute
 -- An abstract container generalizing a property of a fact.
@@ -75,9 +91,9 @@ end
 -- @field position   vector3D
 -- @field direction  vector3D
 -- @field owner      which coalition owns the object coalition.side
--- @field threat     ??
 -- @field event      reference to event object
--- @field value      numeric value representing something
+-- @field value      value representing something
+-- @field delay      numeric value
 -- @field path       a DCS compatible route table providing a valid path to
 --                   the node
 local Fact = class("Fact")
@@ -141,9 +157,17 @@ end
 --- @class ValueFact
 -- Normalized value [0,1] representing something.
 local ValueFact = class("ValueFact", Fact)
-function ValueFact:__init(t, val, conf)
+function ValueFact:__init(t, val, conf, delay)
 	Fact.__init(self, t)
 	self.value = Attribute(val, conf)
+	self.delay = delay
+end
+
+--- @class PlayerMsgFact
+-- Message fact that needs to be displayed to the player.
+local PlayerMsgFact = class("PlayerMsgFact", ValueFact)
+function PlayerMsgFact:__init(msg, delay)
+	ValueFact.__init(self, factType.PLAYERMSG, msg, nil, delay)
 end
 
 --- @class WorldState
@@ -277,11 +301,13 @@ local _ws = {}
 _ws.Attribute = Attribute
 _ws.Facts = {
 	["factType"]  = factType,
+	["factKey"]   = factKey,
 	["Node"]      = NodeFact,
 	["Character"] = CharacterFact,
 	["Stimuli"]   = StimuliFact,
 	["Event"]     = EventFact,
 	["Value"]     = ValueFact,
+	["PlayerMsg"] = PlayerMsgFact,
 }
 _ws.ID = id
 _ws.Stance = stanceType

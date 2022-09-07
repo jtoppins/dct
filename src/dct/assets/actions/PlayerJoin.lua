@@ -2,7 +2,6 @@
 
 local dctenum  = require("dct.enum")
 local dctutils = require("dct.libs.utils")
-local uimenu   = require("dct.ui.groupmenu")
 local WS       = require("dct.assets.worldstate")
 
 local function is_join_event(fact)
@@ -51,24 +50,24 @@ function PlayerJoin:enter()
 		return
 	end
 
-	local groupId = grp:getID()
 	self.agent:setDead(false)
-	self.agent.desc.groupId = groupId
+	self.agent:setDescKey("groupId", grp:getID())
 	self.agent:WS():get(WS.ID.INAIR).value = unit:inAir()
 	if not self.agent:hasFact(any_event) then
 		self.agent:WS():get(WS.ID.REACTEDTOEVENT).value = true
 	end
-	uimenu.createMenu(self.agent)
 
 	if msn then
-		trigger.action.outTextForGroup(groupId, string.format(
+		self.agent:setFact(self, WS.Facts.factKey.WELCOMMISSION,
+			WS.Facts.PlayerMsg(string.format(
 			"Welcome. Mission %d is already assigned to this "..
 			"slot, use the F10 menu to get the briefing or "..
-			"find another.", msn:getID()), 20, false)
+			"find another.", msn:getID()), 20))
 		-- TODO: pull all mission facts and add them to the agent
 	end
 
-	trigger.action.outTextForGroup(groupId, dctutils.notifymsg, 20, false)
+	self.agent:setFact(self, WS.Facts.factKey.WELCOMMISSION,
+			   WS.Facts.PlayerMsg(dctutils.notifymsg, 20))
 end
 
 return PlayerJoin
