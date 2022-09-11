@@ -11,9 +11,8 @@ local json        = require("libs.json")
 local dctenum     = require("dct.enum")
 local dctutils    = require("dct.libs.utils")
 local Observable  = require("dct.libs.Observable")
-local uicmds      = require("dct.ui.cmds")
-local Commander   = require("dct.ai.Commander")
 local Command     = require("dct.libs.Command")
+local Commander   = require("dct.ai.Commander")
 local Logger      = dct.Logger.getByName("Theater")
 local settings    = dct.settings.server
 local STATE_VERSION = "3"
@@ -167,6 +166,14 @@ function Theater.singleton()
 
 	dct.theater = Theater()
 	return dct.theater
+end
+
+function Theater.playerRequest(data)
+	xpcall(function()
+		local theater = Theater.singleton()
+		local uimenu = require("dct.ui.groupmenu")
+		uimenu.playerRequest(theater, data)
+	end, errhandler)
 end
 
 function Theater:setTimings(cmdfreq, tgtfps, percent)
@@ -340,31 +347,6 @@ end
 
 function Theater:getTickets()
 	return self:getSystem("dct.systems.tickets")
-end
-
-function Theater.playerRequest(data)
-	local self = Theater.singleton()
-	if data == nil then
-		Logger:error("playerRequest(); value error: data must be provided; %s",
-			debug.traceback())
-		return
-	end
-
-	Logger:debug("playerRequest(); Received player request: %s",
-		json:encode_pretty(data))
-
-	local playerasset = self:getAssetMgr():getAsset(data.name)
-
-	if playerasset.cmdpending == true then
-		Logger:debug("playerRequest(); request pending, ignoring")
-		trigger.action.outTextForGroup(playerasset.groupId,
-			"F10 request already pending, please wait.", 20, true)
-		return
-	end
-
-	local cmd = uicmds[data.type](self, data)
-	self:queueCommand(self.uicmddelay, cmd)
-	playerasset.cmdpending = true
 end
 
 -- do not worry about command priority right now

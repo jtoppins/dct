@@ -14,15 +14,42 @@
 --   object creation.
 
 local utils    = require("libs.utils")
+local json     = require("libs.json")
 local dctenum  = require("dct.enum")
-local Theater  = require("dct.Theater")
 local loadout  = require("dct.ui.loadouts")
 local msncodes = require("dct.ui.missioncodes")
+local uicmds   = require("dct.ui.cmds")
+local WS       = require("dct.assets.worldstate")
+local Theater  = dct.Theater
 local Logger   = dct.Logger.getByName("UI")
 local addmenu  = missionCommands.addSubMenuForGroup
 local addcmd   = missionCommands.addCommandForGroup
 
 local menus = {}
+
+function menus.playerRequest(theater, data)
+	Logger:debug("playerRequest(); Received player request: %s",
+		     json:encode_pretty(data))
+
+	local player = theater:getAssetMgr():getAsset(data.name)
+
+	if player == nil then
+		return
+	end
+
+	if player:getFact(WS.Facts.factKey.CMDPENDING) ~= nil then
+		Logger:debug("playerRequest(); request pending, ignoring")
+		WS.Facts.PlayerMsg("F10 request already pending, please wait.",
+				   20)
+		return
+	end
+
+	local cmd = uicmds[data.type](theater, data)
+	theater:queueCommand(theater.uicmddelay, cmd)
+	player:setFact(theater, WS.Facts.factKey.CMDPENDING,
+		       WS.Facts.Value(WS.Facts.factType.CMDPENDING, true))
+end
+
 function menus.createMenu(asset)
 	local gid  = asset.groupId
 	local name = asset.name
