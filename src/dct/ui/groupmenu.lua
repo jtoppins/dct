@@ -1,10 +1,6 @@
---[[
 -- SPDX-License-Identifier: LGPL-3.0
 --
 -- Handles applying a F10 menu UI to player groups
---]]
-
---[[
 -- Assumptions:
 -- It is assumed each player group consists of a single player
 -- aircraft due to issues with the game.
@@ -16,10 +12,9 @@
 --   mission start is because the the group does not exist until at
 --   least one player occupies a slot. We must add the menu upon
 --   object creation.
---]]
 
 local utils    = require("libs.utils")
-local enum     = require("dct.enum")
+local dctenum  = require("dct.enum")
 local Theater  = require("dct.Theater")
 local loadout  = require("dct.ui.loadouts")
 local msncodes = require("dct.ui.missioncodes")
@@ -43,8 +38,8 @@ function menus.createMenu(asset)
 
 	local padmenu = addmenu(gid, "Scratch Pad", nil)
 	for k, v in pairs({
-		["DISPLAY"] = enum.uiRequestType.SCRATCHPADGET,
-		["SET"] = enum.uiRequestType.SCRATCHPADSET}) do
+		["DISPLAY"] = dctenum.uiRequestType.SCRATCHPADGET,
+		["SET"] = dctenum.uiRequestType.SCRATCHPADSET}) do
 		addcmd(gid, k, padmenu, Theater.playerRequest,
 			{
 				["name"]   = name,
@@ -55,7 +50,7 @@ function menus.createMenu(asset)
 	addcmd(gid, "Theater Update", nil, Theater.playerRequest,
 		{
 			["name"]   = name,
-			["type"]   = enum.uiRequestType.THEATERSTATUS,
+			["type"]   = dctenum.uiRequestType.THEATERSTATUS,
 		})
 
 	local msnmenu = addmenu(gid, "Mission", nil)
@@ -64,7 +59,8 @@ function menus.createMenu(asset)
 		addcmd(gid, k, rqstmenu, Theater.playerRequest,
 			{
 				["name"]   = name,
-				["type"]   = enum.uiRequestType.MISSIONREQUEST,
+				["type"]   =
+					dctenum.uiRequestType.MISSIONREQUEST,
 				["value"]  = v,
 			})
 	end
@@ -73,7 +69,7 @@ function menus.createMenu(asset)
 	addcmd(gid, "Use Scratch Pad Value", joinmenu, Theater.playerRequest,
 		{
 			["name"]   = name,
-			["type"]   = enum.uiRequestType.MISSIONJOIN,
+			["type"]   = dctenum.uiRequestType.MISSIONJOIN,
 			["value"]  = nil,
 		})
 
@@ -83,23 +79,23 @@ function menus.createMenu(asset)
 	addcmd(gid, "Briefing", msnmenu, Theater.playerRequest,
 		{
 			["name"]   = name,
-			["type"]   = enum.uiRequestType.MISSIONBRIEF,
+			["type"]   = dctenum.uiRequestType.MISSIONBRIEF,
 		})
 	addcmd(gid, "Status", msnmenu, Theater.playerRequest,
 		{
 			["name"]   = name,
-			["type"]   = enum.uiRequestType.MISSIONSTATUS,
+			["type"]   = dctenum.uiRequestType.MISSIONSTATUS,
 		})
 	addcmd(gid, "Abort", msnmenu, Theater.playerRequest,
 		{
 			["name"]   = name,
-			["type"]   = enum.uiRequestType.MISSIONABORT,
-			["value"]  = enum.missionAbortType.ABORT,
+			["type"]   = dctenum.uiRequestType.MISSIONABORT,
+			["value"]  = dctenum.missionAbortType.ABORT,
 		})
 	addcmd(gid, "Rolex +30", msnmenu, Theater.playerRequest,
 		{
 			["name"]   = name,
-			["type"]   = enum.uiRequestType.MISSIONROLEX,
+			["type"]   = dctenum.uiRequestType.MISSIONROLEX,
 			["value"]  = 30*60,  -- seconds
 		})
 	loadout.addmenu(asset, nil, Theater.playerRequest)

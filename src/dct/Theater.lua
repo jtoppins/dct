@@ -1,8 +1,6 @@
---[[
 -- SPDX-License-Identifier: LGPL-3.0
 --
 -- Defines the Theater class.
---]]
 
 require("os")
 require("io")
@@ -10,17 +8,57 @@ require("lfs")
 local class       = require("libs.namedclass")
 local containers  = require("libs.containers")
 local json        = require("libs.json")
-local enum        = require("dct.enum")
+local dctenum     = require("dct.enum")
 local dctutils    = require("dct.libs.utils")
 local Observable  = require("dct.libs.Observable")
 local uicmds      = require("dct.ui.cmds")
 local Commander   = require("dct.ai.Commander")
 local Command     = require("dct.libs.Command")
 local Logger      = dct.Logger.getByName("Theater")
-local settings    = _G.dct.settings.server
+local settings    = dct.settings.server
 local STATE_VERSION = "3"
 
---- Component system. Defines a generic way for initializing components
+--- error handler for all xpcall
+local function errhandler(err)
+	Logger:error("protected call - %s", debug.traceback(err, 2))
+end
+
+--- tests if a state table is valid
+local function isStateValid(state)
+	if state == nil then
+		Logger:info("isStateValid(); state object nil")
+		return false
+	end
+
+	if state.complete == true then
+		Logger:info("isStateValid(); theater goals were completed")
+		return false
+	end
+
+	if state.version ~= STATE_VERSION then
+		Logger:warn("isStateValid(); invalid state version")
+		return false
+	end
+
+	if state.theater ~= env.mission.theatre then
+		Logger:warn("isStateValid(); wrong theater; "..
+			"state: '%s'; mission: '%s'", state.theater, env.mission.theatre)
+		return false
+	end
+
+	if state.sortie ~= env.getValueDictByKey(env.mission.sortie) then
+		Logger:warn("isStateValid(); wrong sortie; "..
+			"state: '%s'; mission: '%s'", state.sortie,
+			env.getValueDictByKey(env.mission.sortie))
+		return false
+	end
+
+	return true
+end
+
+
+--- @class Systems
+-- Component system. Defines a generic way for initializing components
 -- of the system without directly tying the two systems together.
 -- A system can provide the following methods:
 --
@@ -28,7 +66,7 @@ local STATE_VERSION = "3"
 --   do not depend on external systems
 -- @function marshal all the system's data for serialization
 -- @function unmarshal initializes the system from the saved data
--- @function generate Assets the system may need
+-- @function generate all assets, guarentees all Templates are read
 -- @function postinit run after __init and generate, guarantees all
 --   assets are generated and all templates have been loaded
 local Systems = class("System")
@@ -94,44 +132,11 @@ function Systems:addSystem(path)
 	self._systemscnt = self._systemscnt + 1
 end
 
-local function isStateValid(state)
-	if state == nil then
-		Logger:info("isStateValid(); state object nil")
-		return false
-	end
 
-	if state.complete == true then
-		Logger:info("isStateValid(); theater goals were completed")
-		return false
-	end
-
-	if state.version ~= STATE_VERSION then
-		Logger:warn("isStateValid(); invalid state version")
-		return false
-	end
-
-	if state.theater ~= env.mission.theatre then
-		Logger:warn("isStateValid(); wrong theater; "..
-			"state: '%s'; mission: '%s'", state.theater, env.mission.theatre)
-		return false
-	end
-
-	if state.sortie ~= env.getValueDictByKey(env.mission.sortie) then
-		Logger:warn("isStateValid(); wrong sortie; "..
-			"state: '%s'; mission: '%s'", state.sortie,
-			env.getValueDictByKey(env.mission.sortie))
-		return false
-	end
-
-	return true
-end
-
---[[
---  Theater class
---    base class that reads in all region and template information
---    and provides a base interface for manipulating data at a theater
---    level.
---]]
+--- @class Theater
+-- base class that reads in all region and template information
+-- and provides a base interface for manipulating data at a theater
+-- level.
 local Theater = class("Theater", Observable, Systems)
 function Theater:__init()
 	Observable.__init(self, Logger)
@@ -161,11 +166,12 @@ function Theater:__init()
 end
 
 function Theater.singleton()
-	if _G.dct.theater ~= nil then
-		return _G.dct.theater
+	if dct.theater ~= nil then
+		return dct.theater
 	end
-	_G.dct.theater = Theater()
-	return _G.dct.theater
+
+	dct.theater = Theater()
+	return dct.theater
 end
 
 function Theater:setTimings(cmdfreq, tgtfps, percent)
@@ -205,7 +211,7 @@ function Theater:delayedInit()
 	-- TODO: temporary, spawn all generated assets
 	-- eventually we will want to spawn only a set of assets
 	for _, asset in self:getAssetMgr():iterate() do
-		if asset.type ~= enum.assetType.PLAYERGROUP and
+		if asset.type ~= dctenum.assetType.PLAYERGROUP and
 		   not asset:isSpawned() then
 			asset:spawn()
 		end
@@ -265,10 +271,6 @@ local irrelevants = {
 	[world.event.S_EVENT_LANDING_QUALITY_MARK]         = true,
 	[world.event.S_EVENT_BDA]                          = true,
 }
-
-local function errhandler(err)
-	Logger:error("protected call - %s", debug.traceback(err, 2))
-end
 
 -- DCS looks for this function in any table we register with the world
 -- event handler
@@ -370,7 +372,6 @@ function Theater.playerRequest(data)
 	playerasset.cmdpending = true
 end
 
---[[
 -- do not worry about command priority right now
 -- command queue discussion,
 --  * central Q
@@ -384,12 +385,11 @@ end
 --
 -- delay - amount of delay in seconds before the command is run
 -- cmd   - the command to be run
---]]
 function Theater:queueCommand(delay, cmd)
 	if delay < self.cmdmindelay then
 		Logger:warn("queueCommand(); delay(%2.2f) less than "..
-			"schedular minimum(%2.2f), setting to schedular minumum",
-			delay, self.cmdmindelay)
+			    "schedular minimum(%2.2f), setting to schedular "..
+			    "minumum", delay, self.cmdmindelay)
 		delay = self.cmdmindelay
 	end
 	self.cmdq:push(timer.getTime() + delay, cmd)
@@ -397,9 +397,11 @@ function Theater:queueCommand(delay, cmd)
 		cmd.name, delay, self.cmdq:size())
 end
 
+--- execute queued commands
 function Theater:exec(time)
-	self.qtimer:reset()
 	local cmdctr = 0
+
+	self.qtimer:reset()
 	while not self.cmdq:empty() do
 		local _, prio = self.cmdq:peek()
 		if time < prio then
@@ -414,17 +416,19 @@ function Theater:exec(time)
 		if ok and type(requeue) == "number" then
 			self:queueCommand(requeue, cmd)
 		end
+
 		cmdctr = cmdctr + 1
 		self.qtimer:update()
 		if self.qtimer:expired() then
-			Logger:debug("exec(); quanta reached, quanta: %5.2fms", self.quanta*1000)
+			Logger:debug("exec(); quanta reached, quanta: %5.2fms",
+				     self.quanta * 1000)
 			break
 		end
 	end
 	self.qtimer:update()
 	if settings.profile then
 		Logger:debug("exec(); time taken: %4.2fms; cmds executed: %d",
-			self.qtimer.timeout*1000, cmdctr)
+			     self.qtimer.timeout * 1000, cmdctr)
 	end
 	return time + self.cmdqdelay
 end
