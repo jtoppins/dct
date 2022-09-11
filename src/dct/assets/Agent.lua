@@ -60,19 +60,6 @@ local function _do_one_obj(obj, tasktbl, push, filter)
 	aitasks.execute(obj:getController(), tasktbl, taskfunc)
 end
 
---- Sensor classes have a bunch of optional functions that can be called
--- by the Agent class.
-local function foreach_call(tbl, func, ...)
-	assert(type(tbl) == "table", "value error: tbl is not a lua table")
-	assert(type(func) == "string", "value error: func is not a string")
-
-	for _, obj in ipairs(tbl) do
-		if type(obj[func]) == "function" then
-			obj[func](obj, ...)
-		end
-	end
-end
-
 --- Remove dead Units from the group description table `grp` and store the
 -- filtered group into `tbl`.
 local function filter_dead_objects(tbl, grp)
@@ -291,7 +278,7 @@ function Agent:setup()
 	end
 
 	self._plangraph = WS.Graph(self, self.actions)
-	foreach_call(self.sensors, "setup")
+	dctutils.foreach_call(self.sensors, ipairs, "setup")
 	self._setup = true
 end
 
@@ -301,7 +288,7 @@ function Agent:marshal()
 		return nil
 	end
 
-	foreach_call(self.sensors, "marshal")
+	dctutils.foreach_call(self.sensors, ipairs, "marshal")
 	local tbl = Marshallable.marshal(self)
 
 	if tbl.desc.tpldata then
@@ -514,7 +501,7 @@ end
 
 --- Handle DCS and DCT objects sent to the Agent
 function Agent:onDCTEvent(event)
-	foreach_call(self.sensors, "onDCTEvent", event)
+	dctutils.foreach_call(self.sensors, ipairs, "onDCTEvent", event)
 end
 
 local function execute_plan(agent)
@@ -601,20 +588,20 @@ function Agent:spawn(ignore)
 		return
 	end
 
-	foreach_call(self.sensors, "spawn", ignore)
+	dctutils.foreach_call(self.sensors, ipairs, "spawn", ignore)
 	spawn_despawn(self, "spawn", ignore)
 	self._spawned = true
-	foreach_call(self.sensors, "spawnPost")
+	dctutils.foreach_call(self.sensors, ipairs, "spawnPost")
 end
 
 -- Remove any DCS objects associated with this asset from the game world.
 -- The method used should result in no DCS events being triggered.
 -- Returns: none
 function Agent:despawn()
-	foreach_call(self.sensors, "despawn")
+	dctutils.foreach_call(self.sensors, ipairs, "despawn")
 	spawn_despawn(self, "despawn")
 	self._spawned = false
-	foreach_call(self.sensors, "despawnPost")
+	dctutils.foreach_call(self.sensors, ipairs, "despawnPost")
 end
 
 --- Like DCS Unit.hasAttribute, returns true if attr is contained by

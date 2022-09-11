@@ -38,6 +38,23 @@ function utils.isalive(grpname)
 	return (grp and grp:isExist() and grp:getSize() > 0)
 end
 
+--- Calls an optional function for a set of objects defined in tbl.
+--
+-- @param tbl the table of objects whos keys do not matter and whos values
+-- are the objects to be checked if the object implements the optional
+-- `func` function.
+-- @param func the function to check for and execute if exists
+function utils.foreach_call(tbl, iterator, func, ...)
+	check.table(tbl)
+	check.func(iterator)
+
+	for _, obj in iterator(tbl) do
+		if type(obj[func]) == "function" then
+			obj[func](obj, ...)
+		end
+	end
+end
+
 function utils.interp(s, tab)
 	return (s:gsub('(%b%%)', function(w) return tab[w:sub(2,-2)] or w end))
 end

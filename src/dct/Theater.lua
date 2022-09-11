@@ -111,12 +111,7 @@ end
 
 -- runs a system method that can optionally be provided by a system
 function Systems:_runsys(methodname, ...)
-	for sysname, sys in pairs(self._systems) do
-		if type(sys[methodname]) == "function" then
-			Logger:info("system calling %s:%s", sysname, methodname)
-			sys[methodname](sys, ...)
-		end
-	end
+	dctutils.foreach_call(self._systems, pairs, methodname, ...)
 end
 
 function Systems:getSystem(path)
@@ -200,13 +195,13 @@ function Theater:loadOrGenerate()
 		self:unmarshal(statetbl.systems)
 	else
 		Logger:info("generating new theater")
-		self:_runsys("generate", self)
+		self:_runsys("generate")
 	end
 end
 
 function Theater:delayedInit()
 	self:loadOrGenerate()
-	self:_runsys("postinit", self)
+	self:_runsys("postinit")
 
 	-- TODO: temporary, spawn all generated assets
 	-- eventually we will want to spawn only a set of assets
