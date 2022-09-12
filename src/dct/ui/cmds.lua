@@ -1,8 +1,6 @@
---[[
 -- SPDX-License-Identifier: LGPL-3.0
 --
 -- UI Commands
---]]
 
 require("os")
 local class    = require("libs.namedclass")
@@ -67,6 +65,7 @@ function UICmd:uicmd(time)
 	end)
 end
 
+--- @class ScratchPadDisplay
 local ScratchPadDisplay = class("ScratchPadDisplay", UICmd)
 function ScratchPadDisplay:__init(theater, data)
 	UICmd.__init(self, theater, data)
@@ -79,6 +78,7 @@ function ScratchPadDisplay:_execute(_, _)
 	return msg
 end
 
+--- @class ScratchPadSet
 local ScratchPadSet = class("ScratchPadSet", UICmd)
 function ScratchPadSet:__init(theater, data)
 	UICmd.__init(self, theater, data)
@@ -92,10 +92,10 @@ function ScratchPadSet:_execute(_, _)
 	self.theater:getSystem("dct.ui.scratchpad"):set(mrkid, self.asset.name)
 	trigger.action.markToGroup(mrkid, "edit me", pos,
 		self.asset.groupId, false)
-	local msg = "Look on F10 MAP for user mark with contents \"edit me\"\n "..
-		"Edit body with your scratchpad information. "..
-		"Click off the mark when finished. "..
-		"The mark will automatically be deleted."
+	local msg = "Look on F10 MAP for user mark with contents \"edit me"..
+		"\"\n Edit body with your scratchpad information. "..
+		"Click off the mark when finished. The mark will "..
+		"automatically be deleted."
 	return msg
 end
 
@@ -227,8 +227,9 @@ function MissionCmd:__init(theater, data)
 end
 
 function MissionCmd:_execute(time, cmdr)
-	local msg
 	local msn = cmdr:getAssigned(self.asset)
+	local msg
+
 	if msn == nil then
 		msg = "You do not have a mission assigned"
 		if self.erequest == true then
@@ -293,7 +294,8 @@ function MissionJoinCmd:_execute(_, cmdr)
 
 	msn = cmdr:getMission(missioncode)
 	if msn == nil then
-		msg = string.format("No mission of ID(%s) available", tostring(missioncode))
+		msg = string.format("No mission of ID(%s) available",
+				    tostring(missioncode))
 	else
 		local tgtinfo = msn:getTargetInfo()
 		msn:addAssigned(self.asset)
