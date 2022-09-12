@@ -125,7 +125,7 @@ function menus.createMenu(asset)
 			["type"]   = dctenum.uiRequestType.MISSIONROLEX,
 			["value"]  = 30*60,  -- seconds
 		})
-	loadout.addmenu(asset, nil, Theater.playerRequest)
+	loadout.addmenu(gid, asset.name, nil, Theater.playerRequest)
 end
 
 return menus

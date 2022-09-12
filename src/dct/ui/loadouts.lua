@@ -1,35 +1,39 @@
---[[
 -- SPDX-License-Identifier: LGPL-3.0
 --
 -- Implements a loadout point buy system to limit player loadouts.
 -- Assumes a single player slot per group and it is the first slot.
---]]
 
-require("lfs")
-local enum     = require("dct.enum")
+local dctenum  = require("dct.enum")
 local dctutils = require("dct.libs.utils")
-local settings = _G.dct.settings
 
 local isAAMissile = {
 	[Weapon.MissileCategory.AAM] = true,
 	[Weapon.MissileCategory.SAM] = true,
 }
 
-local function defaultCategory(weapon)
-	if isAAMissile[weapon.desc.missileCategory] then
-		return enum.weaponCategory.AA
-	elseif weapon.desc.category ~= Weapon.Category.SHELL then
-		return enum.weaponCategory.AG
+local function default_category(weapon)
+	if weapon.desc.category == Weapon.Category.SHELL then
+		return dctenum.weaponCategory.GUN
+	elseif isAAMissile[weapon.desc.missileCategory] then
+		return dctenum.weaponCategory.AA
 	end
+	return dctenum.weaponCategory.AG
 end
 
--- returns totals for all weapon types, or nil if the group does not exist
-local function totalPayload(grp, limits)
-	local unit = grp:getUnit(1)
-	local restrictedWeapons = settings.restrictedweapons
+--- tally all weapon types for a given unit
+--
+-- @param unit dcs unit reference
+-- @param limits the limits table to use
+-- @param restrictions the restrictions table to use
+-- @param defcost the default cost of a weapon
+-- @return a total table keyed on weapon category
+local function total_payload(unit, limits, restrictions, defcost)
 	local payload = unit:getAmmo()
 	local total = {}
-	for _, v in pairs(enum.weaponCategory) do
+	restrictions = restrictions or {}
+	defcost = defcost or 0
+
+	for _, v in pairs(dctenum.weaponCategory) do
 		total[v] = {
 			["current"] = 0,
 			["max"]     = limits[v] or 0,
@@ -41,18 +45,19 @@ local function totalPayload(grp, limits)
 	for _, wpn in ipairs(payload or {}) do
 		local wpnname = dctutils.trimTypeName(wpn.desc.typeName)
 		local wpncnt  = wpn.count
-		local restriction = restrictedWeapons[wpnname] or {}
-		local category = restriction.category or defaultCategory(wpn)
-		local cost = restriction.cost or 0
+		local restriction = restrictions[wpnname] or {}
+		local category = restriction.category or default_category(wpn)
+		local cost = restriction.cost or defcost
 
 		if category ~= nil then
 			total[category].current =
 				total[category].current + (wpncnt * cost)
 
 			table.insert(total[category].payload, {
-				["name"] = wpn.desc.displayName,
+				["name"]  = wpn.desc.displayName,
+				["type"]  = wpnname,
 				["count"] = wpncnt,
-				["cost"] = cost,
+				["cost"]  = cost,
 			})
 		end
 	end
@@ -63,8 +68,8 @@ end
 --   first arg (boolean) is payload valid
 --   second arg (table) total cost per category of the payload, also
 --       includes the max allowed for the airframe
-local function validatePayload(grp, limits)
-	local total = totalPayload(grp, limits)
+local function validate_payload(unit, limits)
+	local total = total_payload(unit, limits)
 
 	for _, cost in pairs(total) do
 		if cost.current > cost.max then
@@ -75,20 +80,73 @@ local function validatePayload(grp, limits)
 	return true, total
 end
 
-local loadout = {}
+-- print cost summary
+local function build_summary(costs)
+	local msg = "== Loadout Summary:"
 
-function loadout.check(player)
-	return validatePayload(Group.getByName(player.name),
-		player.payloadlimits)
+	for desc, cat in pairs(dctenum.weaponCategory) do
+		if costs[cat].current < dctenum.WPNINFCOST then
+			msg = msg..string.format("\n  %s cost: %.4g / %d",
+						 desc, costs[cat].current,
+						 costs[cat].max)
+		else
+			msg = msg..string.format("\n  %s cost: -- / %d",
+						 desc, costs[cat].max)
+		end
+	end
+	return msg
 end
 
-function loadout.addmenu(asset, menu, handler)
-	local gid  = asset.groupId
-	local name = asset.name
+local function build_payload_details(payload, desc)
+	if next(payload) == nil then
+		return ""
+	end
+
+	local msg = string.format("\n\n== %s Weapons:", desc)
+
+	for _, wpn in pairs(payload) do
+		msg = msg..string.format("\n  %s\n    ↳ ", wpn.name)
+		if wpn.cost == 0 then
+			msg = msg..string.format("%d × unrestricted (0 pts)",
+						 wpn.count)
+		elseif wpn.cost < dctenum.WPNINFCOST then
+			msg = msg..string.format("%d × %.4g pts = %.4g pts",
+				wpn.count, wpn.cost, wpn.count * wpn.cost)
+		else
+			msg = msg.."Weapon cannot be used in this theater [!]"
+		end
+	end
+	return msg
+end
+
+local loadout = {}
+
+--- Generate a payload summary for the costs table provided
+--
+-- @return text string summary of the loadout
+function loadout.summary(costs)
+	local msg = build_summary(costs)
+
+	-- group weapons by category
+	for desc, cat in pairs(dctenum.weaponCategory) do
+		msg = msg..build_payload_details(costs[cat].payload, desc)
+	end
+
+	return msg
+end
+
+loadout.total = total_payload
+
+function loadout.check(player)
+	return validate_payload(Group.getByName(player.name):getUnit(1),
+				player:getDescKey("payloadlimits"))
+end
+
+function loadout.addmenu(gid, name, menu, handler)
 	return missionCommands.addCommandForGroup(gid,
 		"Check Payload", menu, handler, {
 			["name"]   = name,
-			["type"]   = enum.uiRequestType.CHECKPAYLOAD,
+			["type"]   = dctenum.uiRequestType.CHECKPAYLOAD,
 		})
 end
 

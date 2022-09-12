@@ -174,60 +174,30 @@ function TheaterUpdateCmd:_execute(_, cmdr)
 	return msg
 end
 
+--- @class CheckPayloadCmd
 local CheckPayloadCmd = class("CheckPayloadCmd", UICmd)
 function CheckPayloadCmd:__init(theater, data)
 	UICmd.__init(self, theater, data)
 	self.name = "CheckPayloadCmd:"..data.name
 end
 
-function CheckPayloadCmd.buildSummary(costs)
-	-- print cost summary at the top
-	local msg = "== Loadout Summary:"
-	for desc, cat in pairs(enum.weaponCategory) do
-		if costs[cat].current < enum.WPNINFCOST then
-			msg = string.format("%s\n  %s cost: %.4g / %d",
-				msg, desc, costs[cat].current, costs[cat].max)
-		else
-			msg = string.format("%s\n  %s cost: -- / %d",
-				msg, desc, costs[cat].max)
-		end
-	end
-
-	-- group weapons by category
-	for desc, cat in pairs(enum.weaponCategory) do
-		if next(costs[cat].payload) ~= nil then
-			msg = msg..string.format("\n\n== %s Weapons:", desc)
-			for _, wpn in pairs(costs[cat].payload) do
-				msg = string.format("%s\n  %s\n    ↳ ", msg, wpn.name)
-				if wpn.cost == 0 then
-					msg = msg..string.format("%d × unrestricted (0 pts)", wpn.count)
-				elseif wpn.cost < enum.WPNINFCOST then
-					msg = msg..string.format("%d × %.4g pts = %.4g pts",
-						wpn.count, wpn.cost, wpn.count * wpn.cost)
-				else
-					msg = msg.."Weapon cannot be used in this theater [!]"
-				end
-			end
-		end
-	end
-
-	return msg
-end
-
 function CheckPayloadCmd:_execute(_ --[[time]], _ --[[cmdr]])
-	if type(self.asset.inAir) == "function" and self.asset:inAir() then
-		return "Payload check is only allowed when landed at a friendly airbase"
+	if self.asset:WS():get(WS.ID.INAIR).value == true then
+		return "Payload check is only allowed when landed at a "..
+		       "friendly airbase"
 	end
 
 	local ok, totals = loadout.check(self.asset)
+	local msg = loadout.summary(totals)
+	local header
+
 	if ok then
-		return "Valid loadout, you may depart. Good luck!\n\n"
-			..self.buildSummary(totals)
+		header = "Valid loadout, you may depart. Good luck!\n\n"
 	else
-		return "You are over budget! Re-arm before departing, or "..
-			"you will be punished!\n\n"
-			..self.buildSummary(totals)
+		header = "You are over budget! Re-arm before departing, "..
+			 "or you will be punished!\n\n"
 	end
+	return header..msg
 end
 
 local MissionCmd = class("MissionCmd", UICmd)

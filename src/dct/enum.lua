@@ -201,6 +201,7 @@ enum.uiRequestType = {
 enum.weaponCategory = {
 	["AA"] = 1,
 	["AG"] = 2,
+	["GUN"] = 3,
 }
 
 enum.WPNINFCOST = 5000
