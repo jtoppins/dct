@@ -3,7 +3,7 @@
 require("os")
 require("dcttestlibs")
 require("dct")
-local utils = require("dct.utils")
+local utils = require("dct.libs.utils")
 local json  = require("libs.json")
 local aienum  = require("dct.ai.enum")
 

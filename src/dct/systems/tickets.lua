@@ -8,7 +8,7 @@ require("math")
 local class    = require("libs.class")
 local utils    = require("libs.utils")
 local Marshallable = require("dct.libs.Marshallable")
-local Command  = require("dct.Command")
+local Command  = require("dct.libs.Command")
 
 local function checkvalue(keydata, tbl)
 	if tbl[keydata.name] >= 0 then

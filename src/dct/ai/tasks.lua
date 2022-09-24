@@ -57,11 +57,11 @@ end
 --]]
 function tasks.execute(controller, tasklist, taskfunc)
 	assert(controller,
-		"value error: controller need to be a DCS controller instance.")
+	       "value error: controller need to be a DCS controller instance.")
 	assert(type(tasklist) == "table",
-		"value error: the task list must be a table.")
+	       "value error: the task list must be a table.")
 	assert(type(taskfunc) == "function" or taskfunc == nil,
-		"value error: [optional] taskfnc must be a function if provided.")
+	       "value error: [optional] taskfnc must be a function if provided.")
 	taskfunc = taskfunc or tasks.pushTask
 	local switch = {
 		[aienum.TASKTYPE.COMMAND] = doCommand,
@@ -74,7 +74,8 @@ function tasks.execute(controller, tasklist, taskfunc)
 			handler(controller, task.data)
 		else
 			dct.Logger.getByName("AI"):error(
-				"no handler found for task type: "..tostring(task.type))
+				"no handler found for task type: "..
+				tostring(task.type))
 		end
 	end
 end
@@ -89,7 +90,7 @@ end
 function tasks.option.createAirFormation(ftype, dist, side)
 	local base = 65536
 	local formation = check.tblkey(ftype, aienum.FORMATION.TYPE,
-		"enum.FORMATION.TYPE")
+				       "enum.FORMATION.TYPE")
 	side = side or 0
 
 	if dist ~= nil then
@@ -102,15 +103,15 @@ end
 
 tasks.command = {}
 function tasks.command.activateBeacon(freq, bcntype, system, callsign,
-								 name, extratbl)
+				      name, extratbl)
 	assert(type(extratbl) == "table" or extratbl == nil,
 		"value error: extratbl must be a table or nil.")
 	extratbl = extratbl or {}
 	local params = {
 		["type"] = check.tblkey(bcntype, aienum.BEACON.TYPE,
-			"enum.BEACON.TYPE"),
+					"enum.BEACON.TYPE"),
 		["system"] = check.tblkey(system, aienum.BEACON.SYSTEM,
-			"enum.BEACON.SYSTEM"),
+					  "enum.BEACON.SYSTEM"),
 		["callsign"] = check.string(callsign),
 		["frequency"] = check.number(freq),
 	}
@@ -123,11 +124,45 @@ function tasks.command.activateBeacon(freq, bcntype, system, callsign,
 		aienum.TASKTYPE.COMMAND
 end
 
+function tasks.command.deactivateBeacon(bcntype)
+	local bcn = bcntype or aienum.BEACON.DEACTIVATE.ALL
+	return create_task_tbl(bcn), aienum.TASKTYPE.COMMAND
+end
+
+function tasks.command.activateACLS(unit, name)
+	local params = {}
+	params.unitId = unit:getID()
+	params.name   = name
+	return create_task_tbl('ActivateACLS', params),
+		aienum.TASKTYPE.COMMAND
+end
+
+function tasks.command.activateICLS(unit, chan, name)
+	local params = {}
+	params.type    = aienum.BEACON.TYPE.ICLS_GLIDESLOPE
+	params.channel = check.range(chan, 1, 20)
+	params.unitId  = unit:getID()
+	params.name    = name
+
+	return create_task_tbl('ActivateICLS', params),
+		aienum.TASKTYPE.COMMAND
+end
+
+function tasks.command.activateLink4(unit, freq, name)
+	local params = {}
+	params.unitId    = unit:getID()
+	params.frequency = check.number(freq)
+	params.name      = name
+
+	return create_task_tbl('ActivateLink4', params),
+		aienum.TASKTYPE.COMMAND
+end
+
 function tasks.command.createTACAN(callsign, channel, mode,
-							  name, aa, bearing, mobile)
+				   name, aa, bearing, mobile)
 	local bcntype = aienum.BEACON.TYPE.TACAN
 	local system = aienum.BEACON.SYSTEM.TACAN
-	local freq = require("dct.utils").calcTACANFreq(channel, mode)
+	local freq = require("dct.libs.utils").calcTACANFreq(channel, mode)
 	local extra = {}
 
 	extra.channel = channel
@@ -160,10 +195,6 @@ function tasks.command.createTACAN(callsign, channel, mode,
 		name, extra)
 end
 
-function tasks.command.deactivateBeacon()
-	return create_task_tbl('DeactivateBeacon'), aienum.TASKTYPE.COMMAND
-end
-
 function tasks.command.eplrs(enable)
 	local task = create_task_tbl('EPLRS')
 	task.params.value = check.bool(enable)
@@ -190,7 +221,7 @@ function tasks.command.setFrequency(freq, mod)
 	local params = {
 		frequency  = check.number(freq),
 		modulation = check.tblkey(mod, radio.modulation,
-			"radio.modulation"),
+					  "radio.modulation"),
 	}
 	return create_task_tbl('SetFrequency', params),
 		aienum.TASKTYPE.COMMAND
@@ -267,7 +298,7 @@ end
 function tasks.task.orbit(pat, pt1, pt2, speed, alt)
 	local params = {
 		["pattern"]  = check.tblkey(pat, AI.Task.OrbitPattern,
-			"AI.Task.OrbitPattern")
+					    "AI.Task.OrbitPattern")
 	}
 	if pt1 then
 		params.point = vector.Vector2D(pt1):raw()
@@ -296,6 +327,8 @@ function tasks.task.follow(gid, pos, wptidx)
 	if wptidx then
 		params.lastWptIndexFlag = true
 		params.listWptIndex     = check.number(wptidx)
+	else
+		params.lastWptIndexFlag = false
 	end
 	return create_task_tbl('Follow', params), aienum.TASKTYPE.TASK
 end
@@ -315,9 +348,17 @@ function tasks.task.escort(gid, pos, engagedist, tgtlist, wptidx)
 	return task, tasktype
 end
 
+function tasks.task.escortGround(gid, pos, orbitdist, tgtlist, wptidx)
+	local task, tasktype = tasks.task.escort(gid, pos, orbitdist,
+						 tgtlist, wptidx)
+
+	task.id = 'GroundEscort'
+	return task, tasktype
+end
+
 function tasks.task.fireAtPoint(pt, rad, expend, wpntype)
 	local params = {
-		point      = vector.Vector2D(pt):raw(),
+		point = vector.Vector2D(pt):raw(),
 	}
 
 	if rad then
@@ -336,14 +377,14 @@ function tasks.task.fireAtPoint(pt, rad, expend, wpntype)
 end
 
 local function check_optional_params(params, wpntype, wpnexpend, attackqty,
-	dir, grpatk, prio)
+				     dir, grpatk, prio)
 	if wpntype then
 		params.weaponType = check.number(wpntype)
 	end
 
 	if wpnexpend then
 		params.expend = check.tblkey(wpnexpend, AI.Task.WeaponExpend,
-			"AI.Task.WeaponExpend")
+					     "AI.Task.WeaponExpend")
 	end
 
 	if dir then
@@ -366,27 +407,27 @@ local function check_optional_params(params, wpntype, wpnexpend, attackqty,
 end
 
 function tasks.task.attackMapObject(pt, wpntype, wpnexpend, attackqty,
-									dir, grpatk)
+				    dir, grpatk)
 	local params = {}
 	params.point = vector.Vector2D(pt):raw()
 	params = check_optional_params(params, wpntype, wpnexpend, attackqty,
-		dir, grpatk)
+				       dir, grpatk)
 	return create_task_tbl('AttackMapObject', params),
 		aienum.TASKTYPE.TASK
 end
 
 function tasks.task.attackUnit(id, wpntype, wpnexpend, attackqty,
-							   dir, grpatk)
+			       dir, grpatk)
 	local params = {}
 	params.unitId = check.number(id)
 	params = check_optional_params(params, wpntype, wpnexpend, attackqty,
-		dir, grpatk)
+				       dir, grpatk)
 	return create_task_tbl('AttackUnit', params),
 		aienum.TASKTYPE.TASK
 end
 
 function tasks.task.carpetBombing(pt, len, alt, wpntype, wpnexpend,
-								  attackqty, grpatk)
+				  attackqty, grpatk)
 	local params = {
 		attackType   = 'Carpet',
 		point        = vector.Vector2D(pt):raw(),
@@ -398,13 +439,13 @@ function tasks.task.carpetBombing(pt, len, alt, wpntype, wpnexpend,
 		params.altitude        = alt
 	end
 	params = check_optional_params(params, wpntype, wpnexpend, attackqty,
-		nil, grpatk)
+				       nil, grpatk)
 	return create_task_tbl('CarpetBombing', params),
 		aienum.TASKTYPE.TASK
 end
 
-function tasks.task.bombing(pt, alt, wpntype, wpnexpend,
-							attackqty, dir, grpatk)
+function tasks.task.bombing(pt, alt, wpntype, wpnexpend, attackqty,
+			    dir, grpatk)
 	local params = {}
 	params.point = vector.Vector2D(pt):raw()
 
@@ -413,37 +454,36 @@ function tasks.task.bombing(pt, alt, wpntype, wpnexpend,
 		params.altitude        = alt
 	end
 	params = check_optional_params(params, wpntype, wpnexpend, attackqty,
-		dir, grpatk)
+				       dir, grpatk)
 	return create_task_tbl('Bombing', params),
 		aienum.TASKTYPE.TASK
 end
 
-function tasks.task.bombingRunway(id, wpntype, wpnexpend,
-								  attackqty, dir, grpatk)
+function tasks.task.bombingRunway(id, wpntype, wpnexpend, attackqty, dir,
+				  grpatk)
 	local params = {}
 	params.runwayId = id
 	params = check_optional_params(params, wpntype, wpnexpend, attackqty,
-		dir, grpatk)
+				       dir, grpatk)
 	return create_task_tbl('BombingRunway', params),
 		aienum.TASKTYPE.TASK
 end
 
-function tasks.task.engageGroup(id, wpntype, wpnexpend,
-								attackqty, dir, prio)
+function tasks.task.engageGroup(id, wpntype, wpnexpend, attackqty, dir, prio)
 	local params = {}
 	params.groupId = check.number(id)
 	params = check_optional_params(params, wpntype, wpnexpend, attackqty,
-		dir, nil, prio)
+				       dir, nil, prio)
 	return create_task_tbl('EngageGroup', params),
 		aienum.TASKTYPE.TASK
 end
 
-function tasks.task.engageUnit(id, wpntype, wpnexpend,
-							   attackqty, dir, grpatk, prio)
+function tasks.task.engageUnit(id, wpntype, wpnexpend, attackqty, dir,
+			       grpatk, prio)
 	local params = {}
 	params.unitId = check.number(id)
 	params = check_optional_params(params, wpntype, wpnexpend, attackqty,
-		dir, grpatk, prio)
+				       dir, grpatk, prio)
 	return create_task_tbl('EngageUnit', params),
 		aienum.TASKTYPE.TASK
 end
@@ -475,10 +515,10 @@ function tasks.task.fac(freq, mod, callid, callnum, prio)
 	local params = {
 		frequency  = check.number(freq),
 		modulation = check.tblkey(mod, radio.modulation,
-			"radio.modulation"),
-		callname = check.range(callid, 1, 18),
-		number   = check.range(callnum, 1, 9),
-		priority    = check.number(prio),
+					  "radio.modulation"),
+		callname   = check.range(callid, 1, 18),
+		number     = check.range(callnum, 1, 9),
+		priority   = check.number(prio),
 	}
 	return create_task_tbl('FAC', params), aienum.TASKTYPE.TASK
 end
@@ -509,19 +549,19 @@ function tasks.Waypoint:setPoint(vec2, wptype, method)
 
 	if wptype ~= nil then
 		self.type = check.tblkey(wptype, AI.Task.WaypointType,
-			"AI.Task.WaypointType")
+					 "AI.Task.WaypointType")
 	end
 
 	if method ~= nil then
 		self.action = check.tblkey(method, AI.Task.TurnMethod,
-			"AI.Task.TurnMethod")
+					   "AI.Task.TurnMethod")
 	end
 end
 
 function tasks.Waypoint:setAlt(alt, alttype)
 	self.alt      = check.number(alt)
 	self.alt_type = check.tblkey(alttype, AI.Task.AltitudeType,
-		"AI.Task.AltitudeType")
+				     "AI.Task.AltitudeType")
 end
 
 function tasks.Waypoint:setSpeed(spd)

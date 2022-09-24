@@ -1,9 +1,7 @@
---[[
 -- SPDX-License-Identifier: LGPL-3.0
 --
 -- Handles raw player input via a "scratchpad" system. The
 -- addition of the F10 menu is handled outside this module.
---]]
 
 local class  = require("libs.namedclass")
 local Logger = require("dct.libs.Logger").getByName("UI")

@@ -120,11 +120,6 @@ function utils.centroid2D(point, pcentroid, n)
 	return vector.Vector2D(c), n1
 end
 
--- add a random value between +/- sigma to val and return
-function utils.addstddev(val, sigma)
-    return val + math.random(-sigma, sigma)
-end
-
 utils.posfmt = {
 	["DD"]   = 1,
 	["DDM"]  = 2,
@@ -290,6 +285,9 @@ function utils.calcTACANFreq(chan, mode)
 end
 
 utils.buildevent = {}
+--- DEAD definition:
+--   id = id of this event
+--   initiator = asset sending the death notification
 function utils.buildevent.dead(obj)
 	check.table(obj)
 	local event = {}
@@ -298,6 +296,10 @@ function utils.buildevent.dead(obj)
 	return event
 end
 
+--- HIT definition:
+--   id = id of this event
+--   initiator = DCT asset that was hit
+--   weapon = DCTWeapon object
 function utils.buildevent.hit(asset, weapon)
 	check.table(asset)
 	check.table(weapon)
@@ -308,6 +310,10 @@ function utils.buildevent.hit(asset, weapon)
 	return event
 end
 
+--- OPERATIONAL definition:
+--   id = id of this event
+--   initiator = base sending the operational notification
+--   state = of the base, true == operational
 function utils.buildevent.operational(base, state)
 	check.table(base)
 	check.bool(state)
@@ -318,6 +324,16 @@ function utils.buildevent.operational(base, state)
 	return event
 end
 
+--- CAPTURED definition:
+--   id = id of this event
+--   initiator = object that initiated the capture
+--   target = the base that has been captured
+-- Doesn't exist right now
+
+--- IMPACT definition:
+--   id = id of the event
+--   initiator = DCTWeapon class causing the impact
+--   point = impact point
 function utils.buildevent.impact(wpn)
 	check.table(wpn)
 	local event = {}
@@ -327,11 +343,94 @@ function utils.buildevent.impact(wpn)
 	return event
 end
 
+--- ADD_ASSET definition:
+--  A new asset was added to the asset manager.
+--   id = id of this event
+--   initiator = asset being added
 function utils.buildevent.addasset(asset)
 	check.table(asset)
 	local event = {}
 	event.id = enum.event.DCT_EVENT_ADD_ASSET
 	event.initiator = asset
+	return event
+end
+
+--- Goal event definition:
+--   id = id of this event
+--   initiator = goal
+function utils.buildevent.goalComplete(goal)
+	check.table(goal)
+	local event = {}
+	event.id = enum.event.DCT_EVENT_GOAL_COMPLETE
+	event.initiator = goal
+	return event
+end
+
+-- Mission event definitions:
+--   id = id of this event
+--   initiator = mission object
+function utils.buildevent.missionStart(msn)
+	check.table(msn)
+	local event = {}
+	event.id = enum.event.DCT_EVENT_MISSION_START
+	event.initiator = msn
+	return event
+end
+
+function utils.buildevent.missionUpdate(msn)
+	check.table(msn)
+	local event = {}
+	event.id = enum.event.DCT_EVENT_MISSION_UPDATE
+	event.initiator = msn
+	return event
+end
+
+-- Mission event definitions:
+--   id = id of this event
+--   initiator = mission object
+--   result = result of the mission; success, abort, timeout
+function utils.buildevent.missionDone(msn, result)
+	check.table(msn)
+	check.number(result)
+	local event = {}
+	event.id = enum.event.DCT_EVENT_MISSION_DONE
+	event.initiator = msn
+	event.result = result
+	return event
+end
+
+--- Mission event definitions:
+--   id = id of this event
+--   member = member that joined or left
+--   initiator = mission object
+function utils.buildevent.missionJoin(msn, member)
+	local event = {}
+	event.id = enum.event.DCT_EVENT_MISSION_JOIN
+	event.initiator = msn
+	event.member = member
+	return event
+end
+
+function utils.buildevent.missionLeave(msn, member)
+	local event = {}
+	event.id = enum.event.DCT_EVENT_MISSION_LEAVE
+	event.initiator = msn
+	event.member = member
+	return event
+end
+
+function utils.buildevent.playerKick(code, sensor)
+	local event = {}
+	event.id = enum.event.DCT_EVENT_PLAYER_KICK
+	event.code = code
+	event.psensor = sensor
+	return event
+end
+
+function utils.buildevent.playerJoin(name)
+	local event = {}
+	event.id = enum.event.DCT_EVENT_PLAYER_JOIN
+	event.unit = name
 	return event
 end
 

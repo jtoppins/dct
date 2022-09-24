@@ -6,7 +6,7 @@
 
 local utils      = require("libs.utils")
 local enum       = require("dct.enum")
-local dctutils   = require("dct.utils")
+local dctutils   = require("dct.libs.utils")
 
 local function validate_weapon_restrictions(cfgdata, tbl)
 	local path = cfgdata.file

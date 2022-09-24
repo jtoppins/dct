@@ -6,7 +6,8 @@ local md5 = require("md5")
 require("dcttestlibs")
 require("dct")
 local enum   = require("dct.enum")
-local settings = _G.dct.settings.server
+local settings = dct.settings.server
+settings.profile = true
 local DEBUG = false
 
 local events = {
@@ -58,38 +59,6 @@ local function copyfile(src, dest)
 	save:close()
 end
 
-local function createEvent(eventdata, player)
-	local event = {}
-	local objref
-
-	if eventdata.object.objtype == Object.Category.UNIT then
-		objref = Unit.getByName(eventdata.object.name)
-	elseif eventdata.object.objtype == Object.Category.STATIC then
-		objref = StaticObject.getByName(eventdata.object.name)
-	elseif eventdata.object.objtype == Object.Category.GROUP then
-		objref = Group.getByName(eventdata.object.name)
-	else
-		assert(false, "other object types not supported")
-	end
-
-	assert(objref, "objref is nil")
-	event.id = eventdata.id
-	event.time = 2345
-	if event.id == world.event.S_EVENT_DEAD then
-		event.initiator = objref
-		objref.clife = 0
-	elseif event.id == world.event.S_EVENT_HIT then
-		event.initiator = player
-		event.weapon = nil
-		event.target = objref
-		objref.clife = objref.clife - eventdata.object.life
-	else
-		assert(false, "other event types not supported: "..tostring(event.id))
-	end
-	return event
-end
-
-
 local function main()
 	local startdate = os.date("!*t")
 	local playergrp = Group(4, {
@@ -108,9 +77,11 @@ local function main()
 	}, playergrp, "bobplayer")
 
 	local theater = dct.Theater()
-	_G.dct.theater = theater
+	dct.theater = theater
 	theater.startdate = startdate
-	theater:exec(50)
+
+	dctstubs.setModelTime(50)
+	theater:exec(60)
 	local expected = 34
 	assert(dctcheck.spawngroups == expected,
 		string.format("group spawn broken; expected(%d), got(%d)",
@@ -132,7 +103,7 @@ local function main()
 
 	-- kill off some units
 	for _, eventdata in ipairs(events) do
-		theater:onEvent(createEvent(eventdata, player1))
+		theater:onEvent(dctstubs.createEvent(eventdata, player1))
 	end
 
 	theater:export()
@@ -144,10 +115,12 @@ local function main()
 		copyfile(settings.statepath, settings.statepath..".orig")
 	end
 
+	dct.Logger.getByName("Theater"):info("create new theater")
+
 	local newtheater = dct.Theater()
-	_G.dct.theater = newtheater
+	dct.theater = newtheater
 	theater.startdate = startdate
-	newtheater:exec(50)
+	newtheater:exec(60)
 	local name = "Test region_1_Abu Musa Ammo Dump"
 	-- verify the units read in do not include the asset we killed off
 	assert(newtheater:getAssetMgr():getAsset(name) == nil,
@@ -200,9 +173,8 @@ local function main()
 	os.remove(settings.statepath)
 
 	if DEBUG == true then
-		print("sumorig: "..tostring(sumorig))
-		print("sumsave: "..tostring(sumsave))
 		print(" sumorig == sumsave: "..tostring(sumorig == sumsave))
+		print("statepath: "..tostring(settings.statepath))
 	end
 	assert(newtheater.statef == true and sumorig == sumsave,
 		"state saving didn't produce the same md5sum")

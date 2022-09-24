@@ -1,8 +1,6 @@
---[[
--- SPDX-License-Identifier: LGPL-3.0
+--- SPDX-License-Identifier: LGPL-3.0
 --
 -- Provides DCS stubs for the mission scripting environment.
---]]
 
 require("os")
 local utils = require("libs.utils")
@@ -16,15 +14,82 @@ end
 function lfs.tempdir()
 	return lfs.dct_testdata .. utils.sep .. "mission"
 end
-local class = require("libs.class")
 
-local logfile = io.open(lfs.dct_testdata .. utils.sep .. "dct_test.log", "a+")
+local class = require("libs.class")
+local testlog = os.getenv("DCT_TEST_LOG") or
+		lfs.dct_testdata..utils.sep.."dct_test.log"
+local logfile = io.open(testlog, "a+")
 
 local dctcheck = {}
 dctcheck.spawngroups  = 0
 dctcheck.spawnunits   = 0
 dctcheck.spawnstatics = 0
 _G.dctcheck = dctcheck
+
+local dctstubs = {}
+dctstubs.model_time = 0
+dctstubs.schedfunctbl = {}
+dctstubs.eventhandlers = {}
+
+function dctstubs.setModelTime(time)
+	dctstubs.model_time = time
+end
+
+function dctstubs.addModelTime(time)
+	dctstubs.model_time = dctstubs.model_time + time
+end
+
+function dctstubs.runSched()
+	for func, data in pairs(dctstubs.schedfunctbl) do
+		if dctstubs.model_time > data.time then
+			data.time = func(data.arg, dctstubs.model_time)
+			if not (data.time ~= nil and
+				type(data.time) == "number") then
+				dctstubs.schedfunctbl[func] = nil
+			end
+		end
+	end
+end
+
+function dctstubs.runEventHandlers(event)
+	for obj, _ in pairs(dctstubs.eventhandlers) do
+		obj:onEvent(event)
+	end
+end
+
+function dctstubs.createEvent(eventdata, player)
+	local event = {}
+	local objref
+
+	if eventdata.object.objtype == Object.Category.UNIT then
+		objref = Unit.getByName(eventdata.object.name)
+	elseif eventdata.object.objtype == Object.Category.STATIC then
+		objref = StaticObject.getByName(eventdata.object.name)
+	elseif eventdata.object.objtype == Object.Category.GROUP then
+		objref = Group.getByName(eventdata.object.name)
+	else
+		assert(false, "other object types not supported")
+	end
+
+	assert(objref, "objref is nil")
+	event.id = eventdata.id
+	event.time = 2345
+	if event.id == world.event.S_EVENT_DEAD then
+		event.initiator = objref
+		objref.clife = 0
+	elseif event.id == world.event.S_EVENT_HIT then
+		event.initiator = player
+		event.weapon = nil
+		event.target = objref
+		objref.clife = objref.clife - eventdata.object.life
+	else
+		assert(false, "other event types not supported: "..
+			tostring(event.id))
+	end
+	return event
+end
+
+_G.dctstubs = dctstubs
 
 -- DCS Singletons
 --
@@ -60,27 +125,20 @@ function env.getValueDictByKey(s)
 	return s
 end
 
-local function logToFile(msg)
-	logfile:write(os.date("%F %X ")..msg.."\n")
-end
-
 function env.warning(msg, _)
-	logToFile("WARN    "..msg)
-	print("WARN: "..msg)
+	logfile:write(os.date("%F %X ").."WARN    "..msg.."\n")
 end
 function env.info(msg, _)
-	logToFile("INFO    "..msg)
+	logfile:write(os.date("%F %X ").."INFO    "..msg.."\n")
 end
 function env.error(msg, _)
-	logToFile("ERROR   "..msg)
-	print("ERROR: "..msg)
+	logfile:write(os.date("%F %X ").."ERROR   "..msg.."\n")
 end
 _G.env = env
 
 local timer = {}
-local model_time = 0
 function timer.getTime()
-	return model_time
+	return dctstubs.model_time
 end
 function timer.getTime0()
 	--- 15:00:00 mission start time
@@ -89,11 +147,10 @@ end
 function timer.getAbsTime()
 	return timer.getTime() + timer.getTime0()
 end
+
 function timer.scheduleFunction(fn, arg, time)
-	fn(arg, time)
-end
-function timer.stub_setTime(time)
-	model_time = time
+	dctstubs.schedfunctbl[fn] = {["arg"] = arg, ["time"] = time}
+	return fn
 end
 _G.timer = timer
 
@@ -282,21 +339,6 @@ AI.Skill = {
 	"EXCELLENT",
 }
 
---[[
-ROE Descriptions:
-WEAPON_FREE -
-	AI will engage any enemy group it detects. Target prioritization is
-	based based on the threat of the target.
-OPEN_FIRE_WEAPON_FREE -
-	AI will engage any enemy group it detects, but will prioritize targets
-	specified in the groups tasking.
-OPEN_FIRE -
-	AI will engage only targets specified in its taskings.
-RETURN_FIRE -
-	AI will only engage threats that shoot first.
-WEAPON_HOLD -
-	AI will hold fire under all circumstances.
---]]
 AI.Option = {
 	["Air"] = {
 		["id"] = {
@@ -318,10 +360,27 @@ AI.Option = {
 			["OPTION_RADIO_USAGE_CONTACT"] = 21,
 			["OPTION_RADIO_USAGE_ENGAGE"] = 22,
 			["OPTION_RADIO_USAGE_KILL"] = 23,
+			-- OPTION_RADIO_* value: attribute list
 			["JETT_TANKS_IF_EMPTY"]     = 25,
 			["FORCED_ATTACK"]           = 26,
 		},
 		["val"] = {
+			-- ROE Descriptions:
+			-- WEAPON_FREE -
+			--     AI will engage any enemy group it detects.
+			--     Target prioritization is based based on the
+			--     threat of the target.
+			-- OPEN_FIRE_WEAPON_FREE -
+			--     AI will engage any enemy group it detects,
+			--     but will prioritize targets specified in the
+			--     groups tasking.
+			-- OPEN_FIRE -
+			--     AI will engage only targets specified in its
+			--     taskings.
+			-- RETURN_FIRE -
+			--     AI will only engage threats that shoot first.
+			-- WEAPON_HOLD -
+			--     AI will hold fire under all circumstances.
 			["ROE"] = {
 				["WEAPON_FREE"]           = 0,
 				["OPEN_FIRE_WEAPON_FREE"] = 1,
@@ -354,6 +413,25 @@ AI.Option = {
 				["USE_IF_DETECTED_LOCK_BY_RADAR"] = 2,
 				["ALWAYS_USE"]                    = 3,
 			},
+			-- Missile Attack option descriptsion:
+			-- Max Range:
+			--     AI will engage at the maximum range of the
+			--     missile they intend to fire.
+			-- NEZ Range:
+			--     AI will engage once within the No Escape Zone
+			--     for a given target.
+			-- Halfway Rmax to NEZ:
+			--     The AI will fire their missile halfway between
+			--     the Rmax and No Escape Zone for the given
+			--     target.
+			-- Target threat estimated:
+			--     AI will engage based on the possible threat
+			--     the enemy target could provide. For example if
+			--     the target is an F-15C the AI is likely to
+			--     engage it at longer ranges than a C-130.
+			-- Random Range:
+			--     AI will first engage at a random distance
+			--     between NEZ and Max range.
 			["MISSILE_ATTACK"] = {
 				["MAX_RANGE"]         = 0,
 				["NEZ_RANGE"]         = 1,
@@ -573,10 +651,27 @@ world.event = {
 	S_EVENT_TRIGGER_ZONE                 = 35,
 	S_EVENT_LANDING_QUALITY_MARK         = 36,
 	S_EVENT_BDA                          = 37,
-	S_EVENT_MAX                          = 38,
+	S_EVENT_AI_ABORT_MISSION             = 38,
+	S_EVENT_DAYNIGHT                     = 39,
+	S_EVENT_FLIGHT_TIME                  = 40,
+	S_EVENT_PLAYER_SELF_KILL_PILOT       = 41,
+	S_EVENT_PLAYER_CAPUTRE_AIRFIELD      = 42,
+	S_EVENT_EMERGENCY_LANDING            = 43,
+	S_EVENT_UNIT_CREATE_TASK             = 44,
+	S_EVENT_UNIT_DELETE_TASK             = 45,
+	S_EVENT_MAX                          = 46,
 }
-function world.addEventHandler(_)
+
+function world.addEventHandler(obj)
+	assert(type(obj.onEvent) == "function", "registering an object with "..
+		"no .onEvent function")
+	dctstubs.eventhandlers[obj] = true
 end
+
+function world.removeEventHandler(obj)
+	dctstubs.eventhandlers[obj] = nil
+end
+
 function world.getAirbases()
 	local tbl = {}
 	for _, obj in pairs(objects[Object.Category.BASE]) do
@@ -628,6 +723,12 @@ function Controller:setOption(--[[id, value]])
 end
 
 function Controller:setOnOff(--[[value]])
+end
+
+function Controller:setAltitude(--[[alt, keep, alttype]])
+end
+
+function Controller:setSpeed(--[[speed, keep]])
 end
 
 function Controller:knowTarget(--[[object, type, distance]])
@@ -773,6 +874,32 @@ end
 
 function Airbase:getParking(_ --[[available]])
 	return self.parking
+end
+
+function Airbase:getRunways()
+	return {
+		{
+			["course"] = -1.597741484642,
+			["Name"] = 8,
+			["position"] = {
+				["y"] = 952.94458007813,
+				["x"] = -360507.1875,
+				["z"] = -75590.0703125,
+			},
+			["length"] = 1859.3155517578,
+			["width"] = 60,
+		}, {
+			["course"] = -2.5331676006317,
+			["Name"] = 26,
+			["position"] = {
+				["y"] = 952.94458007813,
+				["x"] = -359739.875,
+				["z"] = -75289.5078125,
+			},
+			["length"] = 1859.3155517578,
+			["width"] = 60,
+		},
+	}
 end
 
 function Airbase:getCallsign()

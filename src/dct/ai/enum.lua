@@ -63,6 +63,13 @@ enum.BEACON.TACANMODE = {
 	["Y"] = "Y",
 }
 
+enum.BEACON.DEACTIVATE = {
+	["ALL"]   = "DeactivateBeacon",
+	["ACLS"]  = "DeactivateACLS",
+	["ICLS"]  = "DeactivateICLS",
+	["LINK4"] = "DeactivateLink4",
+}
+
 enum.FORMATION = {}
 enum.FORMATION.TYPE = {
 	["NO_FORMATION"]              = 0,

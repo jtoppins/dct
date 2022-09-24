@@ -1,6 +1,4 @@
---[[
--- SPDX-License-Identifier: LGPL-3.0
---]]
+--- SPDX-License-Identifier: LGPL-3.0
 
 local utils = require("libs.utils")
 _G.DCT_TEST = true

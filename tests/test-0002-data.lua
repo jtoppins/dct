@@ -4,7 +4,7 @@ require("os")
 require("io")
 require("dcttestlibs")
 require("dct")
-local Command = require("dct.Command")
+local Command = require("dct.libs.Command")
 
 local function f(a, b, c, time)
     return a + b + c + time
