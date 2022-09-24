@@ -43,7 +43,7 @@ files["src/dct/settings.lua"] = { globals = {"dctserverconfig",} }
 files["src/dct/Template.lua"] = {
 	globals = {"staticTemplate", "metadata",},
 }
-files["src/dct/Theater.lua"] = { globals = {"theatergoals",} }
+files["src/dct/Theater.lua"] = { globals = {"theatergoals", "dct"} }
 files["src/dcttestlibs/dcsstubs.lua"] = {
 	globals = {"lfs"},
 	read_globals = {"socket",},
