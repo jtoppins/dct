@@ -115,7 +115,7 @@ local function main()
 		copyfile(settings.statepath, settings.statepath..".orig")
 	end
 
-	dct.Logger.getByName("Theater"):info("create new theater")
+	dct.Logger.getByName("Theater"):info("++++ create new theater +++++")
 
 	local newtheater = dct.Theater()
 	dct.theater = newtheater
