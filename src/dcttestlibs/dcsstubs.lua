@@ -44,7 +44,7 @@ function dctstubs.runSched()
 		if dctstubs.model_time > data.time then
 			data.time = func(data.arg, dctstubs.model_time)
 			if not (data.time ~= nil and
-				type(data.time) == "number") then
+			   type(data.time) == "number") then
 				dctstubs.schedfunctbl[func] = nil
 			end
 		end
