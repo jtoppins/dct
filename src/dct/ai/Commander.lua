@@ -1,15 +1,12 @@
---[[
 -- SPDX-License-Identifier: LGPL-3.0
 --
 -- Defines a side's strategic theater commander.
---]]
 
 local utils      = require("libs.utils")
 local containers = require("libs.containers")
-local enum       = require("dct.enum")
+local dctenum    = require("dct.enum")
 local dctutils   = require("dct.libs.utils")
 local Mission    = require("dct.libs.Mission")
-local Stats      = require("dct.libs.Stats")
 local Command    = require("dct.libs.Command")
 local Logger     = dct.Logger.getByName("Commander")
 
@@ -61,13 +58,10 @@ local function genstatids()
 	return tbl
 end
 
---[[
--- For now the commander is only concerned with flight missions
---]]
+--- For now the commander is only concerned with flight missions
 local Commander = require("libs.namedclass")("Commander")
 function Commander:__init(theater, side)
 	self.owner        = side
-	self.missionstats = Stats(genstatids())
 	self.missions     = {}
 	self.tgtlist      = {}
 	self.aifreq       = 2*60 -- 2 minutes in seconds
@@ -78,9 +72,6 @@ function Commander:__init(theater, side)
 		table.insert(self.missionIds, math.random(#self.missionIds + 1), i)
 	end
 
-	theater:queueCommand(120, Command(
-		"Commander("..tostring(self.owner)..").startIADS",
-		self.startIADS, self))
 	theater:queueCommand(self.aifreq, Command(
 		"Commander("..tostring(self.owner)..").update",
 		self.update, self))
@@ -115,49 +106,11 @@ function Commander:assethandler(event)
 end
 --]]
 
-function Commander:startIADS()
-	self.IADS = require("dct.systems.IADS")(self)
-end
-
 function Commander:update(time)
 	for _, mission in pairs(self.missions) do
 		mission:update(time)
 	end
 	return self.aifreq
-end
-
---[[
--- TODO: complete this, the enemy information is missing
--- What does a commander need to track for theater status?
---   * the UI currently defines these items that need to be "tracked":
---     - Sea - representation of the opponent's sea control
---     - Air - representation of the opponent's air control
---     - ELINT - representation of the opponent's ability to detect
---     - SAM - representation of the opponent's ability to defend
---     - current active air mission types
---]]
-function Commander:getTheaterUpdate()
-	local theater = dct.Theater.singleton()
-	local theaterUpdate = {}
-	local tks, start
-
-	theaterUpdate.friendly = {}
-	tks, start = theater:getTickets():get(self.owner)
-	theaterUpdate.friendly.str = math.floor((tks / start)*100)
-	theaterUpdate.enemy = {}
-	theaterUpdate.enemy.sea = 50
-	theaterUpdate.enemy.air = 50
-	theaterUpdate.enemy.elint = 50
-	theaterUpdate.enemy.sam = 50
-	tks, start = theater:getTickets():get(dctutils.getenemy(self.owner))
-	theaterUpdate.enemy.str = math.floor((tks / start)*100)
-	theaterUpdate.missions = self.missionstats:getStats()
-	for k,v in pairs(theaterUpdate.missions) do
-		if v == 0 then
-			theaterUpdate.missions[k] = nil
-		end
-	end
-	return theaterUpdate
 end
 
 local invalidXpdrTbl = {
@@ -191,27 +144,6 @@ function Commander:genMissionCodes(msntype)
 	local m1 = (8*digit1)+(enum.squawkMissionSubType[msntype] or 0)
 	local m3 = (512*digit1)+(missionId*8)
 	return { ["id"] = fmtId, ["m1"] = m1, ["m3"] = m3, }
-end
-
---[[
--- recommendMission - recommend a mission type given a unit type
--- unittype - (string) the type of unit making request requesting
--- return: mission type value
---]]
-function Commander:recommendMissionType(allowedmissions)
-	local assetfilter = {}
-
-	for _, v in pairs(allowedmissions) do
-		utils.mergetables(assetfilter, enum.missionTypeMap[v])
-	end
-
-	local pq = heapsort_tgtlist(self.tgtlist, assetfilter, self.owner)
-
-	local tgt = pq:pop()
-	if tgt == nil then
-		return nil
-	end
-	return dctutils.assettype2mission(tgt.type)
 end
 
 --[[
@@ -299,7 +231,6 @@ end
 --]]
 function Commander:addMission(mission)
 	self.missions[mission:getID()] = mission
-	self.missionstats:inc(mission.type)
 end
 
 --[[
@@ -308,7 +239,6 @@ end
 function Commander:removeMission(id)
 	local mission = self.missions[id]
 	self.missions[id] = nil
-	self.missionstats:dec(mission.type)
 end
 
 function Commander:getAssigned(asset)

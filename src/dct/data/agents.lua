@@ -19,6 +19,8 @@ local airdefense = {
 	["sensors"] = {
 		["DCSObjectsSensor"] = 0,
 		["PlanningSensor"]   = 0,
+		["AmmoSensor"]       = 0,
+		["RadarSensor"]      = 0,
 	},
 	["actions"] = {
 		["GroundIdle"]       = 1,

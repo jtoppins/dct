@@ -379,7 +379,7 @@ function Agent:goals()
 	local goals = utils.shallowclone(self._goals)
 
 	if self._msn then
-		table.insert(goals, self._msn:goal())
+		table.insert(goals, self._msn:goal(self))
 	end
 	return goals
 end

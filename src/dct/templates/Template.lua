@@ -13,15 +13,6 @@ local Logger   = dct.Logger.getByName("Template")
 
 -- TODO: setup a respawn attribute
 
--- TODO: we can classify airdefense sites by the highest radar
--- type the template has. We need this classification for UI
--- reasons. We also need it for the air defense manager as
--- depending on strategy we only want EWRs to search.
---
--- TODO: create a SAM/EWR Sensor that iterates over the template on spawn
--- and adds a Fact that is a list of unit names that should be queried
--- for what their radars see
-
 -- The order of these checkers matters as some mutate the template data
 -- which later checkers rely on.
 local checkers = {
@@ -33,6 +24,7 @@ local checkers = {
 	require("dct.templates.checkers.CheckPlayer")(),
 	require("dct.templates.checkers.CheckTpldata")(),
 	require("dct.templates.checkers.CheckCoalition")(),
+	require("dct.templates.checkers.CheckSAM")(),
 	require("dct.templates.checkers.CheckLocation")(),
 }
 
@@ -142,9 +134,6 @@ function Template:__init(data)
 	if not self._valid then
 		return
 	end
-
-	-- TODO: write this classification function, more design is needed
-	--classify(data)
 
 	-- remove static functions
 	self.fromFile = nil
