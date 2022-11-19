@@ -92,7 +92,7 @@ end
 --                   object is to the agent
 -- @field objtype    type of object being referenced
 -- @field position   vector3D
--- @field direction  vector3D
+-- @field velocity   vector3D
 -- @field owner      which coalition owns the object coalition.side
 -- @field event      reference to event object
 -- @field value      value representing something
@@ -161,7 +161,6 @@ StimuliFact.stimType = {
 	["INVALID"]   = 0,
 	["EXPLOSION"] = 1, -- like a shell impacting close by
 	["LAUNCH"]    = 2, -- like a HARM launch, etc
-	["CONTACT"]   = 3, -- like a radar contact
 }
 
 --- Agent received an event from the world and needs to react to it.

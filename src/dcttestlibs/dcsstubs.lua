@@ -989,6 +989,13 @@ Unit.RefuelingSystem = {
 	["PROBE_AND_DROGUE"]    = 2,
 }
 
+Unit.SensorType = {
+	["OPTIC"] = 0,
+	["RADAR"] = 1,
+	["IRST"]  = 2,
+	["RWR"]   = 3,
+}
+
 function Unit.getByName(name)
 	return objects[Object.Category.UNIT][name]
 end
@@ -1027,6 +1034,10 @@ end
 
 function Unit:getRadar()
 	return false, nil
+end
+
+function Unit:hasSensors()
+	return true
 end
 
 function Unit:enableEmission(onoff)

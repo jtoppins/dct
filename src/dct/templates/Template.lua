@@ -27,6 +27,7 @@ local Logger   = dct.Logger.getByName("Template")
 local checkers = {
 	require("dct.templates.checkers.CheckCommon")(),
 	require("dct.templates.checkers.CheckAgent")(),
+	require("dct.templates.checkers.CheckRadar")(),
 	require("dct.templates.checkers.CheckSquadron")(),
 	require("dct.templates.checkers.CheckAirbase")(),
 	require("dct.templates.checkers.CheckPlayer")(),
