@@ -5,6 +5,8 @@
 local enum = {}
 
 enum.DEFAULTCODENAME = "default codename"
+enum.DEFAULTNAME  = "auto"
+enum.DEFAULTRANGE = -1
 
 enum.objtype = {
 	["UNIT"]    = 1,

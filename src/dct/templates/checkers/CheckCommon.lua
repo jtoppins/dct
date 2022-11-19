@@ -1,4 +1,4 @@
---- SPDX-License-Identifier: LGPL-3.0
+-- SPDX-License-Identifier: LGPL-3.0
 
 local class   = require("libs.namedclass")
 local utils   = require("libs.utils")
@@ -105,6 +105,22 @@ Set all unit groups in the template to be immortal.]],
 			["type"] = Check.valuetype.STRING,
 			["description"] =
 			"",
+		},
+		["displayname"] = {
+			["default"] = dctenum.DEFAULTNAME,
+			["type"] = Check.valuetype.STRING,
+			["description"] = [[
+Name to display to players which will be used to reference the agent
+in any player facing UI. Depending on the asset type this name can be
+dynamically generated.]],
+		},
+		["attackrange"] = {
+			["default"] = dctenum.DEFAULTRANGE,
+			["type"] = Check.valuetype.INT,
+			["description"] = [[
+Distance at which the agent considers a target in-range, in meters.
+For things like a squadron defines the maximum path distance the squadron
+will accept from their home base to the target area.]],
 		},
 	})
 end
