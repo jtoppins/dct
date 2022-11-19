@@ -1,4 +1,4 @@
---- SPDX-License-Identifier: LGPL-3.0
+-- SPDX-License-Identifier: LGPL-3.0
 
 local dctenum  = require("dct.enum")
 local dctutils = require("dct.libs.utils")
@@ -6,7 +6,7 @@ local Timer    = require("dct.libs.Timer")
 local WS       = require("dct.assets.worldstate")
 local REPAIR_TIME = 3600 -- 1 hour
 
---- @class RunwayRepair
+--- @classmod RunwayRepair
 --
 local RunwayRepair = require("libs.namedclass")("RunwayRepair", WS.Action)
 function RunwayRepair:__init(agent, cost)

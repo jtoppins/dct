@@ -1,4 +1,4 @@
---- SPDX-License-Identifier: LGPL-3.0
+-- SPDX-License-Identifier: LGPL-3.0
 
 local Queue  = require("libs.containers.queue")
 local WS     = require("dct.assets.worldstate")
@@ -33,7 +33,7 @@ local function list2queue(list)
 	return p
 end
 
---- @class Planning
+--- @classmod Planning
 --  * score goals
 --  * foreach goal in highest score order; do
 --      plan = create_plan(goal)

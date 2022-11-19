@@ -1,4 +1,4 @@
---- SPDX-License-Identifier: LGPL-3.0
+-- SPDX-License-Identifier: LGPL-3.0
 
 local DCTEvents = require("dct.libs.DCTEvents")
 local Timer     = require("dct.libs.Timer")
@@ -10,7 +10,7 @@ local function is_target(fact)
 	       fact.threat and fact.threat.value >= 1
 end
 
---- @class PlayerAttack
+--- @classmod PlayerAttack
 -- Monitors the player Agent object and waits until all mission targets
 -- are dead.
 local PlayerAttack = require("libs.namedclass")("PlayerAttack", WS.Action,

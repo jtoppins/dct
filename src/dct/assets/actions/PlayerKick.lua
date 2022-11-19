@@ -1,4 +1,4 @@
---- SPDX-License-Identifier: LGPL-3.0
+-- SPDX-License-Identifier: LGPL-3.0
 
 local dctenum  = require("dct.enum")
 local dctutils = require("dct.libs.utils")
@@ -22,7 +22,8 @@ local function is_kick_event(fact)
 	       fact.event.id == dctenum.event.DCT_EVENT_PLAYER_KICK
 end
 
---- @class PlayerKick request player to be kicked from slot
+--- @classmod PlayerKick
+-- Request player to be kicked from slot.
 --
 -- Posts a request for the player to be kicked from the slot.
 -- This depends on an outside DCS hooks script to be running

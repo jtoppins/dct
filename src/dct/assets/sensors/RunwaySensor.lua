@@ -6,8 +6,11 @@ local vector     = require("dct.libs.vector")
 local DCTEvents  = require("dct.libs.DCTEvents")
 local WS         = require("dct.assets.worldstate")
 
---- @class Runway
--- Represents a runway object and its state for an airbase.
+--- @classmod RunwaySensor
+-- Detects runway geometry associated with an airbase and determines if
+-- a weapon impacted within the runway's boundary.
+
+--- Represents a runway object and its state for an airbase.
 --
 -- @field name Name of the runway
 -- @field center center of the runway
@@ -63,8 +66,7 @@ function Runway:contains(p)
 end
 
 
---- @class RunwaySensor
--- Detects runway geometry associated with an airbase and determines if
+--- Detects runway geometry associated with an airbase and determines if
 -- a weapon impacted within the runway's boundary.
 local RunwaySensor = class("RunwaySensor", WS.Sensor, DCTEvents)
 function RunwaySensor:__init(agent)

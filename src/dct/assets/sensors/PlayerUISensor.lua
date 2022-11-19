@@ -1,4 +1,4 @@
---- SPDX-License-Identifier: LGPL-3.0
+-- SPDX-License-Identifier: LGPL-3.0
 
 require("math")
 local class     = require("libs.namedclass")
@@ -28,7 +28,7 @@ local function find_next_msg(agent)
 	return key, msg
 end
 
---- @class PlayerUISensor
+--- @classmod PlayerUISensor
 -- Manages drawing UI elements to the player. Be that text messages, F10 map
 -- elements, or F10 menu updates. This sensor handles these issues.
 --

@@ -1,4 +1,4 @@
---- SPDX-License-Identifier: LGPL-3.0
+-- SPDX-License-Identifier: LGPL-3.0
 
 require("math")
 local class     = require("libs.namedclass")
@@ -15,7 +15,7 @@ local function playerIsDead()
 	return false
 end
 
---- @class PlayerSensor
+--- @classmod PlayerSensor
 -- Manages player slot related agent state.
 --
 -- @field timer how often this sensor updates

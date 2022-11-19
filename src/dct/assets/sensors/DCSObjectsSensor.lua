@@ -1,4 +1,4 @@
---- SPDX-License-Identifier: LGPL-3.0
+-- SPDX-License-Identifier: LGPL-3.0
 
 require("math")
 local utils        = require("libs.utils")
@@ -142,7 +142,7 @@ local function checkgoal(sensor, name)
 	end
 end
 
---- @class DCSObjectsSensor
+--- @classmod DCSObjectsSensor
 -- Provides a common API for interacting with underlying DCS groups.
 --
 -- @field agent reference to owning agent

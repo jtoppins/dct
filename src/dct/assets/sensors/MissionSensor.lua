@@ -1,4 +1,4 @@
---- SPDX-License-Identifier: LGPL-3.0
+-- SPDX-License-Identifier: LGPL-3.0
 
 local class     = require("libs.namedclass")
 local dctenum   = require("dct.enum")
@@ -27,7 +27,7 @@ local WS        = require("dct.assets.worldstate")
 -- * MissionComplete (delete all agent's mission related facts, don't need to
 --     keep mission related facts with the mission)
 
---- @class MissionSensor
+--- @classmod MissionSensor
 -- Manages and monitors any Mission object assigned to the Agent.
 local MissionSensor = class("MissionSensor", WS.Sensor, DCTEvents)
 function MissionSensor:__init(agent)

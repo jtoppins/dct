@@ -1,4 +1,8 @@
---- SPDX-License-Identifier: LGPL-3.0
+-- SPDX-License-Identifier: LGPL-3.0
+
+--- @classmod Agent
+-- Agent interface. Provides a common API for interacting with
+-- underlying DCS groups.
 
 local class      = require("libs.namedclass")
 local utils      = require("libs.utils")
@@ -14,8 +18,7 @@ local Subordinates = require("dct.libs.Subordinates")
 local INVALID_OWNER = -1
 local agentcomponents = { "sensors", "actions", "goals" }
 
---- @class AgentLogger
--- common logging interfaces for the Agent class.
+--- common logging interfaces for the Agent class.
 local AgentLogger = class("AgentLogger", Logger)
 function AgentLogger:__init(cls)
 	Logger.__init(self, cls.__clsname)
@@ -159,8 +162,8 @@ local function set_ai_objects(agent, template)
 	end
 end
 
---- @class Agent
--- Agent interface. Provides a common API for interacting with
+
+--- Agent interface. Provides a common API for interacting with
 -- underlying DCS groups.
 --
 -- Fields that must be set by the constructing object:
@@ -746,7 +749,7 @@ end
 --- Interate over DCS units associated with this agent.
 --
 -- @param filter a function of the form, <bool> func(obj), used to filter
---   unitss returned by the iterator, filter must return true to include
+--   units returned by the iterator, filter must return true to include
 --   the unit in the iteration.
 -- @return an iterator to be used in a for loop
 function Agent:iterateUnits(filter)

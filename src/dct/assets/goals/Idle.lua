@@ -1,9 +1,9 @@
---- SPDX-License-Identifier: LGPL-3.0
+-- SPDX-License-Identifier: LGPL-3.0
 
 local WS = require("dct.assets.worldstate")
 
---- @class Idle
--- idle goal in case nothing else is applicable.
+--- Idle goal in case nothing else is applicable.
+-- @classmod Idle
 local Idle = require("libs.namedclass")("Idle", WS.Goal)
 function Idle:__init()
 	WS.Goal.__init(self, WS.WorldState({
