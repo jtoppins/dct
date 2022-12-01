@@ -10,7 +10,7 @@ end
 -- Have an agent react to an event registered in the Agent's memory.
 local ReactToEvent = require("libs.namedclass")("ReactToEvent", WS.Goal)
 function ReactToEvent:__init()
-	WS.Goal.__init(WS.WorldState({
+	WS.Goal.__init(self, WS.WorldState({
 			WS.Property(WS.ID.REACTEDTOEVENT, true),
 		}), 2)
 end

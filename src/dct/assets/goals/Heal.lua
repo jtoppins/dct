@@ -6,7 +6,7 @@ local WS = require("dct.assets.worldstate")
 -- The Agent desires to heal itself.
 local Heal = require("libs.namedclass")("Heal", WS.Goal)
 function Heal:__init()
-	WS.Goal.__init(WS.WorldState({
+	WS.Goal.__init(self, WS.WorldState({
 			WS.Property(WS.ID.DAMAGED, false),
 		}))
 end
