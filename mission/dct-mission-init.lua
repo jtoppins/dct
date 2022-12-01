@@ -1,4 +1,3 @@
---[[
 -- SPDX-License-Identifier: LGPL-3.0
 --
 -- DCT mission script
@@ -7,7 +6,6 @@
 -- the trigger system. This file will test and verify the server's
 -- environment supports the calls required by DCT framework. It will
 -- then setup and start the framework.
---]]
 
 do
 	if not lfs or not io or not os or not require or not package then
@@ -24,9 +22,10 @@ do
 	-- 'dctsettings' can be defined in the mission to set nomodlog
 	dctsettings = dctsettings or {}
 
-	-- Check that DCT mod is installed
-	local modpath = lfs.writedir() .. "Mods\\tech\\DCT"
-	if lfs.attributes(modpath) == nil then
+	local dcttests = os.getenv("DCT_SRC_ROOT") and true
+	local modpath = lfs.writedir() .. "\\Mods\\tech\\DCT"
+
+	if not dcttests and lfs.attributes(modpath) == nil then
 		local errmsg = "DCT: module not installed, mission not DCT enabled"
 		if dctsettings.nomodlog then
 			env.error(errmsg)
@@ -36,7 +35,9 @@ do
 	else
 		package.path = package.path .. ";" .. modpath .. "\\lua\\?.lua;"
 		require("dct")
+		if not dcttests then
+			dct.modpath = modpath
+		end
 		dct.init()
-		dct.modpath = modpath
 	end
 end
