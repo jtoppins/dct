@@ -603,6 +603,17 @@ function coalition.getCountryCoalition(id)
 	end
 	return coalition.side[c]
 end
+
+function coalition.getGroups(side)
+	assert(side, "side must be provided")
+	local tbl = {}
+	for _, obj in pairs(objects[Object.Category.GROUP]) do
+		if side == obj.coalition then
+			table.insert(tbl, obj)
+		end
+	end
+	return tbl
+end
 _G.coalition = coalition
 
 local world = {}
@@ -735,9 +746,13 @@ function Controller:knowTarget(--[[object, type, distance]])
 end
 
 function Controller:isTargetDetected(--[[object, ...<detection type>]])
+	return false, false, 0, false, false, nil, nil
+	-- detected, visible, lastTime, typeknown, distance,
+	-- lastPos, lastVel
 end
 
 function Controller:getDetectedTargets(--[[...<detection type>]])
+	return {}
 end
 _G.Controller = Controller
 
@@ -980,6 +995,14 @@ end
 function Unit:getAmmo()
 	return self.ammo
 end
+
+function Unit:getRadar()
+	return false, nil
+end
+
+function Unit:enableEmission(onoff)
+	assert(type(onoff) == "boolean", "must be of type bool")
+end
 _G.Unit = Unit
 
 local StaticObject = class(Coalition)
@@ -1084,6 +1107,10 @@ end
 
 function Group:getController()
 	return Controller()
+end
+
+function Group:enableEmission(onoff)
+	assert(type(onoff) == "boolean", "must be of type bool")
 end
 _G.Group = Group
 
