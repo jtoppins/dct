@@ -154,7 +154,7 @@ local function set_ai_objects(agent, template)
 		if objkind == "sensors" then
 			table.sort(t)
 		end
-		agent[objkind] = t
+		agent["_"..objkind] = t
 	end
 end
 
@@ -197,9 +197,9 @@ function Agent:__init()
 	self.name       = "unknown"
 	self.type       = dctenum.assetType.INVALID
 	self.owner      = INVALID_OWNER
-	self.sensors    = {}
-	self.actions    = {}
-	self.goals      = {}
+	self._sensors    = {}
+	self._actions    = {}
+	self._goals      = {}
 	self._factcntr  = 0
 	self._ws        = WS.WorldState.createAll()
 	self._setup     = false
@@ -258,9 +258,9 @@ Agent.objectType = objecttypes
 -- a death event to listeners.
 function Agent:destroy()
 	self:despawn()
-	self.sensors = nil
-	self.goals = nil
-	self.actions = nil
+	self._sensors = nil
+	self._goals = nil
+	self._actions = nil
 end
 
 --- Finalizes the Agent and runs the setup function for all sensors
@@ -271,14 +271,14 @@ function Agent:setup()
 	self:setIntel(dctutils.getenemy(self.owner), tpl.intel)
 	set_ai_objects(self, tpl)
 
-	if next(self.sensors) == nil or next(self.goals) == nil or
-	   next(self.actions) == nil then
+	if next(self._sensors) == nil or next(self._goals) == nil or
+	   next(self._actions) == nil then
 		self._logger:warn("sensors, goals & actions tables should "..
 				  "not be empty")
 	end
 
-	self._plangraph = WS.Graph(self, self.actions)
-	dctutils.foreach_call(self.sensors, ipairs, "setup")
+	self._plangraph = WS.Graph(self, self._actions)
+	dctutils.foreach_call(self._sensors, ipairs, "setup")
 	self._setup = true
 end
 
@@ -288,7 +288,7 @@ function Agent:marshal()
 		return nil
 	end
 
-	dctutils.foreach_call(self.sensors, ipairs, "marshal")
+	dctutils.foreach_call(self._sensors, ipairs, "marshal")
 	local tbl = Marshallable.marshal(self)
 
 	if tbl.desc.tpldata then
@@ -345,7 +345,7 @@ end
 --
 -- @return list of worldstate.Goal objects
 function Agent:goals()
-	local goals = utils.shallowclone(self.goals)
+	local goals = utils.shallowclone(self._goals)
 
 	if self._msn then
 		table.insert(goals, self._msn:goal())
@@ -501,7 +501,7 @@ end
 
 --- Handle DCS and DCT objects sent to the Agent
 function Agent:onDCTEvent(event)
-	dctutils.foreach_call(self.sensors, ipairs, "onDCTEvent", event)
+	dctutils.foreach_call(self._sensors, ipairs, "onDCTEvent", event)
 end
 
 local function execute_plan(agent)
@@ -537,7 +537,7 @@ function Agent:update()
 		return
 	end
 
-	for _, sensor in ipairs(self.sensors) do
+	for _, sensor in ipairs(self._sensors) do
 		if type(sensor.update) == "function" and
 		   sensor:update() then
 			break
@@ -588,20 +588,20 @@ function Agent:spawn(ignore)
 		return
 	end
 
-	dctutils.foreach_call(self.sensors, ipairs, "spawn", ignore)
+	dctutils.foreach_call(self._sensors, ipairs, "spawn", ignore)
 	spawn_despawn(self, "spawn", ignore)
 	self._spawned = true
-	dctutils.foreach_call(self.sensors, ipairs, "spawnPost")
+	dctutils.foreach_call(self._sensors, ipairs, "spawnPost")
 end
 
 -- Remove any DCS objects associated with this asset from the game world.
 -- The method used should result in no DCS events being triggered.
 -- Returns: none
 function Agent:despawn()
-	dctutils.foreach_call(self.sensors, ipairs, "despawn")
+	dctutils.foreach_call(self._sensors, ipairs, "despawn")
 	spawn_despawn(self, "despawn")
 	self._spawned = false
-	dctutils.foreach_call(self.sensors, ipairs, "despawnPost")
+	dctutils.foreach_call(self._sensors, ipairs, "despawnPost")
 end
 
 --- Like DCS Unit.hasAttribute, returns true if attr is contained by
