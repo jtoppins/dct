@@ -2,7 +2,7 @@
 
 local WS = require("dct.assets.worldstate")
 
-local function is_event(fact)
+local function is_event(_ --[[key]], fact)
 	return fact.type == WS.Facts.types.EVENT
 end
 

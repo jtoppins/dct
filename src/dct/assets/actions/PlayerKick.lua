@@ -17,7 +17,7 @@ local reasons = {
 		" resetting the slot state.",
 }
 
-local function is_kick_event(fact)
+local function is_kick_event(_ --[[key]], fact)
 	return fact.type == WS.Facts.types.EVENT and
 	       fact.event.id == dctenum.event.DCT_EVENT_PLAYER_KICK
 end

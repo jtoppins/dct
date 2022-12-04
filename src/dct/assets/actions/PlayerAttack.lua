@@ -6,8 +6,8 @@ local WS        = require("dct.assets.worldstate")
 local UPDATE_TIME = 60
 
 local function is_target(fact)
-	return fact.type == WS.Facts.types.CONTACT and
-	       fact.threat and fact.threat.value >= 1
+	return fact.type == WS.Facts.types.CHARACTER and
+	       fact.object and fact.object.confidence >= 1
 end
 
 --- @classmod PlayerAttack

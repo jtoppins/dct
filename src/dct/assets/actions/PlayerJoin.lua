@@ -4,12 +4,12 @@ local dctenum  = require("dct.enum")
 local dctutils = require("dct.libs.utils")
 local WS       = require("dct.assets.worldstate")
 
-local function is_join_event(fact)
+local function is_join_event(_ --[[key]], fact)
 	return fact.type == WS.Facts.types.EVENT and
 	       fact.event.id == dctenum.event.DCT_EVENT_PLAYER_JOIN
 end
 
-local function any_event(fact)
+local function any_event(_ --[[key]], fact)
 	return fact.type == WS.Facts.types.EVENT
 end
 

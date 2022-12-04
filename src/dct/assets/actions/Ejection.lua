@@ -2,12 +2,12 @@
 
 local WS = require("dct.assets.worldstate")
 
-local function is_eject_event(fact)
+local function is_eject_event(_ --[[key]], fact)
 	return fact.type == WS.Facts.types.EVENT and
 	       fact.event.id == world.event.S_EVENT_EJECTION
 end
 
-local function any_event(fact)
+local function any_event(_ --[[key]], fact)
 	return fact.type == WS.Facts.types.EVENT
 end
 
