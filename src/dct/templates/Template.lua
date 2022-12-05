@@ -95,7 +95,7 @@ end
 
 --- generate a codename for an asset created from `template`.
 local function genCodename(template)
-	if template.codename ~= "default codename" then
+	if template.codename ~= dctenum.DEFAULTCODENAME then
 		return template.codename
 	end
 

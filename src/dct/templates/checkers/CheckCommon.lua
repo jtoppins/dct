@@ -73,8 +73,8 @@ template. Allowed values can be found in `assetType` table.]],
 		},
 		["codename"] = {
 			["agent"] = true,
-			["default"] = "default codename",
-			["type"] = Check.valuetype.CODENAME,
+			["default"] = dctenum.DEFAULTCODENAME,
+			["type"] = Check.valuetype.STRING,
 			["description"] =
 			"",
 		},
@@ -106,7 +106,7 @@ function CheckCommon:check(data)
 		return ok, key, msg
 	end
 
-	if data.uniquenames and data.codename ~= "default codename" then
+	if data.uniquenames and data.codename ~= dctenum.DEFAULTCODENAME then
 		return false, "codename",
 		       "cannot be defined if uniquenames is true"
 	end

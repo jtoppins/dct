@@ -4,6 +4,8 @@
 
 local enum = {}
 
+enum.DEFAULTCODENAME = "default codename"
+
 enum.geomtype = {
 	["CIRCLE"]    = 1,
 	["RECTANGLE"] = 2,
