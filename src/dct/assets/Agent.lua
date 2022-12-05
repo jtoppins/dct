@@ -204,7 +204,7 @@ function Agent:__init()
 	self._sensors    = {}
 	self._actions    = {}
 	self._goals      = {}
-	self._factcntr  = 0
+	self._factcntr  = 1
 	self._ws        = WS.WorldState.createAll()
 	self._setup     = false
 	self._spawned   = false
@@ -657,17 +657,15 @@ end
 
 --- add or overwrite a fact in the Agent's memory
 --
--- @param sensor [table] reference to sensor object
 -- @param key [any] value, if nil a key is generated
 -- @param fact [table] the fact object to store
 -- @return [any] the key where the fact was stored
-function Agent:setFact(sensor, key, fact)
-	check.table(sensor)
+function Agent:setFact(key, fact)
 	local incctr = false
 
 	if key == nil then
 		incctr = true
-		key = sensor.__clsname.."."..tostring(self._factcntr)
+		key = self._factcntr
 	end
 	self.memory[key] = fact
 

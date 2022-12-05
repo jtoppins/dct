@@ -72,7 +72,7 @@ function PlayerUISensor:update()
 		local key, msg = find_next_msg(self.agent)
 
 		if msg ~= nil then
-			self.agent:setFact(self, key, nil)
+			self.agent:setFact(key, nil)
 			self.lastsent = modeltime + msg.time.value
 			trigger.action.outTextForGroup(
 				self.agent:getDescKey("groupId"),

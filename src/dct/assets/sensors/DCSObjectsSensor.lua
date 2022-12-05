@@ -213,7 +213,7 @@ function DCSObjectsSensor:handleDead(event)
 		remove_death_goal(self, unitname, goal)
 	end
 
-	self.agent:setFact(self, self.healthkey, WS.Facts.Value(
+	self.agent:setFact(self.healthkey, WS.Facts.Value(
 		WS.Facts.factType.HEALTH,
 		self._curdeathgoals / self._maxdeathgoals,
 		1.0))
@@ -228,7 +228,7 @@ function DCSObjectsSensor:checkGoals()
 		end
 	end
 
-	self.agent:setFact(self, self.healthkey, WS.Facts.Value(
+	self.agent:setFact(self.healthkey, WS.Facts.Value(
 		WS.Facts.factType.HEALTH,
 		self._curdeathgoals / self._maxdeathgoals,
 		1.0))

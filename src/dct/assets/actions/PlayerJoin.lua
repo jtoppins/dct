@@ -58,7 +58,7 @@ function PlayerJoin:enter()
 	end
 
 	if msn then
-		self.agent:setFact(self, WS.Facts.factKey.WELCOMMISSION,
+		self.agent:setFact(WS.Facts.factKey.WELCOMMISSION,
 			WS.Facts.PlayerMsg(string.format(
 			"Welcome. Mission %d is already assigned to this "..
 			"slot, use the F10 menu to get the briefing or "..
@@ -66,7 +66,7 @@ function PlayerJoin:enter()
 		-- TODO: pull all mission facts and add them to the agent
 	end
 
-	self.agent:setFact(self, WS.Facts.factKey.WELCOMMISSION,
+	self.agent:setFact(WS.Facts.factKey.WELCOMMISSION,
 			   WS.Facts.PlayerMsg(dctutils.notifymsg, 20))
 end
 

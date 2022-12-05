@@ -40,7 +40,7 @@ function Ejection:enter()
 	--local fact = self.agent:getFact(self.factkey)
 
 	-- delete the fact from the Agent
-	self.agent:setFact(self, self.factkey, nil)
+	self.agent:setFact(self.factkey, nil)
 	self.factkey = nil
 
 	-- TODO: create pilot agent

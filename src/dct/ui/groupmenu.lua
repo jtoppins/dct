@@ -46,7 +46,7 @@ function menus.playerRequest(theater, data)
 
 	local cmd = uicmds[data.type](theater, data)
 	theater:queueCommand(theater.uicmddelay, cmd)
-	player:setFact(theater, WS.Facts.factKey.CMDPENDING,
+	player:setFact(WS.Facts.factKey.CMDPENDING,
 		       WS.Facts.Value(WS.Facts.factType.CMDPENDING, true))
 end
 

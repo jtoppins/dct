@@ -43,7 +43,7 @@ function ScratchPad:event(event)
 	end
 
 	local player = self._theater:getAssetMgr():getAsset(name)
-	player:setFact(self, WS.Facts.factKey.SCRATCHPAD,
+	player:setFact(WS.Facts.factKey.SCRATCHPAD,
 		       WS.Facts.Value(WS.Facts.factType.SCRATCHPAD,
 				      sanatize(event.text)))
 	self:set(event.idx, nil)

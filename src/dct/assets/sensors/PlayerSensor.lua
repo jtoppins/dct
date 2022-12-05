@@ -80,7 +80,7 @@ function PlayerSensor:doEnable()
 end
 
 function PlayerSensor:postFact(key, fact)
-	self.agent:setFact(self, key, fact)
+	self.agent:setFact(key, fact)
 	self.agent:WS():get(WS.ID.REACTEDTOEVENT).value = false
 	self.agent:replan()
 	if fact.event.id == dctenum.event.DCT_EVENT_PLAYER_KICK then
@@ -91,14 +91,14 @@ end
 
 function PlayerSensor:handleBirth(event)
 	if not self:isEnabled() then
-		self.agent:setFact(self, WS.Facts.factKey.BLOCKSLOT,
+		self.agent:setFact(WS.Facts.factKey.BLOCKSLOT,
 				   WS.Facts.PlayerMsg(
 			"Warning: you have spawned in a disabled "..
 			"slot, slot blocker potentially broken.", 20))
 	end
 
 	self.ejection = false
-	self.agent:setFact(self, WS.Facts.factKey.LOSETICKET,
+	self.agent:setFact(WS.Facts.factKey.LOSETICKET,
 		WS.Facts.Value(WS.Facts.factType.LOSETICKET, false))
 	self:postFact(self._keyjoin, WS.Facts.Event(
 		dctutils.buildevent.playerJoin(event.initiator:getName())))
@@ -113,7 +113,7 @@ function PlayerSensor:handleTakeoff(--[[event]])
 		return
 	end
 
-	self.agent:setFact(self, WS.Facts.factKey.LOSETICKET,
+	self.agent:setFact(WS.Facts.factKey.LOSETICKET,
 		WS.Facts.Value(WS.Facts.factType.LOSETICKET, true))
 	self.agent:WS():get(WS.ID.INAIR).value = true
 end
@@ -132,9 +132,9 @@ function PlayerSensor:handleLand(event)
 	self.agent:WS():get(WS.ID.INAIR).value = false
 	if (airbase and airbase.owner == self.agent.owner) or
 	   event.place:getName() == self.agent:getDescKey("airbase") then
-		self.agent:setFact(self, WS.Facts.factKey.LOSETICKET,
+		self.agent:setFact(WS.Facts.factKey.LOSETICKET,
 			WS.Facts.Value(WS.Facts.factType.LOSETICKET, false))
-		self.agent:setFact(self, WS.Facts.factKey.LANDSAFE,
+		self.agent:setFact(WS.Facts.factKey.LANDSAFE,
 				   WS.Facts.PlayerMsg(
 			"Welcome home. You are able to safely disconnect"..
 			" without costing your side tickets.", 20))
@@ -151,7 +151,7 @@ function PlayerSensor:handleEjection(event)
 end
 
 function PlayerSensor:handleLoseTicket(--[[event]])
-	self.agent:setFact(self, WS.Facts.factKey.LOSETICKET,
+	self.agent:setFact(WS.Facts.factKey.LOSETICKET,
 		WS.Facts.Value(WS.Facts.factType.LOSETICKET, true))
 	self:postFact(self._keykick, WS.Facts.Event(
 		dctutils.buildevent.playerKick(dctenum.kickCode.DEAD, self)))

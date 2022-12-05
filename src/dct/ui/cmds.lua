@@ -38,8 +38,7 @@ function UICmd:_print(msg, isError)
 		return
 	end
 	assert(msg ~= nil and type(msg) == "string", "msg must be a string")
-	self.asset:setFact(self, nil,
-			   WS.Facts.PlayerMsg(msg, self.displaytime))
+	self.asset:setFact(nil, WS.Facts.PlayerMsg(msg, self.displaytime))
 end
 
 function UICmd:uicmd(time)
@@ -49,17 +48,17 @@ function UICmd:uicmd(time)
 	   self.type ~= enum.uiRequestType.MISSIONABORT then
 		Logger:debug("UICmd thinks player is dead, ignore cmd; %s",
 			     debug.traceback())
-		self.asset:setFact(self, WS.Facts.factType.CMDPENDING, nil)
+		self.asset:setFact(WS.Facts.factType.CMDPENDING, nil)
 		return nil
 	end
 
 	xpcall(function()
 		local cmdr = self.theater:getCommander(self.asset.owner)
 		local msg  = self:_execute(time, cmdr)
-		self.asset:setFact(self, WS.Facts.factType.CMDPENDING, nil)
+		self.asset:setFact(WS.Facts.factType.CMDPENDING, nil)
 		self:_print(msg)
 	end, function(err)
-		self.asset:setFact(self, WS.Facts.factType.CMDPENDING, nil)
+		self.asset:setFact(WS.Facts.factType.CMDPENDING, nil)
 		self:_print("F10 menu command failed to execute, please "..
 			    "report a bug", true)
 		error(string.format(

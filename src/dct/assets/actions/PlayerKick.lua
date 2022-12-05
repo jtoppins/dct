@@ -67,7 +67,7 @@ function PlayerKick:enter()
 	local kickfact = self.agent:getFact(self.factkey)
 	local losefact = self.agent:getFact(WS.Facts.factKey.LOSETICKET)
 
-	self.agent:setFact(self, WS.Facts.factKey.KICK,
+	self.agent:setFact(WS.Facts.factKey.KICK,
 			   WS.Facts.PlayerMsg(msg, 20))
 	trigger.action.setUserFlag(flagname, self.kickfact.event.code or
 		dctenum.kickCode.UNKNOWN)
