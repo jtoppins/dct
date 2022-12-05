@@ -166,6 +166,7 @@ function Template:__init(data)
 
 	-- remove static functions
 	self.fromFile = nil
+	self.genDocs  = nil
 
 	-- merge data into template
 	utils.mergetables(self, utils.deepcopy(data))
@@ -207,8 +208,130 @@ function Template.fromFile(dctfile, stmfile)
 	return Template(template)
 end
 
+local Checker = require("dct.templates.checkers.Check")
+
+local value_header = {
+	[Checker.valuetype.VALUES]    = "specific values",
+	[Checker.valuetype.INT]       = "number",
+	[Checker.valuetype.RANGE]     = "range",
+	[Checker.valuetype.STRING]    = "string",
+	[Checker.valuetype.BOOL]      = "boolean (true/false)",
+	[Checker.valuetype.TABLEKEYS] = "specific values",
+	[Checker.valuetype.TABLE]     = "table",
+}
+
+local function is_required(option)
+	local s = " - _required:_ "
+
+	if option.default then
+		s = s.."no"
+
+		if not option.default == "" then
+			s = s.."\n - _default:_ "..tostring(option.default)
+		end
+	else
+		s = s.."yes"
+	end
+	return s
+end
+
+local function option_summary(option)
+	local summary = is_required(option).."\n"
+
+	summary = summary.." - _value:_ "..value_header[option.type]
+	if option.type == Checker.valuetype.RANGE then
+		summary = summary..string.format(" [%d, %d]",
+			option.values[1], option.values[2])
+	end
+	summary = summary.."\n"
+	if option.agent then
+		summary = summary.." - _agent:_ true\n"
+	end
+	return summary
+end
+
+local function option_description(option)
+	local desc = option.description.."\n"
+
+	if option.type == Checker.valuetype.VALUES or
+	   option.type == Checker.valuetype.TABLEKEYS then
+		desc = desc.."\n"
+		for k, v in utils.sortedpairs(option.values) do
+			desc = desc.." - `"..k.."`"
+			if option.type == Checker.valuetype.VALUES then
+				desc = desc.." - "..v.description
+			end
+			desc = desc.."\n"
+		end
+	end
+	return desc
+end
+
+local function write_section(level, name, data)
+	if next(data.options) == nil then
+		return
+	end
+
+	print(string.format("\n%s %s\n", string.rep("#", level), name))
+	if data.description then
+		print(data.description)
+	end
+
+	for optname, optdata in utils.sortedpairs(data.options) do
+		print(string.format("\n%s `%s`\n",
+				    string.rep("#", level+1), optname))
+		print(option_summary(optdata))
+		print(option_description(optdata))
+	end
+end
+
 --- class function to generate Template documentation.
+-- Generate markdown styled documentation for all options a campaign
+-- designer can use to specify a template.
 function Template.genDocs()
+	local sections = {}
+	for _, c in pairs(checkers) do
+		local doc = c:doc()
+		if sections[doc.section] == nil and next(doc.options) then
+			sections[doc.section] = {}
+			sections[doc.section]["options"] = {}
+		end
+
+		if doc.description then
+			sections[doc.section]["description"] = doc.description
+		end
+
+		for key, val in pairs(doc.options) do
+			if val.nodoc ~= true then
+				sections[doc.section]["options"][key] = val
+			end
+		end
+	end
+
+	local header = [[
+# Template Attributes
+
+Listing of all template attributes that are either automatically determined
+from the template file or directly specified in the .dct file.
+
+Most attributes can be modified event after an asset has been generated
+from its template. Meaning campaign progression can be saved but, for example,
+the target description of a given template is modified before the saved
+campaign is loaded. This target description change will be reflected in
+the in-game mission briefing when the campaign is loaded from the save.
+However, if an attribute specifies `agent: true` this means that once the
+asset has been generated this setting cannot be changed by modifying the
+underlying template and the value is fixed for the lifetime of that asset.
+
+Additionally, most attributes are not required and when not provided
+reasonable defaults based on template type, composition, and other factors
+will be considered when selecting the default.
+]]
+
+	print(header)
+	for name, data in utils.sortedpairs(sections) do
+		write_section(2, name, data)
+	end
 end
 
 --- Create a DCT game object from the template definition.

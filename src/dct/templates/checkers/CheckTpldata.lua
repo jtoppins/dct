@@ -161,14 +161,55 @@ function CheckTpldata:__init()
 		["tpldata"] = {
 			["agent"] = true,
 			["type"]  = Check.valuetype.TABLE,
-			["description"] =
-			"",
+			["description"] = [[
+For templates that are not associated with an STM file the format of
+`tpldata` follows:
+
+```lua
+tpldata = {
+	# = {
+		category  = Unit.Category,
+		countryid = id,
+		data      = {
+			# group def members
+			dct_deathgoal = goalspec
+		},
+	}
+}
+```
+
+`tpldata` is a LUA list where each list entry is as shown above; `category`,
+`countryid`, and `data`.
+
+ * `category` - is a value from the `Unit.Category` table
+ * `countryid` - is the numerical id of the country the
+   static/group belongs to
+ * `data` - is the actual static/group definition in a format that is
+   expected by `coalition.addGroup()` and `coalition.addStatic()`]],
 		},
 		["buildings"] = {
 			["default"] = {},
 			["type"]    = Check.valuetype.TABLE,
-			["description"] =
-			"",
+			["description"] = [[
+Allows the campaign designer to specify scenery objects as part of the
+template. The definition is a list of scenery objects that should
+be included as part of the template, an example from the Persian Gulf
+map;
+
+```lua
+buildings = {
+	{
+		["name"] = "building 1",
+		["goal"] = "primary destroyed",
+		["id"]   = 109937143,
+	},
+}
+```
+
+Where `name` is the name of the scenery object (is arbitrary and only
+referenced in DCT for error reporting), `goal` conforms to the textual
+[goalspec](#death-goal-specification-goalspec), and `id` is the map
+specific object id which can be obtained from the mission editor.]],
 		},
 		["unitTypeCnt"] = {
 			["nodoc"] = true,
@@ -197,7 +238,8 @@ template.]],
 Controls if the name of the generated Agent gets renamed to include the
 region name.]]
 		},
-	})
+	}, [[Describes the actual DCS object that will be spawned/tracked
+in association with an asset created from this template.]])
 end
 
 local notpldata = {

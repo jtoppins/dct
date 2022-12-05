@@ -22,8 +22,16 @@ template. Allowed values can be found in `assetType` table.]],
 		["name"] = {
 			["agent"] = true,
 			["type"] = Check.valuetype.STRING,
-			["description"] =
-			"",
+			["description"] = [[
+The name of the template. This name can be used to lookup the template from
+the Region object. If the template uses an STM file then the name field of
+the STM template will be used. This name field is editable in the mission
+editor. If the template is an airbase type the name must reference an airbase
+object in the game world or define a tpldata to spawn a new airbase. This
+airbase validation is not done at template definition time and is instead
+done at asset creation time, thus it is a non-fatal error generating a
+warning in the log file. The asset will not be created if the name or tpldata
+is incorrect or does not exist.]],
 		},
 		["attributes"] = {
 			["agent"] = true,
@@ -37,14 +45,21 @@ at a meta level. Such as an asset that represents a base or strategic target.]]
 		["uniquenames"] = {
 			["default"] = false,
 			["type"] = Check.valuetype.BOOL,
-			["description"] =
-			"",
+			["description"] = [[
+When a template can represent more than one instance of an Asset this
+attribute should be set to `true` so when a new Asset is created the names
+of the DCS objects are made unique. This way when the DCS objects are
+dynamically spawned DCS will not despawn previously spawned objects because
+they have the same name.]],
 		},
 		["ignore"] = {
 			["default"] = false,
 			["type"] = Check.valuetype.BOOL,
-			["description"] =
-			"",
+			["description"] = [[
+Assets generated from templates with this attribute set to true will be
+ignored by the DCT AI. This includes scheduling the asset to be assigned
+as a target to a player. This will also make any units spawned by the asset
+to be ignored by the DCS AI.]],
 		},
 		["immortal"] = {
 			["default"] = false,
@@ -56,8 +71,9 @@ Set all unit groups in the template to be immortal.]],
 			["agent"] = true,
 			["default"] = false,
 			["type"] = Check.valuetype.BOOL,
-			["description"] =
-			"",
+			["description"] = [[
+Forces an asset on campaign state reload to reset its `tpldata` to the
+original state when the asset was created.]],
 		},
 		["exclusion"] = {
 			["default"] = "",
@@ -72,39 +88,54 @@ of the group will be ignored.]],
 			["deprecated"] = true,
 			["default"] = 1000,
 			["type"] = Check.valuetype.INT,
-			["description"] =
-			"",
+			["description"] = [[
+This field defines the relative priority to other templates/assets within
+the region. A lower non-negative number means higher priority.]],
 		},
 		["intel"] = {
 			["default"] = 0,
 			["type"] = Check.valuetype.INT,
-			["description"] =
-			"",
+			["description"] = [[
+Defines the initial amount of 'intel' the opposing side knows about any assets
+generated from the template. The intel value is a direct representation to how
+many decimal places the location of the asset will be truncated to.]],
 		},
 		["spawnalways"] = {
 			["default"] = false,
 			["type"] = Check.valuetype.BOOL,
-			["description"] =
-			"",
+			["description"] = [[
+Used to identify templates that should always be spawned, the value should
+always be 'true' or removed from the template definition.]],
 		},
 		["cost"] = {
 			["default"] = 0,
 			["type"] = Check.valuetype.INT,
-			["description"] =
-			"",
+			["description"] = [[
+The amount of tickets an asset generated from this template is worth.
+With the ticket system each side has a given amount of tickets they can
+lose. An asset with a cost value will deduct against this per-side ticket
+pool. See the [tickets](#tickets) section for more information.]],
 		},
 		["desc"] = {
 			["default"] = "false",
 			["type"] = Check.valuetype.STRING,
-			["description"] =
-			"",
+			["description"] = [[
+This is a text string field used to provide the 'target briefing' text when
+a mission is assigned to a player. This text can use string replacement to
+make certain parts of the message variable, the replacement fields are:
+
+ * `LOCATIONMETHOD` - provides a randomly selected description of how the
+   target was discovered.
+ * `TOT` - replaces with the expected time-on-target]],
 		},
 		["codename"] = {
 			["agent"] = true,
 			["default"] = dctenum.DEFAULTCODENAME,
 			["type"] = Check.valuetype.STRING,
-			["description"] =
-			"",
+			["description"] = [[
+A static codename can be assigned to a template overriding the normally
+random codename. Codenames are displayed in mission briefings and other
+player UI elements.]],
 		},
 		["theater"] = {
 			["default"] = env.mission.theatre,
@@ -114,15 +145,18 @@ of the group will be ignored.]],
 		["subordinates"] = {
 			["default"] = {},
 			["type"] = Check.valuetype.TABLE,
-			["description"] =
-			"",
+			["description"] = [[
+A list of template names that will be converted into DCT assets. These
+templates are usually base defenses or squadrons but there is nothing
+preventing the designer from spawning additional assets with this list.]],
 		},
 		["locationmethod"] = {
 			["agent"] = true,
 			["default"] = "false",
 			["type"] = Check.valuetype.STRING,
-			["description"] =
-			"",
+			["description"] = [[
+Allows designers to enter a static string that is supposed to describe how the
+asset was discovered.]],
 		},
 		["displayname"] = {
 			["default"] = dctenum.DEFAULTNAME,
@@ -197,7 +231,9 @@ influence is reached.
 Falloff rate:
 Every 2 minutes a side's regional influence is reduced by 50%.]],
 		},
-	})
+	},
+	[[This section describes attributes common or mostly common to all
+template types.]])
 end
 
 function CheckCommon:check(data)

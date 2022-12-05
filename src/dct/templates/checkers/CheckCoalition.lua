@@ -42,10 +42,21 @@ local CheckCoalition = class("CheckCoalition", Check)
 function CheckCoalition:__init()
 	Check.__init(self, "Common", {
 		[ckey] = {
-			["type"] = Check.valuetype.VALUES,
+			["type"] = Check.valuetype.TABLEKEYS,
 			["values"] = coalition.side,
-			["description"] =
-			"",
+			["description"] = [[
+A template can only belong to a single coalition (side). If not specified, it
+will be detected based on units and objects present in the template, but if it
+does not contain anything (ie. an airbase), or contains objects of multiple
+coalitions, this value must be filled.
+
+> Important: units and objects saved in templates belong to countries, but the
+coalitions of those objects in-game will be set based on the settings of the
+.miz file. For example, if you create a template where the USA is a Blue
+country, and then run it in a .miz where the USA is set as a neutral country,
+the units in the template will spawn as neutral. Therefore, mission designers
+should standardize which countries belong to which coalition, so that the
+coalitions in templates are consistent with in-game results.]],
 		},
 	})
 end
