@@ -12,6 +12,7 @@ local Marshallable = require("dct.libs.Marshallable")
 local Observable = require("dct.libs.Observable")
 local Subordinates = require("dct.libs.Subordinates")
 local INVALID_OWNER = -1
+local agentcomponents = { "sensors", "actions", "goals" }
 
 --- @class AgentLogger
 -- common logging interfaces for the Agent class.
@@ -107,7 +108,7 @@ end
 local objecttypes = {}
 local objtbl = {}
 local basepath = table.concat({dct.modpath, "dct", "assets"}, utils.sep)
-for _, subpath in ipairs({"sensors", "actions", "goals"}) do
+for _, subpath in ipairs(agentcomponents) do
 	objtbl[subpath] = {}
 	objecttypes[subpath] = {}
 	for file in lfs.dir(basepath..utils.sep..subpath) do
@@ -138,7 +139,7 @@ end
 -- By changing the relative weighting of a given goal the asset
 -- will attempt to do that goal more or less often.
 local function set_ai_objects(agent, template)
-	for _, objkind in ipairs({"sensors", "actions", "goals",}) do
+	for _, objkind in ipairs(agentcomponents) do
 		local t = {}
 		for objtype, val in pairs(template[objkind] or {}) do
 			local ctor = objtbl[objkind][string.upper(objtype)]
