@@ -267,7 +267,9 @@ end
 --- Finalizes the Agent and runs the setup function for all sensors
 function Agent:setup()
 	local tpl = self:getTemplate()
-	assert(tpl, "No Template found")
+	if tpl == nil then
+		return
+	end
 
 	self:setIntel(dctutils.getenemy(self.owner), tpl.intel)
 	set_ai_objects(self, tpl)
@@ -400,10 +402,19 @@ function Agent:getTemplate()
 	local region = rgnmgr:getRegion(self.desc.regionname)
 
 	if region == nil then
+		self._logger:error("Cannot find Region(%s)",
+				   self.desc.regionname)
 		return nil
 	end
 
-	return region:getTemplateByName(self.desc.name)
+	local T = region:getTemplateByName(self.desc.name)
+
+	if T == nil then
+		self._logger:error("No Template found (%s)",
+			self.desc.regionname.."."..self.desc.name)
+	end
+
+	return T
 end
 
 --- Get a copy of the Agent's description table.
