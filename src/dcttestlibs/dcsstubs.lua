@@ -73,7 +73,7 @@ function dctstubs.createEvent(eventdata, player)
 
 	assert(objref, "objref is nil")
 	event.id = eventdata.id
-	event.time = 2345
+	event.time = dctstubs.model_time
 	if event.id == world.event.S_EVENT_DEAD then
 		event.initiator = objref
 		objref.clife = 0

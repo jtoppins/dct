@@ -3,7 +3,7 @@
 require("dcttestlibs")
 dofile(os.getenv("DCT_DATA_ROOT").."/../mission/dct-mission-init.lua")
 dctstubs.setModelTime(50)
-for i = 1,100,1 do
+for _ = 1,100,1 do
 	dctstubs.runSched()
 	dctstubs.addModelTime(3)
 end
