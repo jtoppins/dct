@@ -15,7 +15,7 @@ local Command     = require("dct.libs.Command")
 local Commander   = require("dct.ai.Commander")
 local Logger      = dct.Logger.getByName("Theater")
 local settings    = dct.settings.server
-local STATE_VERSION = "3"
+local STATE_VERSION = "4"
 
 --- error handler for all xpcall
 local function errhandler(err)
