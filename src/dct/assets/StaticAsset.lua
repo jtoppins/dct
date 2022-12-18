@@ -202,9 +202,14 @@ function StaticAsset:handleDead(event)
 	-- mark the unit/group/static as dead in the template, dct_dead
 	local unitname = tostring(obj:getName())
 	if obj:getCategory() == Object.Category.UNIT then
-		local grpname = obj:getGroup():getName()
-		local grp = self._assets[grpname]
-		for _, unit in pairs(grp.data.units) do
+		local grpname
+		local grp = obj:getGroup()
+
+		if grp ~= nil then
+			grpname = grp:getName()
+		end
+		local asset = self._assets[grpname]
+		for _, unit in pairs(asset.data.units) do
 			if unit.name == unitname then
 				unit.dct_dead = true
 				break
