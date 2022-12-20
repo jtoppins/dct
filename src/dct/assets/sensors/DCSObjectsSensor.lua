@@ -197,9 +197,11 @@ function DCSObjectsSensor:handleDead(event)
 	-- mark the unit/group/static as dead in the template, dct_dead
 	local unitname = tostring(obj:getName())
 	if obj:getCategory() == Object.Category.UNIT then
-		local grpname = obj:getGroup():getName()
-		mark_unit_dead(self, grpname, unitname)
-		checkgoal(self, grpname)
+		if obj:getGroup() then
+			local grpname = obj:getGroup():getName()
+			mark_unit_dead(self, grpname, unitname)
+			checkgoal(self, grpname)
+		end
 	else
 		self._assets[unitname].data.dct_dead = true
 		checkgoal(self, unitname)
