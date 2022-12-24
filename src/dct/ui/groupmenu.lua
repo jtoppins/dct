@@ -31,6 +31,11 @@ function menus.playerRequest(theater, data)
 	Logger:debug("playerRequest(); Received player request: %s",
 		     json:encode_pretty(data))
 
+	if data == nil then
+		Logger:debug("playerRequest(); nil data, ignoring")
+		return
+	end
+
 	local player = theater:getAssetMgr():getAsset(data.name)
 
 	if player == nil then
