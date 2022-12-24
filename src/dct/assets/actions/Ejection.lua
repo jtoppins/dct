@@ -3,12 +3,12 @@
 local WS = require("dct.assets.worldstate")
 
 local function is_eject_event(_ --[[key]], fact)
-	return fact.type == WS.Facts.types.EVENT and
+	return fact.type == WS.Facts.factType.EVENT and
 	       fact.event.id == world.event.S_EVENT_EJECTION
 end
 
 local function any_event(_ --[[key]], fact)
-	return fact.type == WS.Facts.types.EVENT
+	return fact.type == WS.Facts.factType.EVENT
 end
 
 --- @classmod Ejection

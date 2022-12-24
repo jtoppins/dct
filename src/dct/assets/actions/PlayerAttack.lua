@@ -6,7 +6,7 @@ local WS        = require("dct.assets.worldstate")
 local UPDATE_TIME = 60
 
 local function is_target(fact)
-	return fact.type == WS.Facts.types.CHARACTER and
+	return fact.type == WS.Facts.factType.CHARACTER and
 	       fact.object and fact.object.confidence >= 1
 end
 

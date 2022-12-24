@@ -5,12 +5,12 @@ local dctutils = require("dct.libs.utils")
 local WS       = require("dct.assets.worldstate")
 
 local function is_join_event(_ --[[key]], fact)
-	return fact.type == WS.Facts.types.EVENT and
+	return fact.type == WS.Facts.factType.EVENT and
 	       fact.event.id == dctenum.event.DCT_EVENT_PLAYER_JOIN
 end
 
 local function any_event(_ --[[key]], fact)
-	return fact.type == WS.Facts.types.EVENT
+	return fact.type == WS.Facts.factType.EVENT
 end
 
 local PlayerJoin = require("libs.namedclass")("PlayerJoin", WS.Action)

@@ -18,7 +18,7 @@ local reasons = {
 }
 
 local function is_kick_event(_ --[[key]], fact)
-	return fact.type == WS.Facts.types.EVENT and
+	return fact.type == WS.Facts.factType.EVENT and
 	       fact.event.id == dctenum.event.DCT_EVENT_PLAYER_KICK
 end
 

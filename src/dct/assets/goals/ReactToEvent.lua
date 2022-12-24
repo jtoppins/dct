@@ -3,7 +3,7 @@
 local WS = require("dct.assets.worldstate")
 
 local function is_event(_ --[[key]], fact)
-	return fact.type == WS.Facts.types.EVENT
+	return fact.type == WS.Facts.factType.EVENT
 end
 
 --- Have an agent react to an event registered in the Agent's memory.
