@@ -118,8 +118,8 @@ local NodeFact = class("NodeFact", Fact)
 function NodeFact:__init(node, importance, ntype, path)
 	Fact.__init(self, factType.NODE)
 	self.object    = Attribute(node, importance)
-	self.objtype   = Attribute(check.tblkey(ntype, NodeFact.types,
-				   "NodeFact.types"))
+	self.objtype   = Attribute(check.tblkey(ntype, NodeFact.nodeType,
+				   "NodeFact.nodeType"))
 	self.path      = path
 	self.nodeType  = nil
 end
