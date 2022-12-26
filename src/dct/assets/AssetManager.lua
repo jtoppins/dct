@@ -232,8 +232,6 @@ function AssetManager:onDCSEvent(event)
 	}
 
 	if not relevents[event.id] then
-		self._logger:debug("onDCSEvent - not relevant event: %s",
-			tostring(event.id))
 		return
 	end
 
