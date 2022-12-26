@@ -84,6 +84,8 @@ end
 
 tasks.option = {}
 function tasks.option.create(optid, value)
+	check.number(optid)
+	assert(value, "value error: value cannot be nil")
 	return create_task_tbl(optid, value), aienum.TASKTYPE.OPTION
 end
 

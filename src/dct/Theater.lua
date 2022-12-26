@@ -17,10 +17,6 @@ local Logger      = dct.Logger.getByName("Theater")
 local settings    = dct.settings.server
 local STATE_VERSION = "4"
 
---- error handler for all xpcall
-local function errhandler(err)
-	Logger:error("protected call - %s", debug.traceback(err, 2))
-end
 
 --- tests if a state table is valid
 local function isStateValid(state)
@@ -173,7 +169,7 @@ function Theater.playerRequest(data)
 		local theater = Theater.singleton()
 		local uimenu = require("dct.ui.groupmenu")
 		uimenu.playerRequest(theater, data)
-	end, errhandler)
+	end, dctutils.errhandler(Logger))
 end
 
 function Theater:setTimings(cmdfreq, tgtfps, percent)
@@ -296,7 +292,8 @@ function Theater:_onEvent(event)
 end
 
 function Theater:onEvent(event)
-	xpcall(function() self:_onEvent(event) end, errhandler)
+	xpcall(function() self:_onEvent(event) end,
+	       dctutils.errhandler(Logger))
 end
 
 function Theater:export(_)
@@ -389,7 +386,7 @@ function Theater:exec(time)
 		local ok, requeue = xpcall(
 			function()
 				return cmd:execute(time)
-			end, errhandler)
+			end, dctutils.errhandler(Logger))
 		if ok and type(requeue) == "number" then
 			self:queueCommand(requeue, cmd)
 		end

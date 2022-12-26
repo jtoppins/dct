@@ -153,7 +153,8 @@ function AssetManager:update()
 	local deletionq = {}
 	for _, asset in self:iterate() do
 		if type(asset.update) == "function" then
-			asset:update()
+			xpcall(function() asset:update() end,
+			       dctutils.errhandler(asset._logger))
 		end
 		if asset:isDead() then
 			deletionq[asset.name] = true

@@ -38,6 +38,13 @@ function utils.isalive(grpname)
 	return (grp and grp:isExist() and grp:getSize() > 0)
 end
 
+--- error handler for all xpcall
+function utils.errhandler(logger)
+	return function(err)
+		logger:error("protected call - %s", debug.traceback(err, 2))
+	end
+end
+
 --- Calls an optional function for a set of objects defined in tbl.
 --
 -- @param tbl the table of objects whos keys do not matter and whos values
