@@ -727,13 +727,17 @@ function Controller:hasTask()
 	return true
 end
 
-function Controller:setCommand(--[[cmd]])
+function Controller:setCommand(cmd)
+	assert(cmd, "value error: cmd cannot be nil")
 end
 
-function Controller:setOption(--[[id, value]])
+function Controller:setOption(id, value)
+	assert(type(id) == "number", "value error: id must be a number")
+	assert(value, "value error: value cannot be nil")
 end
 
-function Controller:setOnOff(--[[value]])
+function Controller:setOnOff(value)
+	assert(type(value) == "boolean", "value error: value must be a bool")
 end
 
 function Controller:setAltitude(--[[alt, keep, alttype]])
