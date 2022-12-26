@@ -20,6 +20,20 @@ local function default_category(weapon)
 	return dctenum.weaponCategory.AG
 end
 
+local function init_totals(limits)
+	local total = {}
+
+	for _, v in pairs(dctenum.weaponCategory) do
+		total[v] = {
+			["current"] = 0,
+			["max"]     = limits[v] or 0,
+			["payload"] = {}
+		}
+	end
+
+	return total
+end
+
 --- tally all weapon types for a given unit
 --
 -- @param unit dcs unit reference
@@ -29,17 +43,9 @@ end
 -- @return a total table keyed on weapon category
 local function total_payload(unit, limits, restrictions, defcost)
 	local payload = unit:getAmmo()
-	local total = {}
+	local total = init_totals(limits)
 	restrictions = restrictions or {}
 	defcost = defcost or 0
-
-	for _, v in pairs(dctenum.weaponCategory) do
-		total[v] = {
-			["current"] = 0,
-			["max"]     = limits[v] or 0,
-			["payload"] = {}
-		}
-	end
 
 	-- tally weapon costs
 	for _, wpn in ipairs(payload or {}) do

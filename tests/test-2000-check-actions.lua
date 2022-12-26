@@ -18,10 +18,10 @@ local function check_action(Object, file)
 	assert(obj.agent == agent, "problem with: actions/"..file)
 end
 
-local function check_sensor(obj)
+local function check_sensor(_)
 end
 
-local function check_goal(obj)
+local function check_goal(_)
 end
 
 local basepath = os.getenv("DCT_SRC_ROOT").."/src/dct/assets"
