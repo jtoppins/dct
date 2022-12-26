@@ -35,7 +35,7 @@ local function doCommand(controller, task)
 end
 
 local function doOption(controller, task)
-	controller:setOption(task.id, task.param)
+	controller:setOption(task.id, task.params)
 end
 
 function tasks.setTask(controller, task)
