@@ -8,11 +8,11 @@ local utils = require("libs.utils")
 require("lfs")
 lfs.dct_testdata = os.getenv("DCT_DATA_ROOT") or "."
 function lfs.writedir()
-	return lfs.dct_testdata
+	return lfs.dct_testdata..utils.sep
 end
 
 function lfs.tempdir()
-	return lfs.dct_testdata .. utils.sep .. "mission"
+	return lfs.dct_testdata..utils.sep.."mission"
 end
 
 local class = require("libs.class")

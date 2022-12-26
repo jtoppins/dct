@@ -105,12 +105,16 @@ end
 
 
 local function load_module(subpath, objtype)
+	Logger.getByName("Agent"):debug("init - load_module: %s",
+		tostring("dct.assets."..subpath.."."..objtype))
 	return require("dct.assets."..subpath.."."..objtype)
 end
 
 local objecttypes = {}
 local objtbl = {}
-local basepath = table.concat({dct.modpath, "dct", "assets"}, utils.sep)
+local basepath = table.concat({dct.modpath, "lua", "dct", "assets"},
+			      utils.sep)
+Logger.getByName("Agent"):debug("init - basepath: %s", tostring(basepath))
 for _, subpath in ipairs(agentcomponents) do
 	objtbl[subpath] = {}
 	objecttypes[subpath] = {}

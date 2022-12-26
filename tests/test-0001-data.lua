@@ -4,7 +4,7 @@ require("os")
 require("dcttestlibs")
 local utils = require("libs.utils")
 
-local testpath = lfs.dct_testdata
+local testpath = lfs.dct_testdata..utils.sep
 assert(lfs.writedir() == testpath,
 	"lfs.writedir() incorrect got '"..lfs.writedir().."' expected '"..
 	testpath.."'")

@@ -22,8 +22,10 @@ do
 	-- 'dctsettings' can be defined in the mission to set nomodlog
 	dctsettings = dctsettings or {}
 
+	local sep = package.config:sub(1,1)
 	local dcttests = os.getenv("DCT_SRC_ROOT") and true
-	local modpath = lfs.writedir() .. "\\Mods\\tech\\DCT"
+	local modpath = lfs.writedir()..table.concat({"Mods", "Tech", "DCT"},
+			sep)
 
 	if not dcttests and lfs.attributes(modpath) == nil then
 		local errmsg = "DCT: module not installed, mission not DCT enabled"
@@ -35,9 +37,6 @@ do
 	else
 		package.path = package.path .. ";" .. modpath .. "\\lua\\?.lua;"
 		require("dct")
-		if not dcttests then
-			dct.modpath = modpath
-		end
 		dct.init()
 	end
 end
