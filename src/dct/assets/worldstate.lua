@@ -68,6 +68,7 @@ local factKey = {
 	["CMDPENDING"]    = "cmdpending",
 	["SCRATCHPAD"]    = "scratchpad",
 	["LOSETICKET"]    = "loseticket",
+	["HEALTH"]        = "health",
 }
 
 --- An abstract container generalizing a property of a fact.

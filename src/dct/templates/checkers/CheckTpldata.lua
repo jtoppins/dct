@@ -269,12 +269,15 @@ function CheckTpldata:check(data)
 
 	-- get the max speed for the template which is the minimum
 	-- speedMax entry for all unit types in the template
-	local maxspeed = 100000000
+	local bigint = 1000000
+	local maxspeed = bigint
 	for typename, _ in pairs(data.unitTypeCnt) do
 		local desc = Unit.getDescByName(typename)
 		maxspeed = math.min(maxspeed, desc.speedMax)
 	end
-	data.speedMax = maxspeed
+	if maxspeed < bigint and maxspeed > 0 then
+		data.speedMax = maxspeed
+	end
 
 	return true
 end

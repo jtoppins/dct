@@ -3,12 +3,14 @@
 require("math")
 local utils        = require("libs.utils")
 local dctenum      = require("dct.enum")
+local dctutils     = require("dct.libs.utils")
 local DCTEvents    = require("dct.libs.DCTEvents")
 local Timer        = require("dct.libs.Timer")
+local vector       = require("dct.libs.vector")
 local Goal         = require("dct.assets.DeathGoals")
 local WS           = require("dct.assets.worldstate")
 local aitasks      = require("dct.ai.tasks")
-local UPDATE_TIME  = 300
+local UPDATE_TIME  = 30
 
 local dctkeys = {
 	["dct_deathgoal"] = true,
@@ -143,6 +145,35 @@ local function checkgoal(sensor, name)
 	end
 end
 
+--- update the location of all individual units and the overall agent's
+-- location. Assume agents running this function do not have groups that
+-- consist of static objects.
+local function update_location(self)
+	local center, n
+
+	for _, grp in ipairs(self._assets) do
+		for _, unit in ipairs(grp.data.units) do
+			local U = Unit.getByName(unit.name)
+
+			if U then
+				local pt = vector.Vector2D(U:getPoint()):raw()
+
+				unit.x = pt.x
+				unit.y = pt.y
+				center, n = dctutils.centroid2D(pt, center, n)
+
+				-- update azimuth of where the unit is pointing
+				local pos = U:getPosition()
+				unit.heading = math.atan2(pos.x.z, pos.x.x)
+			end
+		end
+	end
+
+	if center ~= nil then
+		self.agent:setDescKey("location", center:raw())
+	end
+end
+
 --- @classmod DCSObjectsSensor
 -- Provides a common API for interacting with underlying DCS groups.
 --
@@ -160,7 +191,7 @@ end
 local DCSObjectsSensor = require("libs.namedclass")("DCSObjectsSensor",
 	WS.Sensor, DCTEvents)
 function DCSObjectsSensor:__init(agent)
-	WS.Sensor.__init(self, agent, 10)
+	WS.Sensor.__init(self, agent, 5)
 	DCTEvents.__init(self)
 	self._maxdeathgoals = agent:getDescKey("maxdeathgoals") or 0
 	self._curdeathgoals = 0
@@ -168,12 +199,22 @@ function DCSObjectsSensor:__init(agent)
 	self._hasDeathGoals = agent:getDescKey("hasDeathGoals") or false
 	self._tpldata       = agent.desc.tpldata
 	self.timer          = Timer(UPDATE_TIME)
-	self.healthkey      = self.__clsname..".health"
 
 	self:_overridehandlers({
 		[world.event.S_EVENT_DEAD] = self.handleDead,
 		[world.event.S_EVENT_CRASH] = self.handleDead,
 	})
+
+	if agent:getDescKey("speedMax") > 0 then
+		self.updateLocation = update_location
+	end
+end
+
+function DCSObjectsSensor:setAgentHealth()
+	self.agent:setFact(WS.Facts.factKey.HEALTH,
+		WS.Facts.Value(WS.Facts.factType.HEALTH,
+			       self._curdeathgoals / self._maxdeathgoals,
+			       1.0))
 end
 
 -- Adds an object (group or static) to the monitored list for this
@@ -216,26 +257,23 @@ function DCSObjectsSensor:handleDead(event)
 		remove_death_goal(self, unitname, goal)
 	end
 
-	self.agent:setFact(self.healthkey, WS.Facts.Value(
-		WS.Facts.factType.HEALTH,
-		self._curdeathgoals / self._maxdeathgoals,
-		1.0))
+	self:setAgentHealth()
 end
 
-function DCSObjectsSensor:checkGoals()
+function DCSObjectsSensor:checkGoals(onspawn)
 	local cnt = 0
 	for name, goal in pairs(self._deathgoals) do
 		cnt = cnt + 1
+		if onspawn == true then
+			goal:onSpawn()
+		end
+
 		if goal:checkComplete() then
 			remove_death_goal(self, name, goal)
 		end
 	end
 
-	self.agent:setFact(self.healthkey, WS.Facts.Value(
-		WS.Facts.factType.HEALTH,
-		self._curdeathgoals / self._maxdeathgoals,
-		1.0))
-
+	self:setAgentHealth()
 	self.agent._logger:debug("update() - max goals: %d; cur goals: %d; "..
 		"checked: %d", self._maxdeathgoals, self._curdeathgoals, cnt)
 end
@@ -245,12 +283,21 @@ function DCSObjectsSensor:update()
 	if not self.timer:expired() then
 		return false
 	end
+
 	self:checkGoals()
+	if self.updateLocation then
+		self:updateLocation()
+	end
+
 	self.timer:reset()
-	return false
+	self.timer:start()
+	return true
 end
 
 function DCSObjectsSensor:marshal()
+	if self.updateLocation then
+		self:updateLocation()
+	end
 	self:checkGoals()
 	self.agent:setDescKey("maxdeathgoals", self._maxdeathgoals)
 	self.agent:setDescKey("hasDeathGoals", self._hasDeathGoals)
@@ -261,12 +308,7 @@ function DCSObjectsSensor:spawn()
 		_spawn(remove_dct_keys(grp))
 	end
 
-	for name, goal in pairs(self._deathgoals) do
-		goal:onSpawn()
-		if goal:isComplete() then
-			remove_death_goal(self, name, goal)
-		end
-	end
+	self:checkGoals(true)
 	self.timer:reset()
 	self.timer:start()
 end
@@ -291,6 +333,9 @@ end
 
 function DCSObjectsSensor:despawn()
 	self.timer:stop()
+	if self.updateLocation then
+		self:updateLocation()
+	end
 	self:checkGoals()
 	for name, grp in pairs(self._assets) do
 		local object
