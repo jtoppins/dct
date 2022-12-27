@@ -297,7 +297,6 @@ AI.Task = {
 	["TurnMethod"]       = {
 		["FLY_OVER_POINT"] = "Fly Over Point",
 		["FIN_POINT"]      = "Fin Point",
-		["TURNING_POINT"]  = "Turning Point",
 	},
 	["VehicleFormation"] = {
 		["VEE"]           = "Vee",
@@ -307,7 +306,7 @@ AI.Task = {
 		["ECHELON_LEFT"]  = "EchelonL",
 		["ON_ROAD"]       = "On Road",
 		["CONE"]          = "Cone",
-		["DIAMON"]        = "Diamond",
+		["DIAMOND"]       = "Diamond",
 	},
 	["AltitudeType"]     = {
 		["RADIO"] = "RADIO",
@@ -331,17 +330,18 @@ AI.Task = {
 }
 
 AI.Skill = {
-	"PLAYER",
-	"CLIENT",
-	"AVERAGE",
-	"GOOD",
-	"HIGH",
-	"EXCELLENT",
+	["PLAYER"]    = "Player",
+	["CLIENT"]    = "Client",
+	["AVERAGE"]   = "Average",
+	["GOOD"]      = "Good",
+	["HIGH"]      = "High",
+	["EXCELLENT"] = "Excellent",
 }
 
 AI.Option = {
 	["Air"] = {
 		["id"] = {
+			["NO_OPTION"]               = -1,
 			["ROE"]                     = 0,
 			["REACTION_ON_THREAT"]      = 1,
 			["RADAR_USING"]             = 3,
@@ -366,20 +366,20 @@ AI.Option = {
 		},
 		["val"] = {
 			-- ROE Descriptions:
-			-- WEAPON_FREE -
+			-- WEAPON_FREE:
 			--     AI will engage any enemy group it detects.
 			--     Target prioritization is based based on the
 			--     threat of the target.
-			-- OPEN_FIRE_WEAPON_FREE -
+			-- OPEN_FIRE_WEAPON_FREE:
 			--     AI will engage any enemy group it detects,
 			--     but will prioritize targets specified in the
 			--     groups tasking.
-			-- OPEN_FIRE -
+			-- OPEN_FIRE:
 			--     AI will engage only targets specified in its
 			--     taskings.
-			-- RETURN_FIRE -
+			-- RETURN_FIRE:
 			--     AI will only engage threats that shoot first.
-			-- WEAPON_HOLD -
+			-- WEAPON_HOLD:
 			--     AI will hold fire under all circumstances.
 			["ROE"] = {
 				["WEAPON_FREE"]           = 0,
@@ -401,18 +401,45 @@ AI.Option = {
 				["FOR_SEARCH_IF_REQUIRED"] = 2,
 				["FOR_CONTINUOUS_SEARCH"]  = 3,
 			},
+
+			-- NEVER:
+			--     Chaff and Flares will not be used in any
+			--     circumstances.
+			-- AGAINST_FIRED_MISSILE:
+			--     AI will only deploy chaff and flare if an
+			--     incoming enemy missile is detected.
+			-- WHEN_FLYING_IN_SAM_WEZ:
+			--     AI will release chaff and/or flares as a
+			--     preventative measure when inside a known
+			--     enemy SAM threat zone or within weapons range
+			--     of a known enemy aircraft armed with IR-homing
+			--     missile. Default Setting.
+			-- WHEN_FLYING_NEAR_ENEMIES:
+			--     Unknown.
 			["FLARE_USING"] = {
 				["NEVER"]                    = 0,
 				["AGAINST_FIRED_MISSILE"]    = 1,
 				["WHEN_FLYING_IN_SAM_WEZ"]   = 2,
 				["WHEN_FLYING_NEAR_ENEMIES"] = 3,
 			},
+
+			-- NEVER_USE:
+			--     Disables the ability for AI to use their ECM.
+			-- USE_IF_ONLY_LOCK_BY_RADAR:
+			--     If the AI is actively being locked by an enemy
+			--     radar they will enable their ECM jammer.
+			-- USE_IF_DETECTED_LOCK_BY_RADAR:
+			--     If the AI is being detected by a radar they will
+			--     enable their ECM.
+			-- ALWAYS_USE:
+			--     AI will leave their ECM on all the time.
 			["ECM_USING"] = {
 				["NEVER_USE"]                     = 0,
 				["USE_IF_ONLY_LOCK_BY_RADAR"]     = 1,
 				["USE_IF_DETECTED_LOCK_BY_RADAR"] = 2,
 				["ALWAYS_USE"]                    = 3,
 			},
+
 			-- Missile Attack option descriptsion:
 			-- Max Range:
 			--     AI will engage at the maximum range of the
@@ -443,6 +470,7 @@ AI.Option = {
 	},
 	["Ground"] = {
 		["id"] = {
+			["NO_OPTION"]          = -1,
 			["ROE"]                = 0,
 			["FORMATION"]          = 5,
 			["DISPERSE_ON_ATTACK"] = 8,
@@ -473,6 +501,7 @@ AI.Option = {
 	},
 	["Naval"] = {
 		["id"] = {
+			["NO_OPTION"] = -1,
 			["ROE"] = 0,
 			["ALARM_STATE"] = 9,
 		},
