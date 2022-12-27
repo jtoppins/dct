@@ -538,25 +538,91 @@ function tasks.task.wrappedaction(optiontbl)
 end
 
 tasks.Waypoint = class()
-function tasks.Waypoint:__init(wtype, vec3, speed, name)
+function tasks.Waypoint:__init(point, wtype, action, speed, name)
 	self.name  = name
 	self.tasks = {}
-	self:setPoint(vec3, wtype, AI.Task.TurnMethod.TURNING_POINT)
-	self:setAlt(vec3.y, AI.Task.AltitudeType.BARO)
+	self:setPoint(point, wtype, action)
+	self:setAlt(point.y, AI.Task.AltitudeType.BARO)
 	self:setSpeed(speed)
+
+	self.createGround = nil
+	self.createNaval  = nil
+	self.wpType = nil
+	self.wpAction = nil
 end
 
-function tasks.Waypoint:setPoint(vec2, wptype, method)
-	self.point = vector.Vector2D(vec2)
+tasks.Waypoint.wpType = {
+	["TURNING_POINT"]       = AI.Task.WaypointType.TURNING_POINT,
+	["TAKEOFF"]             = AI.Task.WaypointType.TAKEOFF,
+	["TAKEOFF_PARKING"]     = AI.Task.WaypointType.TAKEOFF_PARKING,
+	["TAKEOFF_PARKING_HOT"] = AI.Task.WaypointType.TAKEOFF_PARKING_HOT,
+	["TAKEOFF_GROUND"]      = "TakeOffGround",
+	["TAKEOFF_GROUND_HOT"]  = "TakeOffGroundHot",
+	["LAND"]                = AI.Task.WaypointType.LAND,
+	["LAND_REARM"]          = "LandingReFuAr",
+}
 
-	if wptype ~= nil then
-		self.type = check.tblkey(wptype, AI.Task.WaypointType,
-					 "AI.Task.WaypointType")
-	end
+tasks.Waypoint.wpAction = {
+	["TURNING_POINT"]    = AI.Task.WaypointType.TURNING_POINT,
+	["FLY_OVER_POINT"]   = AI.Task.TurnMethod.FLY_OVER_POINT,
+	["FROM_PARKING"]     = "From Parking Area",
+	["FROM_PARKING_HOT"] = "From Parking Area Hot",
+	["FROM_GROUND"]      = "From Ground Area",
+	["FROM_GROUND_HOT"]  = "From Ground Area Hot",
+	["FROM_RUNWAY"]      = "From Runway",
+	["LANDING"]          = "Landing",
+	["LANDING_REARM"]    = "LandingReFuAr",
+}
 
-	if method ~= nil then
-		self.action = check.tblkey(method, AI.Task.TurnMethod,
-					   "AI.Task.TurnMethod")
+local type2actionmap = {
+	[tasks.Waypoint.wpType.LAND] =
+		tasks.Waypoint.wpAction.LANDING,
+	[tasks.Waypoint.wpType.TAKEOFF] =
+		tasks.Waypoint.wpAction.FROM_RUNWAY,
+	[tasks.Waypoint.wpType.TAKEOFF_PARKING] =
+		tasks.Waypoint.wpAction.FROM_PARKING,
+	[tasks.Waypoint.wpType.TAKEOFF_PARKING_HOT] =
+		tasks.Waypoint.wpAction.FROM_PARKING_HOT,
+	[tasks.Waypoint.wpType.TAKEOFF_GROUND] =
+		tasks.Waypoint.wpAction.FROM_GROUND,
+	[tasks.Waypoint.wpType.TAKEOFF_GROUND_HOT] =
+		tasks.Waypoint.wpAction.FROM_GROUND_HOT,
+	[tasks.Waypoint.wpType.LAND_REARM] =
+		tasks.Waypoint.wpAction.LANDING_REARM,
+}
+
+function tasks.Waypoint.createGround(point, speed, formation)
+	return tasks.Waypoint(point,
+			      tasks.Waypoint.wpType.TURNING_POINT,
+			      check.tblkey(formation or
+					   AI.Task.VehicleFormation.ON_ROAD,
+					   AI.Task.VehicleFormation,
+					   "AI.Task.VehicleFormation"),
+			      speed)
+end
+
+function tasks.Waypoint.createNaval(point, speed, depth)
+	point.y = depth or 0
+	return tasks.Waypoint(point,
+			      tasks.Waypoint.wpType.TURNING_POINT,
+			      tasks.Waypoint.wpAction.TURNING_POINT,
+			      speed)
+end
+
+function tasks.Waypoint:setPoint(vec2, wptype, action)
+	self.point = vector.Vector2D(check.table(vec2))
+	self.formation_template = ""
+
+	self.type = check.tblkey(wptype, tasks.Waypoint.wpType,
+				 "Waypoint.wpType")
+
+	local typeaction = type2actionmap[wptype]
+	if typeaction ~= nil then
+		self.action = typeaction
+	elseif action ~= nil then
+		self.action = action
+	else
+		self.action = tasks.Waypoint.wpAction.TURNING_POINT
 	end
 end
 
@@ -590,6 +656,7 @@ function tasks.Waypoint:raw()
 	local attrs = {
 		"name", "type", "action", "alt", "alt_type",
 		"speed", "speed_locked", "ETA", "ETA_locked",
+		"formation_template",
 	}
 	local tbl = {}
 	for _, attr in pairs(attrs) do

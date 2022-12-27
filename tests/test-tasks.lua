@@ -17,15 +17,15 @@ local function main()
 	assert(type(task) == "table")
 
 	local mission = aitasks.Mission(true)
-	local waypoint = aitasks.Waypoint(AI.Task.WaypointType.TAKEOFF,
-		vector.Vector3D.create(5, 10, 2000), 200, "Takeoff")
+	local waypoint = aitasks.Waypoint(vector.Vector3D.create(5, 10, 2000),
+		AI.Task.WaypointType.TAKEOFF, nil, 200, "Takeoff")
 	waypoint:addTask(
 		aitasks.option.create(AI.Option.Air.id.REACTION_ON_THREAT,
 			AI.Option.Air.val.REACTION_ON_THREAT.PASSIVE_DEFENCE))
 	waypoint:addTask(aitasks.command.eplrs(true))
 	mission:addWaypoint(waypoint)
-	waypoint = aitasks.Waypoint(AI.Task.WaypointType.TURNING_POINT,
-		vector.Vector3D.create(100, -430, 1000), 200, "Ingress")
+	waypoint = aitasks.Waypoint(vector.Vector3D.create(100, -430, 1000),
+		AI.Task.WaypointType.TURNING_POINT, nil, 200, "Ingress")
 	waypoint:addTask(aitasks.task.orbit(AI.Task.OrbitPattern.RACE_TRACK,
 		vector.Vector2D.create(100, -450),
 		vector.Vector2D.create(400, -600),
