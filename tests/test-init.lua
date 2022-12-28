@@ -1,7 +1,16 @@
 #!/usr/bin/lua
 
 require("dcttestlibs")
-dofile(os.getenv("DCT_DATA_ROOT").."/../mission/dct-mission-init.lua")
+local sep = package.config:sub(1,1)
+local modpath = lfs.writedir()..table.concat({"Mods", "Tech", "DCT"}, sep)
+
+if lfs.attributes(modpath) == nil then
+	env.error("DCT: module not installed, mission not DCT enabled")
+end
+
+package.path = package.path..";"..modpath..sep.."lua"..sep.."?.lua;"
+require("dct")
+dct.init()
 dctstubs.setModelTime(50)
 for _ = 1,100,1 do
 	dctstubs.runSched()

@@ -2,7 +2,8 @@
 
 math.randomseed(50)
 require("dcttestlibs")
-dofile(os.getenv("DCT_DATA_ROOT").."/../mission/dct-mission-init.lua")
+require("dct")
+dct.init()
 local dctenum = require("dct.enum")
 local uirequest = require("dct.ui.request")
 

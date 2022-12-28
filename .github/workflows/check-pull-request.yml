@@ -3,43 +3,32 @@ name: check pull request
 on:
   pull_request:
     branches:
-    - master
+      - master
   push:
     branches:
-    - master
+      - master
 
 env:
-  PACKAGES: lua5.1 lua-md5 lua-filesystem lua-check
+  PACKAGES: lua5.1 lua-md5 lua-filesystem lua-check make
 
 jobs:
-  luacheck:
+  make-check:
     runs-on: ubuntu-latest
     steps:
-    - name: Install Packages
-      run: sudo apt-get install $PACKAGES
+      - name: Install Packages
+        run: sudo apt-get install $PACKAGES
 
-    - name: Checkout DCT
-      uses: actions/checkout@v2
+      - name: Checkout DCT
+        uses: actions/checkout@v2
+        with:
+          path: dct
 
-    - name: Run luacheck
-      run: luacheck hooks mission scripts src tests
+      - name: Checkout lua-libs
+        uses: actions/checkout@v2
+        with:
+          repository: jtoppins/lua-libs
+          path: lua-libs
 
-  runtests:
-    runs-on: ubuntu-latest
-    steps:
-    - name: Install Packages
-      run: sudo apt-get install $PACKAGES
-
-    - name: Checkout DCT
-      uses: actions/checkout@v2
-      with:
-        path: dct
-
-    - name: Checkout lua-libs
-      uses: actions/checkout@v2
-      with:
-        repository: jtoppins/lua-libs
-        path: lua-libs
-
-    - name: Run Tests
-      run: ./dct/tests/runtests
+      - name: Run Tests
+        run: make check
+        working-directory: dct

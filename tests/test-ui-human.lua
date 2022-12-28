@@ -1,7 +1,8 @@
 #!/usr/bin/lua
 
 require("dcttestlibs")
-dofile(os.getenv("DCT_DATA_ROOT").."/../mission/dct-mission-init.lua")
+require("dct")
+dct.init()
 local dctenum = require("dct.enum")
 local human = require("dct.ui.human")
 local Mission = require("dct.libs.Mission")
