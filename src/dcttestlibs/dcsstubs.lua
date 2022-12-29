@@ -1468,3 +1468,11 @@ function atmosphere.getTemperatureAndPressure(_ --[[point]])
 	return 293.15, 101325
 end
 _G.atmosphere = atmosphere
+
+local net = {}
+function net.dostring_in(context, code)
+	logfile:write(os.date("%F %X ")..
+		string.format("NET_DOSTRING context(%s):code(%s)\n",
+			context, code))
+end
+_G.net = net

@@ -1,8 +1,6 @@
---[[
 -- SPDX-License-Identifier: LGPL-3.0
---
--- Defines the accounting of a ticket system.
---]]
+
+--- Defines the accounting of a ticket system.
 
 require("math")
 local class    = require("libs.class")
@@ -53,6 +51,10 @@ local function checkdifficulty(keydata, tbl)
 	return true
 end
 
+local function sanatize(keydata, tbl)
+	tbl[keydata.name] = string.gsub(tbl[keydata.name], '["]', "\\\"")
+end
+
 local function checkside(keydata, tbl)
 	local keys = {
 		{
@@ -75,14 +77,15 @@ local function checkside(keydata, tbl)
 			["check"]   = checkvalue,
 			["default"] = 1,
 		}, {
-			["name"]    = "flag",
-			["type"]    = "number",
-			["check"]   = checkvalue,
-		}, {
 			["name"]    = "difficulty",
 			["type"]    = "string",
 			["check"]   = checkdifficulty,
 			["default"] = "custom",
+		}, {
+			["name"]    = "win_message",
+			["type"]    = "string",
+			["check"]   = sanatize,
+			["default"] = "winner",
 		}
 	}
 
@@ -159,6 +162,7 @@ function Tickets:readconfig()
 	for _, val in ipairs({"red", "blue", "neutral"}) do
 		local s = coalition.side[string.upper(val)]
 		self.tickets[s] = goals[val]
+		self.tickets[s].name = val
 	end
 
 	assert(self.tickets[coalition.side.BLUE] ~= nil and
@@ -216,9 +220,7 @@ function Tickets:loss(side, cost, mod)
 	end
 	self:_add(side, -math.abs(cost), op)
 	if not self:isComplete() and t.tickets <= 0 then
-		local flag = self.tickets[winnermap[side]].flag
-		trigger.action.setUserFlag(flag, true)
-		self:setComplete()
+		self:setComplete(self.tickets[winnermap[side]])
 	end
 end
 
@@ -230,8 +232,17 @@ function Tickets:get(side)
 	return t.tickets, t.start
 end
 
-function Tickets:setComplete()
+function Tickets:setComplete(winner)
+	if self.complete then
+		return
+	end
+
 	self.complete = true
+	self.winner = winner
+	local code = string.format([[a_end_mission("%s", "%s", 10)]],
+		winner.name, winner.win_message)
+
+	net.dostring_in("mission", string.format("%q", code))
 end
 
 function Tickets:isComplete()
@@ -252,15 +263,14 @@ function Tickets:timer()
 	local red  = self.tickets[coalition.side.RED]
 	local blue = self.tickets[coalition.side.BLUE]
 	local civ = self.tickets[coalition.side.NEUTRAL]
-	local flag = civ.flag
+	local winner = civ
 
 	if red.tickets < blue.tickets then
-		flag = blue.flag
+		winner = blue
 	elseif blue.tickets < red.tickets then
-		flag = red.flag
+		winner = red
 	end
-	trigger.action.setUserFlag(flag, true)
-	self:setComplete()
+	self:setComplete(winner)
 	return nil
 end
 
