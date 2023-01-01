@@ -32,11 +32,10 @@ local id = {
 
 --- Stance types the agent can have
 local stanceType = {
-	["WAITING"]   = "waiting",    -- not combat ready, return fire only
+	["DEFAULT"]   = "default",    -- whatever the setting were at spawn
 	["FLEEING"]   = "fleeing",    -- running away, weapons hold
 	["GUARDING"]  = "guarding",   -- combat ready, weapons engage per tasking
 	["SEARCHING"] = "searching",  -- not combat ready, sensors on
-	["HIDING"]    = "hiding",     -- active sensors off
 	["ATTACKING"] = "attacking",  -- fangs out
 }
 
