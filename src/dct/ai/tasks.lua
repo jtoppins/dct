@@ -297,6 +297,14 @@ function tasks.task.tanker()
 	return create_task_tbl('Tanker'), aienum.TASKTYPE.TASK
 end
 
+function tasks.task.recoverytanker(grpid, speed, alt)
+	local params = {}
+	params.groupId = check.number(grpid)
+	params.speed = check.number(speed)
+	params.altitude = check.number(alt)
+	return create_task_tbl('RecoveryTanker', params), aienum.TASKTYPE.TASK
+end
+
 function tasks.task.orbit(pat, pt1, pt2, speed, alt)
 	local params = {
 		["pattern"]  = check.tblkey(pat, AI.Task.OrbitPattern,
