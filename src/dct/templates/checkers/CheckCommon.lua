@@ -122,6 +122,14 @@ Distance at which the agent considers a target in-range, in meters.
 For things like a squadron defines the maximum path distance the squadron
 will accept from their home base to the target area.]],
 		},
+		["threats"] = {
+			["default"] = {},
+			["agent"] = true,
+			["type"] = Check.valuetype.TABLE,
+			["description"] = [[
+A list of DCS attributes that will be used to determine if a given
+object is a threat to the agent.]],
+		},
 	})
 end
 
