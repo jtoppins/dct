@@ -6,12 +6,6 @@ local enum = {}
 
 enum.DEFAULTCODENAME = "default codename"
 
-enum.geomtype = {
-	["CIRCLE"]    = 1,
-	["RECTANGLE"] = 2,
-	["POLYGON"]   = 3,
-}
-
 enum.objtype = {
 	["UNIT"]    = 1,
 	["STATIC"]  = 2,
