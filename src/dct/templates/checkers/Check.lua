@@ -45,8 +45,12 @@ local function check_int(data, key)
 	return true, val
 end
 
-local function check_range(--[[data, key, values]])
-	-- TODO: write this
+local function check_range(data, key, values)
+	local val = tonumber(data[key])
+
+	if values[1] <= val and data[key] <= val then
+		return true, val
+	end
 	return false
 end
 

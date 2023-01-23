@@ -130,6 +130,46 @@ will accept from their home base to the target area.]],
 A list of DCS attributes that will be used to determine if a given
 object is a threat to the agent.]],
 		},
+		["ammo"] = {
+			["default"] = 0,
+			["type"] = Check.valuetype.INT,
+			["description"] = [[
+This resource allows a commander to resupply units in the field. Only
+resource assets can provide resources and they are magically collected
+at a rate of X units every 10 minutes and collected into a common
+resource pool per region. Any spawner or generator agent can pull any or
+all of a given resource from the common region resource pool.]],
+		},
+		["supply"] = {
+			["default"] = 0,
+			["type"] = Check.valuetype.INT,
+			["description"] = [[
+This resource allows a commander to repair units and built new units.
+Resource assets can provide resources and they are magically collected
+at a rate of X units every 10 minutes and collected into a common
+resource pool per region. Any spawner or generator agent can pull any or
+all of a given resource from the common region resource pool.]],
+		},
+		["control"] = {
+			["default"] = 0,
+			["type"] = Check.valuetype.RANGE,
+			["values"] = {0, 1},
+			["description"] = [[
+The value entered is the amount of total control influence the asset
+exerts in the region after the ramp period. For example an airbase
+in a moderate region may be able to influence .75 of the overall region.
+The value is arbitrary and completely up to the campaign designer.
+Control represents security over a given region, it also moderates the
+level and type of objects that can be built in a region. Control has both
+a buildup and falloff period.
+
+Buildup rate:
+Every 2 minutes 10% of the total influence is collected until the maximum
+influence is reached.
+
+Falloff rate:
+Every 2 minutes a side's regional influence is reduced by 50%.]],
+		},
 	})
 end
 
