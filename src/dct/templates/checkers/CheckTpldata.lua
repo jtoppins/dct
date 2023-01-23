@@ -182,7 +182,7 @@ end
 
 local notpldata = {
 	[dctenum.assetType.AIRBASE]     = true,
-	[dctenum.assetType.SQUADRONPLAYER]    = true,
+	[dctenum.assetType.SQUADRON]    = true,
 	-- player groups do have tpldata, it is here as we do not
 	-- want to remove any data from the template definition
 	[dctenum.assetType.PLAYER] = true,

@@ -12,9 +12,9 @@ local Agent    = require("dct.assets.Agent")
 local Logger   = dct.Logger.getByName("Template")
 
 local norenametype = {
-	[dctenum.assetType.SQUADRONPLAYER] = true,
-	[dctenum.assetType.PLAYER]         = true,
-	[dctenum.assetType.AIRBASE]        = true,
+	[dctenum.assetType.SQUADRON]  = true,
+	[dctenum.assetType.PLAYER]    = true,
+	[dctenum.assetType.AIRBASE]   = true,
 }
 
 -- TODO: setup a respawn attribute

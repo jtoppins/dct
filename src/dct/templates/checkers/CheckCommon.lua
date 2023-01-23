@@ -1,8 +1,12 @@
 --- SPDX-License-Identifier: LGPL-3.0
 
 local class   = require("libs.namedclass")
+local utils   = require("libs.utils")
 local dctenum = require("dct.enum")
 local Check   = require("dct.templates.checkers.Check")
+
+local assettypes = utils.mergetables({}, dctenum.assetTypeDeprecated)
+assettypes = utils.mergetables(assettypes, dctenum.assetType)
 
 local CheckCommon = class("CheckCommon", Check)
 function CheckCommon:__init()
@@ -10,7 +14,7 @@ function CheckCommon:__init()
 		["objtype"] = {
 			["agent"] = true,
 			["type"] = Check.valuetype.TABLEKEYS,
-			["values"] = dctenum.assetType,
+			["values"] = assettypes,
 			["description"] = [[
 Defines the type of game object (Asset) that will be created from the
 template. Allowed values can be found in `assetType` table.]],
@@ -100,6 +104,12 @@ template. Allowed values can be found in `assetType` table.]],
 end
 
 function CheckCommon:check(data)
+	if dctenum.assetTypeDeprecated[string.upper(data.objtype)] ~= nil then
+		dct.Logger.getByName("Template"):warn(
+			"%s: is a deprecated objtype; file %s",
+			tostring(data.objtype), tostring(data.filedct))
+	end
+
 	local ok, key, msg = Check.check(self, data)
 
 	if not ok then

@@ -51,7 +51,129 @@ function Mission:__init(cmdr, missiontype, goalq, timeout)
 		g:addObserver(self.onDCTEvent, self, string.format(
 			"Misison(%s).onDCTEvent", self.__clsname))
 	end
+
+	self.typeData = nil
 end
+
+Mission.typeData = {
+	[dctenum.missionType.CAS] = {
+		["name"]        = "Close Air Support",
+		["short"]       = "CAS",
+		["symbol"]      = "B",
+		["mType"]       = dctenum.missionType.GUARD,
+		["codeType"]    = 5,
+		["codeSubType"] = 3,
+	},
+	[dctenum.missionType.CAP] = {
+		["name"]        = "Combat Air Patrol",
+		["short"]       = "CAP",
+		["symbol"]      = "A",
+		["mType"]       = dctenum.missionType.GUARD,
+		["codeType"]    = 2,
+		["codeSubType"] = 0,
+	},
+	[dctenum.missionType.SEAD] = {
+		["name"]        = "Suppression of Enemy Air Defense",
+		["short"]       = "SEAD",
+		["symbol"]      = "A",
+		["mType"]       = dctenum.missionType.GUARD,
+		["codeType"]    = 3,
+	},
+	[dctenum.missionType.TANKER] = {
+		["name"]        = "Refueling Tanker",
+		["short"]       = "TKR",
+		["symbol"]      = "C",
+		["mType"]       = dctenum.missionType.GUARD,
+		["codeType"]    = 0,
+		["codeSubType"] = 0,
+	},
+	[dctenum.missionType.STRIKE] = {
+		["name"]        = "Precision Strike",
+		["short"]       = "STRIKE",
+		["symbol"]      = "B",
+		["mType"]       = dctenum.missionType.ATTACK,
+		["codeType"]    = 5,
+		["codeSubType"] = 0,
+	},
+	[dctenum.missionType.BAI] = {
+		["name"]        = "Interdiction",
+		["short"]       = "IA",
+		["symbol"]      = "B",
+		["mType"]       = dctenum.missionType.ATTACK,
+		["codeType"]    = 5,
+		["codeSubType"] = 1,
+	},
+	[dctenum.missionType.OCA] = {
+		["name"]        = "Offensive Counter Air",
+		["short"]       = "OCA",
+		["symbol"]      = "B",
+		["mType"]       = dctenum.missionType.ATTACK,
+		["codeType"]    = 5,
+		["codeSubType"] = 0,
+	},
+	[dctenum.missionType.ANTISHIP] = {
+		["name"]        = "Anti-Shipping",
+		["short"]       = "SHP",
+		["symbol"]      = "B",
+		["mType"]       = dctenum.missionType.ATTACK,
+		["codeType"]    = 5,
+	},
+	[dctenum.missionType.DEAD] = {
+		["name"]        = "Destruction of Enemy Air Defense",
+		["short"]       = "DEAD",
+		["symbol"]      = "B",
+		["mType"]       = dctenum.missionType.ATTACK,
+		["codeType"]    = 5,
+	},
+	[dctenum.missionType.TRANSPORT] = {
+		["name"]        = "Air Transport",
+		["short"]       = "TRANS",
+		["symbol"]      = "C",
+		["mType"]       = dctenum.missionType.TRANSPORT,
+		["codeType"]    = 0,
+		["codeSubType"] = 0,
+	},
+	[dctenum.missionType.CSAR] = {
+		["name"]        = "Combat Search and Rescue",
+		["short"]       = "CSAR",
+		["symbol"]      = "A",
+		["mType"]       = dctenum.missionType.TRANSPORT,
+		["codeType"]    = 5,
+		["codeSubType"] = 2,
+	},
+	[dctenum.missionType.RESUPPLY] = {
+		["name"]        = "Resupply",
+		["short"]       = "RES",
+		["symbol"]      = "C",
+		["mType"]       = dctenum.missionType.TRANSPORT,
+		["codeType"]    = 0,
+		["codeSubType"] = 0,
+	},
+	[dctenum.missionType.RECON] = {
+		["name"]        = "Recon",
+		["short"]       = "RCN",
+		["symbol"]      = "B",
+		["mType"]       = dctenum.missionType.INVESTIGATE,
+		["codeType"]    = 0,
+		["codeSubType"] = 0,
+	},
+	[dctenum.missionType.INTERCEPT] = {
+		["name"]        = "Air Intercept",
+		["short"]       = "ITC",
+		["symbol"]      = "A",
+		["mType"]       = dctenum.missionType.INVESTIGATE,
+		["codeType"]    = 2,
+		["codeSubType"] = 1,
+	},
+	[dctenum.missionType.ESCORT] = {
+		["name"]        = "Escort",
+		["short"]       = "ESC",
+		["symbol"]      = "B",
+		["mType"]       = dctenum.missionType.ESCORT,
+		["codeType"]    = 5,
+		["codeSubType"] = 0,
+	},
+}
 
 --- remove any references or return any targets that may have been
 -- assigned back to the commander before the Misison object is destroyed.
