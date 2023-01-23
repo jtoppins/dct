@@ -237,7 +237,7 @@ function Template:generate(region, assetmgr, parent)
 		if tpl then
 			local sub = tpl:createObject()
 
-			sub:setParent(parent)
+			sub:setParent(parent.name)
 			parent:addSubordinate(sub)
 			-- have subordinate observe the parent
 			parent:addObserver(sub.onDCTEvent, sub, sub.name)

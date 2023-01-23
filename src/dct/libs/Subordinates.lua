@@ -12,7 +12,7 @@ local Subordinates = class()
 --- constructor
 --
 -- @field _subordinates hashmap(name, true) of asset names
--- @field _parent name of asset to which this object is a child
+-- @field _parent reference to object to which this object is a child
 function Subordinates:__init()
 	self._parent = false
 	self._subordinates = {}
@@ -26,11 +26,18 @@ function Subordinates.getNames()
 	return { "_subordinates", "_parent", }
 end
 
---- set parent asset name
+--- set parent object
 --
--- @param parent the asset object that is the parent of this object
+-- @param parent the object that is the parent of this object
 function Subordinates:setParent(parent)
-	self._parent = parent.name
+	self._parent = parent
+end
+
+--- get parent object
+--
+-- @return parent object that is the parent of this object
+function Subordinates:getParent()
+	return self._parent
 end
 
 --- iterate over all subordinate names
