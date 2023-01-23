@@ -55,6 +55,7 @@ local factType = {
 	["LOSETICKET"]  = 10, -- Value
 	["CMDPENDING"]  = 11, -- Value
 	["SCRATCHPAD"]  = 12, -- Value
+	["OPERATIONAL"] = 13, -- Value <bool>
 }
 
 --- Unique fact keys that represents data that should only exist
@@ -73,6 +74,7 @@ local factKey = {
 	["AMMOAA"]        = "ammoAA",
 	["AMMOAG"]        = "ammoAG",
 	["FUEL"]          = "fuel",
+	["OPERATIONAL"]   = "operational",
 }
 
 --- An abstract container generalizing a property of a fact.

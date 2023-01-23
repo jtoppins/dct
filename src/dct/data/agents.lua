@@ -46,6 +46,7 @@ agents[dctenum.assetType.JTAC]        = groundunits
 agents[dctenum.assetType.AIRBASE]     = {
 	["sensors"] = {
 		["RunwaySensor"]     = 0,
+		["AirbaseSensor"]    = 0,
 		["PlanningSensor"]   = 0,
 	},
 	["actions"] = {
@@ -59,6 +60,7 @@ agents[dctenum.assetType.AIRBASE]     = {
 agents[dctenum.assetType.CV]          = {
 	["sensors"] = {
 		["DCSObjectsSensor"] = 0,
+		["AirbaseSensor"]    = 0,
 		["MissionSensor"]    = 0,
 		["PlanningSensor"]   = 0,
 	},

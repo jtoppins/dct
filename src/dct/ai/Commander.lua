@@ -1,102 +1,62 @@
 -- SPDX-License-Identifier: LGPL-3.0
---
--- Defines a side's strategic theater commander.
 
 local utils      = require("libs.utils")
 local containers = require("libs.containers")
 local dctenum    = require("dct.enum")
 local dctutils   = require("dct.libs.utils")
-local Mission    = require("dct.libs.Mission")
 local Command    = require("dct.libs.Command")
+local Memory     = require("dct.libs.Memory")
 local Logger     = dct.Logger.getByName("Commander")
 
-local function add_target(pq, tgt, owner, filterlist)
-	if tgt == nil then
-		return
-	end
+local invalidXpdrTbl = {
+	["7700"] = true,
+	["7600"] = true,
+	["7500"] = true,
+	["7400"] = true,
+}
 
-	if tgt.ignore or filterlist[tgt.type] == nil then
-		return
-	end
-
-	if tgt:isDead() or tgt:isTargeted(owner) then
-		return
-	end
-
-	pq:push(tgt:getPriority(owner), tgt)
-end
-
-local function heapsort_tgtlist(tgtlist, filterlist, owner)
-	local pq = containers.PriorityQueue()
-	local assetmgr = dct.Theater.singleton():getAssetMgr()
-
-	if type(filterlist) == "table" then
-		filterlist = filterlist
-	elseif type(filterlist) == "number" then
-		local typenum = filterlist
-		filterlist = {}
-		filterlist[typenum] = true
-	else
-		assert(false, "value error: filterlist must be a number or table")
-	end
-
-	-- priority sort target list
-	for tgtname, _ in pairs(tgtlist) do
-		local tgt = assetmgr:getAsset(tgtname)
-		add_target(pq, tgt, owner, filterlist)
-	end
-
-	return pq
-end
-
-local function genstatids()
-	local tbl = {}
-
-	for k,v in pairs(enum.missionType) do
-		table.insert(tbl, {v, 0, k})
-	end
-	return tbl
-end
-
---- For now the commander is only concerned with flight missions
-local Commander = require("libs.namedclass")("Commander")
+--- Defines a side's strategic theater commander.
+local Commander = require("libs.namedclass")("Commander", Memory)
 function Commander:__init(theater, side)
+	Memory.__init(self)
+	self.theater      = theater
 	self.owner        = side
 	self.missions     = {}
-	self.tgtlist      = {}
-	self.aifreq       = 2*60 -- 2 minutes in seconds
+	self.sensors      = {}
+	self.aifreq       = 30
 
 	-- Cache valid mission IDs in random order
-	self.missionIds = {}
+	self.airMissionIds = {}
 	for i = 0, 63 do
-		table.insert(self.missionIds, math.random(#self.missionIds + 1), i)
+		table.insert(self.airMissionIds,
+			     math.random(#self.airMissionIds + 1), i)
 	end
 
 	theater:queueCommand(self.aifreq, Command(
 		"Commander("..tostring(self.owner)..").update",
 		self.update, self))
-	--theater:getAssetMgr():addObserver(self.assethandler, self,
-	--	"Commander("..tostring(self.owner)..").assethandler")
+	theater:getAssetMgr():addObserver(self.onDCTEvent, self,
+		"Commander("..tostring(self.owner)..").onDCTEvent")
 end
 
 --[[
 local function handle_asset_dead(cmdr, event)
-	cmdr.tgtlist[event.initiator.name] = nil
+	cmdr.targets[event.initiator.name] = nil
 end
 
 local function handle_asset_add(cmdr, event)
 	local asset = event.initiator
 
 	if dctutils.isenemy(cmdr.owner, asset.owner) and
-	   enum.assetClass.STRATEGIC[asset.type] ~= nil then
-		cmdr.tgtlist[asset.name] = asset.type
+	   dctenum.assetClass.STRATEGIC[asset.type] ~= nil then
+		cmdr.targets[asset.name] = asset.type
 	end
 end
 
 function Commander:assethandler(event)
 	local handlers = {
-		[enum.event.DCT_EVENT_DEAD] = handle_asset_dead,
-		[enum.event.DCT_EVENT_ADD_ASSET] = handle_asset_add,
+		[dctenum.event.DCT_EVENT_DEAD] = handle_asset_dead,
+		[dctenum.event.DCT_EVENT_ADD_ASSET] = handle_asset_add,
 	}
 
 	local handler = handlers[event.id]
@@ -106,155 +66,143 @@ function Commander:assethandler(event)
 end
 --]]
 
-function Commander:update(time)
-	for _, mission in pairs(self.missions) do
-		mission:update(time)
-	end
-	return self.aifreq
+--- Handle DCS and DCT events sent to the Commander
+function Commander:onDCTEvent(event)
+	dctutils.foreach_call(self.sensors, ipairs, "onDCTEvent", event)
 end
 
-local invalidXpdrTbl = {
-	["7700"] = true,
-	["7600"] = true,
-	["7500"] = true,
-	["7400"] = true,
-}
-
---[[
--- Generates a mission id as well as generating IFF codes for the
--- mission (in octal).
---
--- Returns: a table with the following:
---   * id (string): is the mission ID
---   * m1 (number): is the mode 1 IFF code
---   * m3 (number): is the mode 3 IFF code
---  If 'nil' is returned no valid mission id could be generated.
---]]
-function Commander:genMissionCodes(msntype)
-	local missionId, fmtId
-	local digit1 = enum.squawkMissionType[msntype]
-	for _, id in ipairs(self.missionIds) do
-		fmtId = string.format("%01o%02o0", digit1, id)
-		if invalidXpdrTbl[fmtId] == nil and self:getMission(fmtId) == nil then
-			missionId = id
+function Commander:update(time)
+	for _, sensor in ipairs(self.sensors) do
+		if type(sensor.update) == "function" and
+		   sensor:update(time) then
 			break
 		end
 	end
-	assert(missionId ~= nil, "cannot generate mission: no valid ids left")
-	local m1 = (8*digit1)+(enum.squawkMissionSubType[msntype] or 0)
-	local m3 = (512*digit1)+(missionId*8)
-	return { ["id"] = fmtId, ["m1"] = m1, ["m3"] = m3, }
+
+	return self.aifreq
 end
 
---[[
--- requestMission - get a new mission
---
--- Creates a new mission where the target conforms to the mission type
--- specified and is of the highest priority. The Commander will track
--- the mission and handling tracking which asset is assigned to the
--- mission.
---
--- grpname - the name of the commander's asset that is assigned to take
---   out the target.
--- missiontype - the type of mission which defines the type of target
---   that will be looked for.
---
--- return: a Mission object or nil if no target can be found which
---   meets the mission criteria
---]]
-function Commander:requestMission(grpname, missiontype)
-	local assetmgr = dct.Theater.singleton():getAssetMgr()
-	local pq = heapsort_tgtlist(self.tgtlist,
-		enum.missionTypeMap[missiontype], self.owner)
-
-	-- if no target, there is no mission to assign so return back
-	-- a nil object
-	local tgt = pq:pop()
-	if tgt == nil then
-		return nil
-	end
-	Logger:debug("requestMission() - tgt name: '%s'; isTargeted: %s",
-		tgt.name, tostring(tgt:isTargeted()))
-
-	local plan = { require("dct.ai.actions.KillTarget")(tgt) }
-	local mission = Mission(self, missiontype, tgt, plan)
-	mission:addAssigned(assetmgr:getAsset(grpname))
-	self:addMission(mission)
-
-	Logger:debug("requestMission() - assigned target '%s' to "..
-		"mission %d (codename: %s)", tgt.name,
-		mission.id, tgt.codename)
-
-	return mission
-end
-
---[[
--- return the Mission object identified by the id supplied.
---]]
+--- return the Mission object identified by the id supplied.
 function Commander:getMission(id)
 	return self.missions[id]
 end
 
---[[
--- return the number of missions that can be assigned per given type
---]]
-function Commander:getAvailableMissions(missionTypes)
-	local assetmgr = dct.theater:getAssetMgr()
-
-	-- map asset types to the given mission type names
-	local assetTypeMap = {}
-	for missionTypeName, missionTypeId in pairs(missionTypes) do
-		for assetType, _ in pairs(enum.missionTypeMap[missionTypeId]) do
-			assetTypeMap[assetType] = missionTypeName
-		end
-	end
-
-	local counts = {}
-
-	-- build a user-friendly mapping using the mission type names as keys
-	for name, assetType in pairs(self.tgtlist) do
-		local asset = assetmgr:getAsset(name)
-		if not asset:isDead() and not asset:isTargeted(self.owner) then
-			local missionType = assetTypeMap[assetType]
-			if missionType ~= nil then
-				counts[missionType] = counts[missionType] or 0
-				counts[missionType] = counts[missionType] + 1
-			end
-		end
-	end
-
-	return counts
-end
-
---[[
 -- start tracking a given mission internally
---]]
 function Commander:addMission(mission)
 	self.missions[mission:getID()] = mission
 end
 
---[[
 -- remove the mission identified by id from the commander's tracking
---]]
 function Commander:removeMission(id)
-	local mission = self.missions[id]
 	self.missions[id] = nil
 end
 
-function Commander:getAssigned(asset)
-	local msn = self.missions[asset.missionid]
-
-	if msn == nil then
-		asset.missionid = enum.misisonInvalidID
-		return nil
-	end
-
-	local member = msn:isMember(asset.name)
-	if not member then
-		asset.missionid = enum.misisonInvalidID
-		return nil
-	end
-	return msn
-end
-
 return Commander
+
+-- TODO:
+-- Each side's Commander is responsible for general progression of the
+-- campaign for the given side. A commander has regions it is responsible
+-- for and some regions may have assets that provide supply resources
+-- while other assets my be valuable and do not want to be lost.
+--
+-- Resource Types:
+--  * tickets - once a side's ticket pool is zero it looses, tickets
+--    represent a dual purpose, the ability to spawn tactical units
+--    as well as home support once tickets go below zero the side looses.
+--  * supply - represents the capacity to repair or rearm, drives building
+--    things like FARPs or repairing/resupplying SAM sites
+--
+-- Asset Types:
+--  * generators - assets that create new tactical Agents to be used in
+--    combat. Examples of generators might be squadrons or division HQs.
+--    All generator assets require a spawner asset.
+--    All generator assets should be able to provide how many new tactical
+--    units (flow) they can spawn based on the resource they have available.
+--    i.e. a squadron only can sortie 10 flights of aircraft, so its max
+--    flow is 10. This can vary a sorties are flown, 3 current sorties being
+--    flown so the current flow is 7.
+--  * spawners - take as input templates and create new Agents from these
+--    templates. Examples of spawners are airbase, CV, off-map airbase,
+--    FOB, FARP, etc.
+--
+-- There are several general actions the commander can take:
+--  * attack
+--    - search is considered an action of attack because it helps in finding
+--      new things to attack.
+--  * defend
+--  * resupply
+--
+-- --- maybe not this VVVV
+--  Missions have the ability to create new missions, example: the air
+--  defense mission in its update function could generate CAP missions
+--  if the local airspace seems like it isn't protected enough.
+-- --- maybe nor this ^^^^
+--
+-- GOAP strategic commander AI:
+-- * Actions create Mission objects, the set of actions a commander has
+--   available to it are simply the ATO lists of generators
+-- * Goals general goals could be; attack, defend, resupply, buildup
+-- * Sensors things like an IADS manager, sensors adjust tables and
+--   drive selection of current goal the commander works toward
+--
+-- World State:
+-- * friendlies_lost - simple moving average over X period
+-- * enemies_killed - simple moving average over X period
+-- * supply
+-- * tickets
+--
+-- Per Region data:
+-- * ground_strength
+-- * airdefense_strength
+-- * sea_strength
+-- * detected_enemy_ground_strength
+-- * detected_enemy_airdefense_strength
+-- * detected_enemy_sea_strength
+--
+--
+-- THOUGHT: Each region could have a region world state
+-- Note: To allow for players to come an go the action set needs to be
+--       reevaluated periodically and updated.
+--
+-- Commander's basic responsibilities:
+--  * respond to Agent requests (requests for resupply, request for mission)
+--  * determine where the front line(s) are
+--  * determine distribution of resources
+--
+--  TODO: modify the Agent in the MissionSensor to request a new mission
+--  if the Agent is not assigned a mission.
+--  The thought is let Agents (player & AI) request a specific type of
+--  mission then the Commander has a common pathway for mission assignment.
+--
+--  request air defense mission:
+--  player requests support:
+--
+-- Notes from C&C House AI
+-- House only operates in 5 states:
+--  * buildup
+--  * broke
+--  * threatened
+--  * attacked
+--  * endgame
+--
+-- Different strategies are only valid for a given state. These strategies
+-- specify what buildings will be prioritized and which missions will be
+-- assigned to units. The following are all available strategies:
+--  * build_power
+--  * build_defense
+--  * build_income
+--  * fire_sale
+--  * build_engineer
+--  * build_offense
+--  * build_money
+--  * raise_power
+--  * lower_power
+--  * attack
+--
+-- In red alert unit can have a fear state, which is scaled from none, anxious,
+-- scared, and max. With units becoming more scared based on health being
+-- consistently lost, as well as what class they are as each have different
+-- thresholds. When scared unit become unresponsive.
+--
+-- Also the house has an IQ value which determines if the house AI has access
+-- to various actions or features.

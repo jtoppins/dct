@@ -46,14 +46,13 @@ function CheckAircraft:check(data)
 	end
 
 	local ok, key, msg = Check.check(self, data)
-
 	if not ok then
 		return ok, key, msg
 	end
 
 	if data.reservefuel == 0 or data.cruisespeed == 0 then
 		-- TODO: need a better way to figure out the type of aircraft
-		-- in the template, this basically forces single aircraft
+		-- in the template, this basically forces single aircraft type
 		-- groups.
 		local actype = data.tpldata[1].data.units[1].type
 		local acdesc = Unit.getDescByName(actype)
@@ -65,6 +64,9 @@ function CheckAircraft:check(data)
 		if data.cruisespeed == 0 then
 			local ratio = 0.525
 
+			-- TODO: support helos, this ratio may not be good
+			-- for helos as they like to cruise at about .75 of
+			-- their max
 			if acdesc.Kab == 0 then
 				ratio = 0.75
 			end
@@ -72,6 +74,15 @@ function CheckAircraft:check(data)
 			data.cruisespeed = acdesc.speedMax0 * ratio
 		end
 	end
+
+	-- TODO: modify the attributes list as some aircraft do not have
+	-- the correct list of DCS attributes, example F-15E does not
+	-- have the "multirole" attribute even though it is very much a
+	-- multirole aircraft.
+
+	-- TODO: modify Agent actions based on template attributes, example:
+	-- A template with the "multirole" attribute would have both
+	-- A2A_Attack and A2G_Attack capabilities.
 
 	return true
 end

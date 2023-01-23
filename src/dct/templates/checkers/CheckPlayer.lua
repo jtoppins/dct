@@ -41,6 +41,13 @@ function CheckPlayer:check(data)
 	data.overwrite = false
 	data.rename = false
 
+	-- TODO: add actions based on airframe type and attributes;
+	-- examples:
+	--  * add menu item for carrier if a/c carrier capable
+	--    (likely not needed as the menu item could figure this out)
+	--  * any actions, sensors, or goals that are specific to a
+	--    particular type of aircraft
+
 	return Check.check(self, data)
 end
 

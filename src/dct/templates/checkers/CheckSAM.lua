@@ -175,4 +175,6 @@ function CheckSAM:check(data)
 	return true
 end
 
+-- TODO: this class could be combined into the CheckRadar class
+
 return CheckSAM

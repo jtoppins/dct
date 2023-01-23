@@ -308,8 +308,8 @@ function Agent:setup()
 				  "not be empty")
 	end
 
-	self._plangraph = WS.Graph(self, self._actions)
 	dctutils.foreach_call(self._sensors, ipairs, "setup")
+	self._plangraph = WS.Graph(self, self._actions)
 	self._setup = true
 end
 

@@ -79,15 +79,6 @@ function utils.no_filter()
 	return true
 end
 
-function utils.assettype2mission(assettype)
-	for k, v in pairs(enum.missionTypeMap) do
-		if v[assettype] then
-			return k
-		end
-	end
-	return nil
-end
-
 local airbase_id2name_map = false
 function utils.airbase_id2name(id)
 	if id == nil then
