@@ -247,7 +247,6 @@ function Agent.create(name, typev, owner, desc)
 				   "dctenum.assetType")
 	agent.owner = check.tblkey(owner, coalition.side, "coalition.side")
 	agent.desc  = check.table(desc)
-	agent:setIntel(agent.owner, dctutils.INTELMAX)
 	agent:setup()
 	return agent
 end
@@ -279,6 +278,7 @@ function Agent:setup()
 		return
 	end
 
+	self:setIntel(self.owner, dctutils.INTELMAX)
 	self:setIntel(dctutils.getenemy(self.owner), tpl.intel)
 	set_ai_objects(self, tpl)
 
