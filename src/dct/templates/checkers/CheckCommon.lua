@@ -130,6 +130,15 @@ will accept from their home base to the target area.]],
 A list of DCS attributes that will be used to determine if a given
 object is a threat to the agent.]],
 		},
+		["speedMax"] = {
+			["default"] = 0,
+			["type"] = Check.valuetype.INT,
+			["nodoc"] = true,
+			["description"] = [[
+The maximum speed of the slowest unit in the the template. Otherwise can
+be used as a switch to not include various features of an Agent, like
+movement actions if speedMax is zero.]]
+		},
 		["ammo"] = {
 			["default"] = 0,
 			["type"] = Check.valuetype.INT,

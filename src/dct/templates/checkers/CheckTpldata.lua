@@ -210,6 +210,15 @@ function CheckTpldata:check(data)
 		overrideGroupOptions(grp, idx, data)
 	end
 
+	-- get the max speed for the template which is the minimum
+	-- speedMax entry for all unit types in the template
+	local maxspeed = 100000000
+	for typename, _ in pairs(data.unitTypeCnt) do
+		local desc = Unit.getDescByName(typename)
+		maxspeed = math.min(maxspeed, desc.speedMax)
+	end
+	data.speedMax = maxspeed
+
 	return true
 end
 
