@@ -37,6 +37,12 @@ template. Allowed values can be found in `assetType` table.]],
 			["description"] =
 			"",
 		},
+		["immortal"] = {
+			["default"] = false,
+			["type"] = Check.valuetype.BOOL,
+			["description"] = [[
+Set all unit groups in the template to be immortal.]],
+		},
 		["regenerate"] = {
 			["agent"] = true,
 			["default"] = false,

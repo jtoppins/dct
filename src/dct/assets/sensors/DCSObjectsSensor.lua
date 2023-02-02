@@ -7,6 +7,7 @@ local DCTEvents    = require("dct.libs.DCTEvents")
 local Timer        = require("dct.libs.Timer")
 local Goal         = require("dct.assets.DeathGoals")
 local WS           = require("dct.assets.worldstate")
+local aitasks      = require("dct.ai.tasks")
 local UPDATE_TIME  = 300
 
 local dctkeys = {
@@ -268,6 +269,24 @@ function DCSObjectsSensor:spawn()
 	end
 	self.timer:reset()
 	self.timer:start()
+end
+
+function DCSObjectsSensor:spawnPost()
+	local ignore = false
+	local immortal = false
+
+	if self.agent:getDescKey("ignore") == true then
+		ignore = true
+	end
+
+	if self.agent:getDescKey("immortal") == true then
+		immortal = true
+	end
+
+	self.agent:doTasksForeachGroup({
+		aitasks.wraptask(aitasks.command.setInvisible(ignore)),
+		aitasks.wraptask(aitasks.command.setImmortal(immortal)),
+	})
 end
 
 function DCSObjectsSensor:despawn()
