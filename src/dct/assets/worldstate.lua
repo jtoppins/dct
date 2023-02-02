@@ -125,6 +125,7 @@ function NodeFact:__init(node, importance, ntype, path)
 end
 
 NodeFact.nodeType = {
+	["INVALID"]    = 0,
 	["RALLYPOINT"] = 1, -- a node that can be retreated to
 	["STATION"]    = 2, -- a guard position
 }
@@ -140,6 +141,7 @@ function StimuliFact:__init(stimtype, intensity)
 	self.stimType = nil
 end
 StimuliFact.stimType = {
+	["INVALID"]   = 0,
 	["EXPLOSION"] = 1, -- like a shell impacting close by
 	["LAUNCH"]    = 2, -- like a HARM launch, etc
 	["CONTACT"]   = 3, -- like a radar contact
@@ -177,10 +179,20 @@ function WorldState.createAll()
 	for _, v in pairs(id) do
 		local val = false
 		if v == id.STANCE then
-			val = stanceType.IDLE
+			val = stanceType.DEFAULT
+		elseif v == id.ROE then
+			val = -1
+		elseif v == id.HASFUEL or v == id.IDLE or
+		       v == id.HASAMMO then
+			val = true
+		elseif v == id.ATNODETYPE then
+			val = NodeFact.nodeType.INVALID
+		elseif v == id.DISTURBANCEEXISTS then
+			val = StimuliFact.stimType.INVALID
 		end
 		ws:add(goap.Property(v, val))
 	end
+	ws.createAll = nil
 	return ws
 end
 
