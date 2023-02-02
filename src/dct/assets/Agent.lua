@@ -266,9 +266,12 @@ Agent.objectType = objecttypes
 -- a death event to listeners.
 function Agent:destroy()
 	self:despawn()
-	self._sensors = nil
-	self._goals = nil
-	self._actions = nil
+	self:setMission(nil)
+	self:replan()
+	self._sensors = {}
+	self._goals = {}
+	self._actions = {}
+	self:setDead(true, false)
 end
 
 --- Finalizes the Agent and runs the setup function for all sensors
@@ -486,7 +489,8 @@ end
 
 --- Sets if the object should be thought of as dead or not
 -- @return none
-function Agent:setDead(val)
+function Agent:setDead(val, donotify)
+	donotify = donotify or true
 	assert(type(val) == "boolean", "value error: val must be of type bool")
 	local prev = self._dead
 	local assetmgr = dct.Theater.singleton():getAssetMgr()
@@ -494,12 +498,12 @@ function Agent:setDead(val)
 	for name, _ in self:iterateSubordinates() do
 		local asset = assetmgr:getAsset(name)
 		if asset then
-			asset:setDead(val)
+			asset:setDead(val, donotify)
 		end
 	end
 
 	self._dead = val
-	if self._dead and prev ~= self._dead then
+	if self._dead and prev ~= self._dead and donotify then
 		self._logger:debug("notifying asset death for "..self.name)
 		self:notify(dctutils.buildevent.dead(self))
 	end
