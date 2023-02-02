@@ -50,6 +50,15 @@ Set all unit groups in the template to be immortal.]],
 			["description"] =
 			"",
 		},
+		["exclusion"] = {
+			["default"] = "",
+			["type"] = Check.valuetype.STRING,
+			["description"] = [[
+Used to mark templates that should not be spawned together. If the templates
+have the same string value the templates will be grouped together and only
+one template from the exclusion group will be selected. All other members
+of the group will be ignored.]],
+		},
 		["priority"] = {
 			["deprecated"] = true,
 			["default"] = 1000,
@@ -193,6 +202,10 @@ function CheckCommon:check(data)
 
 	if not ok then
 		return ok, key, msg
+	end
+
+	if data.exclusion == "" then
+		data.exclusion = nil
 	end
 
 	if data.uniquenames and data.codename ~= dctenum.DEFAULTCODENAME then
