@@ -2,7 +2,6 @@
 
 require("dcttestlibs")
 require("dct")
-local utils = require("libs.utils")
 local enum = require("dct.enum")
 local STM = require("dct.templates.STM")
 local Template = require("dct.templates.Template")
@@ -57,19 +56,19 @@ local sampletpls = {
 local function stmexists()
 	Template.fromFile(
 		"dct-does-not-exist",
-		lfs.writedir()..utils.sep.."test.stm")
+		lfs.writedir().."test.stm")
 end
 
 local function dctexists()
 	Template.fromFile(
-		lfs.writedir()..utils.sep.."test.dct",
+		lfs.writedir().."test.dct",
 		"stm-does-not-exist")
 end
 
 local function singleside()
 	local t = Template.fromFile(
-		lfs.writedir()..utils.sep.."test.dct",
-		lfs.writedir()..utils.sep.."test-both-sides.stm")
+		lfs.writedir().."test.dct",
+		lfs.writedir().."test-both-sides.stm")
 	assert(t:isValid() == true)
 end
 
@@ -77,8 +76,8 @@ local function main()
 	for _, data in pairs(sampletpls) do
 		--print("tplname: "..data.name)
 		local t = Template.fromFile(
-			lfs.writedir()..utils.sep..data.name..".dct",
-			lfs.writedir()..utils.sep..data.name..".stm")
+			lfs.writedir()..data.name..".dct",
+			lfs.writedir()..data.name..".stm")
 
 		assert(t:isValid(), "bad template")
 
