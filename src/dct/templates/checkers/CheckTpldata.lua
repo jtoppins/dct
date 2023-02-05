@@ -63,16 +63,19 @@ local function goalFromName(name, objtype)
 end
 
 local function overrideUnitOptions(unit, key, tpl, basename)
-	if unit.playerCanDrive ~= nil then
-		unit.playerCanDrive = false
-	end
-
-	unit.unitId = nil
 	unit.dct_deathgoal = goalFromName(unit.name, Goal.objtype.UNIT)
 	if unit.dct_deathgoal ~= nil then
 		tpl.hasDeathGoals = true
 	end
-	unit.name = basename.."-"..key
+
+	if tpl.overwrite == true then
+		unit.unitId = nil
+		unit.name = basename.."-"..key
+
+		if unit.playerCanDrive ~= nil then
+			unit.playerCanDrive = false
+		end
+	end
 
 	if tpl.unitTypeCnt[unit.type] == nil then
 		tpl.unitTypeCnt[unit.type] = 0
@@ -85,19 +88,15 @@ local function overrideUnitOptions(unit, key, tpl, basename)
 	tpl.unitTypeCnt[unit.type] = tpl.unitTypeCnt[unit.type] + 1
 end
 
+local _opts = {
+	visible        = true,
+	uncontrollable = true,
+	lateActivation = false,
+}
+
 local function overrideGroupOptions(grp, idx, tpl)
 	if grp.category == dctenum.UNIT_CAT_SCENERY then
 		return
-	end
-
-	local opts = {
-		visible        = true,
-		uncontrollable = true,
-		lateActivation = false,
-	}
-
-	for k, v in pairs(opts) do
-		if grp[k] ~= nil then grp[k] = v end
 	end
 
 	local objtype = Goal.objtype.GROUP
@@ -105,17 +104,25 @@ local function overrideGroupOptions(grp, idx, tpl)
 		objtype = Goal.objtype.STATIC
 	end
 
-	grp.data.groupId = nil
-	grp.data.unitId  = nil
-	grp.data.start_time = 0
 	grp.data.dct_deathgoal = goalFromName(grp.data.name, objtype)
 	if grp.data.dct_deathgoal ~= nil then
 		tpl.hasDeathGoals = true
 	end
-	local side = coalition.getCountryCoalition(grp.countryid)
-	grp.data.name = string.format("%s %d %s %d",
-		tpl.name, side,
-		utils.getkey(Unit.Category, grp.category), idx)
+
+	if tpl.overwrite == true then
+		for k, v in pairs(_opts) do
+			if grp.data[k] ~= nil then grp.data[k] = v end
+		end
+
+		grp.data.start_time = 0
+		grp.data.groupId = nil
+		grp.data.unitId  = nil
+
+		grp.data.name = string.format("%s %d %s %d",
+			tpl.name,
+			coalition.getCountryCoalition(grp.countryid),
+			utils.getkey(Unit.Category, grp.category), idx)
+	end
 
 	for i, unit in ipairs(grp.data.units or {}) do
 		overrideUnitOptions(unit, i, tpl, grp.data.name)
@@ -181,15 +188,21 @@ function CheckTpldata:__init()
 			["default"] = false,
 			["type"] = Check.valuetype.BOOL,
 		},
+		["overwrite"] = {
+			["nodoc"] = true,
+			["default"] = true,
+			["type"] = Check.valuetype.BOOL,
+			["description"] = [[
+Controls if various items of the template data is removed from the
+template.]],
+		},
+
 	})
 end
 
 local notpldata = {
 	[dctenum.assetType.AIRBASE]     = true,
 	[dctenum.assetType.SQUADRON]    = true,
-	-- player groups do have tpldata, it is here as we do not
-	-- want to remove any data from the template definition
-	[dctenum.assetType.PLAYER] = true,
 }
 
 function CheckTpldata:check(data)

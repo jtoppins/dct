@@ -117,6 +117,7 @@ function PlayerSlots:postinit()
 				["squadron"]  = name:match("(%w+)(.+)"),
 				["airbase"]   = airbase,
 				["parking"]   = airbase_parking_id(grp),
+				["overwrite"] = false,
 			})
 
 			region:addTemplate(tpl)

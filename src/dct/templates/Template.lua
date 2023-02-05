@@ -28,13 +28,15 @@ local norenametype = {
 -- and adds a Fact that is a list of unit names that should be queried
 -- for what their radars see
 
+-- The order of these checkers matters as some mutate the template data
+-- which later checkers rely on.
 local checkers = {
 	require("dct.templates.checkers.CheckCommon")(),
-	require("dct.templates.checkers.CheckTpldata")(),
-	require("dct.templates.checkers.CheckAgent")(),
 	require("dct.templates.checkers.CheckAirbase")(),
-	require("dct.templates.checkers.CheckSquadron")(),
+	require("dct.templates.checkers.CheckAgent")(),
 	require("dct.templates.checkers.CheckPlayer")(),
+	require("dct.templates.checkers.CheckTpldata")(),
+	require("dct.templates.checkers.CheckSquadron")(),
 	require("dct.templates.checkers.CheckCoalition")(),
 	require("dct.templates.checkers.CheckLocation")(),
 }
