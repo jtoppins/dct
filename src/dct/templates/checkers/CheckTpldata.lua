@@ -63,8 +63,6 @@ local function goalFromName(name, objtype)
 end
 
 local function overrideUnitOptions(unit, key, tpl, basename)
-	local unitdesc = Unit.getDescByName(unit.type)
-
 	if unit.playerCanDrive ~= nil then
 		unit.playerCanDrive = false
 	end
@@ -78,12 +76,13 @@ local function overrideUnitOptions(unit, key, tpl, basename)
 
 	if tpl.unitTypeCnt[unit.type] == nil then
 		tpl.unitTypeCnt[unit.type] = 0
+
+		local unitdesc = Unit.getDescByName(unit.type)
+		if unitdesc ~= nil then
+			utils.mergetables(tpl.attributes, unitdesc.attributes)
+		end
 	end
 	tpl.unitTypeCnt[unit.type] = tpl.unitTypeCnt[unit.type] + 1
-
-	if unitdesc ~= nil then
-		utils.mergetables(tpl.attributes, unitdesc.attributes)
-	end
 end
 
 local function overrideGroupOptions(grp, idx, tpl)
@@ -168,8 +167,13 @@ function CheckTpldata:__init()
 			["agent"] = true,
 			["default"] = {},
 			["type"]    = Check.valuetype.TABLE,
-			["description"] =
-			"",
+			["description"] = [[
+]],
+		},
+		["unitTypeCnt"] = {
+			["nodoc"] = true,
+			["default"] = {},
+			["type"] = Check.valuetype.TABLE,
 		},
 		["hasDeathGoals"] = {
 			["nodoc"] = true,
@@ -193,20 +197,11 @@ function CheckTpldata:check(data)
 		return true
 	end
 
-	data.hasDeathGoals = false
-
-	if data.attributes == nil then
-		data.attributes = {}
-	end
-
-	if data.unitTypeCnt == nil then
-		data.unitTypeCnt = {}
-	end
-
 	check_buildings(data)
 
-	if data.tpldata == nil then
-		return false, "tpldata", Check.reasontext[Check.rc.REQUIRED]
+	local ok, key, msg = Check.check(self, data)
+	if not ok then
+		return ok, key, msg
 	end
 
 	-- loop over all tpldata and process names and existence of
