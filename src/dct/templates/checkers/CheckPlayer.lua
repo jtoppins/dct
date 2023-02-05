@@ -36,18 +36,6 @@ function CheckPlayer:__init()
 	})
 end
 
---[[
--- Agent Facts:
--- cmdpending
--- scratchpad
--- loseticket
---
--- Agent Desc table:
--- groupId - pull from group data
--- airbase - figure out from group definition
--- squadron - set to false by default
---]]
-
 function CheckPlayer:check(data)
 	if data.objtype ~= dctenum.assetType.PLAYER then
 		return true
