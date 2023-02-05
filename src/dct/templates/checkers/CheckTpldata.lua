@@ -196,7 +196,14 @@ function CheckTpldata:__init()
 Controls if various items of the template data is removed from the
 template.]],
 		},
-
+		["rename"] = {
+			["nodoc"] = true,
+			["default"] = true,
+			["type"] = Check.valuetype.BOOL,
+			["description"] = [[
+Controls if the name of the generated Agent gets renamed to include the
+region name.]]
+		},
 	})
 end
 

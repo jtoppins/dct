@@ -11,12 +11,6 @@ local STM      = require("dct.templates.STM")
 local Agent    = require("dct.assets.Agent")
 local Logger   = dct.Logger.getByName("Template")
 
-local norenametype = {
-	[dctenum.assetType.SQUADRON]  = true,
-	[dctenum.assetType.PLAYER]    = true,
-	[dctenum.assetType.AIRBASE]   = true,
-}
-
 -- TODO: setup a respawn attribute
 
 -- TODO: we can classify airdefense sites by the highest radar
@@ -121,7 +115,7 @@ end
 local function genName(template)
 	local name = template.name
 
-	if norenametype[template.objtype] == nil then
+	if template.rename then
 		name = template.regionname.."_"..template.coalition.."_"..
 			template.name
 		if template.uniquenames == true then
@@ -264,7 +258,7 @@ function Template:joinRegion(region)
 	self.regionname = region.name
 	self.regionprio = region.priority
 
-	if norenametype[self.objtype] == nil then
+	if self.rename then
 		add_region_name_to_objects(self.tpldata, region.name)
 	end
 	self._joinedregion = true

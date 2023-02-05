@@ -75,6 +75,7 @@ function CheckAirbase:check(data)
 		return true
 	end
 
+	data.rename = false
 	-- TODO: add support for carriers
 	return Check.check(self, data)
 end

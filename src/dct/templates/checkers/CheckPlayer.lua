@@ -42,6 +42,7 @@ function CheckPlayer:check(data)
 	end
 
 	data.overwrite = false
+	data.rename = false
 
 	return Check.check(self, data)
 end
