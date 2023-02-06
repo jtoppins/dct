@@ -1,6 +1,7 @@
 --- SPDX-License-Identifier: LGPL-3.0
 
 local class   = require("libs.namedclass")
+local utils   = require("libs.utils")
 local Check   = require("dct.templates.checkers.Check")
 local Agent   = require("dct.assets.Agent")
 
@@ -47,7 +48,7 @@ function CheckAgent:check(data)
 
 	for k, _ in pairs(self.options) do
 		if next(data[k]) == nil then
-			data[k] = defaults[k]
+			data[k] = utils.deepcopy(defaults[k])
 		end
 	end
 	return true

@@ -1,6 +1,7 @@
 --- SPDX-License-Identifier: LGPL-3.0
 
 local class = require("libs.namedclass")
+local utils = require("libs.utils")
 local Logger = dct.Logger.getByName("Template")
 
 local rc = {
@@ -133,7 +134,7 @@ function Check:check(data)
 		if data[key] == nil and option.default == nil then
 			return false, key, texttbl[rc.REQUIRED]
 		elseif data[key] == nil and option.default ~= nil then
-			data[key] = option.default
+			data[key] = utils.deepcopy(option.default)
 		else
 			local ok, value =
 				checktbl[option.type](data, key, option.values)
