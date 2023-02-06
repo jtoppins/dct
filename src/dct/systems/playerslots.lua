@@ -11,14 +11,6 @@ local Template = require("dct.templates.Template")
 local Region   = require("dct.templates.Region")
 local Logger   = dct.Logger.getByName("Systems")
 
-local airbase_id2name_map = nil
-if airbase_id2name_map == nil then
-	airbase_id2name_map = {}
-	for _, ab in pairs(world.getAirbases()) do
-		airbase_id2name_map[tonumber(ab:getID())] = ab:getName()
-	end
-end
-
 local function is_player_group(grp, _, _)
 	local isplayer, slotcnt = dctutils.isplayergroup(grp)
 
@@ -47,7 +39,7 @@ local function airbase_name(grp)
 	for _, name in ipairs({"airdromeId", "helipadId", "linkUnit"}) do
 		id = grp.data.route.points[1][name]
 		if id ~= nil then
-			return airbase_id2name_map[id]
+			return dctutils.airbase_id2name(id)
 		end
 	end
 
