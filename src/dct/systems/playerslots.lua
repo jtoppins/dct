@@ -9,6 +9,7 @@ local vector   = require("dct.libs.vector")
 local STM      = require("dct.templates.STM")
 local Template = require("dct.templates.Template")
 local Region   = require("dct.templates.Region")
+local Agent    = require("dct.assets.Agent")
 local Logger   = dct.Logger.getByName("Systems")
 
 local function is_player_group(grp, _, _)
@@ -83,16 +84,35 @@ function PlayerSlots:postinit()
 		["priority"] = 1000,
 		["builtin"] = true,
 	})
+	local playertpl = Template({
+		["objtype"]   = "player",
+		["name"]      = "player",
+		["coalition"] = "blue",
+		["cost"]      = theater:getTickets():
+				getPlayerCost(coalition.side.BLUE),
+		["desc"]      = "Player group",
+		["location"]  = { ["x"] = 0, ["y"] = 0, },
+		["tpldata"]   = {},
+		["groupId"]   = 0,
+		["basedat"]   = "does-not-exist",
+		["overwrite"] = false,
+		["rename"]    = false,
+	})
 
 	theater:getRegionMgr():addRegion(region)
+	playertpl:joinRegion(region)
+	region:addTemplate(playertpl)
+
 	for _, coa_data in pairs(env.mission.coalition) do
 		local grps = STM.processCoalition(coa_data,
 						  env.getValueDictByKey,
 						  is_player_group,
 						  nil)
 		for _, grp in ipairs(grps) do
+			local desc
 			local name = grp.data.name
 			local side = coalition.getCountryCoalition(grp.countryid)
+			local squadron = name:match("(%w+)(.+)")
 			local airbase = airbase_name(grp)
 			local tpl = Template({
 				["objtype"]   = "player",
@@ -106,18 +126,34 @@ function PlayerSlots:postinit()
 						  ["y"] = grp.data.y, },
 				["tpldata"]   = { [1] = grp, },
 				["groupId"]   = grp.data.groupId,
-				["squadron"]  = name:match("(%w+)(.+)"),
-				["airbase"]   = airbase,
+				["squadron"]  = squadron,
+				["basedat"]   = airbase,
 				["parking"]   = airbase_parking_id(grp),
 				["overwrite"] = false,
+				["rename"]    = false,
 			})
 
-			region:addTemplate(tpl)
-			assetmgr:add(tpl:createObject())
+			tpl:joinRegion(region)
+			desc = tpl:genDesc()
+			desc.name = playertpl.name
+			local player = Agent.create(tpl:genName(),
+						    tpl.objtype,
+						    tpl.coalition,
+						    desc)
+			local base = assetmgr:getAsset(airbase)
+
+			if base then
+				player:setParent(base.name)
+				base:addSubordinate(player)
+				base:addObserver(player.onDCTEvent,
+						 player,
+						 player.name)
+			end
+			assetmgr:add(player)
 			cnt = cnt + 1
 		end
 	end
-	Logger:info(string.format("PlayerSlots:__init(); found %d slots", cnt))
+	Logger:info(string.format("PlayerSlots:postinit(); found %d slots", cnt))
 end
 
 return PlayerSlots

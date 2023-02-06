@@ -206,6 +206,24 @@ local function addAndSpawnAsset(self, name, assetmgr)
 	return asset
 end
 
+local hqs = {
+	[dctenum.assetType.SQUADRON] = true,
+	[dctenum.assetType.ARMYGROUP] = true,
+	[dctenum.assetType.FLEET] = true,
+}
+
+local function associateBases(self)
+	for name, tpl in pairs(self._templates) do
+		if hqs[tpl.objtype] then
+			local ptpl = self:getTemplateByName(tpl.basedat)
+
+			if ptpl then
+				ptpl.subordinates[name] = true
+			end
+		end
+	end
+end
+
 --  Region class
 --    base class that reads in a region definition.
 --
@@ -288,6 +306,7 @@ function Region:__init(data)
 	Logger:debug("=> regionpath: "..tostring(self.path))
 	if not self.builtin then
 		getTemplates(self, self.path)
+		associateBases(self)
 	end
 	Logger:debug("'"..self.name.."' Loaded")
 end
@@ -344,6 +363,9 @@ function Region:addTemplate(tpl)
 end
 
 function Region:getTemplateByName(name)
+	if name == nil then
+		return nil
+	end
 	return self._templates[name]
 end
 

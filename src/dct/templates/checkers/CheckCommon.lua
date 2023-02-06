@@ -142,6 +142,17 @@ player UI elements.]],
 			["type"] = Check.valuetype.STRING,
 			["nodoc"] = true,
 		},
+		["basedat"] = {
+			["agent"] = true,
+			["default"] = "",
+			["type"] = Check.valuetype.STRING,
+			["description"] = [[
+The name of the base at which this template is based at. For a squadron
+this would be the airbase the squadron is based at. The value must be a
+string that when passed to `Airbase.getByName(<name>)` returns a DCS Airbase
+object.
+TODO: add more info]],
+		},
 		["subordinates"] = {
 			["default"] = {},
 			["type"] = Check.valuetype.TABLE,
@@ -269,6 +280,17 @@ function CheckCommon:check(data)
 		return false, "locationmethod",
 		       "cannot be defined if uniquenames is true"
 	end
+
+	if data.basedat == "" then
+		data.basedat = nil
+	end
+
+	-- convert subordinate list to a set
+	local subs = {}
+	for _, name in pairs(data.subordinates) do
+		subs[name] = true
+	end
+	data.subordinates = subs
 
 	data.cost = math.abs(data.cost)
 	return true

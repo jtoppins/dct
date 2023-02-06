@@ -11,19 +11,16 @@ function CheckPlayer:__init()
 	Check.__init(self, "Player", {
 		["groupId"] = {
 			["nodoc"] = true,
+			["agent"] = true,
 			["type"] = Check.valuetype.INT,
 			["description"] = "group ID of the player group",
 		},
 		["parking"] = {
 			["nodoc"] = true,
+			["agent"] = true,
 			["default"] = false,
 			["type"] = Check.valuetype.INT,
 			["description"] = "The parking id",
-		},
-		["airbase"] = {
-			["nodoc"] = true,
-			["type"] = Check.valuetype.STRING,
-			["description"] = "The airbase name",
 		},
 		["squadron"] = {
 			["nodoc"] = true,
