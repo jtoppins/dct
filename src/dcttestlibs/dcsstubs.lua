@@ -595,10 +595,6 @@ end
 
 function coalition.addGroup(cntryid, groupcat, groupdata)
 	--print("new group: "..require("libs.json"):encode_pretty(groupdata))
-	assert(groupdata.groupId == nil, "groupId field defined")
-	for _, unit in pairs(groupdata.units or {}) do
-		assert(unit.unitId == nil, "unitId field defined")
-	end
 	dctcheck.spawngroups = dctcheck.spawngroups + 1
 	dctcheck.spawnunits = dctcheck.spawnunits + #(groupdata.units)
 	groupdata.country = cntryid

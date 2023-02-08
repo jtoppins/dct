@@ -76,11 +76,12 @@ for abid, name in pairs(airbase_table[env.mission.theatre] or {}) do
 	end
 end
 
-local function processCategory(tbl, coa)
+local function processCategory(id, cat, tbl, coa)
 	if tbl == nil or tbl.group == nil then
 		return
 	end
 	for _, grp in ipairs(tbl.group) do
+		coalition.addGroup(id, string.upper(cat), grp)
 		if grp.units then
 			for _, unit in ipairs(grp.units) do
 				local newab = {
@@ -102,7 +103,7 @@ local catmap = {
 for coa, coatbl in pairs(env.mission.coalition) do
 	for _, cntrytbl in ipairs(coatbl.country) do
 		for _, cat in pairs(catmap) do
-			processCategory(cntrytbl[cat], coa)
+			processCategory(cntrytbl.id, cat, cntrytbl[cat], coa)
 		end
 	end
 end
