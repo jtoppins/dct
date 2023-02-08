@@ -92,6 +92,45 @@ function utils.isplayergroup(grp)
 	return false
 end
 
+function utils.not_playergroup(grp)
+	local isplayer = utils.isplayergroup(grp)
+	return not isplayer
+end
+
+function utils.get_miz_groups()
+	local STM = require("dct.templates.STM")
+	local groups = {}
+	for _, coa_data in pairs(env.mission.coalition) do
+		local grps = STM.processCoalition(coa_data,
+			nil, utils.not_playergroup, nil)
+		for _, grp in ipairs(grps) do
+			groups[grp.data.name] = grp
+		end
+	end
+	return groups
+end
+
+function utils.get_miz_units(logger)
+	local units = {}
+	local groups = utils.get_miz_groups()
+
+	for _, grp in pairs(groups) do
+		for _, unit in ipairs(grp.data.units or {}) do
+			local u = {}
+			u.name = unit.name
+			u.category = grp.category
+			u.dead = false
+
+			if units[u.name] ~= nil then
+				logger:error("multiple same named miz placed"..
+					" objects exist: "..u.name)
+			end
+			units[u.name] = u
+		end
+	end
+	return units
+end
+
 function utils.time(dcsabstime)
 	-- timer.getAbsTime() returns local time of day, but we still need
 	-- to calculate the day
