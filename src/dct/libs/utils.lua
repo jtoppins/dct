@@ -18,6 +18,15 @@ local enemymap = {
 }
 
 utils.INTELMAX = 5
+utils.lineType = {
+	["NOLINE"]   = 0,
+	["SOLID"]    = 1,
+	["DASHED"]   = 2,
+	["DOTTED"]   = 3,
+	["DOTDASH"]  = 4,
+	["LONGDASH"] = 5,
+	["TWODASH"]  = 6,
+}
 
 function utils.getenemy(side)
 	return enemymap[side]
