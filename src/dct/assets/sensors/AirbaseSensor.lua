@@ -92,6 +92,7 @@ function AirbaseSensor:handleRequestDeparture(event)
 end
 
 function AirbaseSensor:update()
+	self.agent._logger:debug("jtoppins - airbasesensor.update")
 	self.timer:update()
 	if not self.timer:expired() then
 		return false

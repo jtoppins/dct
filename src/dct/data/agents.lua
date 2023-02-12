@@ -21,6 +21,7 @@ local airdefense = {
 		["PlanningSensor"]   = 0,
 		["AmmoSensor"]       = 0,
 		["RadarSensor"]      = 0,
+		["DebugSensor"]      = 10,
 	},
 	["actions"] = {
 		["GroundIdle"]       = 1,
@@ -48,9 +49,11 @@ agents[dctenum.assetType.AIRBASE]     = {
 		["RunwaySensor"]     = 0,
 		["AirbaseSensor"]    = 0,
 		["PlanningSensor"]   = 0,
+		["DebugSensor"]      = 0,
 	},
 	["actions"] = {
 		["RunwayRepair"]     = 1,
+		["DoDepartures"]    = 1,
 	},
 	["goals"]   = {
 		["Idle"]             = 1,
@@ -65,6 +68,7 @@ agents[dctenum.assetType.CV]          = {
 		["PlanningSensor"]   = 0,
 	},
 	["actions"] = {
+		["DoDepartures"]    = 1,
 	},
 	["goals"] = {
 		["Idle"]             = 1,

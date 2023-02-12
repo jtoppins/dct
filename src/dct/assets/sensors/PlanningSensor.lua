@@ -54,7 +54,10 @@ function Planning:update()
 					     self.agent:WS(),
 					     entry.goal:WS(),
 					     nil, nil, true)
+		self.agent._logger:debug("goal: %s", tostring(entry.goal))
 		if plan then
+			self.agent._logger:debug("plan found for: %s",
+				tostring(entry.goal))
 			self.agent:setPlan(entry.goal, list2queue(plan))
 			break
 		end

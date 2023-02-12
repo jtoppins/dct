@@ -71,6 +71,9 @@ function PlayerSensor:setSync(val)
 end
 
 function PlayerSensor:isEnabled()
+	self.agent._logger:debug("isEnabled() - spawned(%s), oper(%s)"..
+	", sync(%s)", tostring(self.agent:isSpawned()),
+	tostring(self._operstate), tostring(self._syncstate))
 	return self.agent:isSpawned() and self._operstate and self._syncstate
 end
 

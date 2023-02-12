@@ -579,6 +579,7 @@ function Agent:update()
 	end
 
 	for _, sensor in ipairs(self._sensors) do
+		self._logger:debug("sensor: %s", sensor.__clsname)
 		if type(sensor.update) == "function" and
 		   sensor:update() then
 			break
