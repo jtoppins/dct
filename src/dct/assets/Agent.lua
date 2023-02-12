@@ -126,7 +126,9 @@ for _, subpath in ipairs(agentcomponents) do
 			local obj = load_module(subpath, cap1)
 			local objtype = string.upper(obj.__clsname)
 
-			assert(objtbl[subpath][objtype] == nil, "type taken")
+			assert(objtbl[subpath][objtype] == nil,
+				string.format("type taken %s(%s)",
+				subpath, objtype))
 			objtbl[subpath][objtype] = obj
 			objecttypes[subpath][objtype] = objtype
 		end
