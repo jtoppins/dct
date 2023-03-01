@@ -73,7 +73,7 @@ local factKey = {
 local Attribute = class("Attribute")
 function Attribute:__init(value, confidence)
 	self.value = value or 0
-	self.confidence = utils.clamp(confidence or 1, 0, 1)
+	self.confidence = utils.clamp(check.number(confidence or 1), 0, 1)
 end
 
 --- @class Fact
