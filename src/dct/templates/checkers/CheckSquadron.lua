@@ -5,7 +5,7 @@ local dctenum = require("dct.enum")
 local Check   = require("dct.templates.checkers.Check")
 
 local issquadron = {
-	[dctenum.assetType.SQUADRONPLAYER] = true,
+	[dctenum.assetType.SQUADRON] = true,
 }
 
 local function check_ato(data)

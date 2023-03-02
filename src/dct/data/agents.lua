@@ -2,7 +2,7 @@
 
 local dctenum = require("dct.enum")
 
-local statics = {
+local static = {
 	["sensors"] = {
 		["DCSObjectsSensor"] = 0,
 		["PlanningSensor"]   = 0,
@@ -30,67 +30,67 @@ local airdefense = {
 
 local groundunits = airdefense
 
-local agents = {
-	[dctenum.assetType.AMMODUMP]    = statics,
-	[dctenum.assetType.FUELDUMP]    = statics,
-	[dctenum.assetType.PORT]        = statics,
-	[dctenum.assetType.FACILITY]    = statics,
-	[dctenum.assetType.BUNKER]      = statics,
-	[dctenum.assetType.CHECKPOINT]  = statics,
-	[dctenum.assetType.FACTORY]     = statics,
-	[dctenum.assetType.C2]          = statics,
-	[dctenum.assetType.FOB]         = statics,
-	[dctenum.assetType.BASEDEFENSE] = airdefense,
-	[dctenum.assetType.EWR]         = airdefense,
-	[dctenum.assetType.SAM]         = airdefense,
-	[dctenum.assetType.SHORAD]      = airdefense,
-	[dctenum.assetType.GROUND]      = groundunits,
-	[dctenum.assetType.JTAC]        = groundunits,
-	[dctenum.assetType.AIRBASE]     = {
-		["sensors"] = {
-			["PlanningSensor"]   = 0,
-			["RunwaySensor"]     = 0,
-		},
-		["actions"] = {
-			["RunwayRepair"]     = 1,
-		},
-		["goals"]   = {
-			["Idle"]             = 1,
-			["Heal"]             = 1,
-		},
+local agents = {}
+for _, assettype in pairs(dctenum.assetType) do
+	agents[assettype] = static
+end
+
+agents[dctenum.assetType.BASEDEFENSE] = airdefense
+agents[dctenum.assetType.EWR]         = airdefense
+agents[dctenum.assetType.SAM]         = airdefense
+agents[dctenum.assetType.SHORAD]      = airdefense
+agents[dctenum.assetType.GROUND]      = groundunits
+agents[dctenum.assetType.JTAC]        = groundunits
+agents[dctenum.assetType.AIRBASE]     = {
+	["sensors"] = {
+		["RunwaySensor"]     = 0,
+		["PlanningSensor"]   = 0,
 	},
-	[dctenum.assetType.CV]          = {
-		["sensors"] = {
-			["MissionSensor"]    = 0,
-			["PlanningSensor"]   = 0,
-		},
-		["actions"] = {
-		},
-		["goals"] = {
-			["Idle"]             = 1,
-		},
+	["actions"] = {
+		["RunwayRepair"]     = 1,
 	},
-	[dctenum.assetType.SQUADRON]    = {
-		["sensors"] = {},
-		["actions"] = {},
-		["goals"] = {},
+	["goals"]   = {
+		["Idle"]             = 1,
+		["Heal"]             = 1,
 	},
-	[dctenum.assetType.PLAYER] = {
-		["sensors"] = {
-			["MissionSensor"]   = 0,
-			["PlanningSensor"]  = 0,
-			["PlayerSensor"]    = 0,
-		},
-		["actions"] = {
-			["PlayerJoin"]   = 1,
-			["Ejection"]     = 1,
-			["PlayerKick"]   = 1,
-			["PlayerAttack"] = 50,
-		},
-		["goals"]   = {
-			["Idle"]         = 1,
-			["ReactToEvent"] = 2,
-		},
+}
+agents[dctenum.assetType.CV]          = {
+	["sensors"] = {
+		["DCSObjectsSensor"] = 0,
+		["MissionSensor"]    = 0,
+		["PlanningSensor"]   = 0,
+	},
+	["actions"] = {
+	},
+	["goals"] = {
+		["Idle"]             = 1,
+	},
+}
+agents[dctenum.assetType.SQUADRON]    = {
+	["sensors"] = {
+		["PlanningSensor"]   = 0,
+	},
+	["actions"] = {
+	},
+	["goals"] = {
+		["Idle"]             = 1,
+	},
+}
+agents[dctenum.assetType.PLAYER] = {
+	["sensors"] = {
+		["MissionSensor"]   = 0,
+		["PlanningSensor"]  = 0,
+		["PlayerSensor"]    = 0,
+	},
+	["actions"] = {
+		["PlayerJoin"]   = 1,
+		["Ejection"]     = 1,
+		["PlayerKick"]   = 1,
+		["PlayerAttack"] = 50,
+	},
+	["goals"]   = {
+		["Idle"]         = 1,
+		["ReactToEvent"] = 2,
 	},
 }
 

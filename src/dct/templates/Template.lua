@@ -12,9 +12,9 @@ local Agent    = require("dct.assets.Agent")
 local Logger   = dct.Logger.getByName("Template")
 
 local norenametype = {
-	[dctenum.assetType.SQUADRONPLAYER] = true,
-	[dctenum.assetType.PLAYER]         = true,
-	[dctenum.assetType.AIRBASE]        = true,
+	[dctenum.assetType.SQUADRON]  = true,
+	[dctenum.assetType.PLAYER]    = true,
+	[dctenum.assetType.AIRBASE]   = true,
 }
 
 -- TODO: setup a respawn attribute
@@ -237,7 +237,7 @@ function Template:generate(region, assetmgr, parent)
 		if tpl then
 			local sub = tpl:createObject()
 
-			sub:setParent(parent)
+			sub:setParent(parent.name)
 			parent:addSubordinate(sub)
 			-- have subordinate observe the parent
 			parent:addObserver(sub.onDCTEvent, sub, sub.name)

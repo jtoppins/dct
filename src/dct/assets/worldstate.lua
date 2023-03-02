@@ -32,11 +32,10 @@ local id = {
 
 --- Stance types the agent can have
 local stanceType = {
-	["WAITING"]   = "waiting",    -- not combat ready, return fire only
+	["DEFAULT"]   = "default",    -- whatever the setting were at spawn
 	["FLEEING"]   = "fleeing",    -- running away, weapons hold
 	["GUARDING"]  = "guarding",   -- combat ready, weapons engage per tasking
 	["SEARCHING"] = "searching",  -- not combat ready, sensors on
-	["HIDING"]    = "hiding",     -- active sensors off
 	["ATTACKING"] = "attacking",  -- fangs out
 }
 
@@ -74,11 +73,10 @@ local factKey = {
 local Attribute = class("Attribute")
 function Attribute:__init(value, confidence)
 	self.value = value or 0
-	self.confidence = utils.clamp(confidence or 1, 0, 1)
+	self.confidence = utils.clamp(check.number(confidence or 1), 0, 1)
 end
 
---- @class Fact
--- A generic data-structure that represents a piece of knowledge the agent
+--- A generic data-structure that represents a piece of knowledge the agent
 -- has about the world
 --
 -- @field type of fact object
@@ -102,8 +100,23 @@ function Fact:__init(t)
 	self.updatetime = timer.getTime()
 end
 
---- @class CharacterFact
--- Represents either a DCT or DCS agent that this agent knows about.
+--- Represents either a DCT or DCS agent that an agent knows about.
+-- A CharacterFact will always have the following attributes:
+-- @field object     reference to object, confidence is how relevant the
+--                   object is to the agent/mission, primary mission
+--                   targets will have an importance of 1. Less important
+--                   targets will have a value less than 1. Any characters
+--                   with an importance of zero(0) are there as a threat
+--                   reference only for planning/threat analysis.
+-- @field objtype    type of object being referenced
+--
+-- And may have the following Attributes based on the knowledge the Agent
+-- has about these characters:
+-- @field position   vector3D, confidence is distance normalized based on
+--                   the agent's attack range where a value greater than
+--                   zero(0) is in-range.
+-- @field velocity   vector3D, confidence has no meaning
+-- @field owner      which coalition owns the object coalition.side
 local CharacterFact = class("CharacterFact", Fact)
 function CharacterFact:__init(obj, importance, objtype)
 	Fact.__init(self, factType.CHARACTER)
@@ -119,13 +132,14 @@ local NodeFact = class("NodeFact", Fact)
 function NodeFact:__init(node, importance, ntype, path)
 	Fact.__init(self, factType.NODE)
 	self.object    = Attribute(node, importance)
-	self.objtype   = Attribute(check.tblkey(ntype, NodeFact.types,
-				   "NodeFact.types"))
+	self.objtype   = Attribute(check.tblkey(ntype, NodeFact.nodeType,
+				   "NodeFact.nodeType"))
 	self.path      = path
 	self.nodeType  = nil
 end
 
 NodeFact.nodeType = {
+	["INVALID"]    = 0,
 	["RALLYPOINT"] = 1, -- a node that can be retreated to
 	["STATION"]    = 2, -- a guard position
 }
@@ -141,6 +155,7 @@ function StimuliFact:__init(stimtype, intensity)
 	self.stimType = nil
 end
 StimuliFact.stimType = {
+	["INVALID"]   = 0,
 	["EXPLOSION"] = 1, -- like a shell impacting close by
 	["LAUNCH"]    = 2, -- like a HARM launch, etc
 	["CONTACT"]   = 3, -- like a radar contact
@@ -178,10 +193,20 @@ function WorldState.createAll()
 	for _, v in pairs(id) do
 		local val = false
 		if v == id.STANCE then
-			val = stanceType.IDLE
+			val = stanceType.DEFAULT
+		elseif v == id.ROE then
+			val = -1
+		elseif v == id.HASFUEL or v == id.IDLE or
+		       v == id.HASAMMO then
+			val = true
+		elseif v == id.ATNODETYPE then
+			val = NodeFact.nodeType.INVALID
+		elseif v == id.DISTURBANCEEXISTS then
+			val = StimuliFact.stimType.INVALID
 		end
 		ws:add(goap.Property(v, val))
 	end
+	ws.createAll = nil
 	return ws
 end
 

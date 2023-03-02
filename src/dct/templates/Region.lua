@@ -6,7 +6,7 @@ require("lfs")
 require("math")
 local class      = require("libs.namedclass")
 local utils      = require("libs.utils")
-local dctenums   = require("dct.enum")
+local dctenum    = require("dct.enum")
 local vector     = require("dct.libs.vector")
 local Marshallable = require("dct.libs.Marshallable")
 local Template   = require("dct.templates.Template")
@@ -35,7 +35,7 @@ local function processlimits(_, tbl)
 	-- their numerical equivalents.
 	local limits = {}
 	for key, data in pairs(tbl.limits) do
-		local typenum = dctenums.assetType[string.upper(key)]
+		local typenum = dctenum.assetType[string.upper(key)]
 		if typenum == nil then
 			Logger:warn("invalid asset type '"..key..
 				"' found in limits definition in file: "..
@@ -180,9 +180,6 @@ local function addAndSpawnAsset(self, name, assetmgr)
 	local asset = tpl:createObject()
 	assetmgr:add(asset)
 	tpl:generate(self, assetmgr, asset)
-	--local d = vector.distance(vector.Vector2D(self:getPoint()),
-	--	vector.Vector2D(asset:getLocation()))
-	--self.radius = math.max(self.radius, d)
 	return asset
 end
 
@@ -372,7 +369,7 @@ function Region:generate()
 	local assetmgr = dct.Theater.singleton():getAssetMgr()
 	local tpltypes = utils.deepcopy(self._tpltypes)
 
-	for objtype, _ in pairs(dctenums.assetClass.INITIALIZE) do
+	for objtype, _ in pairs(dctenum.assetClass.INITIALIZE) do
 		local names = tpltypes[objtype]
 		if names ~= nil then
 			self:_generate(assetmgr, objtype, names)
@@ -423,8 +420,8 @@ local function handleAddAsset(region, event)
 end
 
 local handlers = {
-	[dctenums.event.DCT_EVENT_DEAD] = handleDead,
-	[dctenums.event.DCT_EVENT_ADD_ASSET] = handleAddAsset,
+	[dctenum.event.DCT_EVENT_DEAD] = handleDead,
+	[dctenum.event.DCT_EVENT_ADD_ASSET] = handleAddAsset,
 }
 
 function Region:onDCTEvent(event)
@@ -432,7 +429,7 @@ function Region:onDCTEvent(event)
 	local handler = handlers[event.id]
 
 	if handler == nil or
-	   dctenums.assetClass.STRATEGIC[event.initiator.type] == nil then
+	   dctenum.assetClass.STRATEGIC[event.initiator.type] == nil then
 		return
 	end
 

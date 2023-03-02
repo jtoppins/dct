@@ -15,6 +15,7 @@ local WS         = require("dct.assets.worldstate")
 local Marshallable = require("dct.libs.Marshallable")
 local Observable = require("dct.libs.Observable")
 local Subordinates = require("dct.libs.Subordinates")
+local Memory     = require("dct.libs.Memory")
 local INVALID_OWNER = -1
 local agentcomponents = { "sensors", "actions", "goals" }
 
@@ -125,7 +126,9 @@ for _, subpath in ipairs(agentcomponents) do
 			local obj = load_module(subpath, cap1)
 			local objtype = string.upper(obj.__clsname)
 
-			assert(objtbl[subpath][objtype] == nil, "type taken")
+			assert(objtbl[subpath][objtype] == nil,
+				string.format("type taken %s(%s)",
+				subpath, objtype))
 			objtbl[subpath][objtype] = obj
 			objecttypes[subpath][objtype] = objtype
 		end
@@ -195,12 +198,12 @@ end
 -- @field _dead [bool] is the Agent dead?
 -- @field _plangraph graph of actions the agent can use, is configured in
 --     the setup() method.
-local Agent = class("Agent", Marshallable, Observable, Subordinates)
+local Agent = class("Agent", Marshallable, Memory, Observable, Subordinates)
 function Agent:__init()
 	Marshallable.__init(self)
 	Observable.__init(self, AgentLogger(self))
 	Subordinates.__init(self)
-	self.memory     = {}
+	Memory.__init(self)
 	self.desc       = {}
 	self.name       = "unknown"
 	self.type       = dctenum.assetType.INVALID
@@ -246,7 +249,6 @@ function Agent.create(name, typev, owner, desc)
 				   "dctenum.assetType")
 	agent.owner = check.tblkey(owner, coalition.side, "coalition.side")
 	agent.desc  = check.table(desc)
-	agent:setIntel(agent.owner, dctutils.INTELMAX)
 	agent:setup()
 	return agent
 end
@@ -266,9 +268,12 @@ Agent.objectType = objecttypes
 -- a death event to listeners.
 function Agent:destroy()
 	self:despawn()
-	self._sensors = nil
-	self._goals = nil
-	self._actions = nil
+	self:setMission(nil)
+	self:replan()
+	self._sensors = {}
+	self._goals = {}
+	self._actions = {}
+	self:setDead(true, false)
 end
 
 --- Finalizes the Agent and runs the setup function for all sensors
@@ -278,6 +283,7 @@ function Agent:setup()
 		return
 	end
 
+	self:setIntel(self.owner, dctutils.INTELMAX)
 	self:setIntel(dctutils.getenemy(self.owner), tpl.intel)
 	set_ai_objects(self, tpl)
 
@@ -485,7 +491,8 @@ end
 
 --- Sets if the object should be thought of as dead or not
 -- @return none
-function Agent:setDead(val)
+function Agent:setDead(val, donotify)
+	donotify = donotify or true
 	assert(type(val) == "boolean", "value error: val must be of type bool")
 	local prev = self._dead
 	local assetmgr = dct.Theater.singleton():getAssetMgr()
@@ -493,12 +500,12 @@ function Agent:setDead(val)
 	for name, _ in self:iterateSubordinates() do
 		local asset = assetmgr:getAsset(name)
 		if asset then
-			asset:setDead(val)
+			asset:setDead(val, donotify)
 		end
 	end
 
 	self._dead = val
-	if self._dead and prev ~= self._dead then
+	if self._dead and prev ~= self._dead and donotify then
 		self._logger:debug("notifying asset death for "..self.name)
 		self:notify(dctutils.buildevent.dead(self))
 	end
@@ -636,96 +643,6 @@ function Agent:hasAttribute(attr)
 	return attrs[attr] ~= nil
 end
 
---- Looks for a fact in the agent's memory
---
--- @param test a test function of the form, <bool> test(key, fact),
---   where a true result means the fact we are looking for exists in
---   the table
--- @return true, key or false
-function Agent:hasFact(test)
-	for key, fact in pairs(self.memory) do
-		if test(key, fact) then
-			return true, key
-		end
-	end
-	return false
-end
-
---- get a known fact from Agent's memory
---
--- @param key [any] get the fact indexed by key
--- @return [table] return the fact
-function Agent:getFact(key)
-	return self.memory[key]
-end
-
---- add or overwrite a fact in the Agent's memory
---
--- @param key [any] value, if nil a key is generated
--- @param fact [table] the fact object to store
--- @return [any] the key where the fact was stored
-function Agent:setFact(key, fact)
-	local incctr = false
-
-	if key == nil then
-		incctr = true
-		key = self._factcntr
-	end
-	self.memory[key] = fact
-
-	if incctr then
-		self._factcntr = self._factcntr + 1
-	end
-	return key
-end
-
---- Deletes all facts where test returns true
---
--- @param test a test function of the form, <bool> test(key, fact),
---   where a true result causes the fact to be deleted
--- @return table of deleted facts
-function Agent:deleteFacts(test)
-	local deletedfacts = {}
-	for key, fact in pairs(self.memory) do
-		if test(key, fact) then
-			self.memory[key] = nil
-			deletedfacts[key] = fact
-		end
-	end
-	return deletedfacts
-end
-
---- Delete all facts in the Agent
-function Agent:deleteAllFacts()
-	self.memory = {}
-end
-
-local function no_filter()
-	return true
-end
-
---- Iterate over facts the Agent knows about.
---
--- @param filter a function of the form, <bool> func(obj), used to filter
---   facts returned by the iterator, filter must return true to include
---   the fact in the iteration.
--- @return an iterator to be used in a for loop
-function Agent:iterateFacts(filter)
-	filter = filter or no_filter
-	local function fnext(state, index)
-		local idx = index
-		local fact
-		repeat
-			idx, fact = next(state, idx)
-			if fact == nil then
-				return nil
-			end
-		until(filter(fact))
-		return idx, fact
-	end
-	return fnext, self.memory, nil
-end
-
 --- Iterate over DCS groups associated with this agent.
 --
 -- @param filter a function of the form, <bool> func(obj), used to filter
@@ -733,7 +650,7 @@ end
 --   the group in the iteration.
 -- @return an iterator to be used in a for loop
 function Agent:iterateGroups(filter)
-	filter = filter or no_filter
+	filter = filter or dctutils.no_filter
 	local function fnext(state, index)
 		local idx = index
 		local grp
@@ -755,7 +672,7 @@ end
 --   the unit in the iteration.
 -- @return an iterator to be used in a for loop
 function Agent:iterateUnits(filter)
-	filter = filter or no_filter
+	filter = filter or dctutils.no_filter
 	local units = {}
 	local function fnext(state, index)
 		local idx = index

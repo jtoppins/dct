@@ -56,7 +56,13 @@ local function validate_codenamedb(cfgdata, tbl)
 			string.format("invalid codename category '%s'; file: %s",
 			key, cfgdata.file))
 
-		local k = enum.assetType[string.upper(key)]
+		local upper = string.upper(key)
+		local k = enum.assetType[upper]
+
+		if k == nil then
+			k = enum.assetTypeDeprecated[upper]
+		end
+
 		if k ~= nil then
 			newkey = k
 		elseif key == "default" then

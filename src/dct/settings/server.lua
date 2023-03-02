@@ -120,16 +120,16 @@ local function servercfgs(config)
 	utils.readconfigs({
 		{
 			["name"] = "server",
-			["file"] = lfs.writedir()..utils.sep.."Config"..
-				utils.sep.."dct.cfg",
+			["file"] = lfs.writedir().."Config"..utils.sep..
+				   "dct.cfg",
 			["validate"] = validate_server_config,
 			["default"] = {
 				["debug"]       = _G.DCT_TEST or false,
 				["profile"]     = false,
 				["statepath"]   =
-					lfs.writedir()..utils.sep..vars.theater.."_"..
+					lfs.writedir()..vars.theater.."_"..
 					vars.sortie..".state",
-				["theaterpath"] = lfs.writedir()..utils.sep.."DCT"..
+				["theaterpath"] = lfs.writedir().."DCT"..
 					utils.sep.."theaters"..utils.sep..
 					vars.theater.."_"..vars.sortie,
 				["schedfreq"] = 2, -- hertz

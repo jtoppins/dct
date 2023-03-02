@@ -132,7 +132,6 @@ function DamageGoal:checkComplete()
 	end
 
 	local status = self:getStatus()
-	Logger:debug("checkComplete() - status: %.2f", status)
 
 	if status >= self._tgtdamage then
 		return self:_setComplete()
@@ -159,9 +158,11 @@ function DamageGoal:getStatus()
 			health = 0
 		end
 	end
-	Logger:debug("getStatus() - name: '%s'; health: %.2f; maxlife: %.2f",
-		self.name, health, self._maxlife)
-	return 1 - (health/self._maxlife)
+
+	local status =  1 - (health / self._maxlife)
+	Logger:debug("getStatus() - name: '%s'; status: %.2f; health: %.2f;"..
+		" maxlife: %.2f", self.name, status, health, self._maxlife)
+	return status
 end
 
 --[[

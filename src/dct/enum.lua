@@ -6,12 +6,6 @@ local enum = {}
 
 enum.DEFAULTCODENAME = "default codename"
 
-enum.geomtype = {
-	["CIRCLE"]    = 1,
-	["RECTANGLE"] = 2,
-	["POLYGON"]   = 3,
-}
-
 enum.objtype = {
 	["UNIT"]    = 1,
 	["STATIC"]  = 2,
@@ -31,151 +25,149 @@ enum.airbaserecovery = {
 enum.assetType = {
 	["INVALID"]     = 0,
 	-- resource types
-	["AMMODUMP"]    = 1,
-	["FUELDUMP"]    = 2,
-	["PORT"]        = 3,
-	["FACILITY"]    = 4,
-	["BUNKER"]      = 4,
-	["CHECKPOINT"]  = 4,
-	["FACTORY"]     = 4,
-	["C2"]          = 5,
-	["FOB"]         = 6,
+	["RESOURCE"]    = 1,  -- an agent that supplies resources to its
+			      -- commander; resources can be one or all
+			      -- of: ammo, supply
+	["AMMODUMP"]    = 2,
+	["FUELDUMP"]    = 3,
+	["C2"]          = 4,
+	["BUNKER"]      = 5,
+	["CHECKPOINT"]  = 6,
 
 	-- strategic assets
-	["MISSILE"]     = 10,
-	["OCA"]         = 11,
+	["MISSILE"]     = 11,
+	["OCA"]         = 12,
 
-	-- air defense
-	["BASEDEFENSE"] = 20,
-	["EWR"]         = 21,
-	["SAM"]         = 22,
-	["SHORAD"]      = 23,
+	-- Base assets accept character objects from an HQ and spawn
+	-- the characters into the world according to the base's specific
+	-- criteria
+	["ARMYBASE"]    = 21,
+	["AIRBASE"]     = 22,
+	["PORT"]        = 23,
+	["CV"]          = 24,
+	["HELOCARRIER"] = 25,
+	["FARP"]        = 26,
 
-	-- HQ's / bases
-	["AIRBASE"]        = 31,
-	["SQUADRONPLAYER"] = 32,
-	["SQUADRON"]       = 32,
+	-- Headquarters are children of Bases they are also the only
+	-- Agents the commander sends requests to.
+	["SQUADRON"]    = 31,
+	["ARMYGROUP"]   = 32,
+	["FLEET"]       = 33,
 
-	-- tactical land
-	["GROUND"]        = 41,
-	["LOGISTICS"]     = 41,
-	["SPECIALFORCES"] = 41,
-	["JTAC"]          = 42,
-
-	-- tactical sea
-	["SEA"]         = 51,
-	["CV"]          = 52,
-
-	-- tactical air
-	["AIRPLANE"]    = 61,
-	["HELO"]        = 62,
+	-- tactical units are the "game pieces", some can move and some
+	-- just occupy an area defined by their template.
+	["GROUND"]      = 41,
+	["JTAC"]        = 42,
+	["AIRPLANE"]    = 43,
+	["HELO"]        = 44,
+	["BASEDEFENSE"] = 45,
+	["EWR"]         = 46,
+	["SAM"]         = 47,
+	["SHORAD"]      = 48,
+	["INFANTRY"]    = 49,
+	["PILOT"]       = 50,
+	["SHIP"]        = 51,
 
 	-- players
 	["PLAYER"]      = 71,
 
 	-- control primitives
 	["SCRIPT"]      = 101,  -- no agent is associated, it is just a
-				-- template that spawns DCS objects
-	["NODE"]        = 102,
+				-- template that spawns DCS objects, the
+				-- objects are not even tracked or targetable
+	["NODE"]        = 102,  -- navigation points in the DCT object space
+				-- they can also be smartobjects and do things
+				-- like transmit a beacon
 }
 
-enum.missionType = {
-	["CAS"]        = 1,
-	["CAP"]        = 2,
-	["STRIKE"]     = 3,
-	["SEAD"]       = 4,
-	["BAI"]        = 5,
-	["OCA"]        = 6,
-	["ARMEDRECON"] = 7,
+enum.assetTypeDeprecated = {
+	["FACTORY"]        = 1,
+	["FACILITY"]       = 1,
+	["FOB"]            = 21,
+	["SQUADRONPLAYER"] = 31,
+	["LOGISTICS"]      = 41,
+	["SPECIALFORCES"]  = 41,
 }
-
-enum.squawkMissionType = {
-	[enum.missionType.CAP]        = 2,
-	[enum.missionType.SEAD]       = 3,
-	[enum.missionType.CAS]        = 5,
-	[enum.missionType.STRIKE]     = 5,
-	[enum.missionType.BAI]        = 5,
-	[enum.missionType.OCA]        = 5,
-	[enum.missionType.ARMEDRECON] = 5,
-}
-
-enum.squawkMissionSubType = {
-	[enum.missionType.STRIKE]     = 0,
-	[enum.missionType.OCA]        = 0,
-	[enum.missionType.BAI]        = 1,
-	[enum.missionType.ARMEDRECON] = 2,
-	[enum.missionType.CAS]        = 3,
-}
-
-for _, msntype in pairs(enum.missionType) do
-	assert(enum.squawkMissionType[msntype],
-		"not all mission types are mapped to squawk codes")
-end
 
 enum.assetClass = {
 	["INITIALIZE"] = {
+		[enum.assetType.RESOURCE]    = true,
 		[enum.assetType.AMMODUMP]    = true,
 		[enum.assetType.FUELDUMP]    = true,
 		[enum.assetType.C2]          = true,
-		[enum.assetType.EWR]         = true,
+		[enum.assetType.BUNKER]      = true,
+		[enum.assetType.CHECKPOINT]  = true,
 		[enum.assetType.MISSILE]     = true,
 		[enum.assetType.OCA]         = true,
-		[enum.assetType.PORT]        = true,
-		[enum.assetType.SAM]         = true,
-		[enum.assetType.FACILITY]    = true,
-		[enum.assetType.BUNKER]      = true,
-		[enum.assetType.CHECKPOINT]  = true,
-		[enum.assetType.FACTORY]     = true,
-		[enum.assetType.SHORAD]      = true,
+		[enum.assetType.ARMYBASE]    = true,
 		[enum.assetType.AIRBASE]     = true,
-		[enum.assetType.SPECIALFORCES] = true,
-		[enum.assetType.FOB]           = true,
-		[enum.assetType.LOGISTICS]     = true,
-	},
-	-- strategic list is used in calculating ownership of a region
-	-- among other things
-	["STRATEGIC"] = {
-		[enum.assetType.AMMODUMP]    = true,
-		[enum.assetType.FUELDUMP]    = true,
-		[enum.assetType.C2]          = true,
+		[enum.assetType.PORT]        = true,
+		[enum.assetType.CV]          = true,
+		[enum.assetType.HELOCARRIER] = true,
+		[enum.assetType.FARP]        = true,
+		[enum.assetType.GROUND]      = true,
+		[enum.assetType.JTAC]        = true,
+		[enum.assetType.AIRPLANE]    = true,
+		[enum.assetType.HELO]        = true,
 		[enum.assetType.EWR]         = true,
-		[enum.assetType.MISSILE]     = true,
-		[enum.assetType.PORT]        = true,
 		[enum.assetType.SAM]         = true,
-		[enum.assetType.FACILITY]    = true,
-		[enum.assetType.BUNKER]      = true,
-		[enum.assetType.CHECKPOINT]  = true,
-		[enum.assetType.FACTORY]     = true,
+		[enum.assetType.SHORAD]      = true,
+		[enum.assetType.SHIP]        = true,
+	},
+	["TACTICAL"] = {
+		[enum.assetType.MISSILE]     = true,
+		[enum.assetType.GROUND]      = true,
+		[enum.assetType.JTAC]        = true,
+		[enum.assetType.AIRPLANE]    = true,
+		[enum.assetType.HELO]        = true,
+		[enum.assetType.BASEDEFENSE] = true,
+		[enum.assetType.EWR]         = true,
+		[enum.assetType.SAM]         = true,
+		[enum.assetType.SHORAD]      = true,
+		[enum.assetType.INFANTRY]    = true,
+		[enum.assetType.SHIP]        = true,
+	},
+	["HQ"] = {
+		[enum.assetType.SQUADRON]    = true,
+		[enum.assetType.ARMYGROUP]   = true,
+		[enum.assetType.FLEET]       = true,
+	},
+	["SPAWNER"] = {
+		[enum.assetType.ARMYBASE]    = true,
 		[enum.assetType.AIRBASE]     = true,
-		[enum.assetType.FOB]         = true,
-	},
-	["AGENTS"] = {
-	},
-	["HEADQUARTERS"] = {
-		--[enum.assetType.SQUADRON] = true,
+		[enum.assetType.PORT]        = true,
+		[enum.assetType.CV]          = true,
+		[enum.assetType.HELOCARRIER] = true,
+		[enum.assetType.FARP]        = true,
 	},
 }
 
-enum.missionTypeMap = {
-	[enum.assetType.AMMODUMP]	= enum.missionType.STRIKE,
-	[enum.assetType.FUELDUMP]	= enum.missionType.STRIKE,
-	[enum.assetType.C2]		= enum.missionType.STRIKE,
-	[enum.assetType.MISSILE]	= enum.missionType.STRIKE,
-	[enum.assetType.PORT]		= enum.missionType.STRIKE,
-	[enum.assetType.FACILITY]	= enum.missionType.STRIKE,
-	[enum.assetType.BUNKER]		= enum.missionType.STRIKE,
-	[enum.assetType.CHECKPOINT]	= enum.missionType.STRIKE,
-	[enum.assetType.FACTORY]	= enum.missionType.STRIKE,
-	[enum.assetType.EWR]		= enum.missionType.SEAD,
-	[enum.assetType.SAM]		= enum.missionType.SEAD,
-	[enum.assetType.SHORAD]		= enum.missionType.SEAD,
-	[enum.assetType.OCA]		= enum.missionType.OCA,
-	[enum.assetType.AIRBASE]	= enum.missionType.OCA,
-	[enum.assetType.LOGISTICS]	= enum.missionType.BAI,
-	[enum.assetType.JTAC]		= enum.missionType.CAS,
-	[enum.assetType.SPECIALFORCES]	= enum.missionType.ARMEDRECON,
-	[enum.assetType.FOB]		= enum.missionType.ARMEDRECON,
-	[enum.assetType.SEA]		= enum.missionType.SEA,
+enum.missionType = {
+	["INVALID"]    = 0,
+	["MOVETO"]     = 11,
+
+	["GUARD"]      = 20,
+	["CAS"]        = 21,
+	["CAP"]        = 22,
+	["SEAD"]       = 23,
+	["TANKER"]     = 24,
+
+	["ATTACK"]     = 30,
+	["STRIKE"]     = 31,
+	["BAI"]        = 32,
+	["OCA"]        = 33,
+	["ANTISHIP"]   = 34,
+	["DEAD"]       = 35,
+	["ARMEDRECON"] = 36,
+
+	["SEARCH"]     = 40,
+	["RECON"]      = 41,
+	["INTERCEPT"]  = 42,
+	["ESCORT"]     = 43,
+
+	["TRANSPORT"]  = 50,
+	["CSAR"]       = 51,
+	["RESUPPLY"]   = 52,
 }
 
 enum.missionResult = {

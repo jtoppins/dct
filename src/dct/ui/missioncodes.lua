@@ -5,8 +5,8 @@
 -- from the radio menu UI
 --]]
 
-local enum    = require("dct.enum")
 local Theater = require("dct.Theater")
+local Mission = require("dct.libs.Mission")
 local addmenu = missionCommands.addSubMenuForGroup
 local addcmd  = missionCommands.addCommandForGroup
 
@@ -17,8 +17,8 @@ local function addEmptyCommand(gid, path)
 end
 
 local validFirstDigit = {}
-for _, m1 in pairs(enum.squawkMissionType) do
-	validFirstDigit[m1] = true
+for _, msn in pairs(Mission.typeData) do
+	validFirstDigit[msn.codeType] = true
 end
 
 local function createJoinCmds(gid, name, parentMenu, halfCode)
