@@ -44,7 +44,7 @@ local function main()
 	dctstubs.setModelTime(50)
 	dctstubs.runSched()
 
-	local expected = 34
+	local expected = 35
 	assert(dctcheck.spawngroups == expected,
 		string.format("group spawn broken; expected(%d), got(%d)",
 		expected, dctcheck.spawngroups))

@@ -84,10 +84,11 @@ function Commander:__init(theater, side)
 	theater:queueCommand(self.aifreq, Command(
 		"Commander("..tostring(self.owner)..").update",
 		self.update, self))
-	theater:getAssetMgr():addObserver(self.assethandler, self,
-		"Commander("..tostring(self.owner)..").assethandler")
+	--theater:getAssetMgr():addObserver(self.assethandler, self,
+	--	"Commander("..tostring(self.owner)..").assethandler")
 end
 
+--[[
 local function handle_asset_dead(cmdr, event)
 	cmdr.tgtlist[event.initiator.name] = nil
 end
@@ -112,6 +113,7 @@ function Commander:assethandler(event)
 		handler(self, event)
 	end
 end
+--]]
 
 function Commander:startIADS()
 	self.IADS = require("dct.systems.IADS")(self)
