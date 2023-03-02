@@ -1,5 +1,6 @@
 --- SPDX-License-Identifier: LGPL-3.0
 
+--[[
 local containers = require("libs.containers")
 local class      = require("libs.namedclass")
 local dctenum    = require("dct.enum")
@@ -89,3 +90,4 @@ function Commander:requestMission(grpname, missiontype)
 
 	return mission
 end
+--]]
