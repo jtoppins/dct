@@ -5,6 +5,7 @@
 -- from the radio menu UI
 --]]
 
+local dctenum = require("dct.enum")
 local Theater = require("dct.Theater")
 local Mission = require("dct.libs.Mission")
 local addmenu = missionCommands.addSubMenuForGroup
@@ -28,7 +29,7 @@ local function createJoinCmds(gid, name, parentMenu, halfCode)
 			addcmd(gid, string.format("Mission %s", missionCode), parentMenu,
 				Theater.playerRequest, {
 					["name"]  = name,
-					["type"]  = enum.uiRequestType.MISSIONJOIN,
+					["type"]  = dctenum.uiRequestType.MISSIONJOIN,
 					["value"] = missionCode,
 				}
 			)
