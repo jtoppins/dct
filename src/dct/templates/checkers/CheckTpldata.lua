@@ -170,13 +170,6 @@ function CheckTpldata:__init()
 			["description"] =
 			"",
 		},
-		["attributes"] = {
-			["agent"] = true,
-			["default"] = {},
-			["type"]    = Check.valuetype.TABLE,
-			["description"] = [[
-]],
-		},
 		["unitTypeCnt"] = {
 			["nodoc"] = true,
 			["default"] = {},
