@@ -1,6 +1,7 @@
 --- SPDX-License-Identifier: LGPL-3.0
 
 local class   = require("libs.namedclass")
+local utils   = require("libs.utils")
 local Check   = require("dct.templates.checkers.Check")
 local Agent   = require("dct.assets.Agent")
 
@@ -14,23 +15,27 @@ function CheckAgent:__init()
 			["type"]    = Check.valuetype.TABLEKEYS,
 			["values"]  = Agent.objectType["sensors"],
 			["description"] = [[
-			]],
+Sensors monitor the agent's state. The available sensors are:]],
 		},
 		["actions"] = {
 			["default"] = {},
 			["type"]    = Check.valuetype.TABLEKEYS,
 			["values"]  = Agent.objectType["actions"],
 			["description"] = [[
-			]],
+Actions are the set of action object the agent has available to it to
+manipulate its state to a desired goal state. The follow list of actions
+are:]],
 		},
 		["goals"] = {
 			["default"] = {},
 			["type"]    = Check.valuetype.TABLEKEYS,
 			["values"]  = Agent.objectType["goals"],
 			["description"] = [[
-			]],
+Goals represent desired world states that an Agent attempts to achieve. The
+following goals are available:]],
 		},
-	})
+	},[[Agents are DCT assets that can think and will react to various
+stimuli that occur in the theater.]])
 end
 
 function CheckAgent:check(data)
@@ -47,7 +52,7 @@ function CheckAgent:check(data)
 
 	for k, _ in pairs(self.options) do
 		if next(data[k]) == nil then
-			data[k] = defaults[k]
+			data[k] = utils.deepcopy(defaults[k])
 		end
 	end
 	return true

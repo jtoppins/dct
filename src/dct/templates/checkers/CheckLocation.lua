@@ -20,15 +20,31 @@ end
 
 local CheckLocation = class("CheckLocation", Check)
 function CheckLocation:__init()
-	Check.__init(self, "Location")
+	Check.__init(self, "Common", {
+		["location"] = {
+			["agent"] = true,
+			["type"] = Check.valuetype.TABLE,
+			["description"] = [[
+The location is defined as `x` is the east-west DCS location value while
+`y` is the north-south DCS value.
+
+_Note: These values cannot be lat-long or degrees decimal corrdinates, they
+much be DCS internal map coordinates._]],
+		},
+	})
 end
+
+local noloc = {
+	[dctenum.assetType.SQUADRON]   = true,
+	[dctenum.assetType.ARMYGROUP]  = true,
+	[dctenum.assetType.FLEET]      = true,
+}
 
 function CheckLocation:check(data)
 	local loc = data.location
 
 	if loc == nil or next(loc) == nil then
-		if data.objtype == dctenum.assetType.AIRBASE or
-		   data.objtype == dctenum.assetType.SQUADRONPLAYER then
+		if noloc[data.objtype] == true then
 			return true
 		end
 

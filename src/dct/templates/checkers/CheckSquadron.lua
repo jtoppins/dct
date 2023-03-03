@@ -93,6 +93,8 @@ function CheckSquadron:check(data)
 		return ok, key, msg
 	end
 
+	data.rename = false
+
 	return check_ato(data)
 end
 

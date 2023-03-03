@@ -1,6 +1,7 @@
 --- SPDX-License-Identifier: LGPL-3.0
 
 local class = require("libs.namedclass")
+local utils = require("libs.utils")
 local Logger = dct.Logger.getByName("Template")
 
 local rc = {
@@ -45,8 +46,12 @@ local function check_int(data, key)
 	return true, val
 end
 
-local function check_range(--[[data, key, values]])
-	-- TODO: write this
+local function check_range(data, key, values)
+	local val = tonumber(data[key])
+
+	if values[1] <= val and data[key] <= val then
+		return true, val
+	end
 	return false
 end
 
@@ -92,7 +97,7 @@ local checktbl = {
 }
 
 local Check = class("Check")
-function Check:__init(section, options)
+function Check:__init(section, options, description)
 	options = options or {}
 
 	for key, val in pairs(options) do
@@ -103,6 +108,7 @@ function Check:__init(section, options)
 		end
 	end
 	self.section = section
+	self.description = description
 	self.options = options
 end
 
@@ -128,7 +134,7 @@ function Check:check(data)
 		if data[key] == nil and option.default == nil then
 			return false, key, texttbl[rc.REQUIRED]
 		elseif data[key] == nil and option.default ~= nil then
-			data[key] = option.default
+			data[key] = utils.deepcopy(option.default)
 		else
 			local ok, value =
 				checktbl[option.type](data, key, option.values)
@@ -174,6 +180,7 @@ end
 function Check:doc()
 	local d = {
 		["section"] = self.section,
+		["description"] = self.description,
 		["options"] = self.options,
 	}
 

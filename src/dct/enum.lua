@@ -5,6 +5,8 @@
 local enum = {}
 
 enum.DEFAULTCODENAME = "default codename"
+enum.DEFAULTNAME  = "auto"
+enum.DEFAULTRANGE = -1
 
 enum.objtype = {
 	["UNIT"]    = 1,
@@ -87,59 +89,6 @@ enum.assetTypeDeprecated = {
 	["SQUADRONPLAYER"] = 31,
 	["LOGISTICS"]      = 41,
 	["SPECIALFORCES"]  = 41,
-}
-
-enum.assetClass = {
-	["INITIALIZE"] = {
-		[enum.assetType.RESOURCE]    = true,
-		[enum.assetType.AMMODUMP]    = true,
-		[enum.assetType.FUELDUMP]    = true,
-		[enum.assetType.C2]          = true,
-		[enum.assetType.BUNKER]      = true,
-		[enum.assetType.CHECKPOINT]  = true,
-		[enum.assetType.MISSILE]     = true,
-		[enum.assetType.OCA]         = true,
-		[enum.assetType.ARMYBASE]    = true,
-		[enum.assetType.AIRBASE]     = true,
-		[enum.assetType.PORT]        = true,
-		[enum.assetType.CV]          = true,
-		[enum.assetType.HELOCARRIER] = true,
-		[enum.assetType.FARP]        = true,
-		[enum.assetType.GROUND]      = true,
-		[enum.assetType.JTAC]        = true,
-		[enum.assetType.AIRPLANE]    = true,
-		[enum.assetType.HELO]        = true,
-		[enum.assetType.EWR]         = true,
-		[enum.assetType.SAM]         = true,
-		[enum.assetType.SHORAD]      = true,
-		[enum.assetType.SHIP]        = true,
-	},
-	["TACTICAL"] = {
-		[enum.assetType.MISSILE]     = true,
-		[enum.assetType.GROUND]      = true,
-		[enum.assetType.JTAC]        = true,
-		[enum.assetType.AIRPLANE]    = true,
-		[enum.assetType.HELO]        = true,
-		[enum.assetType.BASEDEFENSE] = true,
-		[enum.assetType.EWR]         = true,
-		[enum.assetType.SAM]         = true,
-		[enum.assetType.SHORAD]      = true,
-		[enum.assetType.INFANTRY]    = true,
-		[enum.assetType.SHIP]        = true,
-	},
-	["HQ"] = {
-		[enum.assetType.SQUADRON]    = true,
-		[enum.assetType.ARMYGROUP]   = true,
-		[enum.assetType.FLEET]       = true,
-	},
-	["SPAWNER"] = {
-		[enum.assetType.ARMYBASE]    = true,
-		[enum.assetType.AIRBASE]     = true,
-		[enum.assetType.PORT]        = true,
-		[enum.assetType.CV]          = true,
-		[enum.assetType.HELOCARRIER] = true,
-		[enum.assetType.FARP]        = true,
-	},
 }
 
 enum.missionType = {

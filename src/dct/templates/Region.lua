@@ -30,6 +30,29 @@ local STATUS = {
 	["BLUE"]      = coalition.side.BLUE,
 }
 
+local initasset = {
+	[dctenum.assetType.RESOURCE]    = true,
+	[dctenum.assetType.AMMODUMP]    = true,
+	[dctenum.assetType.FUELDUMP]    = true,
+	[dctenum.assetType.C2]          = true,
+	[dctenum.assetType.BUNKER]      = true,
+	[dctenum.assetType.CHECKPOINT]  = true,
+	[dctenum.assetType.MISSILE]     = true,
+	[dctenum.assetType.OCA]         = true,
+	[dctenum.assetType.ARMYBASE]    = true,
+	[dctenum.assetType.AIRBASE]     = true,
+	[dctenum.assetType.PORT]        = true,
+	[dctenum.assetType.CV]          = true,
+	[dctenum.assetType.HELOCARRIER] = true,
+	[dctenum.assetType.FARP]        = true,
+	[dctenum.assetType.GROUND]      = true,
+	[dctenum.assetType.JTAC]        = true,
+	[dctenum.assetType.EWR]         = true,
+	[dctenum.assetType.SAM]         = true,
+	[dctenum.assetType.SHORAD]      = true,
+	[dctenum.assetType.SHIP]        = true,
+}
+
 local function processlimits(_, tbl)
 	-- process limits; convert the human readable asset type names into
 	-- their numerical equivalents.
@@ -369,7 +392,7 @@ function Region:generate()
 	local assetmgr = dct.Theater.singleton():getAssetMgr()
 	local tpltypes = utils.deepcopy(self._tpltypes)
 
-	for objtype, _ in pairs(dctenum.assetClass.INITIALIZE) do
+	for objtype, _ in pairs(initasset) do
 		local names = tpltypes[objtype]
 		if names ~= nil then
 			self:_generate(assetmgr, objtype, names)

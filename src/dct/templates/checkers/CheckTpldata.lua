@@ -63,42 +63,40 @@ local function goalFromName(name, objtype)
 end
 
 local function overrideUnitOptions(unit, key, tpl, basename)
-	local unitdesc = Unit.getDescByName(unit.type)
-
-	if unit.playerCanDrive ~= nil then
-		unit.playerCanDrive = false
-	end
-
-	unit.unitId = nil
 	unit.dct_deathgoal = goalFromName(unit.name, Goal.objtype.UNIT)
 	if unit.dct_deathgoal ~= nil then
 		tpl.hasDeathGoals = true
 	end
-	unit.name = basename.."-"..key
+
+	if tpl.overwrite == true then
+		unit.unitId = nil
+		unit.name = basename.."-"..key
+
+		if unit.playerCanDrive ~= nil then
+			unit.playerCanDrive = false
+		end
+	end
 
 	if tpl.unitTypeCnt[unit.type] == nil then
 		tpl.unitTypeCnt[unit.type] = 0
+
+		local unitdesc = Unit.getDescByName(unit.type)
+		if unitdesc ~= nil then
+			utils.mergetables(tpl.attributes, unitdesc.attributes)
+		end
 	end
 	tpl.unitTypeCnt[unit.type] = tpl.unitTypeCnt[unit.type] + 1
-
-	if unitdesc ~= nil then
-		utils.mergetables(tpl.attributes, unitdesc.attributes)
-	end
 end
+
+local _opts = {
+	visible        = true,
+	uncontrollable = true,
+	lateActivation = false,
+}
 
 local function overrideGroupOptions(grp, idx, tpl)
 	if grp.category == dctenum.UNIT_CAT_SCENERY then
 		return
-	end
-
-	local opts = {
-		visible        = true,
-		uncontrollable = true,
-		lateActivation = false,
-	}
-
-	for k, v in pairs(opts) do
-		if grp[k] ~= nil then grp[k] = v end
 	end
 
 	local objtype = Goal.objtype.GROUP
@@ -106,17 +104,25 @@ local function overrideGroupOptions(grp, idx, tpl)
 		objtype = Goal.objtype.STATIC
 	end
 
-	grp.data.groupId = nil
-	grp.data.unitId  = nil
-	grp.data.start_time = 0
 	grp.data.dct_deathgoal = goalFromName(grp.data.name, objtype)
 	if grp.data.dct_deathgoal ~= nil then
 		tpl.hasDeathGoals = true
 	end
-	local side = coalition.getCountryCoalition(grp.countryid)
-	grp.data.name = string.format("%s %d %s %d",
-		tpl.name, side,
-		utils.getkey(Unit.Category, grp.category), idx)
+
+	if tpl.overwrite == true then
+		for k, v in pairs(_opts) do
+			if grp.data[k] ~= nil then grp.data[k] = v end
+		end
+
+		grp.data.start_time = 0
+		grp.data.groupId = nil
+		grp.data.unitId  = nil
+
+		grp.data.name = string.format("%s %d %s %d",
+			tpl.name,
+			coalition.getCountryCoalition(grp.countryid),
+			utils.getkey(Unit.Category, grp.category), idx)
+	end
 
 	for i, unit in ipairs(grp.data.units or {}) do
 		overrideUnitOptions(unit, i, tpl, grp.data.name)
@@ -155,21 +161,60 @@ function CheckTpldata:__init()
 		["tpldata"] = {
 			["agent"] = true,
 			["type"]  = Check.valuetype.TABLE,
-			["description"] =
-			"",
+			["description"] = [[
+For templates that are not associated with an STM file the format of
+`tpldata` follows:
+
+```lua
+tpldata = {
+	# = {
+		category  = Unit.Category,
+		countryid = id,
+		data      = {
+			# group def members
+			dct_deathgoal = goalspec
+		},
+	}
+}
+```
+
+`tpldata` is a LUA list where each list entry is as shown above; `category`,
+`countryid`, and `data`.
+
+ * `category` - is a value from the `Unit.Category` table
+ * `countryid` - is the numerical id of the country the
+   static/group belongs to
+ * `data` - is the actual static/group definition in a format that is
+   expected by `coalition.addGroup()` and `coalition.addStatic()`]],
 		},
 		["buildings"] = {
 			["default"] = {},
 			["type"]    = Check.valuetype.TABLE,
-			["description"] =
-			"",
+			["description"] = [[
+Allows the campaign designer to specify scenery objects as part of the
+template. The definition is a list of scenery objects that should
+be included as part of the template, an example from the Persian Gulf
+map;
+
+```lua
+buildings = {
+	{
+		["name"] = "building 1",
+		["goal"] = "primary destroyed",
+		["id"]   = 109937143,
+	},
+}
+```
+
+Where `name` is the name of the scenery object (is arbitrary and only
+referenced in DCT for error reporting), `goal` conforms to the textual
+[goalspec](#death-goal-specification-goalspec), and `id` is the map
+specific object id which can be obtained from the mission editor.]],
 		},
-		["attributes"] = {
-			["agent"] = true,
+		["unitTypeCnt"] = {
+			["nodoc"] = true,
 			["default"] = {},
-			["type"]    = Check.valuetype.TABLE,
-			["description"] =
-			"",
+			["type"] = Check.valuetype.TABLE,
 		},
 		["hasDeathGoals"] = {
 			["nodoc"] = true,
@@ -177,15 +222,29 @@ function CheckTpldata:__init()
 			["default"] = false,
 			["type"] = Check.valuetype.BOOL,
 		},
-	})
+		["overwrite"] = {
+			["nodoc"] = true,
+			["default"] = true,
+			["type"] = Check.valuetype.BOOL,
+			["description"] = [[
+Controls if various items of the template data is removed from the
+template.]],
+		},
+		["rename"] = {
+			["nodoc"] = true,
+			["default"] = true,
+			["type"] = Check.valuetype.BOOL,
+			["description"] = [[
+Controls if the name of the generated Agent gets renamed to include the
+region name.]]
+		},
+	}, [[Describes the actual DCS object that will be spawned/tracked
+in association with an asset created from this template.]])
 end
 
 local notpldata = {
 	[dctenum.assetType.AIRBASE]     = true,
 	[dctenum.assetType.SQUADRON]    = true,
-	-- player groups do have tpldata, it is here as we do not
-	-- want to remove any data from the template definition
-	[dctenum.assetType.PLAYER] = true,
 }
 
 function CheckTpldata:check(data)
@@ -193,20 +252,11 @@ function CheckTpldata:check(data)
 		return true
 	end
 
-	data.hasDeathGoals = false
-
-	if data.attributes == nil then
-		data.attributes = {}
-	end
-
-	if data.unitTypeCnt == nil then
-		data.unitTypeCnt = {}
-	end
-
 	check_buildings(data)
 
-	if data.tpldata == nil then
-		return false, "tpldata", Check.reasontext[Check.rc.REQUIRED]
+	local ok, key, msg = Check.check(self, data)
+	if not ok then
+		return ok, key, msg
 	end
 
 	-- loop over all tpldata and process names and existence of
@@ -214,6 +264,15 @@ function CheckTpldata:check(data)
 	for idx, grp in ipairs(data.tpldata) do
 		overrideGroupOptions(grp, idx, data)
 	end
+
+	-- get the max speed for the template which is the minimum
+	-- speedMax entry for all unit types in the template
+	local maxspeed = 100000000
+	for typename, _ in pairs(data.unitTypeCnt) do
+		local desc = Unit.getDescByName(typename)
+		maxspeed = math.min(maxspeed, desc.speedMax)
+	end
+	data.speedMax = maxspeed
 
 	return true
 end
