@@ -92,7 +92,7 @@ local checktbl = {
 }
 
 local Check = class("Check")
-function Check:__init(section, options)
+function Check:__init(section, options, description)
 	options = options or {}
 
 	for key, val in pairs(options) do
@@ -103,6 +103,7 @@ function Check:__init(section, options)
 		end
 	end
 	self.section = section
+	self.description = description
 	self.options = options
 end
 
@@ -174,6 +175,7 @@ end
 function Check:doc()
 	local d = {
 		["section"] = self.section,
+		["description"] = self.description,
 		["options"] = self.options,
 	}
 
