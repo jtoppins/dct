@@ -1,6 +1,6 @@
 -- SPDX-License-Identifier: LGPL-3.0
 
---- @classmod Agent
+--- @classmod dct.assets.Agent
 -- Agent interface. Provides a common API for interacting with
 -- underlying DCS groups.
 

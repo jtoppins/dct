@@ -9,7 +9,7 @@ local Marshallable = require("dct.libs.Marshallable")
 local Region       = require("dct.templates.Region")
 local settings = dct.settings.server
 
---- @class RegionManager
+--- RegionManager
 -- Keeps a collection of Region classes and allows for easy lookup
 -- of a Region within the collection.
 --

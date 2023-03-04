@@ -130,7 +130,7 @@ local function validate(data)
 	return true
 end
 
---- @class Template
+--- Template
 -- Represents a game template from which one or many game assets can be
 -- created.
 local Template = class("Template")
