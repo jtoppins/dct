@@ -1229,9 +1229,21 @@ function trigger.action.outTextForGroup(grpid, msg, time, bool)
 	end
 end
 
-function trigger.action.markToGroup(
-	_, _, _, _, _, _
-	--[[id, title, pos, grpid, readonly, msg]])
+function trigger.action.markToAll(id, msg) --, pos, readonly)
+	assert(type(id) == "number", "value error: id must be a number")
+	assert(type(msg) == "string", "value error: msg must be a string")
+
+	logfile:write(os.date("%F %X ")..string.format("MARKA   %d;%s\n",
+						       id, msg))
+end
+
+function trigger.action.markToGroup(id, msg, _--[[pos]], grpid, _--[[readonly]])
+	assert(type(id) == "number", "value error: id must be a number")
+	assert(type(msg) == "string", "value error: msg must be a string")
+	assert(type(grpid) == "number", "value error: grpid must be a number")
+
+	logfile:write(os.date("%F %X ")..string.format("MARKG   %d;%s\n",
+						       id, msg))
 end
 
 function trigger.action.removeMark(_ --[[id]])

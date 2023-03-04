@@ -191,6 +191,14 @@ The maximum speed of the slowest unit in the the template. Otherwise can
 be used as a switch to not include various features of an Agent, like
 movement actions if speedMax is zero.]]
 		},
+		["debug"] = {
+			["default"] = 0,
+			["type"] = Check.valuetype.INT,
+			["description"] = [[
+Applies the DebugSensor to the Agent to periodically display debug
+data about the agent. If the value is greater than zero it will enable
+debug and set the refresh rate for the sensor in seconds.]],
+		},
 		["ammo"] = {
 			["default"] = 0,
 			["type"] = Check.valuetype.INT,

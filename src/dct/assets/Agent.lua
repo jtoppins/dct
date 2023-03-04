@@ -169,6 +169,20 @@ local function set_ai_objects(agent, template)
 	end
 end
 
+local agentmt = {}
+function agentmt.__tostring(agent)
+	local action
+
+	if agent._plan ~= nil then
+		action = agent._plan.action
+	end
+
+	return string.format("N:%s, T:%s, G:%s, A:%s",
+			     agent.name,
+			     utils.getkey(dctenum.assetType, agent.type),
+			     tostring(agent:getGoal()),
+			     tostring(action))
+end
 
 --- Agent interface. Provides a common API for interacting with
 -- underlying DCS groups.
@@ -198,7 +212,8 @@ end
 -- @field _dead [bool] is the Agent dead?
 -- @field _plangraph graph of actions the agent can use, is configured in
 --     the setup() method.
-local Agent = class("Agent", Marshallable, Memory, Observable, Subordinates)
+local Agent = utils.override_ops(class("Agent", Marshallable, Memory,
+				       Observable, Subordinates), agentmt)
 function Agent:__init()
 	Marshallable.__init(self)
 	Observable.__init(self, AgentLogger(self))

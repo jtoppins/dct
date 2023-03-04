@@ -181,9 +181,20 @@ function PlayerMsgFact:__init(msg, delay)
 	ValueFact.__init(self, factType.PLAYERMSG, msg, nil, delay)
 end
 
---- @class WorldState
--- Represents an abstract symbol state relative to the agent
-local WorldState = class("dct-worldstate", goap.WorldState)
+local wsmt = {}
+function wsmt.__tostring(ws)
+	local tbl = {}
+
+	for _, v in ws:iterate() do
+		tbl[v.id] = v.value
+	end
+
+	return require("libs.json"):encode(tbl)
+end
+
+--- Represents an abstract symbol state relative to the agent
+local WorldState = utils.override_ops(class("dct-worldstate",
+					    goap.WorldState), wsmt)
 function WorldState.createAll()
 	local ws = WorldState()
 	for _, v in pairs(id) do
@@ -214,8 +225,12 @@ function actionmt.__lt(self, other)
 	return self.order < other.order
 end
 
---- @class Action
--- A simple Action interface. Represents a discrete set of tasks
+function actionmt.__tostring(action)
+	return string.format("%s(%d)", action.__clsname or "__unknown__",
+			     action.order)
+end
+
+--- A simple Action interface. Represents a discrete set of tasks
 -- to be done that achieve a given state.
 --
 -- @field agent [obj] reference to owning agent object
@@ -243,9 +258,13 @@ function Action:isComplete()
 	return true
 end
 
---- @class Goal
+local goalmt = {}
+function goalmt.__tostring(tbl)
+	return tbl.__clsname or "__unknown__"
+end
+
 -- A simple Goal interface that represents a desired world state.
-local Goal = class("Goal", Observable)
+local Goal = utils.override_ops(class("Goal", Observable), goalmt)
 function Goal:__init(desiredws, weight, iaus)
 	Observable.__init(self)
 	self.desiredws = desiredws

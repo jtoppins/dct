@@ -55,6 +55,13 @@ function CheckAgent:check(data)
 			data[k] = utils.deepcopy(defaults[k])
 		end
 	end
+
+	if data.debug > 0 then
+		data.sensors["DebugSensor"] = 0
+	else
+		data.sensors["DebugSensor"] = nil
+	end
+
 	return true
 end
 
