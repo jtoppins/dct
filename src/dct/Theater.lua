@@ -59,17 +59,17 @@ local function isStateValid(state)
 end
 
 
---- @class Systems
+--- Systems
 -- Component system. Defines a generic way for initializing components
 -- of the system without directly tying the two systems together.
 -- A system can provide the following methods:
 --
--- @function __init initialization only init local system data,
+-- function __init initialization only init local system data,
 --   do not depend on external systems
--- @function marshal all the system's data for serialization
--- @function unmarshal initializes the system from the saved data
--- @function generate all assets, guarentees all Templates are read
--- @function postinit run after __init and generate, guarantees all
+-- function marshal all the system's data for serialization
+-- function unmarshal initializes the system from the saved data
+-- function generate all assets, guarentees all Templates are read
+-- function postinit run after __init and generate, guarantees all
 --   assets are generated and all templates have been loaded
 local Systems = class("System")
 function Systems:__init()
@@ -132,7 +132,7 @@ function Systems:addSystem(path)
 end
 
 
---- @class Theater
+--- Theater
 -- base class that reads in all region and template information
 -- and provides a base interface for manipulating data at a theater
 -- level.
