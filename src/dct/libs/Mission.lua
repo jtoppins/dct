@@ -1,60 +1,70 @@
---- SPDX-License-Identifier: LGPL-3.0
+-- SPDX-License-Identifier: LGPL-3.0
+
+--- @classmod dct.libs.Mission
+-- Represents a series of goals to be completed.
 
 local class      = require("libs.namedclass")
+local utils      = require("libs.utils")
 local dctenum    = require("dct.enum")
 local dctutils   = require("dct.libs.utils")
-local Timer      = require("dct.libs.Timer")
 local Observable = require("dct.libs.Observable")
 local DCTEvents  = require("dct.libs.DCTEvents")
+local Subordinates = require("dct.libs.Subordinates")
+local Memory     = require("dct.libs.Memory")
 
-local function goal_complete(msn, _ --[[event]])
-	msn.goalq:pophead()
-	if msn:goal() == nil then
-		msn:notify(dctutils.buildevent.missionDone(msn,
-			dctenum.missionResult.SUCCESS))
-		return
-	end
-	msn:notify(dctutils.buildevent.missionUpdate(msn))
+local missionmt = {}
+function missionmt.__tostring(tbl)
+	return tbl.__clsname or "__unknown__"
 end
 
---- @class Mission
--- Represents a series of goals to be completed.
---
--- @cmdr reference to controlling commander
--- @type type of mission
--- @goalq queue of mission WS.Goal objects
--- @iffcodes base set of IFF codes used for this mission
--- @id ID of the mission
--- @facts set of facts (intel and targets) that will be passed to agents
---        that get assigned to the mission
--- @_assigned list of Agents assigned to this Mission
--- @_assignedcnt total number of Agents assigned to this Mission
--- @_timer timeout timer
-local Mission = class("Mission", Observable, DCTEvents)
-function Mission:__init(cmdr, missiontype, goalq, timeout)
+--- Mission class definition. The following members are part of a class
+-- instance.
+-- @field cmdr reference to controlling commander
+-- @field id ID of the mission
+-- @field goalq queue of mission WS.Goal objects
+-- @field facts set of facts (intel and targets) that will be passed
+--  to agents that get assigned to the mission
+-- @field _playable controls if a player can be assigned to this mission
+-- @field _assigned list of Agents assigned to this Mission
+-- @field _assignedcnt total number of Agents assigned to this Mission
+-- @field _timer timeout timer
+local Mission = utils.override_ops(class("Mission", Observable, DCTEvents,
+				Subordinates, Memory), missionmt)
+function Mission:__init(msntype, cmdr, goalq, timer)
 	Observable.__init(self)
 	DCTEvents.__init(self)
+	Subordinates.__init(self)
+	Memory.__init(self)
 	self.cmdr         = cmdr
-	self.type         = missiontype
 	self.goalq        = goalq
-	self.iffcodes     = cmdr:genMissionCodes(missiontype)
-	self.id           = self.iffcodes.id
-	self.facts        = {}
+	self.id           = cmdr:missionNextID()
+	self.type         = msntype
+	self._playable    = false
 	self._assigned    = {}
 	self._assignedcnt = 0
-	self._timer       = Timer(timeout, timer.getAbsTime)
+	self._timer       = timer
 
 	self:_overridehandlers({
-		[dctenum.event.DCT_EVENT_GOAL_COMPLETE] = goal_complete,
+		[dctenum.event.DCT_EVENT_GOAL_COMPLETE] =
+			self.eventGoalComplete,
 	})
-	for _, g in self.goalq:iterate() do
-		g:addObserver(self.onDCTEvent, self, string.format(
+
+	if goalq then
+		local g = goalq:peekhead()
+
+		if g then
+			g:addObserver(self.onDCTEvent, self, string.format(
 			"Misison(%s).onDCTEvent", self.__clsname))
+		end
 	end
 
 	self.typeData = nil
+	self.factFilter = nil
+	self.factPrefix = nil
 end
 
+--- typeData provides human readable mission information for all air
+-- missions.
 Mission.typeData = {
 	[dctenum.missionType.CAS] = {
 		["name"]        = "Close Air Support",
@@ -175,6 +185,39 @@ Mission.typeData = {
 	},
 }
 
+--- factPrefix is the fact key prefix used when adding mission facts
+-- to a participating agent.
+Mission.factPrefix = "mission_intel"
+
+--- Determines if the given fact is a mission fact. This function can
+-- be used in various functions defined in dct.libs.Memory.
+--
+-- @param key the fact key from the agent
+function Mission.factTest(key)
+	if string.match(key, Mission.factPrefix) ~= nil then
+		return true
+	end
+	return false
+end
+
+--- event handler used when one of the mission's goals is completed
+function Mission:eventGoalComplete(_--[[event]])
+	local g = self.goalq:pophead()
+
+	g:removeObserver(self)
+	g = self.goalq:peekhead()
+
+	if g == nil then
+		self:notify(dctutils.buildevent.missionDone(self,
+			dctenum.missionResult.SUCCESS))
+		return
+	end
+
+	g:addObserver(self.onDCTEvent, self, string.format(
+		      "Misison(%s).onDCTEvent", self.__clsname))
+	self:notify(dctutils.buildevent.missionUpdate(self))
+end
+
 --- remove any references or return any targets that may have been
 -- assigned back to the commander before the Misison object is destroyed.
 function Mission:destroy()
@@ -190,24 +233,8 @@ end
 --- get the current Mission goal
 --
 -- @return the current Mission WS.Goal
-function Mission:goal()
+function Mission:goal(_ --[[agent]])
 	return self.goalq:peekhead()
-end
-
---- determines if the Mission is currently active
---
--- @return bool true if Mission is active/started
-function Mission:active()
-	return self._timer:started()
-end
-
---- Start the Mission timer
-function Mission:start()
-	if self._timer:started() then
-		return
-	end
-	self._timer:start()
-	self:notify(dctutils.buildevent.missionStart(self))
 end
 
 --- Aborts a mission for all observers of the mission.
@@ -216,57 +243,52 @@ function Mission:abort()
 		dctenum.missionResult.ABORT))
 end
 
---- return the time at which this Mission will expire
---
--- @return time at which the Mission will expire
-function Mission:getTimeout()
-	local remain, ctime = self.timer:remain()
-	return ctime + remain
+--- Get any timer assigned to the mission.
+function Mission:getTimer()
+	return self._timer
 end
 
---- add time in seconds the Mission should be extended by
---
--- @param time seconds to extend the Mission by
--- @return amount of time the mission was extended by
-function Mission:addTime(time)
-	self._timer:extend(time)
-	return time
+--- Set mission timeout timer.
+function Mission:setTimer(timer)
+	self._timer = timer
 end
 
---- get the IFF code for the given Agent
---
--- @agent the Agent to look up the IFF codes for
--- @return the Agent's assigned IFF codes
-function Mission:getIFFCodes(agent)
-	if agent == nil then
-		return nil
-	end
-	return self._assigned[agent.name]
+--- Is this mission playable by players.
+function Mission:isPlayable()
+	return self._playable
 end
 
---- return the table of assigned Agent names
+--- Interate over Agents assigned to this mission
 --
--- @return table of Agent names where key is Agent.name and value is the
---         Agent's IFF code
-function Mission:getAssigned()
-	return self._assigned
+-- @return an iterator to be used in a for loop where key is
+--  Agent.name and value is the order in which the agent was
+--  assigned to the mission
+function Mission:iterateAssigned()
+	return next, self._assigned, nil
+end
+
+--- Tests if a given agent is assigned to this mission.
+--
+-- @param agent reference to agent to test
+function Mission:isAssigned(agent)
+	return self._assigned[agent.name] ~= nil
 end
 
 --- Assign a new Agent to the Mission
 --
 -- @param agent to assign to this Mission
-function Mission:add(agent)
+function Mission:assign(agent)
 	self:notify(dctutils.buildevent.missionJoin(self, agent))
 	self._assignedcnt = self._assignedcnt + 1
 	self:addObserver(agent.onDCTEvent, agent, agent.name)
-	local cnt = self._assignedcnt % 8
-	local m1 = string.format("%o", self.iffcodes.m1)
-	local m3 = string.format("%o", self.iffcodes.m3 + cnt)
-	self._assigned[agent.name] = { ["m1"] = m1, ["m3"] = m3 }
+	self._assigned[agent.name] = self._assignedcnt
 	agent:setMission(self)
 
-	-- TODO: add all mission facts to agent and for target(s)
-	-- add the agent as an observer for the target.
+	local intel = 0
+	for _, fact in self:iterateFacts() do
+		agent:setFact(Mission.factPrefix..intel, fact)
+		intel = intel + 1
+	end
 end
 
 --- Remove Agent from this Mission
@@ -279,9 +301,7 @@ function Mission:remove(agent)
 	self:removeObserver(agent)
 	self._assigned[agent.name] = nil
 	self._assignedcnt = self._assignedcnt - 1
-
-	-- TODO: remove all mission facts from the agent and for target(s)
-	-- remove the agent as an observer for those targets.
+	agent:deleteFacts(Mission.factTest)
 
 	-- abort the mission once no one is assigned
 	if self._assignedcnt <= 0 then
@@ -293,6 +313,10 @@ end
 
 --- Update function which is periodically run
 function Mission:update()
+	if self._timer == nil then
+		return
+	end
+
 	self._timer:update()
 	if self._timer:expired() then
 		self:notify(dctutils.buildevent.missionDone(self,
