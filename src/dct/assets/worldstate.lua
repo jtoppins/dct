@@ -1,4 +1,6 @@
---- SPDX-License-Identifier: LGPL-3.0
+-- SPDX-License-Identifier: LGPL-3.0
+
+--- WorldState describes an Agent's view of the world.
 
 local utils      = require("libs.utils")
 local check      = require("libs.check")
@@ -68,8 +70,7 @@ local factKey = {
 	["LOSETICKET"]    = "loseticket",
 }
 
---- @class Attribute
--- An abstract container generalizing a property of a fact.
+--- An abstract container generalizing a property of a fact.
 local Attribute = class("Attribute")
 function Attribute:__init(value, confidence)
 	self.value = value or 0
@@ -125,8 +126,7 @@ function CharacterFact:__init(obj, importance, objtype)
 				   "dctenum.objtype"))
 end
 
---- @class NodeFact
--- Represents a point/area in the world the agents knows about. Optionally
+--- Represents a point/area in the world the agents knows about. Optionally
 -- can have a path to the node.
 local NodeFact = class("NodeFact", Fact)
 function NodeFact:__init(node, importance, ntype, path)
@@ -144,8 +144,7 @@ NodeFact.nodeType = {
 	["STATION"]    = 2, -- a guard position
 }
 
---- @class StimuliFact
--- Some sort of disturbance the Agent detects that can trigger an change
+--- Some sort of disturbance the Agent detects that can trigger an change
 -- in plan/response.
 local StimuliFact = class("StimuliFact", Fact)
 function StimuliFact:__init(stimtype, intensity)
@@ -161,16 +160,14 @@ StimuliFact.stimType = {
 	["CONTACT"]   = 3, -- like a radar contact
 }
 
---- @class EventFact
--- Agent received an event from the world and needs to react to it.
+--- Agent received an event from the world and needs to react to it.
 local EventFact = class("EventFact", Fact)
 function EventFact:__init(event)
 	Fact.__init(self, factType.EVENT)
 	self.event = Attribute(event)
 end
 
---- @class ValueFact
--- Normalized value [0,1] representing something.
+--- Normalized value [0,1] representing something.
 local ValueFact = class("ValueFact", Fact)
 function ValueFact:__init(t, val, conf, delay)
 	Fact.__init(self, t)
@@ -178,8 +175,7 @@ function ValueFact:__init(t, val, conf, delay)
 	self.delay = delay
 end
 
---- @class PlayerMsgFact
--- Message fact that needs to be displayed to the player.
+--- Message fact that needs to be displayed to the player.
 local PlayerMsgFact = class("PlayerMsgFact", ValueFact)
 function PlayerMsgFact:__init(msg, delay)
 	ValueFact.__init(self, factType.PLAYERMSG, msg, nil, delay)
@@ -226,8 +222,8 @@ end
 -- @field order [int] defines the sort order the action will appear in the
 --   plan, a higher number means later in the plan. The default is 1.
 --
--- @note See lua-libs Action object for descriptions of fields
---   cost, precond, effects, and methods.
+-- lua-libs Action object for descriptions of fields cost, precond,
+-- effects, and methods.
 local Action = utils.override_ops(class("Action", goap.Action),
 	actionmt)
 function Action:__init(agent, cost, precond, effects, order)
@@ -242,7 +238,7 @@ function Action:enter()
 end
 
 --- Determine if the action is complete.
--- @return <bool>, true action is complete
+-- @return bool, true action is complete
 function Action:isComplete()
 	return true
 end
@@ -268,7 +264,7 @@ end
 --- Calculates the relevance of a goal for a particular agent's
 -- current state.
 --
--- @return <number> the priority at which this goal should be
+-- @return number the priority at which this goal should be
 --  considered, higher is more important. Zero disables the goal.
 function Goal:relevance(agent)
 	local score = self.weight
@@ -286,35 +282,34 @@ function sensormt.__lt(self, other)
 	return self.order < other.order
 end
 
---- @class Sensor
 -- Defines the Sensor interface.
 --
 -- @field agent [ref] reference to owning agent
 -- @field order [int] defines the order of execution of the sensor's update
 --     function, a larger number means the sensor will be updated later
 --
--- @method __init(agent, order)
--- @optionalmethod void  setup()
+-- __init(agent, order)
+-- void  setup()
 --    Does any setup needed, called to finalize an Agent's construction.
 --    Also, is called when unmarshalling an Agent object.
--- @optionalmethod table marshal()
+-- table marshal()
 --    Called when Agent:marshal() is called. Is called before the Agent's
 --    data is marshalled. This gives the Sensor the opportunity to "fixup"
 --    any Agent data. The Sensor can store additional data in the agent.
--- @optionalmethod void  onDCTEvent(event)
+-- void  onDCTEvent(event)
 --    Called when the Agent receives an event
--- @optionalmethod bool  update()
+-- bool  update()
 --    Called periodically by the Agent. If the function returns true this
 --    terminates further processing of sensors that have update functions.
--- @optionalmethod void  spawn()
+-- void  spawn()
 --    Spawn any DCS object the sensor may need. The Agent's spawned flag is
 --    still false and Sensor should not relying on anything external to it.
--- @optionalmethod void  spawnPost()
+-- void  spawnPost()
 --    Take any post spawning actions. The Agent's spawned flag is true and
 --    Sensor can rely on data obtained from the Agent object.
--- @optionalmethod void  despawn()
+-- void  despawn()
 --    Same as spawn() except in reverse.
--- @optionalmethod void  despawnPost()
+-- void  despawnPost()
 --    Same as spawnPost().
 local Sensor = utils.override_ops(class("Sensor"), sensormt)
 function Sensor:__init(agent, order)
