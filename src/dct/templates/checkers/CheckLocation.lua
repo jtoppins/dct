@@ -26,10 +26,11 @@ function CheckLocation:__init()
 			["type"] = Check.valuetype.TABLE,
 			["description"] = [[
 The location is defined as `x` is the east-west DCS location value while
-`y` is the north-south DCS value.
+`y` is the north-south DCS value. The value will attempt to be auto-calculated
+but some types require this field be set by the designer.
 
-_Note: These values cannot be lat-long or degrees decimal corrdinates, they
-much be DCS internal map coordinates._]],
+_Note: These values cannot be lat-long or degrees decimal coordinates, they
+must be DCS internal map coordinates._]],
 		},
 	})
 end
