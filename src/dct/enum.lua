@@ -93,13 +93,16 @@ enum.assetTypeDeprecated = {
 
 enum.missionType = {
 	["INVALID"]    = 0,
-	["MOVETO"]     = 11,
+
+	["MOVETO"]     = 10,
+	["JTAC"]       = 11,
 
 	["GUARD"]      = 20,
 	["CAS"]        = 21,
 	["CAP"]        = 22,
 	["SEAD"]       = 23,
 	["TANKER"]     = 24,
+	["AWACS"]      = 25,
 
 	["ATTACK"]     = 30,
 	["STRIKE"]     = 31,
@@ -108,6 +111,7 @@ enum.missionType = {
 	["ANTISHIP"]   = 34,
 	["DEAD"]       = 35,
 	["ARMEDRECON"] = 36,
+	["SWEEP"]      = 37,
 
 	["SEARCH"]     = 40,
 	["RECON"]      = 41,

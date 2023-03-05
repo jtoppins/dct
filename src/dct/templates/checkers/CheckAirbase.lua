@@ -76,6 +76,10 @@ function CheckAirbase:check(data)
 
 	data.rename = false
 
+	if data.objtype == dctenum.assetType.AIRBASE then
+		data.notpldata = true
+	end
+
 	local ok, key, msg = Check.check(self, data)
 	if not ok then
 		return ok, key, msg
