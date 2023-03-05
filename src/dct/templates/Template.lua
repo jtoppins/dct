@@ -223,10 +223,11 @@ local value_header = {
 local function is_required(option)
 	local s = " - _required:_ "
 
-	if option.default then
+	if option.default ~= nil then
 		s = s.."no"
 
-		if not option.default == "" then
+		if not (option.default == "") and
+		   type(option.default) ~= "table" then
 			s = s.."\n - _default:_ "..tostring(option.default)
 		end
 	else
@@ -246,6 +247,10 @@ local function option_summary(option)
 	summary = summary.."\n"
 	if option.agent then
 		summary = summary.." - _agent:_ true\n"
+	end
+	if option.deprecated then
+		summary = summary.."\n_NOTE: this option has been "..
+			  "deprecated._\n"
 	end
 	return summary
 end
