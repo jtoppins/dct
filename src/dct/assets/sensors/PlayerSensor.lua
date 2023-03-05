@@ -75,8 +75,9 @@ function PlayerSensor:isEnabled()
 end
 
 function PlayerSensor:doEnable()
-	trigger.action.setUserFlag(self.agent.name, self:isEnabled())
-	self._logger:debug("setting enable flag: %s", tostring(self:isEnabled()))
+	local enabled = self:isEnabled()
+	trigger.action.setUserFlag(self.agent.name, enabled)
+	self.agent._logger:debug("isEnabled(%s)", tostring(enabled))
 end
 
 function PlayerSensor:postFact(key, fact)
@@ -187,7 +188,6 @@ function PlayerSensor:update()
 		return false
 	end
 
-	self.timer:reset()
 	self:doEnable()
 
 	if not dctutils.isalive(self.agent.name) then
@@ -196,6 +196,8 @@ function PlayerSensor:update()
 						       self)))
 	end
 
+	self.timer:reset()
+	self.timer:start()
 	return false
 end
 

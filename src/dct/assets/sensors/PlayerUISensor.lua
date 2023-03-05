@@ -65,7 +65,6 @@ function PlayerUISensor:update()
 	if not self.timer:expired() then
 		return false
 	end
-	self.timer:reset()
 
 	local modeltime = timer.getTime()
 	if modeltime > self.lastsent then
@@ -85,6 +84,8 @@ function PlayerUISensor:update()
 	-- TODO: draw any F10 elements the player has requested and are
 	--       pending in memory
 
+	self.timer:reset()
+	self.timer:start()
 	return false
 end
 
