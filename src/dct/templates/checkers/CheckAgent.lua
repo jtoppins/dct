@@ -2,10 +2,15 @@
 
 local class   = require("libs.namedclass")
 local utils   = require("libs.utils")
+local dctenum = require("dct.enum")
 local Check   = require("dct.templates.checkers.Check")
 local Agent   = require("dct.assets.Agent")
 
-local notagent = {}
+local notagent = {
+	[dctenum.assetType.INVALID] = true,
+	[dctenum.assetType.SCRIPT]  = true,
+	[dctenum.assetType.NODE]    = true,
+}
 
 local CheckAgent = class("CheckAgent", Check)
 function CheckAgent:__init()
@@ -34,7 +39,7 @@ are:]],
 Goals represent desired world states that an Agent attempts to achieve. The
 following goals are available:]],
 		},
-	},[[Agents are DCT assets that can think and will react to various
+	}, [[Agents are DCT assets that can think and will react to various
 stimuli that occur in the theater.]])
 end
 

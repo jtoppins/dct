@@ -35,6 +35,8 @@ for _, assettype in pairs(dctenum.assetType) do
 	agents[assettype] = static
 end
 
+agents[dctenum.assetType.INVALID]     = nil
+agents[dctenum.assetType.NODE]        = nil
 agents[dctenum.assetType.BASEDEFENSE] = airdefense
 agents[dctenum.assetType.EWR]         = airdefense
 agents[dctenum.assetType.SAM]         = airdefense
