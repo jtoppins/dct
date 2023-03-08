@@ -8,36 +8,44 @@ local Check    = require("dct.templates.checkers.Check")
 
 local takeoffvalues = {
 	["INAIR"]   = {
-		["value"] = AI.Task.WaypointType.TURNING_POINT,
+		["value"] = 1,
 		["description"] = [[
 aircraft will depart the field already in the air above the field at 1500ft]],
 	},
 	["RUNWAY"]  = {
-		["value"] = AI.Task.WaypointType.TAKEOFF,
-		["description"] = "aircraft will depart from the runway",
+		["value"] = 2,
+		["description"] = [[aircraft will depart from the runway]],
 	},
 	["PARKING"] = {
-		["value"] = AI.Task.WaypointType.TAKEOFF_PARKING,
-		["description"] =
-			"aircraft will depart the airfield from parking cold",
+		["value"] = 3,
+		["description"] = [[
+aircraft will depart the airfield from ramp parking only cold]],
+	},
+	["GROUND"] = {
+		["value"] = 4,
+		["description"] = [[
+aircraft will depart the airfield from ramp parking if fixed wing and from
+ground spots, if defined, for helicopters.]]
 	},
 }
 
 local landingvalues = {
 	["TERMINAL"] = {
-		["value"] = dctenum.airbaserecovery.TERMINAL,
+		["value"] = 1,
 		["description"] = [[
 aircraft will get within 10nm of the airbase before despawning]],
 	},
 	["LAND"]     = {
-		["value"] = dctenum.airbaserecovery.LAND,
+		["value"] = 2,
 		["description"] = [[
-when the aircraft land event fires the plane will be despawned]],
+aircraft will land on the runway or ramp helipads only and immediately
+despawn 30 seconds after doing so]],
 	},
 	["TAXI"]     = {
-		["value"] = dctenum.airbaserecovery.TAXI,
+		["value"] = 3,
 		["description"] = [[
-the aircraft will be despawned after 5 minutes of the land event firing]],
+aircraft will land using runway or helipads, including ground spots, and
+be despawned after 5 minutes of the land event firing]],
 	},
 }
 
@@ -45,20 +53,31 @@ local CheckAirbase = class("CheckAirbase", Check)
 function CheckAirbase:__init()
 	Check.__init(self, "Airbase", {
 		["takeoff"] = {
-			["default"] = "inair",
+			["default"] = takeoffvalues.INAIR.value,
 			["type"]    = Check.valuetype.VALUES,
 			["values"]  = takeoffvalues,
 			["description"] = [[
 This allows the mission designer to specify how AI aircraft will depart the
-field. The possible options are:]],
+field. The possible options are:
+
+%VALUES%
+
+If any airbase does not have any suitable parking spots, after exclusion
+set is applied, then this option will be forced to runway departures.
+Ground spots are only used for helicopters.]],
 		},
 		["recovery"] = {
-			["default"] = "terminal",
+			["default"] = landingvalues.TERMINAL.value,
 			["type"]    = Check.valuetype.VALUES,
 			["values"]  = landingvalues,
 			["description"] = [[
 This allows the mission designer to specify how AI aircraft will recover at
-the field. The possible options are:]],
+the field. The possible options are:
+
+%VALUES%
+
+Ground spots, if defined, will only be used for helicopters and only if
+recovery is land or taxi.]],
 		},
 	})
 end

@@ -6,6 +6,6 @@ subordinates = {
 	"VMFA251",
 }
 desc = "Kutaisi"
-recoverytype = "land"
-takeofftype = "runway"
+recovery = "land"
+takeoff = "runway"
 cost = 20

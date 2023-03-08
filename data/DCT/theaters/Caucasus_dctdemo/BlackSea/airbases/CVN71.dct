@@ -5,6 +5,6 @@ subordinates = {
 	"VF102",
 }
 desc = "CVN-71 Theodore Roosevelt"
-recoverytype = "land"
-takeofftype = "runway"
+recovery = "land"
+takeoff = "runway"
 cost = 20

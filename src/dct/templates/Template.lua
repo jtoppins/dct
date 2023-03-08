@@ -227,8 +227,21 @@ local function is_required(option)
 		s = s.."no"
 
 		if not (option.default == "") and
-		   type(option.default) ~= "table" then
+		   type(option.default) ~= "table" and
+		   option.type ~= Checker.valuetype.VALUES then
 			s = s.."\n - _default:_ "..tostring(option.default)
+		elseif option.type == Checker.valuetype.VALUES then
+			local found = nil
+			for key, data in pairs(option.values) do
+				if data.value == option.default then
+					found = key
+					break
+				end
+			end
+
+			if found ~= nil then
+				s = s.."\n - _default:_ "..tostring(found)
+			end
 		end
 	else
 		s = s.."yes"
@@ -260,14 +273,20 @@ local function option_description(option)
 
 	if option.type == Checker.valuetype.VALUES or
 	   option.type == Checker.valuetype.TABLEKEYS then
-		desc = desc.."\n"
+		local values = ""
 		for k, v in utils.sortedpairs(option.values) do
-			desc = desc.." - `"..k.."`"
+			values = values.." - `"..k.."`"
 			if option.type == Checker.valuetype.VALUES then
-				desc = desc.." - "..v.description
+				values = values.." - "..v.description
 			end
-			desc = desc.."\n"
+			values = values.."\n"
 		end
+		local len = string.len(values)
+		values = string.sub(values, 1, len - 1)
+
+		desc = dctutils.interp(desc, {
+			["VALUES"] = values,
+		})
 	end
 	return desc
 end

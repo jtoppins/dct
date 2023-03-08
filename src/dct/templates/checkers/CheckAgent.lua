@@ -20,7 +20,9 @@ function CheckAgent:__init()
 			["type"]    = Check.valuetype.TABLEKEYS,
 			["values"]  = Agent.objectType["sensors"],
 			["description"] = [[
-Sensors monitor the agent's state. The available sensors are:]],
+Sensors monitor the agent's state. The available sensors are:
+
+%VALUES%]],
 		},
 		["actions"] = {
 			["default"] = {},
@@ -29,7 +31,9 @@ Sensors monitor the agent's state. The available sensors are:]],
 			["description"] = [[
 Actions are the set of action object the agent has available to it to
 manipulate its state to a desired goal state. The follow list of actions
-are:]],
+are:
+
+%VALUES%]],
 		},
 		["goals"] = {
 			["default"] = {},
@@ -37,7 +41,9 @@ are:]],
 			["values"]  = Agent.objectType["goals"],
 			["description"] = [[
 Goals represent desired world states that an Agent attempts to achieve. The
-following goals are available:]],
+following goals are available:
+
+%VALUES%]],
 		},
 	}, [[Agents are DCT assets that can think and will react to various
 stimuli that occur in the theater.]])

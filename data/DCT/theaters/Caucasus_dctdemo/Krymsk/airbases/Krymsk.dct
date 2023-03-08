@@ -7,6 +7,6 @@ subordinates = {
 	"42TAB",
 }
 desc = "Krymsk"
-recoverytype = "land"
-takeofftype = "runway"
+recovery = "land"
+takeoff = "runway"
 cost = 20
