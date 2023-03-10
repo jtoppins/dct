@@ -78,14 +78,14 @@ function PlayerKick:enter()
 		self.agent:setDead(true)
 	end
 
-	-- tell the player sensor the agent has sync'ed its state
-	kickfact.event.psensor:setSync(true)
-	kickfact.event.psensor:doEnable()
-
 	-- clear all facts from agent
 	self.factkey = nil
 	self.agent:deleteAllFacts()
 	self.agent:WS():get(WS.ID.REACTEDTOEVENT).value = true
+
+	-- tell the player sensor the agent has sync'ed its state
+	kickfact.event.psensor:setSync(true)
+	kickfact.event.psensor:doEnable()
 end
 
 return PlayerKick
