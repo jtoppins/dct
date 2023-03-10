@@ -14,7 +14,7 @@ local Observable = require("dct.libs.Observable")
 local id = {
 	["IDLE"]        = "idle",        -- <bool>
 	["INAIR"]       = "inAir",       -- <bool>
-	["DAMAGED"]     = "damaged",     -- <bool>
+	["HEALTH"]      = "health",      -- <enum> WS.Health
 	["HASAMMO"]     = "hasAmmo",     -- <bool>
 	["HASFUEL"]     = "hasFuel",     -- <bool>
 	["HASCARGO"]    = "hasCargo",    -- <bool>
@@ -30,6 +30,12 @@ local id = {
 	["STANCE"]      = "stance",      -- <enum>
 	["REACTEDTOEVENT"]    = "reactedToEvent",    -- <bool>
 	["DISTURBANCEEXISTS"] = "disturbanceExists", -- <stim-type>
+}
+
+local healthType = {
+	["DEAD"]        = 1, -- agent is dead
+	["DAMAGED"]     = 2, -- combat ineffective, repairs needed
+	["OPERATIONAL"] = 3, -- agent is combat effective
 }
 
 --- Stance types the agent can have
@@ -201,6 +207,8 @@ function WorldState.createAll()
 		local val = false
 		if v == id.STANCE then
 			val = stanceType.DEFAULT
+		elseif v == id.HEALTH then
+			val = healthType.OPERATIONAL
 		elseif v == id.ROE then
 			val = -1
 		elseif v == id.HASFUEL or v == id.IDLE or
@@ -350,6 +358,7 @@ _ws.Facts = {
 }
 _ws.ID = id
 _ws.Stance = stanceType
+_ws.Health = healthType
 _ws.Property = goap.Property
 _ws.WorldState = WorldState
 _ws.Action = Action

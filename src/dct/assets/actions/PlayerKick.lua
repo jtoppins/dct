@@ -75,7 +75,7 @@ function PlayerKick:enter()
 		flagname, self.kickfact.event.code)
 
 	if losefact and losefact.value.value then
-		self.agent:setDead(true)
+		self.agent:setHealth(WS.Health.DEAD)
 	end
 
 	-- clear all facts from agent

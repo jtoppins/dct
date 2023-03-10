@@ -12,10 +12,10 @@ local RunwayRepair = require("libs.namedclass")("RunwayRepair", WS.Action)
 function RunwayRepair:__init(agent, cost)
 	WS.Action.__init(self, agent, cost or 10, {
 		-- pre-conditions
-		WS.Property(WS.ID.DAMAGED, true),
+		WS.Property(WS.ID.HEALTH, WS.Health.DAMAGED),
 	}, {
 		-- effects
-		WS.Property(WS.ID.DAMAGED, false),
+		WS.Property(WS.ID.HEALTH, WS.Health.OPERATIONAL),
 	}, 100)
 	self.timer = Timer(REPAIR_TIME)
 end
@@ -38,7 +38,7 @@ function RunwayRepair:isComplete()
 		return false
 	end
 
-	self.agent:WS():get(WS.ID.DAMAGED).value = false
+	self.agent:WS():get(WS.ID.HEALTH).value = WS.Health.OPERATIONAL
 	return true
 end
 

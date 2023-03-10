@@ -103,7 +103,8 @@ function RunwaySensor:handleImpact(event)
 
 	for _, rwy in ipairs(self._runways) do
 		if rwy:contains(event.point) then
-			self.agent:WS():get(WS.ID.DAMAGED).value = true
+			self.agent:WS():get(WS.ID.HEALTH).value =
+				WS.Health.DAMAGED
 			self.agent:replan()
 			break
 		end
