@@ -11,13 +11,14 @@ local enum  = require("dct.enum")
 local vector = require("dct.libs.vector")
 local utils = {}
 
+utils.INTELMAX = 5
+utils.COALITION_CONTESTED = -1
+
 local enemymap = {
 	[coalition.side.NEUTRAL] = false,
 	[coalition.side.BLUE]    = coalition.side.RED,
 	[coalition.side.RED]     = coalition.side.BLUE,
 }
-
-utils.INTELMAX = 5
 
 function utils.getenemy(side)
 	return enemymap[side]
