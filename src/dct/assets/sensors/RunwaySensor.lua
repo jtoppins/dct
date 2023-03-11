@@ -1,7 +1,9 @@
 -- SPDX-License-Identifier: LGPL-3.0
 
 local class      = require("libs.namedclass")
+local utils      = require("libs.utils")
 local dctenum    = require("dct.enum")
+local dctutils   = require("dct.libs.utils")
 local vector     = require("dct.libs.vector")
 local DCTEvents  = require("dct.libs.DCTEvents")
 local WS         = require("dct.assets.worldstate")
@@ -70,30 +72,33 @@ end
 -- a weapon impacted within the runway's boundary.
 local RunwaySensor = class("RunwaySensor", WS.Sensor, DCTEvents)
 function RunwaySensor:__init(agent)
-	WS.Sensor.__init(self, agent, 15)
+	WS.Sensor.__init(self, agent, 5)
 	DCTEvents.__init(self)
 
-	self._expmass  = agent:getDescKey("expmass_threshold")
+	self._expmass  = 30
 	self._runways  = {}
+
 	self:_overridehandlers({
 		[dctenum.event.DCT_EVENT_IMPACT] = self.handleImpact,
 	})
 end
 
-function RunwaySensor:setup()
-	local ab = Airbase.getByName(self.agent.name)
+function RunwaySensor:setAgentHealth(health)
+	local healthenum = WS.Health.OPERATIONAL
 
-	if ab == nil then
-		self.agent._logger:error("is not a DCS Airbase")
-		self.agent:setDead(true)
-		return
+	health = utils.clamp(health, 0, 1)
+	self.agent:setFact(WS.Facts.factKey.HEALTH,
+		WS.Facts.Value(WS.Facts.factType.HEALTH, health, 1.0))
+
+	if health < 1 then
+		healthenum = WS.Health.DAMAGED
 	end
+	self.agent:setHealth(healthenum)
+end
 
-	local rwys = ab:getRunways() or {}
-
-	for _, rwy in pairs(rwys) do
-		table.insert(self._runways, Runway(rwy))
-	end
+function RunwaySensor:marshal()
+	self.agent.desc.runwayhealth =
+		self.agent:getFact(WS.Facts.factKey.HEALTH).value.value
 end
 
 function RunwaySensor:handleImpact(event)
@@ -103,12 +108,31 @@ function RunwaySensor:handleImpact(event)
 
 	for _, rwy in ipairs(self._runways) do
 		if rwy:contains(event.point) then
-			self.agent:WS():get(WS.ID.HEALTH).value =
-				WS.Health.DAMAGED
+			self:setAgentHealth(0)
 			self.agent:replan()
 			break
 		end
 	end
+end
+
+function RunwaySensor:spawnPost()
+	local ab = Airbase.getByName(self.agent.name)
+
+	if ab == nil then
+		self.agent._logger:info("Deleting Agent as underlying DCS"..
+					"Airbase doesn't exist")
+		self.agent:setHealth(WS.Health.DEAD)
+		return
+	end
+
+	local rwys = ab:getRunways() or {}
+
+	for _, rwy in pairs(rwys) do
+		table.insert(self._runways, Runway(rwy))
+	end
+
+	self.agent:setDescKey("hasRunway", next(self._runways) ~= nil)
+	self:setAgentHealth(self.agent.desc.runwayhealth or 1)
 end
 
 return RunwaySensor
