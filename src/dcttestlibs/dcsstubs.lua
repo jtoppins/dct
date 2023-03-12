@@ -1273,3 +1273,17 @@ function land.getHeight(_ --[[vec2]])
 	return 10
 end
 _G.land = land
+
+local atmosphere = {}
+function atmosphere.getWind(_ --[[point]])
+	return { y = 0, x = 2.17, z = 3.058 }
+end
+
+function atmosphere.getWindWithTurbulence(_ --[[point]])
+	return { y = 0.0336, 2.17, z = 3.058 }
+end
+
+function atmosphere.getTemperatureAndPressure(_ --[[point]])
+	return 293.15, 101325
+end
+_G.atmosphere = atmosphere
