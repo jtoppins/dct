@@ -1278,7 +1278,9 @@ land.SurfaceType = {
 	["RUNWAY"]        = 5,
 }
 
-function land.getHeight(_ --[[vec2]])
+function land.getHeight(vec2)
+	assert(vec2.x)
+	assert(vec2.y)
 	return 10
 end
 _G.land = land

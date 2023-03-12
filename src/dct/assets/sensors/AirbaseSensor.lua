@@ -3,12 +3,23 @@
 local class       = require("libs.namedclass")
 local dctenum     = require("dct.enum")
 local dctutils    = require("dct.libs.utils")
+local vector      = require("dct.libs.vector")
 local Timer       = require("dct.libs.Timer")
 local DCTEvents   = require("dct.libs.DCTEvents")
 local WS          = require("dct.assets.worldstate")
 local aitasks     = require("dct.ai.tasks")
 local UPDATE_TIME = 60
 local NAVAID_REFRESH = 5
+
+local function create_spot_fact(self, spot)
+	local obj = {}
+	obj.id   = spot.Term_Index
+	obj.type = spot.Term_Type
+
+	local node = WS.Facts.Node(obj, 1, WS.Facts.Node.nodeType.PARKING)
+	node.position = WS.Attribute(vector.Vector3D(spot.vTerminalPos))
+	self.agent:setFact("parking"..spot.Term_Index, node)
+end
 
 --- @classmod AirbaseSensor
 -- Represents an Airbase. Airbases can be captured and have various
@@ -135,6 +146,27 @@ function AirbaseSensor:notifyOperational()
 		dctutils.buildevent.operational(self.agent, operational))
 end
 
+function AirbaseSensor:getRampSpots()
+	local ab = Airbase.getByName(self.agent.name)
+
+	if ab == nil or Object.getCategory(ab) ~= Object.Category.UNIT then
+		return
+	end
+
+	local ramp_exclude = self.agent:getDescKey("ramp_exclude")
+	local ground_spots = self.agent:getDescKey("ground_spots")
+
+	for _, spot in ipairs(ab:getParking(true) or {}) do
+		if ramp_exclude[spot.Term_Index] == nil then
+			create_spot_fact(self, spot)
+		end
+	end
+
+	for _, spot in pairs(ground_spots) do
+		create_spot_fact(self, spot)
+	end
+end
+
 function AirbaseSensor:setup()
 	self:setSilent(true)
 end
@@ -147,6 +179,7 @@ end
 function AirbaseSensor:spawnPost()
 	self.timer:reset()
 	self.timer:start()
+	self:getRampSpots()
 	self:notifyOperational()
 end
 

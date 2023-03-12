@@ -16,12 +16,6 @@ enum.objtype = {
 	["AGENT"]   = 5,
 }
 
-enum.airbaserecovery = {
-	["TERMINAL"] = 1,
-	["LAND"]     = 2,
-	["TAXI"]     = 3,
-}
-
 -- this is really the template type, it has no bearing on the underlying
 -- object used
 enum.assetType = {
@@ -139,6 +133,28 @@ enum.uiRequestType = {
 	["CHECKPAYLOAD"]    = 11,
 	["MISSIONJOIN"]     = 12,
 	["REQUESTREARM"]    = 13,
+}
+
+enum.parkingType = {
+	["GROUND"]      = 1,
+	["RUNWAY"]      = 16,
+	["HELO"]        = 40,
+	["HARDSHELTER"] = 68,
+	["AIRPLANE"]    = 72,
+	["OPENAIR"]     = 104,
+}
+
+enum.airbaseTakeoff = {
+	["INAIR"]   = 1,
+	["RUNWAY"]  = 2,
+	["PARKING"] = 3,
+	["GROUND"]  = 4,
+}
+
+enum.airbaseRecovery = {
+	["TERMINAL"] = 1,
+	["LAND"]     = 2,
+	["TAXI"]     = 3,
 }
 
 enum.weaponCategory = {

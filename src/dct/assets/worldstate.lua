@@ -151,6 +151,7 @@ NodeFact.nodeType = {
 	["INVALID"]    = 0,
 	["RALLYPOINT"] = 1, -- a node that can be retreated to
 	["STATION"]    = 2, -- a guard position
+	["PARKING"]    = 3, -- a parking spot at an airbase
 }
 
 --- Some sort of disturbance the Agent detects that can trigger an change
