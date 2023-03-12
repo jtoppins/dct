@@ -18,6 +18,7 @@ function AirbaseSensor:__init(agent)
 	WS.Sensor.__init(self, agent, 50)
 	DCTEvents.__init(self)
 	self.timer = Timer(UPDATE_TIME)
+	self.navaid_counter = 0
 
 	local handlers = {}
 
@@ -42,6 +43,65 @@ AirbaseSensor.linkmap = {
 	[dctenum.assetType.FARP]    = "helipadId",
 }
 
+function AirbaseSensor:activateNavaids(ab)
+	if ab == nil or Object.getCategory(ab) ~= Object.Category.UNIT then
+		return
+	end
+
+	local tasklist = {}
+	local atc = self.agent:getDescKey("atc")
+	local tacan = self.agent:getDescKey("tacan")
+	local icls = self.agent:getDescKey("icls")
+
+	if atc then
+		table.insert(tasklist, aitasks.wraptask(
+			aitasks.command.setFrequency(atc.frequency,
+						     atc.modulation)))
+	end
+
+	if tacan then
+		table.insert(tasklist, aitasks.wraptask(
+			aitasks.command.createTACAN(ab,
+						    tacan.callsign,
+						    tacan.channel,
+						    tacan.mode, nil,
+						    false, true, false)))
+	end
+
+	if icls then
+		table.insert(tasklist, aitasks.wraptask(
+			aitasks.command.activateICLS(ab, icls)))
+	end
+
+	aitasks.execute(Unit.getController(ab), tasklist)
+end
+
+function AirbaseSensor:deactivateNavaids(ab)
+	if ab == nil or Object.getCategory(ab) ~= Object.Category.UNIT then
+		return
+	end
+
+	aitasks.execute(Unit.getController(ab), {
+		aitasks.command.deactivateBeacon()
+	})
+end
+
+function AirbaseSensor:refreshNavaids()
+	local ab = Airbase.getByName(self.agent.name)
+
+	if ab == nil or Object.getCategory(ab) ~= Object.Category.UNIT then
+		return
+	end
+
+	self.navaid_counter = self.navaid_counter + 1
+	if (self.navaid_counter % NAVAID_REFRESH) ~= 0 then
+		return
+	end
+
+	self.navaid_counter = 0
+	self:activateNavaids(ab)
+end
+
 --- An airbase is defined to be operational if its health state is
 -- operational and it is spawned.
 function AirbaseSensor:isOperational()
@@ -58,6 +118,12 @@ function AirbaseSensor:setSilent(silent)
 
 	if ab then
 		ab:setRadioSilentMode(silent)
+
+		if silent then
+			self:deactivateNavaids(ab)
+		else
+			self:activateNavaids(ab)
+		end
 	end
 end
 
@@ -98,6 +164,21 @@ function AirbaseSensor:handleCapture(event)
 	self.agent._logger:debug("captured - setting dead")
 	self:setSilent(true)
 	self.agent:setHealth(WS.Health.DEAD)
+end
+
+function AirbaseSensor:update()
+	self.timer:update()
+	if not self.timer:expired() then
+		return false
+	end
+
+	if self.isOperational() then
+		self:refreshNavaids()
+	end
+
+	self.timer:reset()
+	self.timer:start()
+	return false
 end
 
 return AirbaseSensor

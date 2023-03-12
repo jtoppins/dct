@@ -323,29 +323,6 @@ utils.notifymsg =
 	"Please read the loadout limits in the briefing and "..
 	"use the F10 Menu to validate your loadout before departing."
 
-function utils.calcTACANFreq(chan, mode)
-	local aienum = require("dct.ai.enum")
-	check.range(chan, 1, 126)
-	check.tblkey(mode, aienum.BEACON.TACANMODE, "BEACON.TACANMODE")
-	local A = 1151
-	local B = 64
-
-	if chan < 64 then
-		B = 1
-	end
-	if mode == aienum.BEACON.TACANMODE.Y then
-		A = 1025
-		if chan < 64 then
-			A = 1088
-		end
-	else
-		if chan < 64 then
-			A = 962
-		end
-	end
-	return (A + chan - B) * 1000000
-end
-
 utils.buildevent = {}
 --- DEAD definition:
 --   id = id of this event

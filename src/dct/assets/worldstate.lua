@@ -41,10 +41,12 @@ local healthType = {
 --- Stance types the agent can have
 local stanceType = {
 	["DEFAULT"]   = "default",    -- whatever the setting were at spawn
+	["MOVING"]    = "moving",     -- agent is relocating
 	["FLEEING"]   = "fleeing",    -- running away, weapons hold
 	["GUARDING"]  = "guarding",   -- combat ready, weapons engage per tasking
 	["SEARCHING"] = "searching",  -- not combat ready, sensors on
 	["ATTACKING"] = "attacking",  -- fangs out
+	["LAUNCHING"] = "launching",  -- agent is launching aircraft
 }
 
 --- Fact types
