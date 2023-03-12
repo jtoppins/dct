@@ -47,6 +47,7 @@ agents[dctenum.assetType.AIRBASE]     = {
 	["sensors"] = {
 		["RunwaySensor"]     = 0,
 		["PlanningSensor"]   = 0,
+		["AirbaseSensor"]    = 0,
 	},
 	["actions"] = {
 		["RunwayRepair"]     = 1,
@@ -61,6 +62,7 @@ agents[dctenum.assetType.CV]          = {
 		["DCSObjectsSensor"] = 0,
 		["MissionSensor"]    = 0,
 		["PlanningSensor"]   = 0,
+		["AirbaseSensor"]    = 0,
 	},
 	["actions"] = {
 	},

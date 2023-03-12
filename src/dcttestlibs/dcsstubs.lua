@@ -902,6 +902,7 @@ function Airbase:__init(objdata)
 	self.group = nil
 	self.callsign = objdata.callsign
 	self.parking = objdata.parking
+	self.silenceATC = false
 	if self.desc.airbaseCategory == nil then
 		self.desc.airbaseCategory = Airbase.Category.AIRDROME
 	end
@@ -958,8 +959,16 @@ function Airbase:getUnit(num)
 end
 
 function Airbase:_addGroup(obj)
-	assert(obj.isa(Group), "no a Group object")
+	assert(obj.isa(Group), "not a Group object")
 	self.group = obj
+end
+
+function Airbase:getRadioSilentMode()
+	return self.silenceATC
+end
+
+function Airbase:setRadioSilentMode(state)
+	self.silenceATC = state
 end
 _G.Airbase = Airbase
 
