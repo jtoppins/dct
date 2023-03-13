@@ -30,6 +30,7 @@ function AirbaseSensor:__init(agent)
 	DCTEvents.__init(self)
 	self.timer = Timer(UPDATE_TIME)
 	self.navaid_counter = 0
+	self.departure_cntr = 0
 
 	local handlers = {}
 
@@ -149,9 +150,15 @@ end
 function AirbaseSensor:getRampSpots()
 	local ab = Airbase.getByName(self.agent.name)
 
-	if ab == nil or Object.getCategory(ab) ~= Object.Category.UNIT then
+	if ab == nil or Object.getCategory(ab) ~= Object.Category.AIRDROME then
 		return
 	end
+
+	-- set launching state for land airbases (airbase & farp) as they
+	-- do not need to move to be ready for launching aircraft. The only
+	-- way an airbase can be prevented from launching aircraft is if
+	-- the runway is damaged.
+	self.agent:WS():get(WS.ID.STANCE).value = WS.Stance.LAUNCHING
 
 	local ramp_exclude = self.agent:getDescKey("ramp_exclude")
 	local ground_spots = self.agent:getDescKey("ground_spots")
@@ -167,6 +174,17 @@ function AirbaseSensor:getRampSpots()
 	end
 end
 
+function AirbaseSensor:setValues()
+	local ab = Airbase.getByName(self.agent.name)
+	local translation = vector.Vector3D(
+		self.agent:getDescKey("departure_point"))
+	local location = vector.Vector3D(self.agent:getDescKey("location"))
+
+	self.agent:setDescKey("airdromeId", ab:getID())
+	self.agent:setFact(WS.Facts.factKey.DEPARTURE,
+			   location + translation)
+end
+
 function AirbaseSensor:setup()
 	self:setSilent(true)
 end
@@ -179,6 +197,8 @@ end
 function AirbaseSensor:spawnPost()
 	self.timer:reset()
 	self.timer:start()
+
+	self:setValues()
 	self:getRampSpots()
 	self:notifyOperational()
 end
@@ -199,6 +219,16 @@ function AirbaseSensor:handleCapture(event)
 	self.agent:setHealth(WS.Health.DEAD)
 end
 
+function AirbaseSensor:handleDeparture(event)
+	if not self.isOperational() then
+		return
+	end
+
+	local fact = WS.Facts.Event(event)
+	self.departure_cntr = self.departure_cntr + 1
+	self.agent:setFact("departure_"..tostring(self.departure_cntr), fact)
+end
+
 function AirbaseSensor:update()
 	self.timer:update()
 	if not self.timer:expired() then
@@ -206,6 +236,7 @@ function AirbaseSensor:update()
 	end
 
 	if self.isOperational() then
+		self:setValues()
 		self:refreshNavaids()
 	end
 

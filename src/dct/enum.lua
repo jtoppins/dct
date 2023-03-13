@@ -182,6 +182,7 @@ enum.event = {
 	["DCT_EVENT_MISSION_LEAVE"]  = eventbase + 12,
 	["DCT_EVENT_PLAYER_KICK"]    = eventbase + 13,
 	["DCT_EVENT_PLAYER_JOIN"]    = eventbase + 14,
+	["DCT_EVENT_DEPARTURE"]      = eventbase + 15,
 }
 
 enum.kickCode = require("dct.libs.kickinfo").kickCode

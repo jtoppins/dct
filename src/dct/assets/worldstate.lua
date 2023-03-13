@@ -28,7 +28,7 @@ local id = {
 	["ATNODE"]      = "atNode",      -- <handle>
 	["ATNODETYPE"]  = "atNodeType",  -- <enum>
 	["STANCE"]      = "stance",      -- <enum>
-	["REACTEDTOEVENT"]    = "reactedToEvent",    -- <bool>
+	["REACTEDTOEVENT"]    = "reactedToEvent",    -- <event-id>
 	["DISTURBANCEEXISTS"] = "disturbanceExists", -- <stim-type>
 }
 
@@ -77,6 +77,7 @@ local factKey = {
 	["SCRATCHPAD"]    = "scratchpad",
 	["LOSETICKET"]    = "loseticket",
 	["HEALTH"]        = "health",
+	["DEPARTURE"]     = "departure",
 }
 
 --- An abstract container generalizing a property of a fact.
@@ -174,7 +175,7 @@ StimuliFact.stimType = {
 local EventFact = class("EventFact", Fact)
 function EventFact:__init(event)
 	Fact.__init(self, factType.EVENT)
-	self.event = Attribute(event)
+	self.event = event
 end
 
 --- Normalized value [0,1] representing something.

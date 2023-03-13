@@ -135,6 +135,7 @@ end
 function utils.time(dcsabstime)
 	-- timer.getAbsTime() returns local time of day, but we still need
 	-- to calculate the day
+	dcsabstime = dcsabstime or timer.getAbsTime()
 	local time = os.time({
 		["year"]  = env.mission.date.Year,
 		["month"] = env.mission.date.Month,
@@ -470,6 +471,14 @@ function utils.buildevent.playerJoin(name)
 	local event = {}
 	event.id = enum.event.DCT_EVENT_PLAYER_JOIN
 	event.unit = name
+	return event
+end
+
+function utils.buildevent.departure(agent, takeofftime)
+	local event = {}
+	event.id = enum.event.DCT_EVENT_DEPARTURE
+	event.agent = agent.name
+	event.takeoff = takeofftime
 	return event
 end
 

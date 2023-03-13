@@ -668,7 +668,8 @@ function tasks.Waypoint:raw()
 	local attrs = {
 		"name", "type", "action", "alt", "alt_type",
 		"speed", "speed_locked", "ETA", "ETA_locked",
-		"formation_template",
+		"formation_template", "airdromeId", "helipadId",
+		"linkUnit",
 	}
 	local tbl = {}
 	for _, attr in pairs(attrs) do
