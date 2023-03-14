@@ -101,7 +101,7 @@ local function remove_death_goal(self, name, goal)
 		-- is a pending set of events, like ejections, the Agent
 		-- could be deleted before all the ejections are processed.
 		-- Instead post death event to agent memory.
-		self.agent:setDead(true)
+		self.agent:setHealth(WS.Health.DEAD)
 	end
 end
 
@@ -188,7 +188,7 @@ function DCSObjectsSensor:setup()
 	if next(self._deathgoals) == nil then
 		self.agent._logger:error(
 			"runtime error: must have a deathgoal, deleting")
-		self.agent:setDead(true)
+		self.agent:setHealth(WS.Health.DEAD)
 	end
 end
 

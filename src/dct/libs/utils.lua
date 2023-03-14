@@ -11,13 +11,14 @@ local enum  = require("dct.enum")
 local vector = require("dct.libs.vector")
 local utils = {}
 
+utils.INTELMAX = 5
+utils.COALITION_CONTESTED = -1
+
 local enemymap = {
 	[coalition.side.NEUTRAL] = false,
 	[coalition.side.BLUE]    = coalition.side.RED,
 	[coalition.side.RED]     = coalition.side.BLUE,
 }
-
-utils.INTELMAX = 5
 
 function utils.getenemy(side)
 	return enemymap[side]
@@ -134,6 +135,7 @@ end
 function utils.time(dcsabstime)
 	-- timer.getAbsTime() returns local time of day, but we still need
 	-- to calculate the day
+	dcsabstime = dcsabstime or timer.getAbsTime()
 	local time = os.time({
 		["year"]  = env.mission.date.Year,
 		["month"] = env.mission.date.Month,
@@ -322,29 +324,6 @@ utils.notifymsg =
 	"Please read the loadout limits in the briefing and "..
 	"use the F10 Menu to validate your loadout before departing."
 
-function utils.calcTACANFreq(chan, mode)
-	local aienum = require("dct.ai.enum")
-	check.range(chan, 1, 126)
-	check.tblkey(mode, aienum.BEACON.TACANMODE, "BEACON.TACANMODE")
-	local A = 1151
-	local B = 64
-
-	if chan < 64 then
-		B = 1
-	end
-	if mode == aienum.BEACON.TACANMODE.Y then
-		A = 1025
-		if chan < 64 then
-			A = 1088
-		end
-	else
-		if chan < 64 then
-			A = 962
-		end
-	end
-	return (A + chan - B) * 1000000
-end
-
 utils.buildevent = {}
 --- DEAD definition:
 --   id = id of this event
@@ -492,6 +471,14 @@ function utils.buildevent.playerJoin(name)
 	local event = {}
 	event.id = enum.event.DCT_EVENT_PLAYER_JOIN
 	event.unit = name
+	return event
+end
+
+function utils.buildevent.departure(agent, takeofftime)
+	local event = {}
+	event.id = enum.event.DCT_EVENT_DEPARTURE
+	event.agent = agent.name
+	event.takeoff = takeofftime
 	return event
 end
 

@@ -104,8 +104,8 @@ end
 -- Commands
 
 tasks.command = {}
-function tasks.command.activateBeacon(freq, bcntype, system, callsign,
-				      name, extratbl)
+function tasks.command.activateBeacon(unit, freq, bcntype, system,
+				      callsign, name, extratbl)
 	assert(type(extratbl) == "table" or extratbl == nil,
 		"value error: extratbl must be a table or nil.")
 	extratbl = extratbl or {}
@@ -117,6 +117,10 @@ function tasks.command.activateBeacon(freq, bcntype, system, callsign,
 		["callsign"] = check.string(callsign),
 		["frequency"] = check.number(freq),
 	}
+
+	if unit then
+		params.unitId = unit:getID()
+	end
 
 	if name then
 		params.name = check.string(name)
@@ -160,11 +164,11 @@ function tasks.command.activateLink4(unit, freq, name)
 		aienum.TASKTYPE.COMMAND
 end
 
-function tasks.command.createTACAN(callsign, channel, mode,
+function tasks.command.createTACAN(unit, callsign, channel, mode,
 				   name, aa, bearing, mobile)
 	local bcntype = aienum.BEACON.TYPE.TACAN
 	local system = aienum.BEACON.SYSTEM.TACAN
-	local freq = require("dct.libs.utils").calcTACANFreq(channel, mode)
+	local freq = require("dct.ai.tacan").getFrequency(channel, mode)
 	local extra = {}
 
 	extra.channel = channel
@@ -193,8 +197,8 @@ function tasks.command.createTACAN(callsign, channel, mode,
 		end
 	end
 
-	return tasks.command.activateBeacon(freq, bcntype, system, callsign,
-		name, extra)
+	return tasks.command.activateBeacon(unit, freq, bcntype, system,
+		callsign, name, extra)
 end
 
 function tasks.command.eplrs(enable)
@@ -664,7 +668,8 @@ function tasks.Waypoint:raw()
 	local attrs = {
 		"name", "type", "action", "alt", "alt_type",
 		"speed", "speed_locked", "ETA", "ETA_locked",
-		"formation_template",
+		"formation_template", "airdromeId", "helipadId",
+		"linkUnit",
 	}
 	local tbl = {}
 	for _, attr in pairs(attrs) do

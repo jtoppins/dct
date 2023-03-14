@@ -75,17 +75,17 @@ function PlayerKick:enter()
 		flagname, self.kickfact.event.code)
 
 	if losefact and losefact.value.value then
-		self.agent:setDead(true)
+		self.agent:setHealth(WS.Health.DEAD)
 	end
-
-	-- tell the player sensor the agent has sync'ed its state
-	kickfact.event.psensor:setSync(true)
-	kickfact.event.psensor:doEnable()
 
 	-- clear all facts from agent
 	self.factkey = nil
 	self.agent:deleteAllFacts()
 	self.agent:WS():get(WS.ID.REACTEDTOEVENT).value = true
+
+	-- tell the player sensor the agent has sync'ed its state
+	kickfact.event.psensor:setSync(true)
+	kickfact.event.psensor:doEnable()
 end
 
 return PlayerKick

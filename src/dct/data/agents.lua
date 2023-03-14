@@ -35,6 +35,8 @@ for _, assettype in pairs(dctenum.assetType) do
 	agents[assettype] = static
 end
 
+agents[dctenum.assetType.INVALID]     = nil
+agents[dctenum.assetType.NODE]        = nil
 agents[dctenum.assetType.BASEDEFENSE] = airdefense
 agents[dctenum.assetType.EWR]         = airdefense
 agents[dctenum.assetType.SAM]         = airdefense
@@ -45,9 +47,11 @@ agents[dctenum.assetType.AIRBASE]     = {
 	["sensors"] = {
 		["RunwaySensor"]     = 0,
 		["PlanningSensor"]   = 0,
+		["AirbaseSensor"]    = 0,
 	},
 	["actions"] = {
 		["RunwayRepair"]     = 1,
+		["DoDeparture"]      = 1,
 	},
 	["goals"]   = {
 		["Idle"]             = 1,
@@ -59,8 +63,10 @@ agents[dctenum.assetType.CV]          = {
 		["DCSObjectsSensor"] = 0,
 		["MissionSensor"]    = 0,
 		["PlanningSensor"]   = 0,
+		["AirbaseSensor"]    = 0,
 	},
 	["actions"] = {
+		["DoDeparture"]      = 1,
 	},
 	["goals"] = {
 		["Idle"]             = 1,

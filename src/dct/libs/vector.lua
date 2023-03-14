@@ -191,4 +191,10 @@ function vmath.dot(U, V)
 	return sum
 end
 
+--- Angle between 2D vectors A and B in radians
+function vmath.angle(A, B)
+	local dot = vmath.dot(A, B)
+	return math.acos(dot / (A:magnitude() * B:magnitude()))
+end
+
 return vmath

@@ -8,7 +8,7 @@ local aienum  = require("dct.ai.enum")
 local aitasks = require("dct.ai.tasks")
 
 local function main()
-	local task = aitasks.command.createTACAN("TST", 74,
+	local task = aitasks.command.createTACAN(nil, "TST", 74,
 		aienum.BEACON.TACANMODE.X, "test", false, false, true)
 	assert(type(task) == "table")
 

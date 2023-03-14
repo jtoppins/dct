@@ -902,6 +902,7 @@ function Airbase:__init(objdata)
 	self.group = nil
 	self.callsign = objdata.callsign
 	self.parking = objdata.parking
+	self.silenceATC = false
 	if self.desc.airbaseCategory == nil then
 		self.desc.airbaseCategory = Airbase.Category.AIRDROME
 	end
@@ -958,8 +959,16 @@ function Airbase:getUnit(num)
 end
 
 function Airbase:_addGroup(obj)
-	assert(obj.isa(Group), "no a Group object")
+	assert(obj.isa(Group), "not a Group object")
 	self.group = obj
+end
+
+function Airbase:getRadioSilentMode()
+	return self.silenceATC
+end
+
+function Airbase:setRadioSilentMode(state)
+	self.silenceATC = state
 end
 _G.Airbase = Airbase
 
@@ -1269,7 +1278,23 @@ land.SurfaceType = {
 	["RUNWAY"]        = 5,
 }
 
-function land.getHeight(_ --[[vec2]])
+function land.getHeight(vec2)
+	assert(vec2.x)
+	assert(vec2.y)
 	return 10
 end
 _G.land = land
+
+local atmosphere = {}
+function atmosphere.getWind(_ --[[point]])
+	return { y = 0, x = 2.17, z = 3.058 }
+end
+
+function atmosphere.getWindWithTurbulence(_ --[[point]])
+	return { y = 0.0336, 2.17, z = 3.058 }
+end
+
+function atmosphere.getTemperatureAndPressure(_ --[[point]])
+	return 293.15, 101325
+end
+_G.atmosphere = atmosphere

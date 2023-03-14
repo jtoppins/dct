@@ -1,9 +1,12 @@
 -- SPDX-License-Identifier: LGPL-3.0
 
 local class      = require("libs.namedclass")
+local utils      = require("libs.utils")
 local dctenum    = require("dct.enum")
+local dctutils   = require("dct.libs.utils")
 local vector     = require("dct.libs.vector")
 local DCTEvents  = require("dct.libs.DCTEvents")
+local human      = require("dct.ui.human")
 local WS         = require("dct.assets.worldstate")
 
 --- @classmod RunwaySensor
@@ -20,7 +23,7 @@ local WS         = require("dct.assets.worldstate")
 -- @field dotAB vector dot product of AB * AB
 -- @field dotBC vector dot product of BC * BC
 local Runway = class("Runway")
-function Runway:__init(rwy)
+function Runway:__init(rwy, debug)
 	local center = vector.Vector2D(rwy.position)
 	local theta = rwy.course * -1
 	local v1 = vector.Vector2D.create(math.cos(theta), math.sin(theta))
@@ -29,6 +32,7 @@ function Runway:__init(rwy)
 	v1 = (rwy.length / 2) * v1
 	v2 = (rwy.width / 2) * v2
 
+	self.debug  = debug or false
 	self.name   = rwy.name
 	self.center = center
 	self.points = {
@@ -41,6 +45,15 @@ function Runway:__init(rwy)
 	self.BC    = self.points[2] - self.points[3]
 	self.dotAB = vector.dot(self.AB, self.AB)
 	self.dotBC = vector.dot(self.BC, self.BC)
+
+	if self.debug then
+		self.debugids = {}
+		self.debugids.border = human.getMarkID()
+		self.debugids[1] = human.getMarkID()
+		self.debugids[2] = human.getMarkID()
+		self.debugids[3] = human.getMarkID()
+		self.debugids[4] = human.getMarkID()
+	end
 end
 
 --- Check if runway was hit by a bomb that landed close by.
@@ -65,35 +78,69 @@ function Runway:contains(p)
 	return false
 end
 
+local linecolor = { 1, 0,    0, 1     }
+local fillcolor = { 1, 0.25, 0, 0.075 }
+
+function Runway:drawBorder()
+	trigger.action.removeMark(self.debugids.border)
+	trigger.action.quadToAll(dctutils.COALITION_CONTESTED,
+				 self.debugids.border,
+				 self.points[1]:raw(),
+				 self.points[2]:raw(),
+				 self.points[3]:raw(),
+				 self.points[4]:raw(),
+				 linecolor, fillcolor,
+				 human.lineType.SOLID)
+end
+
+--- This is intended to be used for debug.
+function Runway:draw()
+	self:drawBorder()
+	for key, point in ipairs(self.points) do
+		local id = self.debugids[key]
+		trigger.action.removeMark(id)
+		trigger.action.markToAll(id, string.format("Point %d", key),
+					 point:raw(), true)
+	end
+end
+
+function Runway:drawClear()
+	for _, id in pairs(self.debugids or {}) do
+		trigger.action.removeMark(id)
+	end
+end
 
 --- Detects runway geometry associated with an airbase and determines if
 -- a weapon impacted within the runway's boundary.
 local RunwaySensor = class("RunwaySensor", WS.Sensor, DCTEvents)
 function RunwaySensor:__init(agent)
-	WS.Sensor.__init(self, agent, 15)
+	WS.Sensor.__init(self, agent, 5)
 	DCTEvents.__init(self)
 
-	self._expmass  = agent:getDescKey("expmass_threshold")
+	self._expmass  = 30
 	self._runways  = {}
+
 	self:_overridehandlers({
 		[dctenum.event.DCT_EVENT_IMPACT] = self.handleImpact,
 	})
 end
 
-function RunwaySensor:setup()
-	local ab = Airbase.getByName(self.agent.name)
+function RunwaySensor:setAgentHealth(health)
+	local healthenum = WS.Health.OPERATIONAL
 
-	if ab == nil then
-		self.agent._logger:error("is not a DCS Airbase")
-		self.agent:setDead(true)
-		return
+	health = utils.clamp(health, 0, 1)
+	self.agent:setFact(WS.Facts.factKey.HEALTH,
+		WS.Facts.Value(WS.Facts.factType.HEALTH, health, 1.0))
+
+	if health < 1 then
+		healthenum = WS.Health.DAMAGED
 	end
+	self.agent:setHealth(healthenum)
+end
 
-	local rwys = ab:getRunways() or {}
-
-	for _, rwy in pairs(rwys) do
-		table.insert(self._runways, Runway(rwy))
-	end
+function RunwaySensor:marshal()
+	self.agent.desc.runwayhealth =
+		self.agent:getFact(WS.Facts.factKey.HEALTH).value.value
 end
 
 function RunwaySensor:handleImpact(event)
@@ -103,10 +150,43 @@ function RunwaySensor:handleImpact(event)
 
 	for _, rwy in ipairs(self._runways) do
 		if rwy:contains(event.point) then
-			self.agent:WS():get(WS.ID.DAMAGED).value = true
+			self:setAgentHealth(0)
 			self.agent:replan()
 			break
 		end
+	end
+end
+
+function RunwaySensor:spawnPost()
+	local ab = Airbase.getByName(self.agent.name)
+
+	if ab == nil then
+		self.agent._logger:info("Deleting Agent as underlying DCS"..
+					"Airbase doesn't exist")
+		self.agent:setHealth(WS.Health.DEAD)
+		return
+	end
+
+	local rwys = ab:getRunways() or {}
+	local debug = self.agent:getDescKey("debug")
+
+	for _, rwy in pairs(rwys) do
+		table.insert(self._runways, Runway(rwy, debug))
+	end
+
+	self.agent:setDescKey("hasRunway", next(self._runways) ~= nil)
+	self:setAgentHealth(self.agent.desc.runwayhealth or 1)
+
+	if debug == true then
+		for _, rwy in ipairs(self._runways) do
+			rwy:draw()
+		end
+	end
+end
+
+function RunwaySensor:despawnPost()
+	for _, rwy in ipairs(self._runways) do
+		rwy:drawClear()
 	end
 end
 

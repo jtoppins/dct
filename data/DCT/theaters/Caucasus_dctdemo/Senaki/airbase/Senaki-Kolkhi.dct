@@ -6,6 +6,6 @@ subordinates = {
 	"104FS",
 }
 desc = "Senaki-Kolkhi"
-recoverytype = "land"
-takeofftype = "runway"
+recovery = "terminal"
+takeoff = "ground"
 cost = 20

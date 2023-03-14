@@ -14,7 +14,7 @@ local Observable = require("dct.libs.Observable")
 local id = {
 	["IDLE"]        = "idle",        -- <bool>
 	["INAIR"]       = "inAir",       -- <bool>
-	["DAMAGED"]     = "damaged",     -- <bool>
+	["HEALTH"]      = "health",      -- <enum> WS.Health
 	["HASAMMO"]     = "hasAmmo",     -- <bool>
 	["HASFUEL"]     = "hasFuel",     -- <bool>
 	["HASCARGO"]    = "hasCargo",    -- <bool>
@@ -28,17 +28,25 @@ local id = {
 	["ATNODE"]      = "atNode",      -- <handle>
 	["ATNODETYPE"]  = "atNodeType",  -- <enum>
 	["STANCE"]      = "stance",      -- <enum>
-	["REACTEDTOEVENT"]    = "reactedToEvent",    -- <bool>
+	["REACTEDTOEVENT"]    = "reactedToEvent",    -- <event-id>
 	["DISTURBANCEEXISTS"] = "disturbanceExists", -- <stim-type>
+}
+
+local healthType = {
+	["DEAD"]        = 1, -- agent is dead
+	["DAMAGED"]     = 2, -- combat ineffective, repairs needed
+	["OPERATIONAL"] = 3, -- agent is combat effective
 }
 
 --- Stance types the agent can have
 local stanceType = {
 	["DEFAULT"]   = "default",    -- whatever the setting were at spawn
+	["MOVING"]    = "moving",     -- agent is relocating
 	["FLEEING"]   = "fleeing",    -- running away, weapons hold
 	["GUARDING"]  = "guarding",   -- combat ready, weapons engage per tasking
 	["SEARCHING"] = "searching",  -- not combat ready, sensors on
 	["ATTACKING"] = "attacking",  -- fangs out
+	["LAUNCHING"] = "launching",  -- agent is launching aircraft
 }
 
 --- Fact types
@@ -68,6 +76,8 @@ local factKey = {
 	["CMDPENDING"]    = "cmdpending",
 	["SCRATCHPAD"]    = "scratchpad",
 	["LOSETICKET"]    = "loseticket",
+	["HEALTH"]        = "health",
+	["DEPARTURE"]     = "departure",
 }
 
 --- An abstract container generalizing a property of a fact.
@@ -142,6 +152,7 @@ NodeFact.nodeType = {
 	["INVALID"]    = 0,
 	["RALLYPOINT"] = 1, -- a node that can be retreated to
 	["STATION"]    = 2, -- a guard position
+	["PARKING"]    = 3, -- a parking spot at an airbase
 }
 
 --- Some sort of disturbance the Agent detects that can trigger an change
@@ -164,7 +175,7 @@ StimuliFact.stimType = {
 local EventFact = class("EventFact", Fact)
 function EventFact:__init(event)
 	Fact.__init(self, factType.EVENT)
-	self.event = Attribute(event)
+	self.event = event
 end
 
 --- Normalized value [0,1] representing something.
@@ -201,6 +212,8 @@ function WorldState.createAll()
 		local val = false
 		if v == id.STANCE then
 			val = stanceType.DEFAULT
+		elseif v == id.HEALTH then
+			val = healthType.OPERATIONAL
 		elseif v == id.ROE then
 			val = -1
 		elseif v == id.HASFUEL or v == id.IDLE or
@@ -350,6 +363,7 @@ _ws.Facts = {
 }
 _ws.ID = id
 _ws.Stance = stanceType
+_ws.Health = healthType
 _ws.Property = goap.Property
 _ws.WorldState = WorldState
 _ws.Action = Action

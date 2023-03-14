@@ -17,7 +17,9 @@ function CheckCommon:__init()
 			["values"] = assettypes,
 			["description"] = [[
 Defines the type of game object (Asset) that will be created from the
-template. Allowed values can be found in `assetType` table.]],
+template. Allowed values can be found in `assetType` table.
+
+%VALUES%]],
 		},
 		["name"] = {
 			["agent"] = true,

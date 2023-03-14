@@ -230,7 +230,6 @@ function Agent:__init()
 	self._ws        = WS.WorldState.createAll()
 	self._setup     = false
 	self._spawned   = false
-	self._dead      = false
 	self._plan      = nil
 	self._msn       = nil
 	self._intel     = {}
@@ -285,10 +284,10 @@ function Agent:destroy()
 	self:despawn()
 	self:setMission(nil)
 	self:replan()
-	self._sensors = {}
 	self._goals = {}
 	self._actions = {}
-	self:setDead(true, false)
+	self:setHealth(WS.Health.DEAD, false)
+	self._sensors = {}
 end
 
 --- Finalizes the Agent and runs the setup function for all sensors
@@ -498,31 +497,32 @@ function Agent:setIntel(side, val)
 	self._intel[side] = val
 end
 
--- Is the asset considered dead yet?
--- Returns: boolean
+--- Is the asset considered dead yet?
+-- @return boolean
 function Agent:isDead()
-	return self._dead
+	return self:WS():get(WS.ID.HEALTH).value == WS.Health.DEAD
 end
 
---- Sets if the object should be thought of as dead or not
+--- Sets the health state of the Agent.
+-- Will call any Sensor objects that define an `onHealthChange` function
+-- providing the previous and current health states.
+--
 -- @return none
-function Agent:setDead(val, donotify)
+function Agent:setHealth(val, donotify)
+	check.tblkey(val, WS.Health, "WS.Health")
 	donotify = donotify or true
-	assert(type(val) == "boolean", "value error: val must be of type bool")
-	local prev = self._dead
-	local assetmgr = dct.Theater.singleton():getAssetMgr()
+	local prev = self:WS():get(WS.ID.HEALTH).value
 
-	for name, _ in self:iterateSubordinates() do
-		local asset = assetmgr:getAsset(name)
-		if asset then
-			asset:setDead(val, donotify)
+	self:WS():get(WS.ID.HEALTH).value = val
+
+	if prev ~= val then
+		dctutils.foreach_call(self._sensors, ipairs, "onHealthChange",
+				      prev, val)
+		if donotify and val == WS.Health.DEAD then
+			self._logger:debug("notifying asset death for "..
+					   self.name)
+			self:notify(dctutils.buildevent.dead(self))
 		end
-	end
-
-	self._dead = val
-	if self._dead and prev ~= self._dead and donotify then
-		self._logger:debug("notifying asset death for "..self.name)
-		self:notify(dctutils.buildevent.dead(self))
 	end
 end
 

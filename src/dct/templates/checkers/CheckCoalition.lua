@@ -56,7 +56,9 @@ coalitions of those objects in-game will be set based on the settings of the
 country, and then run it in a .miz where the USA is set as a neutral country,
 the units in the template will spawn as neutral. Therefore, mission designers
 should standardize which countries belong to which coalition, so that the
-coalitions in templates are consistent with in-game results.]],
+coalitions in templates are consistent with in-game results.
+
+%VALUES%]],
 		},
 	})
 end
