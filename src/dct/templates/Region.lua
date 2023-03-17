@@ -7,6 +7,7 @@ require("math")
 local class      = require("libs.namedclass")
 local utils      = require("libs.utils")
 local dctenum    = require("dct.enum")
+local dctutils   = require("dct.libs.utils")
 local vector     = require("dct.libs.vector")
 local Marshallable = require("dct.libs.Marshallable")
 local Template   = require("dct.templates.Template")
@@ -21,13 +22,6 @@ local DOMAIN = {
 	["AIR"]  = "air",
 	["LAND"] = "land",
 	["SEA"]  = "sea",
-}
-
-local STATUS = {
-	["CONTESTED"] = -1,
-	["NEUTRAL"]   = coalition.side.NEUTRAL,
-	["RED"]       = coalition.side.RED,
-	["BLUE"]      = coalition.side.BLUE,
 }
 
 local initasset = {
@@ -273,10 +267,9 @@ function Region:__init(data)
 	for _, side in pairs(coalition.side) do
 		self.weight[side] = 0
 	end
-	self.owner         = STATUS.NEUTRAL
+	self.owner         = dctutils.coalition.NEUTRAL
 	self.radius        = 25
 	self.DOMAIN        = nil
-	self.STATUS        = nil
 	self.fromFile      = nil
 
 	self:_addMarshalNames({
@@ -293,7 +286,6 @@ function Region:__init(data)
 end
 
 Region.DOMAIN = DOMAIN
-Region.STATUS = STATUS
 
 function Region.fromFile(path)
 	local deffile = path..utils.sep.."region.def"
@@ -460,12 +452,12 @@ function Region:onDCTEvent(event)
 
 	if self.weight[side.RED] == 0 or self.weight[side.BLUE] == 0 then
 		if self.weight[side.RED] - self.weight[side.BLUE] == 0 then
-			self.owner = STATUS.NEUTRAL
+			self.owner = dctutils.coalition.NEUTRAL
 		else
 			if self.weight[side.RED] > self.weight[side.BLUE] then
-				self.owner = STATUS.RED
+				self.owner = dctutils.coalition.RED
 			else
-				self.owner = STATUS.BLUE
+				self.owner = dctutils.coalition.BLUE
 			end
 		end
 		return
@@ -475,11 +467,11 @@ function Region:onDCTEvent(event)
 	local ratioB = self.weight[side.BLUE] / self.weight[side.RED]
 
 	if ratioB > c then
-		self.owner = STATUS.BLUE
+		self.owner = dctutils.coalition.BLUE
 	elseif ratioB < 1/c then
-		self.owner = STATUS.RED
+		self.owner = dctutils.coalition.RED
 	else
-		self.owner = STATUS.CONTESTED
+		self.owner = dctutils.coalition.CONTESTED
 	end
 end
 
