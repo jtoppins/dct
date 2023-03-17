@@ -134,7 +134,7 @@ function PlayerSensor:handleLand(event)
 
 	self.agent:WS():get(WS.ID.INAIR).value = false
 	if (airbase and airbase.owner == self.agent.owner) or
-	   event.place:getName() == self.agent:getDescKey("airbase") then
+	   event.place:getName() == self.agent:getDescKey("basedat") then
 		self.agent:setFact(WS.Facts.factKey.LOSETICKET,
 			WS.Facts.Value(WS.Facts.factType.LOSETICKET, false))
 		self.agent:setFact(WS.Facts.factKey.LANDSAFEMSG,
@@ -161,7 +161,7 @@ function PlayerSensor:handleLoseTicket(--[[event]])
 end
 
 function PlayerSensor:handleBaseState(event)
-	if event.initiator.name ~= self.agent:getDescKey("airbase") then
+	if event.initiator.name ~= self.agent:getDescKey("basedat") then
 		self.agent._logger:warn(
 			"received unknown event %s(%d) from initiator(%s)",
 			utils.getkey(dctenum.event, event.id),

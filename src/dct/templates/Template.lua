@@ -106,25 +106,6 @@ local function genCodename(template)
 	return typetbl[idx]
 end
 
---- generate an asset name.
--- An asset must have a unique name or it will not be added to the
--- AssetManager. This function guarantees compliance with this requirement.
---
--- @param template template date used to generate the unique name from
--- @return a predictable unique name
-local function genName(template)
-	local name = template.name
-
-	if template.rename then
-		name = template.regionname.."_"..template.coalition.."_"..
-			template.name
-		if template.uniquenames == true then
-			name = name.." #"..dct.Theater.singleton():getcntr()
-		end
-	end
-	return name
-end
-
 --- Validates user `data` according to the checkers defined in `checkers`.
 --
 -- @param data data to validate
@@ -362,7 +343,7 @@ end
 --
 -- @return the object created
 function Template:createObject()
-	return Agent.create(genName(self),
+	return Agent.create(self:genName(),
 			    self.objtype,
 			    self.coalition,
 			    self:genDesc())
@@ -374,7 +355,7 @@ end
 -- @param assetmgr the AssetManager instance to store generated assets
 -- @param parent asset object
 function Template:generate(region, assetmgr, parent)
-	for _, name in ipairs(self.subordinates) do
+	for name, _ in pairs(self.subordinates) do
 		local tpl = region:getTemplateByName(name)
 
 		if tpl then
@@ -408,6 +389,24 @@ function Template:joinRegion(region)
 		add_region_name_to_objects(self.tpldata, region.name)
 	end
 	self._joinedregion = true
+end
+
+--- generate an asset name.
+-- An asset must have a unique name or it will not be added to the
+-- AssetManager. This function guarantees compliance with this requirement.
+--
+-- @param template template date used to generate the unique name from
+-- @return a predictable unique name
+function Template:genName()
+	local name = self.name
+
+	if self.rename then
+		name = self.regionname.."_"..self.coalition.."_"..self.name
+		if self.uniquenames == true then
+			name = name.." #"..dct.Theater.singleton():getcntr()
+		end
+	end
+	return name
 end
 
 --- Generate the description table from the Template. Is usually given

@@ -5,6 +5,12 @@ local utils   = require("libs.utils")
 local dctenum = require("dct.enum")
 local Check   = require("dct.templates.checkers.Check")
 
+local ishq = {
+	[dctenum.assetType.SQUADRON] = true,
+	[dctenum.assetType.ARMYGROUP] = true,
+	[dctenum.assetType.FLEET] = true,
+}
+
 local assettypes = utils.mergetables({}, dctenum.assetTypeDeprecated)
 assettypes = utils.mergetables(assettypes, dctenum.assetType)
 
@@ -144,6 +150,16 @@ player UI elements.]],
 			["type"] = Check.valuetype.STRING,
 			["nodoc"] = true,
 		},
+		["basedat"] = {
+			["agent"] = true,
+			["default"] = "",
+			["type"] = Check.valuetype.STRING,
+			["description"] = [[
+The name of the base at which this template is based at. For a squadron this
+would be the airbase the squadron is based at. In the case of a squadron the
+value must be a string that when passed to `Airbase.getByName(<name>)` returns
+a DCS Airbase object.]],
+		},
 		["subordinates"] = {
 			["default"] = {},
 			["type"] = Check.valuetype.TABLE,
@@ -246,23 +262,7 @@ Every 2 minutes a side's regional influence is reduced by 50%.]],
 template types.]])
 end
 
-function CheckCommon:check(data)
-	if dctenum.assetTypeDeprecated[string.upper(data.objtype)] ~= nil then
-		dct.Logger.getByName("Template"):warn(
-			"%s: is a deprecated objtype; file %s",
-			tostring(data.objtype), tostring(data.filedct))
-	end
-
-	local ok, key, msg = Check.check(self, data)
-
-	if not ok then
-		return ok, key, msg
-	end
-
-	if data.exclusion == "" then
-		data.exclusion = nil
-	end
-
+function CheckCommon:checkDefaults(data)
 	if data.uniquenames and data.codename ~= dctenum.DEFAULTCODENAME then
 		return false, "codename",
 		       "cannot be defined if uniquenames is true"
@@ -272,6 +272,47 @@ function CheckCommon:check(data)
 		return false, "locationmethod",
 		       "cannot be defined if uniquenames is true"
 	end
+
+	if data.airbase ~= nil and data.basedat == "" then
+		data.basedat = data.airbase
+	end
+
+	if data.basedat == "" then
+		if ishq[data.objtype] then
+			return false, "basedat",
+			       "required for headquarters assets"
+		else
+			data.basedat = nil
+		end
+	end
+	return true
+end
+
+function CheckCommon:check(data)
+	if dctenum.assetTypeDeprecated[string.upper(data.objtype)] ~= nil then
+		dct.Logger.getByName("Template"):warn(
+			"%s: is a deprecated objtype; file %s",
+			tostring(data.objtype), tostring(data.filedct))
+	end
+
+	for _, check in ipairs({ Check.check,
+				 self.checkDefaults, }) do
+		local ok, key, msg = check(self, data)
+		if not ok then
+			return ok, key, msg
+		end
+	end
+
+	if data.exclusion == "" then
+		data.exclusion = nil
+	end
+
+	-- convert subordinate list to a set
+	local subs = {}
+	for _, name in pairs(data.subordinates) do
+		subs[name] = true
+	end
+	data.subordinates = subs
 
 	data.cost = math.abs(data.cost)
 	return true
