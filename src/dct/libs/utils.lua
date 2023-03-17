@@ -12,7 +12,13 @@ local vector = require("dct.libs.vector")
 local utils = {}
 
 utils.INTELMAX = 5
-utils.COALITION_CONTESTED = -1
+utils.coalition = {
+	["ALL"]       = -1,
+	["NEUTRAL"]   = coalition.side.NEUTRAL,
+	["RED"]       = coalition.side.RED,
+	["BLUE"]      = coalition.side.BLUE,
+	["CONTESTED"] = 3,
+}
 
 local enemymap = {
 	[coalition.side.NEUTRAL] = false,

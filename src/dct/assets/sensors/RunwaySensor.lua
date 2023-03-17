@@ -83,7 +83,7 @@ local fillcolor = { 1, 0.25, 0, 0.075 }
 
 function Runway:drawBorder()
 	trigger.action.removeMark(self.debugids.border)
-	trigger.action.quadToAll(dctutils.COALITION_CONTESTED,
+	trigger.action.quadToAll(dctutils.coalition.ALL,
 				 self.debugids.border,
 				 self.points[1]:raw(),
 				 self.points[2]:raw(),
