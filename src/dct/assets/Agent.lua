@@ -444,11 +444,9 @@ function Agent:getTemplate()
 	return T
 end
 
---- Get a copy of the Agent's description table.
--- TODO: get the total description table for the Agent including the
--- backing Template items.
+--- Get access to the Agent's description table.
 function Agent:getDesc()
-	return utils.deepcopy(self.desc)
+	return self.desc
 end
 
 --- Get the entry defined by key in the description table for this Agent.
@@ -602,7 +600,8 @@ local actions = {
 		end
 	end,
 
-	["despawn"] = function (_, asset)
+	["despawn"] = function (self, asset)
+		self:removeObserver(asset)
 		asset:despawn()
 	end
 }
