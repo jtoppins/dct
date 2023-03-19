@@ -150,7 +150,8 @@ end
 function AirbaseSensor:getRampSpots()
 	local ab = Airbase.getByName(self.agent.name)
 
-	if ab == nil or Object.getCategory(ab) ~= Object.Category.AIRDROME then
+	if ab == nil or
+	   ab:getDesc().category ~= Airbase.Category.AIRDROME then
 		return
 	end
 

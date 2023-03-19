@@ -12,7 +12,13 @@ local vector = require("dct.libs.vector")
 local utils = {}
 
 utils.INTELMAX = 5
-utils.COALITION_CONTESTED = -1
+utils.coalition = {
+	["ALL"]       = -1,
+	["NEUTRAL"]   = coalition.side.NEUTRAL,
+	["RED"]       = coalition.side.RED,
+	["BLUE"]      = coalition.side.BLUE,
+	["CONTESTED"] = 3,
+}
 
 local enemymap = {
 	[coalition.side.NEUTRAL] = false,
@@ -36,7 +42,7 @@ end
 
 function utils.isalive(grpname)
 	local grp = Group.getByName(grpname)
-	return (grp and grp:isExist() and grp:getSize() > 0)
+	return (grp ~= nil and grp:isExist() and grp:getSize() > 0)
 end
 
 --- error handler for all xpcall
@@ -78,6 +84,22 @@ function utils.assettype2mission(assettype)
 		end
 	end
 	return nil
+end
+
+local airbase_id2name_map = false
+function utils.airbase_id2name(id)
+	if id == nil then
+		return nil
+	end
+
+	if airbase_id2name_map == false then
+		airbase_id2name_map = {}
+		for _, ab in pairs(world.getAirbases()) do
+			airbase_id2name_map[tonumber(ab:getID())] =
+				ab:getName()
+		end
+	end
+	return airbase_id2name_map[id]
 end
 
 function utils.isplayergroup(grp)

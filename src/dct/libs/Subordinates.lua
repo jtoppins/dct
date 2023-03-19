@@ -16,9 +16,6 @@ local Subordinates = class()
 function Subordinates:__init()
 	self._parent = false
 	self._subordinates = {}
-	if not self._subeventhandlers then
-		self._subeventhandlers = {}
-	end
 end
 
 --- [static method] gets fields that need to be marshalled
@@ -30,7 +27,11 @@ end
 --
 -- @param parent the object that is the parent of this object
 function Subordinates:setParent(parent)
-	self._parent = parent
+	if parent == nil then
+		self._parent = nil
+	else
+		self._parent = parent.name
+	end
 end
 
 --- get parent object
@@ -47,24 +48,13 @@ function Subordinates:iterateSubordinates()
 	return next, self._subordinates, nil
 end
 
---- Process a DCS or DCT event.
---
--- @param event the event to process
--- @return none
-function Subordinates:onSubEvent(event)
-	local handler = self._subeventhandlers[event.id]
-	if handler ~= nil then
-		handler(self, event)
-	end
-end
-
 --- set `obj` as a subordinate of this object
 --
 -- @param obj the asset object to set as a subordinate of this object
 function Subordinates:addSubordinate(obj)
-	assert(obj ~= nil,
-		"value error: 'obj' must not be nil")
+	assert(obj ~= nil, "value error: 'obj' must not be nil")
 	self._subordinates[obj.name] = true
+	obj:setParent(self)
 end
 
 --- remove a subordinate from this object

@@ -62,17 +62,17 @@ end
 
 function PlayerKick:enter()
 	local flagname = dctutils.build_kick_flagname(self.agent.name)
-	local msg = reasons[self.fact.event.code] or
-		"You have been kicked from the slot for an unknown reason."
 	local kickfact = self.agent:getFact(self.factkey)
 	local losefact = self.agent:getFact(WS.Facts.factKey.LOSETICKET)
+	local msg = reasons[kickfact.event.code] or
+		"You have been kicked from the slot for an unknown reason."
 
 	self.agent:setFact(WS.Facts.factKey.KICK,
 			   WS.Facts.PlayerMsg(msg, 20))
-	trigger.action.setUserFlag(flagname, self.kickfact.event.code or
+	trigger.action.setUserFlag(flagname, kickfact.event.code or
 		dctenum.kickCode.UNKNOWN)
 	self.agent._logger:debug("requesting kick: %s; reason: %d",
-		flagname, self.kickfact.event.code)
+		flagname, kickfact.event.code)
 
 	if losefact and losefact.value.value then
 		self.agent:setHealth(WS.Health.DEAD)
