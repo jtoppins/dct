@@ -16,9 +16,6 @@ local Subordinates = class()
 function Subordinates:__init()
 	self._parent = false
 	self._subordinates = {}
-	if not self._subeventhandlers then
-		self._subeventhandlers = {}
-	end
 end
 
 --- [static method] gets fields that need to be marshalled
@@ -49,17 +46,6 @@ end
 -- @return an iterator used in a for loop
 function Subordinates:iterateSubordinates()
 	return next, self._subordinates, nil
-end
-
---- Process a DCS or DCT event.
---
--- @param event the event to process
--- @return none
-function Subordinates:onSubEvent(event)
-	local handler = self._subeventhandlers[event.id]
-	if handler ~= nil then
-		handler(self, event)
-	end
 end
 
 --- set `obj` as a subordinate of this object
