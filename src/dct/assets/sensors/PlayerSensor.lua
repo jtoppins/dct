@@ -76,8 +76,9 @@ function PlayerSensor:isEnabled()
 end
 
 function PlayerSensor:doEnable()
-	trigger.action.setUserFlag(self.agent.name, self:isEnabled())
-	self._logger:debug("setting enable flag: %s", tostring(self:isEnabled()))
+	local enabled = self:isEnabled()
+	trigger.action.setUserFlag(self.agent.name, enabled)
+	self.agent._logger:debug("setting enable flag: %s", tostring(enabled))
 end
 
 function PlayerSensor:postFact(key, fact)
