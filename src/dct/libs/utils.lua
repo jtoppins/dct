@@ -42,7 +42,7 @@ end
 
 function utils.isalive(grpname)
 	local grp = Group.getByName(grpname)
-	return (grp and grp:isExist() and grp:getSize() > 0)
+	return (grp ~= nil and grp:isExist() and grp:getSize() > 0)
 end
 
 --- error handler for all xpcall
