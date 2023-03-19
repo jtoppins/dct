@@ -30,7 +30,11 @@ end
 --
 -- @param parent the object that is the parent of this object
 function Subordinates:setParent(parent)
-	self._parent = parent
+	if parent == nil then
+		self._parent = nil
+	else
+		self._parent = parent.name
+	end
 end
 
 --- get parent object
@@ -62,9 +66,9 @@ end
 --
 -- @param obj the asset object to set as a subordinate of this object
 function Subordinates:addSubordinate(obj)
-	assert(obj ~= nil,
-		"value error: 'obj' must not be nil")
+	assert(obj ~= nil, "value error: 'obj' must not be nil")
 	self._subordinates[obj.name] = true
+	obj:setParent(self)
 end
 
 --- remove a subordinate from this object
