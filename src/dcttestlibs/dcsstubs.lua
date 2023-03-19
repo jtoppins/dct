@@ -894,18 +894,37 @@ function Coalition:getCountry()
 end
 _G.Coalition = Coalition
 
+local airbase_desc_defaults = {
+	["life"] = 3600,
+	["attributes"] = {
+		["Airfields"] = true,
+	},
+	["_origin"] = "",
+	["category"] = 0,
+	["typeName"] = "Anapa-Vityazevo",
+	["displayName"] = "Anapa-Vityazevo",
+}
 
 local Airbase = class(Coalition)
 function Airbase:__init(objdata)
 	objdata.category = Object.Category.BASE
 	Coalition.__init(self, objdata)
-	self.group = nil
 	self.callsign = objdata.callsign
 	self.parking = objdata.parking
 	self.silenceATC = false
-	if self.desc.airbaseCategory == nil then
-		self.desc.airbaseCategory = Airbase.Category.AIRDROME
+	self.desc = utils.deepcopy(airbase_desc_defaults)
+	self.desc.typeName = self.name
+	self.desc.displayName = self.name
+	if objdata.airbaseCategory == nil then
+		self.desc.category = Airbase.Category.AIRDROME
+	else
+		self.desc.category = objdata.airbaseCategory
+		self.airbaseCategory = nil
 	end
+
+	self.group = nil
+	self.Category = nil
+	self.getByName = nil
 end
 Airbase.Category = {
 	["AIRDROME"] = 0,

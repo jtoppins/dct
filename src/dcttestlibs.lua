@@ -89,8 +89,12 @@ local function processCategory(id, cat, tbl, coa)
 					["id"]     = unit.unitId,
 					["exists"] = true,
 					["coalition"] = coalition.side[string.upper(coa)],
+					["airbaseCategory"] = Airbase.Category.SHIP,
 				}
-				Airbase(newab)
+				local ab = Airbase(newab)
+				ab.desc.attributes.Airfields = nil
+				ab.desc.attributes["Aircraft Carriers"] = true
+				ab.desc.attributes["AircraftCarrier"] = true
 			end
 		end
 	end
