@@ -35,6 +35,7 @@ function PlayerSensor:__init(agent)
 	DCTEvents.__init(self)
 	self.timer      = Timer(UPDATE_TIME)
 	self.ejection   = false
+	self.birth      = false
 	self._operstate = false
 	self._syncstate = true
 	self._keyjoin   = self.__clsname..".join"
@@ -98,6 +99,7 @@ function PlayerSensor:handleBirth(event)
 	end
 
 	self.ejection = false
+	self.birth = true
 	self.agent:setFact(WS.Facts.factKey.LOSETICKET,
 		WS.Facts.Value(WS.Facts.factType.LOSETICKET, false))
 	self:postFact(self._keyjoin, WS.Facts.Event(
@@ -187,15 +189,15 @@ function PlayerSensor:update()
 		return false
 	end
 
-	self.timer:reset()
-	self:doEnable()
-
-	if not dctutils.isalive(self.agent.name) then
+	if self.birth and not dctutils.isalive(self.agent.name) then
+		self.birth = false
 		self:postFact(self._keykick, WS.Facts.Event(
 			dctutils.buildevent.playerKick(dctenum.kickCode.EMPTY,
 						       self)))
 	end
 
+	self.timer:reset()
+	self.timer:start()
 	return false
 end
 
