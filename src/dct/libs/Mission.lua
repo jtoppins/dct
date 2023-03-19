@@ -9,7 +9,6 @@ local dctenum    = require("dct.enum")
 local dctutils   = require("dct.libs.utils")
 local Observable = require("dct.libs.Observable")
 local DCTEvents  = require("dct.libs.DCTEvents")
-local Subordinates = require("dct.libs.Subordinates")
 local Memory     = require("dct.libs.Memory")
 
 local missionmt = {}
@@ -29,11 +28,10 @@ end
 -- @field _assignedcnt total number of Agents assigned to this Mission
 -- @field _timer timeout timer
 local Mission = utils.override_ops(class("Mission", Observable, DCTEvents,
-				Subordinates, Memory), missionmt)
+				Memory), missionmt)
 function Mission:__init(msntype, cmdr, goalq, timer)
 	Observable.__init(self)
 	DCTEvents.__init(self)
-	Subordinates.__init(self)
 	Memory.__init(self)
 	self.cmdr         = cmdr
 	self.goalq        = goalq
@@ -42,8 +40,11 @@ function Mission:__init(msntype, cmdr, goalq, timer)
 	self._playable    = false
 	self._assigned    = {}
 	self._assignedcnt = 0
+	self._suptmsns    = {}
+	self._parent      = nil
 	self._timer       = timer
 
+	setmetatable(self._suptmsns, { __mode = "k", })
 	self:_overridehandlers({
 		[dctenum.event.DCT_EVENT_GOAL_COMPLETE] =
 			self.eventGoalComplete,
@@ -198,6 +199,34 @@ function Mission.factTest(key)
 		return true
 	end
 	return false
+end
+
+-- Tree Methods
+
+function Mission:setParent(msn)
+	self._parent = msn
+end
+
+function Mission:getParent()
+	return self._parent
+end
+
+function Mission:addChild(msn)
+	assert(msn ~= nil, "value error: 'obj' must not be nil")
+	self._suptmsns[msn] = true
+	msn:setParent(self)
+end
+
+function Mission:removeChild(msn)
+	self._suptmsns[msn] = nil
+
+	if msn:getParent() == self then
+		msn:setParent(nil)
+	end
+end
+
+function Mission:iterateChildren()
+	return next, self._suptmsns, nil
 end
 
 --- event handler used when one of the mission's goals is completed
