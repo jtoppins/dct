@@ -2,6 +2,7 @@
 
 local class = require("libs.namedclass")
 local utils = require("libs.utils")
+local dctutils = require("dct.libs.utils")
 local vector = require("dct.libs.vector")
 
 local rc = {
@@ -149,6 +150,107 @@ local checktbl = {
 	[valuetype.LIST]   = check_list,
 }
 
+local value_header = {
+	[valuetype.VALUES]    = "specific values",
+	[valuetype.INT]       = "number",
+	[valuetype.RANGE]     = "range",
+	[valuetype.STRING]    = "string",
+	[valuetype.BOOL]      = "boolean (true/false)",
+	[valuetype.TABLEKEYS] = "specific values",
+	[valuetype.TABLE]     = "table",
+}
+
+local function is_required(option)
+	local s = " - _required:_ "
+
+	if option.default ~= nil then
+		s = s.."no"
+
+		if not (option.default == "") and
+		   type(option.default) ~= "table" and
+		   option.type ~= valuetype.VALUES then
+			s = s.."\n - _default:_ "..tostring(option.default)
+		elseif option.type == valuetype.VALUES then
+			local found = nil
+			for key, data in pairs(option.values) do
+				if data.value == option.default then
+					found = key
+					break
+				end
+			end
+
+			if found ~= nil then
+				s = s.."\n - _default:_ "..tostring(found)
+			end
+		end
+	else
+		s = s.."yes"
+	end
+	return s
+end
+
+local function option_summary(option)
+	local summary = is_required(option).."\n"
+
+	summary = summary.." - _value:_ "..value_header[option.type]
+	if option.type == valuetype.RANGE then
+		summary = summary..string.format(" [%d, %d]",
+			option.values[1], option.values[2])
+	end
+	summary = summary.."\n"
+	if option.agent then
+		summary = summary.." - _agent:_ true\n"
+	end
+	if option.deprecated then
+		summary = summary.."\n_NOTE: this option has been "..
+			  "deprecated._\n"
+	end
+	return summary
+end
+
+local function option_description(option)
+	local desc = option.description.."\n"
+
+	if option.type == valuetype.VALUES or
+	   option.type == valuetype.TABLEKEYS or
+	   (option.type == valuetype.TABLE and
+	    option.values ~= nil) then
+		local values = ""
+		for k, v in utils.sortedpairs(option.values) do
+			values = values.." - `"..k.."`"
+			if option.type == valuetype.VALUES then
+				values = values.." - "..v.description
+			end
+			values = values.."\n"
+		end
+		local len = string.len(values)
+		values = string.sub(values, 1, len - 1)
+
+		desc = dctutils.interp(desc, {
+			["VALUES"] = values,
+		})
+	end
+	return desc
+end
+
+local function write_section(level, name, data)
+	if next(data.options) == nil then
+		return
+	end
+
+	print(string.format("\n%s %s\n", string.rep("#", level), name))
+	if data.description then
+		print(data.description)
+	end
+
+	for optname, optdata in utils.sortedpairs(data.options) do
+		print(string.format("\n%s `%s`\n",
+				    string.rep("#", level+1), optname))
+		print(option_summary(optdata))
+		print(option_description(optdata))
+	end
+end
+
 local Check = class("Check")
 function Check:__init(section, options, description)
 	options = options or {}
@@ -170,6 +272,35 @@ end
 Check.rc = rc
 Check.reasontext = texttbl
 Check.valuetype = valuetype
+
+--- class function to generate check documentation.
+-- Generate markdown styled documentation for all options checked for by
+-- the given set of checkers. Output to standard out.
+function Check.genDocs(header, checkers)
+	local sections = {}
+	for _, c in pairs(checkers) do
+		local doc = c:doc()
+		if sections[doc.section] == nil and next(doc.options) then
+			sections[doc.section] = {}
+			sections[doc.section]["options"] = {}
+		end
+
+		if doc.description then
+			sections[doc.section]["description"] = doc.description
+		end
+
+		for key, val in pairs(doc.options) do
+			if val.nodoc ~= true then
+				sections[doc.section]["options"][key] = val
+			end
+		end
+	end
+
+	print(header)
+	for name, data in utils.sortedpairs(sections) do
+		write_section(2, name, data)
+	end
+end
 
 --- checks the if the options in data have legal values
 --
