@@ -5,8 +5,10 @@
 require("math")
 local class    = require("libs.class")
 local utils    = require("libs.utils")
+local Timer    = require("dct.libs.Timer")
 local Marshallable = require("dct.libs.Marshallable")
 local Command  = require("dct.libs.Command")
+local UPDATE_TIME = 120
 
 local function checkvalue(keydata, tbl)
 	if tbl[keydata.name] >= 0 then
@@ -102,20 +104,19 @@ function Tickets:__init(theater)
 	self.cfgfile = dct.settings.server.theaterpath..utils.sep..
 		"theater.goals"
 	self.tickets = {}
-	self.timeout = {
-		["enabled"] = false,
-		["ctime"] = timer.getAbsTime(),
-		["period"] = 120,
-	}
+	self.timeout = false
 	self.complete = false
+
 	self:readconfig()
+
 	self:_addMarshalNames({
 		"tickets",
-		"timeout",
 		"complete"})
-	if self.timeout.enabled then
-		theater:queueCommand(self.timeout.period, Command(
-			"Tickets.timer", self.timer, self), true)
+
+	if self.timeout then
+		self.timer:start()
+		theater:queueCommand(UPDATE_TIME,
+			Command("Tickets.update", self.update, self))
 	end
 end
 
@@ -126,6 +127,21 @@ function Tickets:_unmarshalpost(data)
 			self[tbl][tonumber(k)] = v
 		end
 	end
+
+	if self.timeout then
+		self.timer:reset(data.timeleft)
+		self.timer:start()
+	end
+end
+
+function Tickets:marshal()
+	local data = Marshallable.marshal(self)
+
+	if self.timeout then
+		data.timeleft = self.timer:remain()
+	end
+
+	return data
 end
 
 function Tickets:readconfig()
@@ -156,8 +172,8 @@ function Tickets:readconfig()
 	goals.path = nil
 
 	if goals.time > 0 then
-		self.timeout.timeleft = goals.time
-		self.timeout.enabled = true
+		self.timer = Timer(goals.time, timer.getAbsTime)
+		self.timeout = true
 	end
 	for _, val in ipairs({"red", "blue", "neutral"}) do
 		local s = coalition.side[string.upper(val)]
@@ -249,14 +265,10 @@ function Tickets:isComplete()
 	return self.complete
 end
 
-function Tickets:timer()
-	local ctime = timer.getAbsTime()
-	local tdiff = ctime - self.timeout.ctime
-
-	self.timeout.ctime = ctime
-	self.timeout.timeleft = self.timeout.timeleft - tdiff
-	if self.timeout.timeleft > 0 then
-		return self.timeout.period
+function Tickets:update()
+	self.timer:update()
+	if not self.timer:expired() then
+		return UPDATE_TIME
 	end
 
 	-- campaign timeout reached, determine the winner
