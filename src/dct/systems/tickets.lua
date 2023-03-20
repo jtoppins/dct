@@ -11,6 +11,8 @@ local Command  = require("dct.libs.Command")
 local Check    = require("dct.templates.checkers.Check")
 local UPDATE_TIME = 120
 
+local coa_list = {"red", "blue", "neutral"}
+
 local difficulty = {
 	["EASY"] = {
 		["player_cost"]     = 1.0,
@@ -168,7 +170,7 @@ function CheckGoals:check(data)
 
 	local checkside = CheckSide()
 
-	for _, side in pairs({"red", "blue", "neutral"}) do
+	for _, side in pairs(coa_list) do
 		ok, key, msg = checkside:check(data[side])
 
 		if not ok then
@@ -200,12 +202,10 @@ function Tickets:__init(theater)
 	end
 end
 
-function Tickets:_unmarshalpost(data)
-	for _, tbl in ipairs({"tickets"}) do
-		self[tbl] = {}
-		for k, v in pairs(data[tbl]) do
-			self[tbl][tonumber(k)] = v
-		end
+function Tickets:unmarshal(data)
+	self.complete = data.complete
+	for k, v in pairs(data.tickets) do
+		utils.mergetables(self.tickets[tonumber(k)], v)
 	end
 
 	if self.timeout then
@@ -214,8 +214,21 @@ function Tickets:_unmarshalpost(data)
 	end
 end
 
+local include_list = {
+	["start"]   = true,
+	["tickets"] = true,
+}
+
 function Tickets:marshal()
-	local data = Marshallable.marshal(self)
+	local data = Marshallable.marshal(self, utils.deepcopy)
+
+	for _, coa in pairs(coalition.side) do
+		for key, _ in pairs(data.tickets[coa]) do
+			if include_list[key] == nil then
+				data.tickets[coa][key] = nil
+			end
+		end
+	end
 
 	if self.timeout then
 		data.timeleft = self.timer:remain()
@@ -238,7 +251,7 @@ function Tickets:readconfig()
 		self.timer = Timer(goals.time, timer.getAbsTime)
 		self.timeout = true
 	end
-	for _, val in ipairs({"red", "blue", "neutral"}) do
+	for _, val in ipairs(coa_list) do
 		local s = coalition.side[string.upper(val)]
 		self.tickets[s] = goals[val]
 		self.tickets[s].name = val
@@ -317,7 +330,6 @@ function Tickets:setComplete(winner)
 	end
 
 	self.complete = true
-	self.winner = winner
 	local code = string.format([[a_end_mission("%s", "%s", 10)]],
 		winner.name, winner.win_message)
 
