@@ -143,6 +143,10 @@ function Theater:__init()
 	self.startdate = os.date("!*t")
 	self.namecntr  = 1000
 
+	-- Create a weak table for storing commands that should be
+	-- requeued on errors
+	self.requeueOnError = setmetatable({}, { __mode = "k" })
+
 	Systems.__init(self)
 	for _, val in pairs(coalition.side) do
 		self.cmdrs[val] = Commander(self, val)
@@ -360,12 +364,17 @@ end
 --
 -- delay - amount of delay in seconds before the command is run
 -- cmd   - the command to be run
-function Theater:queueCommand(delay, cmd)
+-- requeueOnError - boolean; requeue this command automatically with
+--   the given delay if it encounters an error
+function Theater:queueCommand(delay, cmd, requeueOnError)
 	if delay < self.cmdmindelay then
 		Logger:warn("queueCommand(); delay(%2.2f) less than "..
 			    "schedular minimum(%2.2f), setting to schedular "..
 			    "minumum", delay, self.cmdmindelay)
 		delay = self.cmdmindelay
+	end
+	if requeueOnError then
+		self.requeueOnError[cmd] = delay
 	end
 	self.cmdq:push(timer.getTime() + delay, cmd)
 	Logger:debug("queueCommand(); cmd(%s), delay: %d, cmdq size: %d",
@@ -387,7 +396,15 @@ function Theater:exec(time)
 		local ok, requeue = xpcall(
 			function()
 				return cmd:execute(time)
-			end, dctutils.errhandler(Logger))
+			end,
+			function(err)
+				Logger:error("protected call - %s",
+					debug.traceback(err, 2))
+				local delay = self.requeueOnError[cmd]
+				if delay ~= nil then
+					self:queueCommand(delay, cmd, true)
+				end
+			end)
 		if ok and type(requeue) == "number" then
 			self:queueCommand(requeue, cmd)
 		end
