@@ -68,11 +68,10 @@ local factType = {
 --- Unique fact keys that represents data that should only exist
 -- once in the agent's memory
 local factKey = {
-	["WELCOMMISSION"] = "welcomemission",
-	["WELCOME"]       = "welcome",
-	["KICK"]          = "kick",
-	["BLOCKSLOT"]     = "blockslot",
-	["LANDSAFE"]      = "landsafe",
+	["WELCOMEMSG"]    = "welcome_msg",
+	["KICKMSG"]       = "kick_msg",
+	["BLOCKSLOTMSG"]  = "blockslot_msg",
+	["LANDSAFEMSG"]   = "landsafe_msg",
 	["CMDPENDING"]    = "cmdpending",
 	["SCRATCHPAD"]    = "scratchpad",
 	["LOSETICKET"]    = "loseticket",

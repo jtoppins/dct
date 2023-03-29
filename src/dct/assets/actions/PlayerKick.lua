@@ -67,7 +67,7 @@ function PlayerKick:enter()
 	local msg = reasons[kickfact.event.code] or
 		"You have been kicked from the slot for an unknown reason."
 
-	self.agent:setFact(WS.Facts.factKey.KICK,
+	self.agent:setFact(WS.Facts.factKey.KICKMSG,
 			   WS.Facts.PlayerMsg(msg, 20))
 	trigger.action.setUserFlag(flagname, kickfact.event.code or
 		dctenum.kickCode.UNKNOWN)

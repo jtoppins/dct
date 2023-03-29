@@ -93,7 +93,7 @@ end
 
 function PlayerSensor:handleBirth(event)
 	if not self:isEnabled() then
-		self.agent:setFact(WS.Facts.factKey.BLOCKSLOT,
+		self.agent:setFact(WS.Facts.factKey.BLOCKSLOTMSG,
 				   WS.Facts.PlayerMsg(
 			"Warning: you have spawned in a disabled "..
 			"slot, slot blocker potentially broken.", 20))
@@ -137,7 +137,7 @@ function PlayerSensor:handleLand(event)
 	   event.place:getName() == self.agent:getDescKey("airbase") then
 		self.agent:setFact(WS.Facts.factKey.LOSETICKET,
 			WS.Facts.Value(WS.Facts.factType.LOSETICKET, false))
-		self.agent:setFact(WS.Facts.factKey.LANDSAFE,
+		self.agent:setFact(WS.Facts.factKey.LANDSAFEMSG,
 				   WS.Facts.PlayerMsg(
 			"Welcome home. You are able to safely disconnect"..
 			" without costing your side tickets.", 20))
