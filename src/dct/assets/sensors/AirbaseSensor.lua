@@ -221,7 +221,7 @@ function AirbaseSensor:handleCapture(event)
 end
 
 function AirbaseSensor:handleDeparture(event)
-	if not self.isOperational() then
+	if not self:isOperational() then
 		return
 	end
 
@@ -236,7 +236,7 @@ function AirbaseSensor:update()
 		return false
 	end
 
-	if self.isOperational() then
+	if self:isOperational() then
 		self:setValues()
 		self:refreshNavaids()
 	end
