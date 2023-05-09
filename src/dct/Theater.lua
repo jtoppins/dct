@@ -16,10 +16,17 @@ local Commander   = require("dct.ai.Commander")
 local Logger      = dct.Logger.getByName("Theater")
 local settings    = dct.settings.server
 local STATE_VERSION = "4"
+local RESETFILE = lfs.writedir()..require("libs.utils").sep.."reset.txt"
 
 
 --- tests if a state table is valid
 local function isStateValid(state)
+	if io.open(RESETFILE) ~= nil then
+		Logger:info("isStateValid(); state reset requested by file")
+		os.remove(RESETFILE)
+		return false
+	end
+
 	if state == nil then
 		Logger:info("isStateValid(); state object nil")
 		return false
@@ -137,11 +144,16 @@ function Theater:__init()
 	self:setTimings(settings.schedfreq, settings.tgtfps,
 		settings.percentTimeAllowed)
 	self.statef    = false
+	self.initdone  = false
 	self.qtimer    = require("dct.libs.Timer")(self.quanta, os.clock)
 	self.cmdq      = containers.PriorityQueue()
 	self.cmdrs     = {}
 	self.startdate = os.date("!*t")
 	self.namecntr  = 1000
+
+	-- Create a weak table for storing commands that should be
+	-- requeued on errors
+	self.requeueOnError = setmetatable({}, { __mode = "k" })
 
 	Systems.__init(self)
 	for _, val in pairs(coalition.side) do
@@ -151,7 +163,7 @@ function Theater:__init()
 	self:queueCommand(5, Command(self.__clsname..".delayedInit",
 		self.delayedInit, self))
 	self:queueCommand(100, Command(self.__clsname..".export",
-		self.export, self))
+		self.export, self), true)
 	self.singleton = nil
 	self.playerRequest = nil
 end
@@ -201,6 +213,8 @@ function Theater:loadOrGenerate()
 		Logger:info("generating new theater")
 		self:_runsys("generate")
 	end
+
+	self.initdone = true
 end
 
 function Theater:delayedInit()
@@ -280,14 +294,19 @@ function Theater:_onEvent(event)
 	fixup_airbase(event)
 	self:notify(event)
 	if event.id == world.event.S_EVENT_MISSION_END then
-		-- Only delete the state if there is an end mission event
+		-- Only delete the active state if there is an end mission event
 		-- and tickets are complete, otherwise when a server is
 		-- shutdown gracefully the state will be deleted.
 		if self:getTickets():isComplete() then
+			-- Save the now-ended state with a timestamped filename
+			self:export(nil, os.time())
 			local ok, err = os.remove(settings.statepath)
 			if not ok then
 				Logger:error("unable to remove statefile; "..err)
 			end
+		elseif self.initdone then
+			-- Save the state for reloading after a server restart
+			self:export()
 		end
 	end
 end
@@ -297,15 +316,21 @@ function Theater:onEvent(event)
 	       dctutils.errhandler(Logger))
 end
 
-function Theater:export(_)
+function Theater:export(_, suffix)
+	local path = settings.statepath
 	local statefile
 	local msg
 
-	statefile, msg = io.open(settings.statepath, "w+")
+	if suffix ~= nil then
+		local noext, ext = string.match(path, "^(.+)(%.[^/\\]+)$")
+		path = noext.."_"..tostring(suffix)..ext
+	end
+
+	statefile, msg = io.open(path, "w+")
 
 	if statefile == nil then
-		Logger:error("export(); unable to open '"..
-			settings.statepath.."'; msg: "..tostring(msg))
+		Logger:error("export(); unable to open '"..path..
+			"'; msg: "..tostring(msg))
 		return self.savestatefreq
 	end
 
@@ -360,12 +385,17 @@ end
 --
 -- delay - amount of delay in seconds before the command is run
 -- cmd   - the command to be run
-function Theater:queueCommand(delay, cmd)
+-- requeueOnError - boolean; requeue this command automatically with
+--   the given delay if it encounters an error
+function Theater:queueCommand(delay, cmd, requeueOnError)
 	if delay < self.cmdmindelay then
 		Logger:warn("queueCommand(); delay(%2.2f) less than "..
 			    "schedular minimum(%2.2f), setting to schedular "..
 			    "minumum", delay, self.cmdmindelay)
 		delay = self.cmdmindelay
+	end
+	if requeueOnError then
+		self.requeueOnError[cmd] = delay
 	end
 	self.cmdq:push(timer.getTime() + delay, cmd)
 	Logger:debug("queueCommand(); cmd(%s), delay: %d, cmdq size: %d",
@@ -387,7 +417,15 @@ function Theater:exec(time)
 		local ok, requeue = xpcall(
 			function()
 				return cmd:execute(time)
-			end, dctutils.errhandler(Logger))
+			end,
+			function(err)
+				Logger:error("protected call - %s",
+					debug.traceback(err, 2))
+				local delay = self.requeueOnError[cmd]
+				if delay ~= nil then
+					self:queueCommand(delay, cmd, true)
+				end
+			end)
 		if ok and type(requeue) == "number" then
 			self:queueCommand(requeue, cmd)
 		end

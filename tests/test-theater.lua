@@ -171,6 +171,24 @@ local function main()
 	end
 	assert(newtheater.statef == true and sumorig == sumsave,
 		"state saving didn't produce the same md5sum")
+
+	-- finish a state and reload it
+	theater:getTickets():loss(1, 5000)
+	theater:export()
+
+	assert(theater:getTickets():isComplete() == true,
+		"theater was not completed")
+
+	-- allow a chance to save a backup of the state
+	theater:onEvent({ id = world.event.S_EVENT_MISSION_END })
+
+	theater = dct.Theater()
+	_G.dct.theater = theater
+	theater:exec(50)
+
+	assert(theater:getTickets():isComplete() == false,
+		"theater was not regenerated after completion")
+
 	return 0
 end
 
