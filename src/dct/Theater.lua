@@ -419,8 +419,7 @@ function Theater:exec(time)
 				return cmd:execute(time)
 			end,
 			function(err)
-				Logger:error("protected call - %s",
-					debug.traceback(err, 2))
+				Logger:error(dctutils.errtraceback(err, 2))
 				local delay = self.requeueOnError[cmd]
 				if delay ~= nil then
 					self:queueCommand(delay, cmd, true)

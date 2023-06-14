@@ -129,15 +129,11 @@ function WeaponsTracker:_update(time)
 end
 
 function WeaponsTracker:update(time)
-	local errhandler = function(err)
-		Logger:error("protected call - "..tostring(err).."\n"..
-			debug.traceback())
-	end
 	local pcallfunc = function()
 		self:_update(time)
 	end
 
-	xpcall(pcallfunc, errhandler)
+	xpcall(pcallfunc, dctutils.errhandler(Logger))
 	return time + self.updatefreq
 end
 

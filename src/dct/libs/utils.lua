@@ -45,10 +45,18 @@ function utils.isalive(grpname)
 	return (grp ~= nil and grp:isExist() and grp:getSize() > 0)
 end
 
+function utils.errtraceback(err, lvl)
+	return "---[ cut here ]---\n"..
+	       "ERROR: "..tostring(err).."\n"..
+	       string.format("DCT(%s) traceback:\n", dct._VERSION)..
+	       debug.traceback(err, lvl+1)..
+	       "---[ end trace ]---"
+end
+
 --- error handler for all xpcall
-function utils.errhandler(logger)
+function utils.errhandler(logger, lvl)
 	return function(err)
-		logger:error("protected call - %s", debug.traceback(err, 2))
+		logger:error(utils.errtraceback(err, lvl or 1))
 	end
 end
 
