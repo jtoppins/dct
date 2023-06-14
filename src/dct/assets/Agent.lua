@@ -106,9 +106,10 @@ end
 
 
 local function load_module(subpath, objtype)
+	local path = "dct.assets."..subpath.."."..objtype
 	Logger.getByName("Agent"):debug("init - load_module: %s",
-		tostring("dct.assets."..subpath.."."..objtype))
-	return require("dct.assets."..subpath.."."..objtype)
+		tostring(path))
+	return require(path)
 end
 
 local objecttypes = {}
