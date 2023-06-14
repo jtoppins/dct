@@ -1,21 +1,13 @@
---[[
 -- SPDX-License-Identifier: LGPL-3.0
---
--- Creates all menu entries necessary to input a mission code
--- from the radio menu UI
---]]
+
+--- Creates all menu entries necessary to input a mission code
+-- from the radio menu UI.
 
 local dctenum = require("dct.enum")
-local Theater = require("dct.Theater")
 local Mission = require("dct.libs.Mission")
-local addmenu = missionCommands.addSubMenuForGroup
-local addcmd  = missionCommands.addCommandForGroup
+local PlayerMenu = require("dct.ui.PlayerMenu")
 
 local function empty() end
-
-local function addEmptyCommand(gid, path)
-	addcmd(gid, "", path, empty)
-end
 
 local validFirstDigit = {}
 for _, msn in pairs(Mission.typeData) do
@@ -24,52 +16,47 @@ for _, msn in pairs(Mission.typeData) do
 	end
 end
 
-local function createJoinCmds(gid, name, parentMenu, halfCode)
+local function createJoinCmds(root, halfCode)
 	for digit3 = 1, 10 do
 		if digit3 % 10 < 8 then
-			local missionCode = string.format("%s%d0", halfCode, digit3 % 10)
-			addcmd(gid, string.format("Mission %s", missionCode), parentMenu,
-				Theater.playerRequest, {
-					["name"]  = name,
-					["type"]  = dctenum.uiRequestType.MISSIONJOIN,
-					["value"] = missionCode,
-				}
-			)
+			local code = string.format("%s%d0", halfCode,
+				digit3 % 10)
+			root:addRqstCmd(string.format("Mission %s", code),
+				dctenum.requestType.MISSION_JOIN, code)
 		else
-			addEmptyCommand(gid, parentMenu)
+			root:addCmd("", empty)
 		end
 	end
 end
 
-local function createDigit2Menu(gid, name, parentMenu, quarterCode)
+local function createDigit2Menu(root, quarterCode)
 	for digit2 = 1, 10 do
 		if digit2 % 10 < 8 then
-			local halfCode = string.format("%s%d", quarterCode, digit2 % 10)
-			local menu = addmenu(gid,
-				string.format("Mission %s__", halfCode), parentMenu)
-			createJoinCmds(gid, name, menu, halfCode)
+			local halfCode = string.format("%s%d", quarterCode,
+				digit2 % 10)
+			createJoinCmds(root:addMenu(string.format(
+				"Mission %s__", halfCode)), halfCode)
 		else
-			addEmptyCommand(gid, parentMenu)
+			root:addCmd("", empty)
 		end
 	end
 end
 
-local function createDigit1Menu(gid, name, parentMenu)
+--- Adds all valid mission code as sub items of root.
+--
+-- @param root [PlayerMenu] root menu entry which all new menu items are
+--   children
+local function addMissionCodes(root)
+	assert(root:isa(PlayerMenu.Menu), "not a PlayerMenu class")
 	for digit1 = 1, 10 do
 		if validFirstDigit[digit1] then
 			local quarterCode = tostring(digit1 % 10)
-			local menu = addmenu(gid,
-				string.format("Mission %s___", quarterCode), parentMenu)
-			createDigit2Menu(gid, name, menu, quarterCode)
+			createDigit2Menu(root:addmenu(string.format(
+				"Mission %s___", quarterCode)), quarterCode)
 		else
-			addEmptyCommand(gid, parentMenu)
+			root:addCmd("", empty)
 		end
 	end
 end
 
-local missioncodes = {}
-function missioncodes.addMissionCodes(gid, name, parentMenu)
-	createDigit1Menu(gid, name, parentMenu)
-end
-
-return missioncodes
+return addMissionCodes
