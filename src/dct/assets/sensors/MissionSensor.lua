@@ -18,7 +18,7 @@ local WS        = require("dct.assets.worldstate")
 -- * mission complete (mission complete, replan)
 -- * mission specific action (check-in/check-out/pickup/dropoff)
 --    - can post these player initiated events as facts and let the current
---      misstion plan handle it?
+--      mission plan handle it?
 --
 -- Actions:
 -- * MissionAssign (mission request event)
@@ -35,21 +35,15 @@ function MissionSensor:__init(agent)
 	DCTEvents.__init(self)
 
 	self:_overridehandlers({
-		[dctenum.event.DCT_EVENT_MISSION_DONE]   = self.missionDone,
+		[dctenum.event.DCT_EVENT_MISSION_JOIN]   = self.missionJoin,
 		[dctenum.event.DCT_EVENT_MISSION_UPDATE] = self.missionUpdate,
+		[dctenum.event.DCT_EVENT_MISSION_LEAVE]  = self.missionDone,
+		[dctenum.event.DCT_EVENT_MISSION_DONE]   = self.missionDone,
 	})
 end
 
---- tell agent to dump the mission and replan
-function MissionSensor:missionDone(event)
-	if event.initiator ~= self.agent:getMission() then
-		self.agent._logger:error("unknown mission: %s",
-			event.initiator.__clsname)
-		return
-	end
-
-	self.agent:setMission(nil)
-	event.initiator:remove(self.agent)
+function MissionSensor:missionJoin(event)
+	self.agent:setMission(event.initiator)
 	self.agent:replan()
 end
 
@@ -58,11 +52,19 @@ end
 -- replanning
 function MissionSensor:missionUpdate(event)
 	if event.initiator ~= self.agent:getMission() then
-		self.agent._logger:error("unknown mission: %s",
-			event.initiator.__clsname)
 		return
 	end
 
+	self.agent:replan()
+end
+
+--- tell agent to dump the mission and replan
+function MissionSensor:missionDone(event)
+	if event.initiator ~= self.agent:getMission() then
+		return
+	end
+
+	self.agent:setMission(nil)
 	self.agent:replan()
 end
 
