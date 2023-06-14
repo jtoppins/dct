@@ -165,7 +165,6 @@ function Theater:__init()
 	self:queueCommand(100, Command(self.__clsname..".export",
 		self.export, self), true)
 	self.singleton = nil
-	self.playerRequest = nil
 end
 
 function Theater.singleton()
@@ -175,14 +174,6 @@ function Theater.singleton()
 
 	dct.theater = Theater()
 	return dct.theater
-end
-
-function Theater.playerRequest(data)
-	xpcall(function()
-		local theater = Theater.singleton()
-		local uimenu = require("dct.ui.groupmenu")
-		uimenu.playerRequest(theater, data)
-	end, dctutils.errhandler(Logger))
 end
 
 function Theater:setTimings(cmdfreq, tgtfps, percent)

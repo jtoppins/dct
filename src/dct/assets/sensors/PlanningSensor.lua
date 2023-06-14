@@ -41,7 +41,7 @@ end
 --        transition to doplan state
 local Planning = require("libs.namedclass")("PlanningSensor", WS.Sensor)
 function Planning:__init(agent)
-	WS.Sensor.__init(self, agent, 30)
+	WS.Sensor.__init(self, agent, 70)
 end
 
 function Planning:update()

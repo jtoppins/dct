@@ -65,6 +65,7 @@ local factType = {
 	["LOSETICKET"]  = 10, -- Value
 	["CMDPENDING"]  = 11, -- Value
 	["SCRATCHPAD"]  = 12, -- Value
+	["PLAYERMENU"]  = 13, -- objref (a player menu object)
 }
 
 --- Unique fact keys that represents data that should only exist
@@ -192,6 +193,28 @@ StimuliFact.stimType = {
 	["LAUNCH"]    = 2, -- like a HARM launch, etc
 	["CONTACT"]   = 3, -- like a radar contact
 }
+
+local PlayerMenuFact = class("PlayerMenu", Fact)
+function PlayerMenuFact:__init(menu, menutype)
+	Fact.__init(self, factType.PLAYERMENU)
+	self.object    = Attribute(menu)
+	self.objtype   = Attribute(check.tblkey(menutype,
+						PlayerMenuFact.menuType,
+						"PlayerMenuFact.menuType"))
+	PlayerMenuFact.menuType = nil
+end
+
+PlayerMenuFact.menuType = {
+	["SCRATCHPAD"] = 1,
+	["INTEL"]      = 2,
+	["GROUNDCREW"] = 3,
+	["MISSION"]    = 4,
+	["TANKER"]     = 5,
+}
+
+function PlayerMenuFact.buildKey(menutype)
+	return string.format("menu%d", menutype)
+end
 
 --- Agent received an event from the world and needs to react to it.
 local EventFact = class("EventFact", Fact)
@@ -383,6 +406,7 @@ _ws.Facts = {
 	["Event"]     = EventFact,
 	["Value"]     = ValueFact,
 	["PlayerMsg"] = PlayerMsgFact,
+	["PlayerMenu"]= PlayerMenuFact,
 }
 _ws.ID = id
 _ws.Stance = stanceType

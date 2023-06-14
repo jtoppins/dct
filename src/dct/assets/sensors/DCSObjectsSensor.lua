@@ -160,7 +160,7 @@ end
 local DCSObjectsSensor = require("libs.namedclass")("DCSObjectsSensor",
 	WS.Sensor, DCTEvents)
 function DCSObjectsSensor:__init(agent)
-	WS.Sensor.__init(self, agent, 10)
+	WS.Sensor.__init(self, agent, 5)
 	DCTEvents.__init(self)
 	self._maxdeathgoals = agent:getDescKey("maxdeathgoals") or 0
 	self._curdeathgoals = 0

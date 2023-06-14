@@ -444,12 +444,11 @@ end
 --
 -- @param agent to assign to this Mission
 function Mission:assign(agent)
-	self:notify(dctutils.buildevent.missionJoin(self, agent))
 	self._assignedcnt = self._assignedcnt + 1
 	self:addObserver(agent.onDCTEvent, agent, agent.name)
 	self._assigned[agent.name] = self._assignedcnt
-	agent:setMission(self)
 	self:copyFacts(agent)
+	self:notify(dctutils.buildevent.missionJoin(self, agent))
 end
 
 --- Remove Agent from this Mission
@@ -459,6 +458,8 @@ function Mission:remove(agent)
 	if self._assigned[agent.name] == nil then
 		return
 	end
+
+	self:notify(dctutils.buildevent.missionLeave(self, agent))
 	self:removeObserver(agent)
 	self._assigned[agent.name] = nil
 	self._assignedcnt = self._assignedcnt - 1
@@ -467,8 +468,6 @@ function Mission:remove(agent)
 	-- abort the mission once no one is assigned
 	if self._assignedcnt <= 0 then
 		self:abort()
-	else
-		self:notify(dctutils.buildevent.missionLeave(self, agent))
 	end
 end
 
