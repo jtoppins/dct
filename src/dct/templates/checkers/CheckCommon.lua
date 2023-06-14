@@ -3,6 +3,7 @@
 local class   = require("libs.namedclass")
 local utils   = require("libs.utils")
 local dctenum = require("dct.enum")
+local dctutils= require("dct.libs.utils")
 local Check   = require("dct.templates.checkers.Check")
 
 local ishq = {
@@ -102,7 +103,8 @@ the region. A lower non-negative number means higher priority.]],
 		},
 		["intel"] = {
 			["default"] = 0,
-			["type"] = Check.valuetype.INT,
+			["type"] = Check.valuetype.RANGE,
+			["values"] = {0, dctutils.INTELMAX},
 			["description"] = [[
 Defines the initial amount of 'intel' the opposing side knows about any assets
 generated from the template. The intel value is a direct representation to how
