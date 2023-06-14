@@ -427,23 +427,4 @@ function Template:genDesc()
 	return desc
 end
 
---- Generate mission briefing text from the supplied information
---
--- @param posit position data to use when generating location information
--- @precision how accurate posit is
--- @desc description table from the asset
--- @fmts the format table
-function Template:genBriefing(posit, precision, desc, fmts)
-	local brief = nil
-
-	if self.desc then
-		brief = dctutils.interp(self.desc, {
-			["LOCATIONMETHOD"] = desc.locationmethod,
-			["LOCATION"] = dctutils.fmtposition(posit, precision,
-						fmts.position),
-		})
-	end
-	return brief
-end
-
 return Template
