@@ -253,7 +253,9 @@ local function option_description(option)
 	local desc = option.description.."\n"
 
 	if option.type == Checker.valuetype.VALUES or
-	   option.type == Checker.valuetype.TABLEKEYS then
+	   option.type == Checker.valuetype.TABLEKEYS or
+	   (option.type == Checker.valuetype.TABLE and
+	    option.values ~= nil) then
 		local values = ""
 		for k, v in utils.sortedpairs(option.values) do
 			values = values.." - `"..k.."`"
