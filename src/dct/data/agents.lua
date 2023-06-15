@@ -75,6 +75,7 @@ agents[dctenum.assetType.CV]          = {
 agents[dctenum.assetType.SQUADRON]    = {
 	["sensors"] = {
 		["PlanningSensor"]   = 0,
+		["SquadronSensor"]   = 0,
 	},
 	["actions"] = {
 	},
