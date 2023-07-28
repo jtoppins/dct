@@ -6,6 +6,7 @@ require("dcttestlibs")
 require("dct")
 local enum   = require("dct.enum")
 local uicmds = require("dct.ui.cmds")
+local Mission = require("dct.libs.Mission")
 
 -- create a player group
 local grp = Group(4, {
@@ -140,7 +141,7 @@ local testcmds = {
 		["data"] = {
 			["name"]   = grp:getName(),
 			["type"]   = enum.uiRequestType.MISSIONABORT,
-			["value"]  = enum.missionResult.ABORT,
+			["value"]  = Mission.typeResult.ABORT,
 		},
 		["assert"]     = true,
 		["expected"]   = "Mission 5170 aborted",

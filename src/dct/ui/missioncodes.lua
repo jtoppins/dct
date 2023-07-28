@@ -19,7 +19,9 @@ end
 
 local validFirstDigit = {}
 for _, msn in pairs(Mission.typeData) do
-	validFirstDigit[msn.codeType] = true
+	if msn.codeType then
+		validFirstDigit[msn.codeType] = true
+	end
 end
 
 local function createJoinCmds(gid, name, parentMenu, halfCode)

@@ -87,13 +87,16 @@ enum.assetTypeDeprecated = {
 
 enum.missionType = {
 	["INVALID"]    = 0,
-	["MOVETO"]     = 11,
+	["MOVETO"]     = 10,
+	["JTAC"]       = 11,
+	["AFAC"]       = 12,
 
 	["GUARD"]      = 20,
 	["CAS"]        = 21,
 	["CAP"]        = 22,
 	["SEAD"]       = 23,
 	["TANKER"]     = 24,
+	["AWACS"]      = 25,
 
 	["ATTACK"]     = 30,
 	["STRIKE"]     = 31,
@@ -101,7 +104,7 @@ enum.missionType = {
 	["OCA"]        = 33,
 	["ANTISHIP"]   = 34,
 	["DEAD"]       = 35,
-	["ARMEDRECON"] = 36,
+	["SWEEP"]      = 36,
 
 	["SEARCH"]     = 40,
 	["RECON"]      = 41,
@@ -111,12 +114,6 @@ enum.missionType = {
 	["TRANSPORT"]  = 50,
 	["CSAR"]       = 51,
 	["RESUPPLY"]   = 52,
-}
-
-enum.missionResult = {
-	["ABORT"]   = 0,
-	["TIMEOUT"] = 1,
-	["SUCCESS"] = 2,
 }
 
 enum.uiRequestType = {
