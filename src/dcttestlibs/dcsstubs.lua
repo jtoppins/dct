@@ -15,6 +15,7 @@ function lfs.tempdir()
 	return lfs.dct_testdata..utils.sep.."mission"
 end
 
+local libscheck = require("libs.check")
 local class = require("libs.class")
 local testlog = os.getenv("DCT_TEST_LOG") or
 		lfs.dct_testdata..utils.sep.."dct_test.log"
@@ -1230,6 +1231,13 @@ trigger.action = {}
 local chkbuffer  = ""
 local msgbuffer  = ""
 local enabletest = false
+local scope = {
+	["ALL"]     = -1,
+	["NEUTRAL"] = 0,
+	["RED"]     = 1,
+	["BLUE"]    = 2,
+}
+
 function trigger.action.setmsgbuffer(msg)
 	chkbuffer = msg
 end
@@ -1274,7 +1282,70 @@ function trigger.action.markToGroup(id, msg, _--[[pos]], grpid, _--[[readonly]])
 						       id, msg))
 end
 
-function trigger.action.removeMark(_ --[[id]])
+function trigger.action.markToCoalition(id, msg, _--[[pos]], grpid, _--[[readonly]])
+	assert(type(id) == "number", "value error: id must be a number")
+	assert(type(msg) == "string", "value error: msg must be a string")
+	assert(type(grpid) == "number", "value error: grpid must be a number")
+
+	logfile:write(os.date("%F %X ")..string.format("MARKC   %d;%s\n",
+						       id, msg))
+end
+
+local function check_common_args(coa, id, color, linetype)
+	libscheck.tblkey(coa, scope, "coalition.side")
+	libscheck.number(id)
+	libscheck.table(color)
+	libscheck.number(linetype)
+end
+
+function trigger.action.lineToAll(coa, id, startpt, endpt, color, linetype)
+	libscheck.table(startpt)
+	libscheck.table(endpt)
+	check_common_args(coa, id, color, linetype)
+end
+
+function trigger.action.circleToAll(coa, id, center, radius, color,
+		fillcolor, linetype)
+	libscheck.table(center)
+	libscheck.table(fillcolor)
+	libscheck.number(radius)
+	check_common_args(coa, id, color, linetype)
+end
+
+function trigger.action.rectToAll(coa, id, startpt, endpt, color,
+		fillcolor, linetype)
+	libscheck.table(startpt)
+	libscheck.table(endpt)
+	libscheck.table(fillcolor)
+	check_common_args(coa, id, color, linetype)
+end
+
+function trigger.action.quadToAll(coa, id, pt1, pt2, pt3, pt4, color,
+		fillcolor, linetype)
+	libscheck.table(pt1)
+	libscheck.table(pt2)
+	libscheck.table(pt3)
+	libscheck.table(pt4)
+	libscheck.table(fillcolor)
+	check_common_args(coa, id, color, linetype)
+end
+
+function trigger.action.textToAll(coa, id, pt, color, fillcolor, fontsize)
+	libscheck.table(pt)
+	libscheck.table(fillcolor)
+	check_common_args(coa, id, color, fontsize)
+end
+
+function trigger.action.arrowToAll(coa, id, startpt, endpt, color, fillcolor,
+		linetype)
+	libscheck.table(startpt)
+	libscheck.table(endpt)
+	libscheck.table(fillcolor)
+	check_common_args(coa, id, color, linetype)
+end
+
+function trigger.action.removeMark(id)
+	libscheck.number(id)
 end
 
 function trigger.action.setUserFlag(flagname, value)

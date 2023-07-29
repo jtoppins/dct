@@ -11,23 +11,6 @@ local dctutils = require("dct.libs.utils")
 
 local human = {}
 
-human.lineType = {
-	["NOLINE"]   = 0,
-	["SOLID"]    = 1,
-	["DASHED"]   = 2,
-	["DOTTED"]   = 3,
-	["DOTDASH"]  = 4,
-	["LONGDASH"] = 5,
-	["TWODASH"]  = 6,
-}
-
-local markindex = 10
-function human.getMarkID()
-	markindex = markindex + 1
-	return markindex
-end
-local marks = {}
-
 -- enemy air superiroty as defined by the US-DOD is
 --  'incapability', 'denial', 'parity', 'superiority',
 --  'supremacy' - this is simply represented by a number
