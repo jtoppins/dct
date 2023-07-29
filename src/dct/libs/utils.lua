@@ -46,11 +46,11 @@ function utils.isalive(grpname)
 end
 
 function utils.errtraceback(err, lvl)
-	return "---[ cut here ]---\n"..
-	       "ERROR: "..tostring(err).."\n"..
-	       string.format("DCT(%s) traceback:\n", dct._VERSION)..
+	lvl = lvl or 0
+	return "\n---[ cut here ]---\n"..
+	       string.format("ERROR DCT(%s): ", dct._VERSION)..
 	       debug.traceback(err, lvl+1)..
-	       "---[ end trace ]---"
+	       "\n---[ end trace ]---"
 end
 
 --- error handler for all xpcall
