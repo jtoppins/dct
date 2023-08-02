@@ -172,17 +172,11 @@ end
 
 local agentmt = {}
 function agentmt.__tostring(agent)
-	local action
-
-	if agent._plan ~= nil then
-		action = agent._plan.action
-	end
-
 	return string.format("N:%s, T:%s, G:%s, A:%s",
 			     agent.name,
 			     utils.getkey(dctenum.assetType, agent.type),
 			     tostring(agent:getGoal()),
-			     tostring(action))
+			     tostring(agent:getAction()))
 end
 
 --- Agent interface. Provides a common API for interacting with
@@ -411,6 +405,14 @@ function Agent:getGoal()
 	return self._plan.goal
 end
 
+function Agent:getAction()
+	local action
+	if self._plan ~= nil then
+		action = self._plan.action
+	end
+	return action
+end
+
 --- Required by the AssetManager, returns the list of DCS groups/static the
 -- Agent is composed of.
 --
@@ -542,6 +544,11 @@ end
 --- Handle DCS and DCT objects sent to the Agent
 function Agent:onDCTEvent(event)
 	dctutils.foreach_call(self._sensors, ipairs, "onDCTEvent", event)
+	local action = self:getAction()
+	if action ~= nil and
+	   type(self._plan.action.onDCTEvent) == "function" then
+		action:onDCTEvent(event)
+	end
 end
 
 local function execute_plan(agent)
