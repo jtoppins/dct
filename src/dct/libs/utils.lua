@@ -525,4 +525,18 @@ function utils.buildevent.departure(agent, takeofftime)
 	return event
 end
 
+--- Agent Request:
+-- id = id of this event
+-- initiator = the agent that initiated the request, for player
+--   agents they can receive requests they themselves have generated
+--   to allow the actual player to modify the model
+-- data = request data, at minimum must be a table with a field of 'id'
+function utils.buildevent.agentRequest(agent, data)
+	local event = {}
+	event.id = enum.event.DCT_EVENT_AGENT_REQUEST
+	event.initiator = agent
+	event.data = data
+	return event
+end
+
 return utils

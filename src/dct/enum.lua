@@ -116,20 +116,9 @@ enum.missionType = {
 	["RESUPPLY"]   = 52,
 }
 
-enum.uiRequestType = {
-	["THEATERSTATUS"]   = 1,
-	["MISSIONREQUEST"]  = 2,
-	["MISSIONBRIEF"]    = 3,
-	["MISSIONSTATUS"]   = 4,
-	["MISSIONABORT"]    = 5,
-	["MISSIONROLEX"]    = 6,
-	["MISSIONCHECKIN"]  = 7,
-	["MISSIONCHECKOUT"] = 8,
-	["SCRATCHPADGET"]   = 9,
-	["SCRATCHPADSET"]   = 10,
-	["CHECKPAYLOAD"]    = 11,
-	["MISSIONJOIN"]     = 12,
-	["REQUESTREARM"]    = 13,
+--- Requests that Agents can send to other agents.
+enum.requestType = {
+	["REARM"]      = 1,
 }
 
 enum.parkingType = {
@@ -179,6 +168,7 @@ enum.event = {
 	["DCT_EVENT_PLAYER_KICK"]    = eventbase + 13,
 	["DCT_EVENT_PLAYER_JOIN"]    = eventbase + 14,
 	["DCT_EVENT_DEPARTURE"]      = eventbase + 15,
+	["DCT_EVENT_AGENT_REQUEST"]  = eventbase + 16,
 }
 
 enum.kickCode = require("dct.libs.kickinfo").kickCode
