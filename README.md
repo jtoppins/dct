@@ -55,6 +55,4 @@ fixes off `master`.
 
 ## Contact Us
 
-You can join the VMFA-169 discord(https://discord.gg/6z8uERVW5Y) if you
-would like to discuss DCT topics. The channel is
-`#dynamic-campaign-tools-discussion`.
+* [DCT discord](https://discord.gg/kG38MDqDrN)
