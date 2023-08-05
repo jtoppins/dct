@@ -51,9 +51,6 @@ function PlayerJoin:enter()
 		return
 	end
 
-	self.agent:setHealth(WS.Health.OPERATIONAL)
-	self.agent:setDescKey("groupId", grp:getID())
-	self.agent:WS():get(WS.ID.INAIR).value = unit:inAir()
 	if not self.agent:hasFact(any_event) then
 		self.agent:WS():get(WS.ID.REACTEDTOEVENT).value = true
 	end

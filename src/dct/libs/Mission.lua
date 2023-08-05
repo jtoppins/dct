@@ -182,10 +182,7 @@ local function check_desc(desc)
 	end
 
 	local default_values = {
-		description = "generic mission description",
-		codename = "codename1",
-		remarks = "none",
-		threats = "no known threats",
+		description = "No mission description available.",
 	}
 
 	check.table(desc.location)
@@ -221,7 +218,7 @@ end
 -- @field cmdr reference to controlling commander
 -- @field id ID of the mission
 -- @field goalq queue of mission WS.Goal objects
--- @field desc description table of the mission. The description table hold
+-- @field desc description table of the mission. The description table holds
 --  metadata used mainly by Player agents to provide human readiable data
 --  about the mission.
 -- @field facts set of facts (intel and targets) that will be passed

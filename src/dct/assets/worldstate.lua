@@ -34,6 +34,7 @@ local id = {
 }
 
 local healthType = {
+	["UNKNOWN"]     = 0,
 	["DEAD"]        = 1, -- agent is dead
 	["DAMAGED"]     = 2, -- combat ineffective, repairs needed
 	["OPERATIONAL"] = 3, -- agent is combat effective
@@ -142,6 +143,7 @@ end
 --                   zero(0) is in-range.
 -- @field velocity   vector3D, confidence has no meaning
 -- @field owner      which coalition owns the object coalition.side
+-- @field status     the status (WS.ID.HEALTH) of the object
 local CharacterFact = class("CharacterFact", Fact)
 function CharacterFact:__init(obj, importance, objtype)
 	Fact.__init(self, factType.CHARACTER)
