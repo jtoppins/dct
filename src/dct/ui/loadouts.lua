@@ -151,12 +151,4 @@ function loadout.check(player)
 
 end
 
-function loadout.addmenu(gid, name, menu, handler)
-	return missionCommands.addCommandForGroup(gid,
-		"Check Payload", menu, handler, {
-			["name"]   = name,
-			["type"]   = dctenum.uiRequestType.CHECKPAYLOAD,
-		})
-end
-
 return loadout
