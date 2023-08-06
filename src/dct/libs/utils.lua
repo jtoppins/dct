@@ -393,20 +393,6 @@ function utils.buildevent.dead(obj)
 	return event
 end
 
---- HIT definition:
---   id = id of this event
---   initiator = DCT asset that was hit
---   weapon = DCTWeapon object
-function utils.buildevent.hit(asset, weapon)
-	check.table(asset)
-	check.table(weapon)
-	local event = {}
-	event.id = enum.event.DCT_EVENT_HIT
-	event.initiator = asset
-	event.weapon = weapon
-	return event
-end
-
 --- OPERATIONAL definition:
 --   id = id of this event
 --   initiator = base sending the operational notification
