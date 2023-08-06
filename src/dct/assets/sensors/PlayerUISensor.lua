@@ -2,6 +2,7 @@
 
 require("math")
 local class     = require("libs.namedclass")
+local pqueue    = require("libs.containers.pqueue")
 local Timer     = require("dct.libs.Timer")
 local DCTEvents = require("dct.libs.DCTEvents")
 local uimenu    = require("dct.ui.groupmenu")
@@ -13,19 +14,28 @@ local function is_player_msg(fact)
 	return fact.type == WS.Facts.factType.PLAYERMSG
 end
 
-local function find_next_msg(agent)
-	local msg, key
+local function display_messages(agent, ctime, maxmsgs)
+	local gid = agent:getDescKey("groupId")
+	local pq = pqueue()
+	local maxdelay = 0
 
-	for k, fact in agent:iterateFacts(is_player_msg) do
-		if msg == nil then
-			msg = fact
-			key = k
-		elseif msg.updatetime > fact.updatetime then
-			msg = fact
-			key = k
+	for key, fact in agent:iterateFacts(is_player_msg) do
+		if fact.updatetime < ctime then
+			pq:push(fact.value.confidence, key)
 		end
 	end
-	return key, msg
+
+	while not pq:empty() and maxmsgs > 0 do
+		local key = pq:pop()
+		local fact = agent:getFact(key)
+
+		trigger.action.outTextForGroup(gid, fact.value.value,
+					       fact.delay, false)
+		maxdelay = math.max(maxdelay, fact.delay)
+		maxmsgs = maxmsgs - 1
+		agent:setFact(key, nil)
+	end
+	return maxdelay
 end
 
 --- @classmod PlayerUISensor
@@ -66,20 +76,11 @@ function PlayerUISensor:update()
 		return false
 	end
 	self.timer:reset()
+	self.timer:start()
 
-	local modeltime = timer.getTime()
-	if modeltime > self.lastsent then
-		local key, msg = find_next_msg(self.agent)
-
-		if msg ~= nil then
-			self.agent:setFact(key, nil)
-			self.lastsent = modeltime + msg.time.value
-			trigger.action.outTextForGroup(
-				self.agent:getDescKey("groupId"),
-				msg.value.value,
-				msg.delay,
-				true)
-		end
+	local ctime = timer.getTime()
+	if ctime > self.lastsent then
+		self.lastsent = ctime + display_messages(self.agent, ctime, 4)
 	end
 
 	-- TODO: draw any F10 elements the player has requested and are
