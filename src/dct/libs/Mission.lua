@@ -5,11 +5,13 @@
 
 local class      = require("libs.namedclass")
 local utils      = require("libs.utils")
+local check      = require("libs.check")
 local dctenum    = require("dct.enum")
 local dctutils   = require("dct.libs.utils")
 local Observable = require("dct.libs.Observable")
 local DCTEvents  = require("dct.libs.DCTEvents")
 local Memory     = require("dct.libs.Memory")
+local WS         = require("dct.assets.worldstate")
 
 local missionResult = {
 	["ABORT"]   = 0,
@@ -170,6 +172,10 @@ for k, v in pairs(dctenum.missionType) do
 	assert(missiondata[v] ~= nil, "missiondata missing type entry: "..k)
 end
 
+local function is_character_fact(fact)
+	return fact.type == WS.Facts.factType.CHARACTER
+end
+
 local function check_desc(desc)
 	if desc == nil then
 		return nil
@@ -182,8 +188,8 @@ local function check_desc(desc)
 		threats = "no known threats",
 	}
 
-	assert(type(desc.position) == "table", "no position data available")
-	assert(type(desc.intel) == "number", "no intel value available")
+	check.table(desc.location)
+	check.range(desc.intel, 0, dctutils.INTELMAX)
 	for k, v in pairs(default_values) do
 		if desc[k] == nil then
 			desc[k] = v
@@ -228,7 +234,8 @@ local Mission = utils.override_ops(class("Mission", Observable, DCTEvents,
 				Memory), missionmt)
 
 --- Mission constructor.
--- @param msntype the type of mission the object represents
+-- @param msntype the type of mission the object represents,
+--          enum.missionType
 -- @param cmdr reference to controlling commander
 -- @param goalq queue of mission WS.Goal objects
 -- @param desc [optional] description table of the mission
@@ -240,7 +247,8 @@ function Mission:__init(msntype, cmdr, desc, goalq, timer)
 	self.cmdr         = cmdr
 	self.goalq        = goalq
 	self.id           = cmdr:missionNextID()
-	self.type         = msntype
+	self.type         = check.tblkey(msntype, dctenum.missionType,
+				"enum.missionType")
 	self.desc         = check_desc(desc)
 	self._playable    = (desc ~= nil)
 	self._assigned    = {}
@@ -422,6 +430,19 @@ function Mission:iterateAssigned()
 	return next, self._assigned, nil
 end
 
+--- Copy character facts in the mission to the agent.
+-- That way each agent only needs to be concerned with what
+-- it knows about concerning threats.
+--
+-- @param agent to copy the facts to
+function Mission:copyFacts(agent)
+	local intel = 0
+	for _, fact in self:iterateFacts(is_character_fact) do
+		agent:setFact(Mission.factPrefix..intel, fact)
+		intel = intel + 1
+	end
+end
+
 --- Assign a new Agent to the Mission
 --
 -- @param agent to assign to this Mission
@@ -431,12 +452,7 @@ function Mission:assign(agent)
 	self:addObserver(agent.onDCTEvent, agent, agent.name)
 	self._assigned[agent.name] = self._assignedcnt
 	agent:setMission(self)
-
-	local intel = 0
-	for _, fact in self:iterateFacts() do
-		agent:setFact(Mission.factPrefix..intel, fact)
-		intel = intel + 1
-	end
+	self:copyFacts(agent)
 end
 
 --- Remove Agent from this Mission
