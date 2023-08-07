@@ -371,9 +371,10 @@ end
 -- @return list of worldstate.Goal objects
 function Agent:goals()
 	local goals = utils.shallowclone(self._goals)
+	local msn = self:getMission()
 
-	if self._msn then
-		table.insert(goals, self._msn:goal())
+	if msn ~= nil then
+		table.insert(goals, msn:goal())
 	end
 	return goals
 end
