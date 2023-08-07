@@ -230,8 +230,9 @@ function WorldState.createAll()
 			val = healthType.OPERATIONAL
 		elseif v == id.ROE then
 			val = -1
-		elseif v == id.HASFUEL or v == id.IDLE or
-		       v == id.HASAMMO then
+		elseif v == id.IDLE then
+			val = false
+		elseif v == id.HASFUEL or v == id.HASAMMO then
 			val = true
 		elseif v == id.ATNODETYPE then
 			val = NodeFact.nodeType.INVALID
