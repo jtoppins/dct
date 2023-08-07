@@ -4,6 +4,7 @@
 
 local utils      = require("libs.utils")
 local check      = require("libs.check")
+local json       = require("libs.json")
 local class      = require("libs.namedclass")
 local goap       = require("libs.containers.goap")
 local dctenum    = require("dct.enum")
@@ -79,11 +80,25 @@ local factKey = {
 	["DEPARTURE"]     = "departure",
 }
 
+local attrmt = {}
+function attrmt.__tostring(attr)
+	return string.format("%s = %s",
+		attr.__clsname or "Attribute",
+		json:encode(attr))
+end
+
 --- An abstract container generalizing a property of a fact.
-local Attribute = class("Attribute")
+local Attribute = utils.override_ops(class("Attribute"), attrmt)
 function Attribute:__init(value, confidence)
 	self.value = value or 0
 	self.confidence = utils.clamp(check.number(confidence or 1), 0, 1)
+end
+
+local factmt = {}
+function factmt.__tostring(fact)
+	return string.format("%s(%s) = %s", fact.__clsname or "Fact",
+		utils.getkey(factType, fact.type),
+		json:encode(fact))
 end
 
 --- A generic data-structure that represents a piece of knowledge the agent
@@ -104,7 +119,7 @@ end
 -- @field delay      numeric value
 -- @field path       a DCS compatible route table providing a valid path to
 --                   the node
-local Fact = class("Fact")
+local Fact = utils.override_ops(class("Fact"), factmt)
 function Fact:__init(t)
 	self.type       = check.tblkey(t, factType, "WS.Facts.factType")
 	self.updatetime = timer.getTime()
