@@ -384,6 +384,7 @@ end
 function Agent:replan()
 	self:WS():get(WS.ID.IDLE).value = false
 	self._plan = nil
+	dctutils.foreach_call(self._sensors, ipairs, "onReplan")
 end
 
 --- Set the current plan the Agent needs to execute.
@@ -394,6 +395,13 @@ function Agent:setPlan(goal, plan)
 	self._plan = {}
 	self._plan.goal = goal
 	self._plan.plan = plan
+end
+
+function Agent:getPlan()
+	if self._plan == nil then
+		return nil
+	end
+	return self._plan.plan
 end
 
 --- Return the plan Goal the Agent is attempting to achieve.
@@ -407,11 +415,10 @@ function Agent:getGoal()
 end
 
 function Agent:getAction()
-	local action
-	if self._plan ~= nil then
-		action = self._plan.action
+	if self._plan == nil then
+		return nil
 	end
-	return action
+	return self._plan.action
 end
 
 --- Required by the AssetManager, returns the list of DCS groups/static the
@@ -547,35 +554,36 @@ function Agent:onDCTEvent(event)
 	dctutils.foreach_call(self._sensors, ipairs, "onDCTEvent", event)
 	local action = self:getAction()
 	if action ~= nil and
-	   type(self._plan.action.onDCTEvent) == "function" then
+	   type(action.onDCTEvent) == "function" then
 		action:onDCTEvent(event)
 	end
 end
 
-local function execute_plan(agent)
-	if agent._plan == nil then
+function Agent:executePlan()
+	if self._plan == nil then
 		return
 	end
 
-	local plan = agent._plan.plan
-	local goal = agent._plan.goal
-	local action = agent._plan.action
+	local plan = self:getPlan()
+	local goal = self:getGoal()
+	local action = self:getAction()
 
 	if plan:empty() then
 		goal:complete()
-		agent:replan()
+		self:replan()
 		return
 	end
 
 	if action == nil then
-		agent._plan.action = plan:peekhead()
-		action = agent._plan.action
-		action:enter(agent)
+		self._plan.action = plan:peekhead()
+		action = self._plan.action
+		action:enter(self)
 	end
 
-	if action:isComplete(agent) then
+	if action:isComplete(self) then
 		plan:pophead()
-		agent._plan.action = nil
+		dctutils.foreach_call(self._sensors, ipairs, "onActionComplete")
+		self._plan.action = nil
 	end
 end
 
@@ -592,7 +600,7 @@ function Agent:update()
 		end
 	end
 
-	execute_plan(self)
+	self:executePlan()
 end
 
 -- Have the DCS objects associated with this asset been spawned?
