@@ -2,6 +2,7 @@
 
 local class       = require("libs.namedclass")
 local dctenum     = require("dct.enum")
+local dctutils    = require("dct.libs.utils")
 local Timer       = require("dct.libs.Timer")
 local DCTEvents   = require("dct.libs.DCTEvents")
 local WS          = require("dct.assets.worldstate")
@@ -36,6 +37,11 @@ function SquadronSensor:__init(agent)
 	})
 end
 
+--- Set the agent's ato list for which missions they are allowed to fly.
+function SquadronSensor:setATO(flight)
+	dctutils.set_ato(self.agent, flight)
+end
+
 --- A Squadron is defined to be operational if its health state is
 -- operational and it is spawned.
 function SquadronSensor:isOperational()
@@ -64,9 +70,11 @@ function SquadronSensor:spawn()
 
 		if isvalid and allplayers then
 			self.agent:addSubordinate(asset)
+			self:setATO(asset)
 		elseif isvalid and
 		       self.agent.name == asset:getDescKey("squadron") then
 			self.agent:addSubordinate(asset)
+			self:setATO(asset)
 		end
 	end
 end

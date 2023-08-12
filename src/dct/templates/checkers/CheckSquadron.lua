@@ -79,7 +79,11 @@ missions, like: `{ "cas", "cap", "sead", }`. The list of all mission types is:
 
 %VALUES%
 
-This table can be auto-generated if the squadron defines aircraft templates.]],
+This table can be auto-generated if the squadron defines aircraft templates.
+If the squadron does not define an ato then aircraft will be assigned an
+ato as specified per their aircraft type in the global ato list. Finally,
+if no specific ato is specified for the aircraft type then all mission
+types are allowed.]],
 		},
 		["airframe_max"] = {
 			["default"] = -1,

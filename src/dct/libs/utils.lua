@@ -6,6 +6,7 @@
 
 require("os")
 require("math")
+local libsutils = require("libs.utils")
 local check = require("libs.check")
 local enum  = require("dct.enum")
 local vector = require("dct.libs.vector")
@@ -126,6 +127,29 @@ end
 function utils.not_playergroup(grp)
 	local isplayer = utils.isplayergroup(grp)
 	return not isplayer
+end
+
+function utils.set_ato(sqdn, flight)
+	local sqdnato = sqdn:getDescKey("ato")
+	-- mixed flights are not allowed in DCS
+	local actype = next(flight:getDescKey("unitTypeCnt"))
+	local globalato = dct.settings.ui.ato[actype]
+
+	if next(sqdnato) ~= nil then
+		flight:setDescKey("ato", libsutils.shallowclone(sqdnato))
+		return
+	end
+
+	if next(globalato) ~= nil then
+		flight:setDescKey("ato", libsutils.shallowclone(globalato))
+		return
+	end
+
+	local allmsns = {}
+	for _, val in pairs(enum.missionType) do
+		allmsns[val] = true
+	end
+	flight:setDescKey("ato", allmsns)
 end
 
 function utils.get_miz_groups()
