@@ -52,6 +52,7 @@ agents[dctenum.assetType.AIRBASE]     = {
 	["actions"] = {
 		["RunwayRepair"]     = 1,
 		["DoDeparture"]      = 1,
+		["Idle"]             = 1,
 	},
 	["goals"]   = {
 		["Idle"]             = 1,
@@ -67,6 +68,7 @@ agents[dctenum.assetType.CV]          = {
 	},
 	["actions"] = {
 		["DoDeparture"]      = 1,
+		["Idle"]             = 1,
 	},
 	["goals"] = {
 		["Idle"]             = 1,
@@ -78,6 +80,7 @@ agents[dctenum.assetType.SQUADRON]    = {
 		["SquadronSensor"]   = 0,
 	},
 	["actions"] = {
+		["Idle"]             = 1,
 	},
 	["goals"] = {
 		["Idle"]             = 1,
@@ -94,6 +97,7 @@ agents[dctenum.assetType.PLAYER] = {
 		["Ejection"]     = 1,
 		["PlayerKick"]   = 1,
 		["PlayerAttack"] = 50,
+		["Idle"]         = 1,
 	},
 	["goals"]   = {
 		["Idle"]         = 1,
