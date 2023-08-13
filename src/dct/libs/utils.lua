@@ -54,10 +54,13 @@ function utils.errtraceback(err, lvl)
 	       "\n---[ end trace ]---"
 end
 
---- error handler for all xpcall
-function utils.errhandler(logger, lvl)
-	return function(err)
-		logger:error(utils.errtraceback(err, lvl or 1))
+--- Logs an error message as a result of a failed pcall context
+function utils.errhandler(err, logger, lvl)
+	local str = utils.errtraceback(err, lvl or 1)
+	logger:error("%s", str)
+
+	if _G.DCT_TEST == true then
+		print(str)
 	end
 end
 

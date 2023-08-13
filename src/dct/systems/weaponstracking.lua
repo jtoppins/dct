@@ -129,11 +129,11 @@ function WeaponsTracker:_update(time)
 end
 
 function WeaponsTracker:update(time)
-	local pcallfunc = function()
-		self:_update(time)
-	end
+	local ok, err = pcall(self._update, self, time)
 
-	xpcall(pcallfunc, dctutils.errhandler(Logger))
+	if not ok then
+		dctutils.errhandler(err, Logger)
+	end
 	return time + self.updatefreq
 end
 

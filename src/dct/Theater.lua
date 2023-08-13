@@ -312,8 +312,11 @@ function Theater:_onEvent(event)
 end
 
 function Theater:onEvent(event)
-	xpcall(function() self:_onEvent(event) end,
-	       dctutils.errhandler(Logger))
+	local ok, err = pcall(self._onEvent, self, event)
+
+	if not ok then
+		dctutils.errhandler(err, Logger)
+	end
 end
 
 function Theater:export(_, suffix)
@@ -414,18 +417,16 @@ function Theater:exec(time)
 		end
 
 		local cmd = self.cmdq:pop()
-		local ok, requeue = xpcall(
-			function()
-				return cmd:execute(time)
-			end,
-			function(err)
-				Logger:error(dctutils.errtraceback(err, 2))
-				local delay = self.requeueOnError[cmd]
-				if delay ~= nil then
-					self:queueCommand(delay, cmd, true)
-				end
-			end)
-		if ok and type(requeue) == "number" then
+		local ok, requeue = cmd:execute(time)
+
+		if not ok then
+			dctutils.errhandler(requeue, Logger, 2)
+			local delay = self.requeueOnError[cmd]
+
+			if delay ~= nil then
+				self:queueCommand(delay, cmd, true)
+			end
+		elseif ok and type(requeue) == "number" then
 			self:queueCommand(requeue, cmd)
 		end
 
