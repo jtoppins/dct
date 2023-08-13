@@ -91,6 +91,7 @@ agents[dctenum.assetType.PLAYER] = {
 		["MissionSensor"]   = 0,
 		["PlanningSensor"]  = 0,
 		["PlayerSensor"]    = 0,
+		["PlayerUISensor"]  = 0,
 	},
 	["actions"] = {
 		["PlayerJoin"]   = 1,
