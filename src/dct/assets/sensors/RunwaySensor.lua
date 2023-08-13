@@ -3,11 +3,13 @@
 local class      = require("libs.namedclass")
 local utils      = require("libs.utils")
 local dctenum    = require("dct.enum")
-local dctutils   = require("dct.libs.utils")
 local vector     = require("dct.libs.vector")
 local DCTEvents  = require("dct.libs.DCTEvents")
-local human      = require("dct.ui.human")
+local uidraw     = require("dct.ui.draw")
 local WS         = require("dct.assets.worldstate")
+
+local linecolor = { 1, 0,    0, 1     }
+local fillcolor = { 1, 0.25, 0, 0.075 }
 
 --- @classmod RunwaySensor
 -- Detects runway geometry associated with an airbase and determines if
@@ -47,12 +49,17 @@ function Runway:__init(rwy, debug)
 	self.dotBC = vector.dot(self.BC, self.BC)
 
 	if self.debug then
-		self.debugids = {}
-		self.debugids.border = human.getMarkID()
-		self.debugids[1] = human.getMarkID()
-		self.debugids[2] = human.getMarkID()
-		self.debugids[3] = human.getMarkID()
-		self.debugids[4] = human.getMarkID()
+		self.uiobjects = {}
+		self.uiobjects.border = uidraw.Quad({self.points[1]:raw(),
+						self.points[2]:raw(),
+						self.points[3]:raw(),
+						self.points[4]:raw(),
+					}, linecolor, fillcolor)
+		for key, point in ipairs(self.points) do
+			self.uiobjects[key] = uidraw.Mark(
+				string.format("Point %d", key),
+				point:raw())
+		end
 	end
 end
 
@@ -78,35 +85,16 @@ function Runway:contains(p)
 	return false
 end
 
-local linecolor = { 1, 0,    0, 1     }
-local fillcolor = { 1, 0.25, 0, 0.075 }
-
-function Runway:drawBorder()
-	trigger.action.removeMark(self.debugids.border)
-	trigger.action.quadToAll(dctutils.coalition.ALL,
-				 self.debugids.border,
-				 self.points[1]:raw(),
-				 self.points[2]:raw(),
-				 self.points[3]:raw(),
-				 self.points[4]:raw(),
-				 linecolor, fillcolor,
-				 human.lineType.SOLID)
-end
-
 --- This is intended to be used for debug.
 function Runway:draw()
-	self:drawBorder()
-	for key, point in ipairs(self.points) do
-		local id = self.debugids[key]
-		trigger.action.removeMark(id)
-		trigger.action.markToAll(id, string.format("Point %d", key),
-					 point:raw(), true)
+	for _, obj in pairs(self.uiobjects or {}) do
+		obj:draw()
 	end
 end
 
 function Runway:drawClear()
-	for _, id in pairs(self.debugids or {}) do
-		trigger.action.removeMark(id)
+	for _, obj in pairs(self.uiobjects or {}) do
+		obj:remove()
 	end
 end
 

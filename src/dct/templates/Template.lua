@@ -28,9 +28,9 @@ local checkers = {
 	require("dct.templates.checkers.CheckCommon")(),
 	require("dct.templates.checkers.CheckAgent")(),
 	require("dct.templates.checkers.CheckAirbase")(),
+	require("dct.templates.checkers.CheckSquadron")(),
 	require("dct.templates.checkers.CheckPlayer")(),
 	require("dct.templates.checkers.CheckTpldata")(),
-	require("dct.templates.checkers.CheckSquadron")(),
 	require("dct.templates.checkers.CheckCoalition")(),
 	require("dct.templates.checkers.CheckLocation")(),
 }
@@ -253,7 +253,9 @@ local function option_description(option)
 	local desc = option.description.."\n"
 
 	if option.type == Checker.valuetype.VALUES or
-	   option.type == Checker.valuetype.TABLEKEYS then
+	   option.type == Checker.valuetype.TABLEKEYS or
+	   (option.type == Checker.valuetype.TABLE and
+	    option.values ~= nil) then
 		local values = ""
 		for k, v in utils.sortedpairs(option.values) do
 			values = values.." - `"..k.."`"

@@ -322,6 +322,9 @@ function CheckAirbase:check(data)
 	end
 
 	data.rename = false
+	if data.objtype == dctenum.assetType.AIRBASE then
+		data.notpldata = true
+	end
 
 	for _, check in ipairs({ Check.check,
 				 self.checkAirbase,

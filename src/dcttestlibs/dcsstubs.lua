@@ -15,6 +15,7 @@ function lfs.tempdir()
 	return lfs.dct_testdata..utils.sep.."mission"
 end
 
+local libscheck = require("libs.check")
 local class = require("libs.class")
 local testlog = os.getenv("DCT_TEST_LOG") or
 		lfs.dct_testdata..utils.sep.."dct_test.log"
@@ -30,6 +31,27 @@ local dctstubs = {}
 dctstubs.model_time = 0
 dctstubs.schedfunctbl = {}
 dctstubs.eventhandlers = {}
+
+function dctstubs.createPlayer(playername)
+	local grp = Group(4, {
+		["id"] = 9,
+		["name"] = "VMFA251 - Enfield 1-1",
+		["coalition"] = coalition.side.BLUE,
+		["exists"] = true,
+	})
+
+	local unit1 = Unit({
+		["name"] = "pilot1",
+		["exists"] = true,
+		["desc"] = {
+			["typeName"] = "FA-18C_hornet",
+			["displayName"] = "F/A-18C Hornet",
+			["attributes"] = {},
+		},
+	}, grp, playername or "bobplayer")
+
+	return unit1, grp
+end
 
 function dctstubs.setModelTime(time)
 	dctstubs.model_time = time
@@ -54,6 +76,13 @@ end
 function dctstubs.runEventHandlers(event)
 	for obj, _ in pairs(dctstubs.eventhandlers) do
 		obj:onEvent(event)
+	end
+end
+
+function dctstubs.fastForward(time, step)
+	for _ = 1,time or 100,1 do
+		dctstubs.runSched()
+		dctstubs.addModelTime(step or 3)
 	end
 end
 
@@ -1171,6 +1200,7 @@ function Group:enableEmission(onoff)
 end
 _G.Group = Group
 
+local groupmenus = {}
 local missionCommands = {}
 function missionCommands.addCommand(_, _, _, _)
 end
@@ -1190,13 +1220,68 @@ end
 function missionCommands.removeItemForCoalition(_, _)
 end
 
-function missionCommands.addCommandForGroup(_, _, _, _, _)
+local function addGroupItem(gid, title, path, value)
+	if groupmenus[gid] == nil then
+		groupmenus[gid] = {}
+	end
+
+	if path == nil then
+		path = {}
+	end
+
+	local ptbl = groupmenus[gid]
+	for _, val in ipairs(path) do
+		ptbl = ptbl[val]
+	end
+	ptbl[title] = value
+	local npath = utils.deepcopy(path)
+	table.insert(npath, title)
+	return npath
 end
 
-function missionCommands.addSubMenuForGroup(_, _, _)
+function missionCommands.addCommandForGroup(gid, title, path)
+--[[, handler, data]]
+	return addGroupItem(gid, title, path, true)
 end
 
-function missionCommands.removeItemForGroup(_, _)
+function missionCommands.addSubMenuForGroup(gid, title, path)
+	return addGroupItem(gid, title, path, {})
+end
+
+function missionCommands.removeItemForGroup(gid, path)
+	if groupmenus[gid] == nil then
+		return
+	end
+
+	if path == nil then
+		groupmenus[gid] = {}
+		return
+	end
+
+	local ptbl = groupmenus[gid]
+	for i = 1, (#path - 1) do
+		ptbl = ptbl[path[i]]
+	end
+	ptbl[path[#path]] = nil
+end
+
+local function dfs_print_menu(root, depth)
+	local s = ""
+	if type(root) ~= "table" then
+		return s
+	end
+
+	local indent = string.rep(" ", depth*4)
+	for key, value in pairs(root) do
+		s = s..string.format("%s- %s\n", indent, key)..
+			dfs_print_menu(value, depth + 1)
+	end
+	return s
+end
+
+function missionCommands.printGroupMenu(gid)
+	return string.format("Group (%d):\n", gid)..
+		dfs_print_menu(groupmenus[gid] or {}, 0)
 end
 _G.missionCommands = missionCommands
 
@@ -1229,52 +1314,118 @@ trigger.action = {}
 
 local chkbuffer  = ""
 local msgbuffer  = ""
-local enabletest = false
+
+local scope = {
+	["ALL"]     = -1,
+	["NEUTRAL"] = 0,
+	["RED"]     = 1,
+	["BLUE"]    = 2,
+}
+
 function trigger.action.setmsgbuffer(msg)
 	chkbuffer = msg
 end
 
-function trigger.action.setassert(val)
-	enabletest = val
-end
-
 function trigger.action.chkmsgbuffer()
 	assert(msgbuffer == chkbuffer,
-		"generated output not as expected;\ngot '"..
-		msgbuffer.."';\n expected '"..chkbuffer.."'")
+	       "generated output not as expected;\ngot '"..
+	       msgbuffer.."';\n expected '"..chkbuffer.."'")
 end
 
 function trigger.action.outTextForGroup(grpid, msg, time, bool)
-	assert(type(grpid) == "number", "value error: grpid must be a number")
-	assert(type(msg) == "string", "value error: msg must be a string")
-	assert(type(time) == "number", "value error: time must be a number")
-	assert(type(bool) == "boolean", "value error: bool must be a boolean")
+	libscheck.number(grpid)
+	libscheck.string(msg)
+	libscheck.number(time)
+	libscheck.bool(bool)
 	msgbuffer = msg
-	if enabletest == true then
-		assert(msgbuffer == chkbuffer,
-			"generated output not as expected;\ngot '"..
-			msg.."';\n expected '"..chkbuffer.."'")
-	end
+	logfile:write(os.date("%F %X ")..
+		string.format("GRPMSG  %d;%s\n", grpid, msg))
 end
 
-function trigger.action.markToAll(id, msg) --, pos, readonly)
-	assert(type(id) == "number", "value error: id must be a number")
-	assert(type(msg) == "string", "value error: msg must be a string")
+function trigger.action.markToAll(id, msg, pos)
+	libscheck.number(id)
+	libscheck.string(msg)
+	libscheck.table(pos)
 
 	logfile:write(os.date("%F %X ")..string.format("MARKA   %d;%s\n",
 						       id, msg))
 end
 
-function trigger.action.markToGroup(id, msg, _--[[pos]], grpid, _--[[readonly]])
-	assert(type(id) == "number", "value error: id must be a number")
-	assert(type(msg) == "string", "value error: msg must be a string")
-	assert(type(grpid) == "number", "value error: grpid must be a number")
+function trigger.action.markToGroup(id, msg, pos, grpid)
+	libscheck.number(id)
+	libscheck.string(msg)
+	libscheck.table(pos)
+	libscheck.number(grpid)
 
 	logfile:write(os.date("%F %X ")..string.format("MARKG   %d;%s\n",
 						       id, msg))
 end
 
-function trigger.action.removeMark(_ --[[id]])
+function trigger.action.markToCoalition(id, msg, pos, coa)
+	libscheck.number(id)
+	libscheck.string(msg)
+	libscheck.table(pos)
+	libscheck.tblkey(coa, coalition.side, "coalition.side")
+
+	logfile:write(os.date("%F %X ")..string.format("MARKC   %d;%s\n",
+						       id, msg))
+end
+
+local function check_common_args(coa, id, color, linetype)
+	libscheck.tblkey(coa, scope, "coalition.side")
+	libscheck.number(id)
+	libscheck.table(color)
+	libscheck.number(linetype)
+end
+
+function trigger.action.lineToAll(coa, id, startpt, endpt, color, linetype)
+	libscheck.table(startpt)
+	libscheck.table(endpt)
+	check_common_args(coa, id, color, linetype)
+end
+
+function trigger.action.circleToAll(coa, id, center, radius, color,
+		fillcolor, linetype)
+	libscheck.table(center)
+	libscheck.table(fillcolor)
+	libscheck.number(radius)
+	check_common_args(coa, id, color, linetype)
+end
+
+function trigger.action.rectToAll(coa, id, startpt, endpt, color,
+		fillcolor, linetype)
+	libscheck.table(startpt)
+	libscheck.table(endpt)
+	libscheck.table(fillcolor)
+	check_common_args(coa, id, color, linetype)
+end
+
+function trigger.action.quadToAll(coa, id, pt1, pt2, pt3, pt4, color,
+		fillcolor, linetype)
+	libscheck.table(pt1)
+	libscheck.table(pt2)
+	libscheck.table(pt3)
+	libscheck.table(pt4)
+	libscheck.table(fillcolor)
+	check_common_args(coa, id, color, linetype)
+end
+
+function trigger.action.textToAll(coa, id, pt, color, fillcolor, fontsize)
+	libscheck.table(pt)
+	libscheck.table(fillcolor)
+	check_common_args(coa, id, color, fontsize)
+end
+
+function trigger.action.arrowToAll(coa, id, startpt, endpt, color, fillcolor,
+		linetype)
+	libscheck.table(startpt)
+	libscheck.table(endpt)
+	libscheck.table(fillcolor)
+	check_common_args(coa, id, color, linetype)
+end
+
+function trigger.action.removeMark(id)
+	libscheck.number(id)
 end
 
 function trigger.action.setUserFlag(flagname, value)

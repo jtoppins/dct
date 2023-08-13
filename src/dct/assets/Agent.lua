@@ -172,17 +172,11 @@ end
 
 local agentmt = {}
 function agentmt.__tostring(agent)
-	local action
-
-	if agent._plan ~= nil then
-		action = agent._plan.action
-	end
-
 	return string.format("N:%s, T:%s, G:%s, A:%s",
 			     agent.name,
 			     utils.getkey(dctenum.assetType, agent.type),
 			     tostring(agent:getGoal()),
-			     tostring(action))
+			     tostring(agent:getAction()))
 end
 
 --- Agent interface. Provides a common API for interacting with
@@ -377,9 +371,10 @@ end
 -- @return list of worldstate.Goal objects
 function Agent:goals()
 	local goals = utils.shallowclone(self._goals)
+	local msn = self:getMission()
 
-	if self._msn then
-		table.insert(goals, self._msn:goal())
+	if msn ~= nil then
+		table.insert(goals, msn:goal())
 	end
 	return goals
 end
@@ -389,6 +384,7 @@ end
 function Agent:replan()
 	self:WS():get(WS.ID.IDLE).value = false
 	self._plan = nil
+	dctutils.foreach_call(self._sensors, ipairs, "onReplan")
 end
 
 --- Set the current plan the Agent needs to execute.
@@ -401,6 +397,13 @@ function Agent:setPlan(goal, plan)
 	self._plan.plan = plan
 end
 
+function Agent:getPlan()
+	if self._plan == nil then
+		return nil
+	end
+	return self._plan.plan
+end
+
 --- Return the plan Goal the Agent is attempting to achieve.
 --
 -- @return worldstate.Goal
@@ -409,6 +412,13 @@ function Agent:getGoal()
 		return nil
 	end
 	return self._plan.goal
+end
+
+function Agent:getAction()
+	if self._plan == nil then
+		return nil
+	end
+	return self._plan.action
 end
 
 --- Required by the AssetManager, returns the list of DCS groups/static the
@@ -542,32 +552,38 @@ end
 --- Handle DCS and DCT objects sent to the Agent
 function Agent:onDCTEvent(event)
 	dctutils.foreach_call(self._sensors, ipairs, "onDCTEvent", event)
+	local action = self:getAction()
+	if action ~= nil and
+	   type(action.onDCTEvent) == "function" then
+		action:onDCTEvent(event)
+	end
 end
 
-local function execute_plan(agent)
-	if agent._plan == nil then
+function Agent:executePlan()
+	if self._plan == nil then
 		return
 	end
 
-	local plan = agent._plan.plan
-	local goal = agent._plan.goal
-	local action = agent._plan.action
+	local plan = self:getPlan()
+	local goal = self:getGoal()
+	local action = self:getAction()
 
 	if plan:empty() then
 		goal:complete()
-		agent:replan()
+		self:replan()
 		return
 	end
 
 	if action == nil then
-		agent._plan.action = plan:peekhead()
-		action = agent._plan.action
-		action:enter(agent)
+		self._plan.action = plan:peekhead()
+		action = self._plan.action
+		action:enter(self)
 	end
 
-	if action:isComplete(agent) then
+	if action:isComplete(self) then
 		plan:pophead()
-		agent._plan.action = nil
+		dctutils.foreach_call(self._sensors, ipairs, "onActionComplete")
+		self._plan.action = nil
 	end
 end
 
@@ -584,7 +600,7 @@ function Agent:update()
 		end
 	end
 
-	execute_plan(self)
+	self:executePlan()
 end
 
 -- Have the DCS objects associated with this asset been spawned?

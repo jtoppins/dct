@@ -119,33 +119,6 @@ local function main()
 	assert(newtheater:getAssetMgr():getAsset(name) == nil,
 		"state saving has an issue, dead asset is alive: "..name)
 
-	-- attempt to get theater status
-	newtheater:onEvent({
-		["id"]        = world.event.S_EVENT_BIRTH,
-		["initiator"] = player1,
-	})
-
-	local status = {
-		["data"] = {
-			["name"]   = playergrp:getName(),
-			["type"]   = enum.uiRequestType.THEATERSTATUS,
-		},
-		["assert"]     = true,
-		["expected"]   = "== Theater Status ==\n"..
-			"Friendly Force Str: Nominal\nEnemy Force Str: Nominal\n\n"..
-			"Airbases:\n  Friendly: CVN-71 Theodore Roosevelt\n  "..
-			"Friendly: Kutaisi\n  Friendly: Senaki-Kolkhi\n  Hostile: Krymsk\n\n"..
-			"Current Active Air Missions:\n  None\n\n"..
-			"Available missions:\n  "..
-			"OCA:  1\n  SEAD:  2\n  STRIKE:  2\n\n"..
-			"Recommended Mission Type: SEAD",
-	}
-	local uicmds = require("dct.ui.cmds")
-	trigger.action.setassert(status.assert)
-	trigger.action.setmsgbuffer(status.expected)
-	local cmd = uicmds[status.data.type](newtheater, status.data)
-	cmd:execute(400)
-
 	local playercnt = 0
 	for _, asset in newtheater:getAssetMgr():iterate() do
 		if asset.type == enum.assetType.PLAYER then

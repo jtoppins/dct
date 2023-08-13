@@ -87,13 +87,16 @@ enum.assetTypeDeprecated = {
 
 enum.missionType = {
 	["INVALID"]    = 0,
-	["MOVETO"]     = 11,
+	["MOVETO"]     = 10,
+	["JTAC"]       = 11,
+	["AFAC"]       = 12,
 
 	["GUARD"]      = 20,
 	["CAS"]        = 21,
 	["CAP"]        = 22,
 	["SEAD"]       = 23,
 	["TANKER"]     = 24,
+	["AWACS"]      = 25,
 
 	["ATTACK"]     = 30,
 	["STRIKE"]     = 31,
@@ -101,7 +104,7 @@ enum.missionType = {
 	["OCA"]        = 33,
 	["ANTISHIP"]   = 34,
 	["DEAD"]       = 35,
-	["ARMEDRECON"] = 36,
+	["SWEEP"]      = 36,
 
 	["SEARCH"]     = 40,
 	["RECON"]      = 41,
@@ -113,26 +116,9 @@ enum.missionType = {
 	["RESUPPLY"]   = 52,
 }
 
-enum.missionResult = {
-	["ABORT"]   = 0,
-	["TIMEOUT"] = 1,
-	["SUCCESS"] = 2,
-}
-
-enum.uiRequestType = {
-	["THEATERSTATUS"]   = 1,
-	["MISSIONREQUEST"]  = 2,
-	["MISSIONBRIEF"]    = 3,
-	["MISSIONSTATUS"]   = 4,
-	["MISSIONABORT"]    = 5,
-	["MISSIONROLEX"]    = 6,
-	["MISSIONCHECKIN"]  = 7,
-	["MISSIONCHECKOUT"] = 8,
-	["SCRATCHPADGET"]   = 9,
-	["SCRATCHPADSET"]   = 10,
-	["CHECKPAYLOAD"]    = 11,
-	["MISSIONJOIN"]     = 12,
-	["REQUESTREARM"]    = 13,
+--- Requests that Agents can send to other agents.
+enum.requestType = {
+	["REARM"]      = 1,
 }
 
 enum.parkingType = {
@@ -169,7 +155,6 @@ enum.UNIT_CAT_SCENERY = Unit.Category.STRUCTURE + 1
 local eventbase = world.event.S_EVENT_MAX + 2000
 enum.event = {
 	["DCT_EVENT_DEAD"]           = eventbase + 1,
-	["DCT_EVENT_HIT"]            = eventbase + 2,
 	["DCT_EVENT_OPERATIONAL"]    = eventbase + 3,
 	["DCT_EVENT_CAPTURED"]       = eventbase + 4,
 	["DCT_EVENT_IMPACT"]         = eventbase + 5,
@@ -183,6 +168,7 @@ enum.event = {
 	["DCT_EVENT_PLAYER_KICK"]    = eventbase + 13,
 	["DCT_EVENT_PLAYER_JOIN"]    = eventbase + 14,
 	["DCT_EVENT_DEPARTURE"]      = eventbase + 15,
+	["DCT_EVENT_AGENT_REQUEST"]  = eventbase + 16,
 }
 
 enum.kickCode = require("dct.libs.kickinfo").kickCode

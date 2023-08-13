@@ -15,6 +15,10 @@ local function playerIsDead()
 	return false
 end
 
+local function is_player_msg(_ --[[key]], fact)
+	return fact.type == WS.Facts.factType.PLAYERMSG
+end
+
 --- @classmod PlayerSensor
 -- Manages player slot related agent state.
 --
@@ -92,12 +96,24 @@ function PlayerSensor:postFact(key, fact)
 end
 
 function PlayerSensor:handleBirth(event)
+	self.agent:deleteFacts(is_player_msg)
+
 	if not self:isEnabled() then
 		self.agent:setFact(WS.Facts.factKey.BLOCKSLOTMSG,
 				   WS.Facts.PlayerMsg(
 			"Warning: you have spawned in a disabled "..
 			"slot, slot blocker potentially broken.", 20))
 	end
+
+	local grp = event.initiator:getGroup()
+	local aircraft = event.initiator:getDesc().displayName
+	local playername = event.initiator:getPlayerName() or "unknown"
+
+	self.agent:setHealth(WS.Health.OPERATIONAL)
+	self.agent:WS():get(WS.ID.INAIR).value = event.initiator:inAir()
+	self.agent:setDescKey("groupId", grp:getID())
+	self.agent:setDescKey("displayname",
+			      string.format("%s (%s)", playername, aircraft))
 
 	self.ejection = false
 	self.birth = true

@@ -37,17 +37,17 @@ function ScratchPad:event(event)
 		return
 	end
 
-	local name = self:get(event.idx)
-	if name == nil then
+	local data = self:get(event.idx)
+	if data == nil then
 		return
 	end
 
-	local player = self._theater:getAssetMgr():getAsset(name)
+	local player = self._theater:getAssetMgr():getAsset(data.name)
 	player:setFact(WS.Facts.factKey.SCRATCHPAD,
 		       WS.Facts.Value(WS.Facts.factType.SCRATCHPAD,
 				      sanatize(event.text)))
 	self:set(event.idx, nil)
-	trigger.action.removeMark(event.idx)
+	data.mark:remove()
 end
 
 return ScratchPad

@@ -236,19 +236,21 @@ template.]],
 			["type"] = Check.valuetype.BOOL,
 			["description"] = [[
 Controls if the name of the generated Agent gets renamed to include the
-region name.]]
+region name.]],
+		},
+		["notpldata"] = {
+			["nodoc"] = true,
+			["default"] = false,
+			["type"] = Check.valuetype.BOOL,
+			["description"] = [[
+Defines if a template is suppose to have group/unit data.]],
 		},
 	}, [[Describes the actual DCS object that will be spawned/tracked
 in association with an asset created from this template.]])
 end
 
-local notpldata = {
-	[dctenum.assetType.AIRBASE]     = true,
-	[dctenum.assetType.SQUADRON]    = true,
-}
-
 function CheckTpldata:check(data)
-	if notpldata[data.objtype] ~= nil then
+	if data.notpldata == true then
 		return true
 	end
 

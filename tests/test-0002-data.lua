@@ -12,7 +12,7 @@ end
 
 local function main()
     local cmd = Command("test cmd", f, 1, 2, 3)
-    local r = cmd:execute(500)
+    local _, r = cmd:execute(500)
     assert(r == 506, "Command class broken")
 end
 

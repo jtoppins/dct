@@ -1,72 +1,133 @@
 #!/usr/bin/lua
 
 require("dcttestlibs")
-require("dct")
+dofile(os.getenv("DCT_DATA_ROOT").."/../mission/dct-mission-init.lua")
+local dctenum = require("dct.enum")
 local human = require("dct.ui.human")
-local enum  = require("dct.enum")
+local Mission = require("dct.libs.Mission")
+local WS = require("dct.assets.worldstate")
+
+local unit1, grp = dctstubs.createPlayer()
 
 local testairthreat = {
-	[1] = {
+	name = "airthreat",
+	func = human.airthreat,
+	{
 		["value"] = 0,
 		["expected"] = "incapability",
-	},
-	[2] = {
+	}, {
 		["value"] = 20,
 		["expected"] = "denial",
-	},
-	[3] = {
+	}, {
 		["value"] = 40,
 		["expected"] = "parity",
-	},
-	[4] = {
+	}, {
 		["value"] = 60,
 		["expected"] = "superiority",
-	},
-	[5] = {
+	}, {
 		["value"] = 80,
 		["expected"] = "supremacy",
 	},
 }
 
 local testthreat = {
-	[1] = {
+	name = "threat",
+	func = human.threat,
+	{
 		["value"] = 0,
 		["expected"] = "low",
-	},
-	[2] = {
+	}, {
 		["value"] = 30,
 		["expected"] = "medium",
-	},
-	[3] = {
+	}, {
 		["value"] = 70,
 		["expected"] = "high",
 	},
 }
 
-local testlochdr = {
-	[1] = {
-		["value"] = enum.missionType.STRIKE,
-		["expected"] = "Target AO",
-	},
-	[2] = {
-		["value"] = enum.missionType.CAP,
-		["expected"] = "Station AO",
+local teststr = {
+	name = "strength",
+	func = human.strength,
+	{
+		["value"] = nil,
+		["expected"] = "Unknown",
+	}, {
+		["value"] = 22,
+		["expected"] = "Critical",
+	}, {
+		["value"] = 50,
+		["expected"] = "Marginal",
+	}, {
+		["value"] = 100,
+		["expected"] = "Nominal",
+	}, {
+		["value"] = 130,
+		["expected"] = "Excellent",
 	},
 }
 
+local testrel = {
+	{
+		["v1"] = coalition.side.BLUE,
+		["v2"] = coalition.side.BLUE,
+		["expected"] = "Friendly",
+	}, {
+		["v1"] = coalition.side.RED,
+		["v2"] = coalition.side.BLUE,
+		["expected"] = "Hostile",
+	}, {
+		["v1"] = coalition.side.RED,
+		["v2"] = coalition.side.Neutral,
+		["expected"] = "Neutral",
+	}, {
+		["v1"] = coalition.side.NEUTRAL,
+		["v2"] = coalition.side.NEUTRAL,
+		["expected"] = "Friendly",
+	}
+}
+
+local msndesc = {
+	description = "Strike mission description",
+	location = {1, 2, 5},
+	intel = 2,
+	codename = "foo",
+}
+
+-- luacheck: max_line_length 500
+local msnbrief = "Mission 500 assigned, use F10 menu to see this briefing again.\n\n### Overview\nPackage: #500\nMission: Precision Strike\nAO: 88°07'12.00\"N 063°27'00.00\"W (foo)\nProgress: 70% complete\n\n### Description\nStrike mission description\n\n### Comms Plan\nNot Implemented\n\n### Threat Analysis\nNo known threats.\n\n### Package Assets\nP: bobplayer (F/A-18C Hornet)\n\n### Remarks\nNone.\n\n"
+
 local function main()
-	for _, v in ipairs(testairthreat) do
-		assert(human.airthreat(v.value) == v.expected,
-			"human.airthreat() unexpected value")
+	for _, tests in pairs({testairthreat, testthreat, teststr}) do
+		for _, v in ipairs(tests) do
+			assert(tests.func(v.value) == v.expected,
+				string.format("human.%s(%s) unexpected value",
+				tests.name, tostring(v.value)))
+		end
 	end
-	for _, v in ipairs(testthreat) do
-		assert(human.threat(v.value) == v.expected,
-			"human.threat() unexpected value")
+	for _, v in ipairs(testrel) do
+		assert(human.relationship(v.v1, v.v2) == v.expected,
+			"human.relationship() unexpected value")
 	end
-	for _, v in ipairs(testlochdr) do
-		assert(human.locationhdr(v.value) == v.expected,
-			"human.locationhdr() unexpected value")
-	end
+
+	local theater = dct.theater
+	dctstubs.setModelTime(50)
+	dctstubs.fastForward(10, 30)
+	local player = theater:getAssetMgr():getAsset(grp.name)
+	dctstubs.runEventHandlers({
+		["id"]        = world.event.S_EVENT_BIRTH,
+		["initiator"] = unit1,
+	})
+
+	dctstubs.fastForward(10, 40)
+	local msn = Mission(dctenum.missionType.STRIKE,
+		theater:getCommander(player.owner), msndesc)
+	msn:setFact(WS.Facts.factKey.HEALTH,
+		WS.Facts.Value(WS.Facts.factType.HEALTH,
+			.7))
+	msn:assign(player)
+	assert(msnbrief == player:getFact(WS.Facts.factKey.MSNBRIEFMSG).value.value,
+		"mission briefing not as expected")
+	dctstubs.fastForward(2, 40)
 	return 0
 end
 

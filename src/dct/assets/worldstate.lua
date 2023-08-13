@@ -4,6 +4,7 @@
 
 local utils      = require("libs.utils")
 local check      = require("libs.check")
+local json       = require("libs.json")
 local class      = require("libs.namedclass")
 local goap       = require("libs.containers.goap")
 local dctenum    = require("dct.enum")
@@ -33,6 +34,7 @@ local id = {
 }
 
 local healthType = {
+	["UNKNOWN"]     = 0,
 	["DEAD"]        = 1, -- agent is dead
 	["DAMAGED"]     = 2, -- combat ineffective, repairs needed
 	["OPERATIONAL"] = 3, -- agent is combat effective
@@ -63,6 +65,7 @@ local factType = {
 	["LOSETICKET"]  = 10, -- Value
 	["CMDPENDING"]  = 11, -- Value
 	["SCRATCHPAD"]  = 12, -- Value
+	["PLAYERMENU"]  = 13, -- objref (a player menu object)
 }
 
 --- Unique fact keys that represents data that should only exist
@@ -72,6 +75,12 @@ local factKey = {
 	["KICKMSG"]       = "kick_msg",
 	["BLOCKSLOTMSG"]  = "blockslot_msg",
 	["LANDSAFEMSG"]   = "landsafe_msg",
+	["MSNBRIEFMSG"]   = "mission_brief_msg",
+	["MSNLEAVEMSG"]   = "mission_leave_msg",
+	["MSNDONEMSG"]    = "mission_done_msg",
+	["MSNUPDATEMSG"]  = "mission_update_msg",
+	["MSNSTATUSMSG"]  = "mission_status_msg",
+	["CMDMSG"]        = "cmdpending_msg",
 	["CMDPENDING"]    = "cmdpending",
 	["SCRATCHPAD"]    = "scratchpad",
 	["LOSETICKET"]    = "loseticket",
@@ -79,11 +88,25 @@ local factKey = {
 	["DEPARTURE"]     = "departure",
 }
 
+local attrmt = {}
+function attrmt.__tostring(attr)
+	return string.format("%s = %s",
+		attr.__clsname or "Attribute",
+		json:encode(attr))
+end
+
 --- An abstract container generalizing a property of a fact.
-local Attribute = class("Attribute")
+local Attribute = utils.override_ops(class("Attribute"), attrmt)
 function Attribute:__init(value, confidence)
 	self.value = value or 0
 	self.confidence = utils.clamp(check.number(confidence or 1), 0, 1)
+end
+
+local factmt = {}
+function factmt.__tostring(fact)
+	return string.format("%s(%s) = %s", fact.__clsname or "Fact",
+		utils.getkey(factType, fact.type),
+		json:encode(fact))
 end
 
 --- A generic data-structure that represents a piece of knowledge the agent
@@ -104,7 +127,7 @@ end
 -- @field delay      numeric value
 -- @field path       a DCS compatible route table providing a valid path to
 --                   the node
-local Fact = class("Fact")
+local Fact = utils.override_ops(class("Fact"), factmt)
 function Fact:__init(t)
 	self.type       = check.tblkey(t, factType, "WS.Facts.factType")
 	self.updatetime = timer.getTime()
@@ -127,6 +150,7 @@ end
 --                   zero(0) is in-range.
 -- @field velocity   vector3D, confidence has no meaning
 -- @field owner      which coalition owns the object coalition.side
+-- @field status     the status (WS.ID.HEALTH) of the object
 local CharacterFact = class("CharacterFact", Fact)
 function CharacterFact:__init(obj, importance, objtype)
 	Fact.__init(self, factType.CHARACTER)
@@ -169,6 +193,28 @@ StimuliFact.stimType = {
 	["LAUNCH"]    = 2, -- like a HARM launch, etc
 	["CONTACT"]   = 3, -- like a radar contact
 }
+
+local PlayerMenuFact = class("PlayerMenu", Fact)
+function PlayerMenuFact:__init(menu, menutype)
+	Fact.__init(self, factType.PLAYERMENU)
+	self.object    = Attribute(menu)
+	self.objtype   = Attribute(check.tblkey(menutype,
+						PlayerMenuFact.menuType,
+						"PlayerMenuFact.menuType"))
+	PlayerMenuFact.menuType = nil
+end
+
+PlayerMenuFact.menuType = {
+	["SCRATCHPAD"] = 1,
+	["INTEL"]      = 2,
+	["GROUNDCREW"] = 3,
+	["MISSION"]    = 4,
+	["TANKER"]     = 5,
+}
+
+function PlayerMenuFact.buildKey(menutype)
+	return string.format("menu%d", menutype)
+end
 
 --- Agent received an event from the world and needs to react to it.
 local EventFact = class("EventFact", Fact)
@@ -215,8 +261,9 @@ function WorldState.createAll()
 			val = healthType.OPERATIONAL
 		elseif v == id.ROE then
 			val = -1
-		elseif v == id.HASFUEL or v == id.IDLE or
-		       v == id.HASAMMO then
+		elseif v == id.IDLE then
+			val = false
+		elseif v == id.HASFUEL or v == id.HASAMMO then
 			val = true
 		elseif v == id.ATNODETYPE then
 			val = NodeFact.nodeType.INVALID
@@ -359,6 +406,7 @@ _ws.Facts = {
 	["Event"]     = EventFact,
 	["Value"]     = ValueFact,
 	["PlayerMsg"] = PlayerMsgFact,
+	["PlayerMenu"]= PlayerMenuFact,
 }
 _ws.ID = id
 _ws.Stance = stanceType

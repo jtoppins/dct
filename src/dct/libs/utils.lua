@@ -6,6 +6,7 @@
 
 require("os")
 require("math")
+local libsutils = require("libs.utils")
 local check = require("libs.check")
 local enum  = require("dct.enum")
 local vector = require("dct.libs.vector")
@@ -46,17 +47,20 @@ function utils.isalive(grpname)
 end
 
 function utils.errtraceback(err, lvl)
-	return "---[ cut here ]---\n"..
-	       "ERROR: "..tostring(err).."\n"..
-	       string.format("DCT(%s) traceback:\n", dct._VERSION)..
+	lvl = lvl or 0
+	return "\n---[ cut here ]---\n"..
+	       string.format("ERROR DCT(%s): ", dct._VERSION)..
 	       debug.traceback(err, lvl+1)..
-	       "---[ end trace ]---"
+	       "\n---[ end trace ]---"
 end
 
---- error handler for all xpcall
-function utils.errhandler(logger, lvl)
-	return function(err)
-		logger:error(utils.errtraceback(err, lvl or 1))
+--- Logs an error message as a result of a failed pcall context
+function utils.errhandler(err, logger, lvl)
+	local str = utils.errtraceback(err, lvl or 1)
+	logger:error("%s", str)
+
+	if _G.DCT_TEST == true then
+		print(str)
 	end
 end
 
@@ -126,6 +130,29 @@ end
 function utils.not_playergroup(grp)
 	local isplayer = utils.isplayergroup(grp)
 	return not isplayer
+end
+
+function utils.set_ato(sqdn, flight)
+	local sqdnato = sqdn:getDescKey("ato")
+	-- mixed flights are not allowed in DCS
+	local actype = next(flight:getDescKey("unitTypeCnt"))
+	local globalato = dct.settings.ui.ato[actype]
+
+	if next(sqdnato) ~= nil then
+		flight:setDescKey("ato", libsutils.shallowclone(sqdnato))
+		return
+	end
+
+	if next(globalato) ~= nil then
+		flight:setDescKey("ato", libsutils.shallowclone(globalato))
+		return
+	end
+
+	local allmsns = {}
+	for _, val in pairs(enum.missionType) do
+		allmsns[val] = true
+	end
+	flight:setDescKey("ato", allmsns)
 end
 
 function utils.get_miz_groups()
@@ -366,20 +393,6 @@ function utils.buildevent.dead(obj)
 	return event
 end
 
---- HIT definition:
---   id = id of this event
---   initiator = DCT asset that was hit
---   weapon = DCTWeapon object
-function utils.buildevent.hit(asset, weapon)
-	check.table(asset)
-	check.table(weapon)
-	local event = {}
-	event.id = enum.event.DCT_EVENT_HIT
-	event.initiator = asset
-	event.weapon = weapon
-	return event
-end
-
 --- OPERATIONAL definition:
 --   id = id of this event
 --   initiator = base sending the operational notification
@@ -509,6 +522,20 @@ function utils.buildevent.departure(agent, takeofftime)
 	event.id = enum.event.DCT_EVENT_DEPARTURE
 	event.agent = agent.name
 	event.takeoff = takeofftime
+	return event
+end
+
+--- Agent Request:
+-- id = id of this event
+-- initiator = the agent that initiated the request, for player
+--   agents they can receive requests they themselves have generated
+--   to allow the actual player to modify the model
+-- data = request data, at minimum must be a table with a field of 'id'
+function utils.buildevent.agentRequest(agent, data)
+	local event = {}
+	event.id = enum.event.DCT_EVENT_AGENT_REQUEST
+	event.initiator = agent
+	event.data = data
 	return event
 end
 

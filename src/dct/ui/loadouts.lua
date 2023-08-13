@@ -44,7 +44,7 @@ end
 local function total_payload(unit, limits, restrictions, defcost)
 	local payload = unit:getAmmo()
 	local total = init_totals(limits)
-	restrictions = restrictions or {}
+	restrictions = restrictions or dct.settings.restrictedweapons
 	defcost = defcost or 0
 
 	-- tally weapon costs
@@ -145,15 +145,10 @@ loadout.total = total_payload
 
 function loadout.check(player)
 	return validate_payload(Group.getByName(player.name):getUnit(1),
-				player:getDescKey("payloadlimits"))
-end
+				player:getDescKey("payloadlimits") or
+					dct.settings.payloadlimits)
 
-function loadout.addmenu(gid, name, menu, handler)
-	return missionCommands.addCommandForGroup(gid,
-		"Check Payload", menu, handler, {
-			["name"]   = name,
-			["type"]   = dctenum.uiRequestType.CHECKPAYLOAD,
-		})
+
 end
 
 return loadout

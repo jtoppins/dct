@@ -8,11 +8,15 @@ LUALIBSAR  := v$(LUALIBSVER).zip
 LUALIBSURL := https://github.com/jtoppins/lua-libs/archive/$(LUALIBSAR)
 LUALIBSDIR := lua-libs-$(LUALIBSVER)
 
-.PHONY: check build
-check:
+.PHONY: check check-syntax tests build
+check-syntax:
 	luacheck -q hooks mission scripts src tests
+
+tests:
 	rm -f "$(SRCPATH)"/data/*.state
 	@$(MAKE) -C tests
+
+check: check-syntax tests
 
 build:
 	mkdir -p "$(BUILDPATH)"/Mods/Tech/DCT/lua
