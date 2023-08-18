@@ -186,7 +186,6 @@ local function check_desc(desc)
 	}
 
 	check.table(desc.location)
-	check.range(desc.intel, 0, dctutils.INTELMAX)
 	for k, v in pairs(default_values) do
 		if desc[k] == nil then
 			desc[k] = v

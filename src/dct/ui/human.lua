@@ -154,15 +154,16 @@ function human.mission_assigned(player)
 end
 
 --- Format location of mission according to the grid format
--- the player object wants.
+-- the player object wants. This is simply the AO of the mission
+-- not any specific targets the mission has. Since this location
+-- is generally known give it a static precision of 3.
 --
 -- @param player an Agent object representing a player
 -- @return string
 function human.mission_location(player)
 	local msn = player:getMission()
 
-	return dctutils.fmtposition(msn:getDescKey("location"),
-				    msn:getDescKey("intel"),
+	return dctutils.fmtposition(msn:getDescKey("location"), 3,
 				    player:getDescKey("gridfmt"))
 end
 

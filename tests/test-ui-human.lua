@@ -89,12 +89,11 @@ local testrel = {
 local msndesc = {
 	description = "Strike mission description",
 	location = {1, 2, 5},
-	intel = 2,
 	codename = "foo",
 }
 
 -- luacheck: max_line_length 500
-local msnbrief = "Mission 500 assigned, use F10 menu to see this briefing again.\n\n### Overview\nPackage: #500\nMission: Precision Strike\nAO: 88°07'12.00\"N 063°27'00.00\"W (foo)\nProgress: 70% complete\n\n### Description\nStrike mission description\n\n### Comms Plan\nNot Implemented\n\n### Threat Analysis\nNo known threats.\n\n### Package Assets\nP: bobplayer (F/A-18C Hornet)\n\n### Remarks\nNone.\n\n"
+local msnbrief = "Mission 500 assigned, use F10 menu to see this briefing again.\n\n### Overview\nPackage: #500\nMission: Precision Strike\nAO: 88°07'23\"N 063°27'22\"W (foo)\nProgress: 70% complete\n\n### Description\nStrike mission description\n\n### Comms Plan\nNot Implemented\n\n### Threat Analysis\nNo known threats.\n\n### Package Assets\nP: bobplayer (F/A-18C Hornet)\n\n### Remarks\nNone.\n\n"
 
 local function main()
 	for _, tests in pairs({testairthreat, testthreat, teststr}) do
@@ -125,9 +124,9 @@ local function main()
 		WS.Facts.Value(WS.Facts.factType.HEALTH,
 			.7))
 	msn:assign(player)
-	assert(msnbrief == player:getFact(WS.Facts.factKey.MSNBRIEFMSG).value.value,
-		"mission briefing not as expected")
+	trigger.action.setmsgbuffer(msnbrief)
 	dctstubs.fastForward(2, 40)
+	trigger.action.chkmsgbuffer()
 	return 0
 end
 
