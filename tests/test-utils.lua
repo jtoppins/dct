@@ -3,13 +3,14 @@
 require("os")
 require("dcttestlibs")
 require("dct")
-local utils = require("dct.libs.utils")
 local json  = require("libs.json")
+local utils = require("dct.libs.utils")
+local uihuman = require("dct.ui.human")
 
 local formats = {
-	["DD"] = utils.posfmt.DD,
-	["DDM"] = utils.posfmt.DDM,
-	["DMS"] = utils.posfmt.DMS,
+	["DD"] = uihuman.posfmt.DD,
+	["DDM"] = uihuman.posfmt.DDM,
+	["DMS"] = uihuman.posfmt.DMS,
 }
 
 local testll = {
@@ -96,7 +97,7 @@ local testlo = {
 			["z"] = -50.35,
 		},
 		["precision"] = 3,
-		["format"] = utils.posfmt.MGRS,
+		["format"] = uihuman.posfmt.MGRS,
 		["expected"] = "DD GJ 012 567",
 	},
 	[2] = {
@@ -106,7 +107,7 @@ local testlo = {
 			["z"] = -50.35,
 		},
 		["precision"] = 5,
-		["format"] = utils.posfmt.DMS,
+		["format"] = uihuman.posfmt.DMS,
 		["expected"] = "88°07'22.800\"N 063°27'21.600\"W",
 	},
 }
@@ -157,7 +158,7 @@ local testcentroid = {
 local function main()
 	for _, coord in ipairs(testll) do
 		for fmtkey, fmt in pairs(formats) do
-			local str = utils.LLtostring(coord.lat, coord.long,
+			local str = uihuman.LLtostring(coord.lat, coord.long,
 				coord.precision, fmt)
 			assert(str == coord[fmtkey], string.format(
 				"utils.LLtostring() with %s (precision %d): "..
@@ -166,13 +167,13 @@ local function main()
 		end
 	end
 	for _, v in ipairs(testmgrs) do
-		local str = utils.MGRStostring(v.mgrs, v.precision)
+		local str = uihuman.MGRStostring(v.mgrs, v.precision)
 		assert(str == v.expected,
 			"utils.MGRStostring() unexpected value; got: '"..str..
 			"'; expected: '"..v.expected.."'")
 	end
 	for _, v in ipairs(testlo) do
-		local str = utils.fmtposition(v.position, v.precision, v.format)
+		local str = uihuman.fmtposition(v.position, v.precision, v.format)
 		assert(str == v.expected,
 			"utils.fmtposition unexpected value; got: '"..str..
 			"'; expected: '"..v.expected.."'")

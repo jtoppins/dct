@@ -7,6 +7,7 @@
 local utils      = require("libs.utils")
 local enum       = require("dct.enum")
 local dctutils   = require("dct.libs.utils")
+local uihuman    = require("dct.ui.human")
 
 local function validate_weapon_restrictions(cfgdata, tbl)
 	local path = cfgdata.file
@@ -86,7 +87,7 @@ local function gridfmt_transform(tbl)
 		if type(v) == "number" then
 			ntbl[k] = v
 		else
-			ntbl[k] = dctutils.posfmt[string.upper(v)]
+			ntbl[k] = uihuman.posfmt[string.upper(v)]
 			assert(ntbl[k] ~= nil, "invalid grid format for "..k)
 		end
 	end
@@ -190,18 +191,18 @@ local function theatercfgs(config)
 			["default"] = {
 				["gridfmt"] = {
 					-- default is DMS, no need to list
-					["Ka-50"]         = dctutils.posfmt.DDM,
-					["Mi-8MT"]        = dctutils.posfmt.DDM,
-					["SA342M"]        = dctutils.posfmt.DDM,
-					["SA342L"]        = dctutils.posfmt.DDM,
-					["UH-1H"]         = dctutils.posfmt.DDM,
-					["A-10A"]         = dctutils.posfmt.MGRS,
-					["A-10C"]         = dctutils.posfmt.MGRS,
-					["A-10C_2"]       = dctutils.posfmt.MGRS,
-					["F-5E-3"]        = dctutils.posfmt.DDM,
-					["F-16C_50"]      = dctutils.posfmt.DDM,
-					["FA-18C_hornet"] = dctutils.posfmt.DDM,
-					["M-2000C"]       = dctutils.posfmt.DDM,
+					["Ka-50"]         = uihuman.posfmt.DDM,
+					["Mi-8MT"]        = uihuman.posfmt.DDM,
+					["SA342M"]        = uihuman.posfmt.DDM,
+					["SA342L"]        = uihuman.posfmt.DDM,
+					["UH-1H"]         = uihuman.posfmt.DDM,
+					["A-10A"]         = uihuman.posfmt.MGRS,
+					["A-10C"]         = uihuman.posfmt.MGRS,
+					["A-10C_2"]       = uihuman.posfmt.MGRS,
+					["F-5E-3"]        = uihuman.posfmt.DDM,
+					["F-16C_50"]      = uihuman.posfmt.DDM,
+					["FA-18C_hornet"] = uihuman.posfmt.DDM,
+					["M-2000C"]       = uihuman.posfmt.DDM,
 				},
 				["ato"] = {},
 			},

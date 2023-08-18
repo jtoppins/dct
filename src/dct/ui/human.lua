@@ -9,7 +9,85 @@ local dctutils = require("dct.libs.utils")
 local Mission  = require("dct.libs.Mission")
 local WS       = require("dct.assets.worldstate")
 
-local human = {}
+local function conversion_entry(ratio, symbol)
+        return {
+                ["ratio"]  = ratio,
+                ["symbol"] = symbol,
+        }
+end
+
+local posfmt = {
+	["DD"]   = 1,
+	["DDM"]  = 2,
+	["DMS"]  = 3,
+	["MGRS"] = 4,
+}
+
+local altfmt = {
+	["FEET"]  = 1,
+	["METER"] = 2,
+}
+
+--- altitude conversion table from meters to X
+local altitude_conversion = {
+	[altfmt.FEET]  = conversion_entry(3.28084, "ft"),
+	[altfmt.METER] = conversion_entry(1, "m"),
+}
+
+local pressurefmt = {
+	["INHG"] = 1,
+	["MMHG"] = 2,
+	["HPA"]  = 3,
+	["MBAR"] = 4,
+}
+
+--- pressure conversion table from pascals to X
+local pressure_conversion = {
+	[pressurefmt.INHG] = conversion_entry(0.0002953, "inHg"),
+	[pressurefmt.MMHG] = conversion_entry(0.00750062, "mmHg"),
+	[pressurefmt.HPA]  = conversion_entry(0.01, "hPa"),
+	[pressurefmt.MBAR] = conversion_entry(0.1, "mbar"),
+}
+
+local distancefmt = {
+	["NAUTICALMILE"] = 1,
+	["STATUTEMILE"]  = 2,
+	["KILOMETER"]    = 3,
+}
+
+--- distance conversion from meters to X
+local distance_conversion = {
+	[distancefmt.NAUTICALMILE] = conversion_entry(0.000539957, "NM"),
+	[distancefmt.STATUTEMILE] = conversion_entry(0.000621371, "sm"),
+	[distancefmt.KILOMETER] = conversion_entry(0.001, "km"),
+}
+
+local speedfmt = {
+	["KNOTS"] = 1,
+	["KPH"]   = 2,
+	["MPH"]   = 3,
+}
+
+-- converts meters per second to X speed
+local speed_conversion = {
+	[speedfmt.KNOTS] = conversion_entry(1.94384, "kts"),
+	[speedfmt.KPH] = conversion_entry(3.6, "kph"),
+	[speedfmt.MPH] = conversion_entry(2.23694, "mph"),
+}
+
+local unitstype = {
+	["SPEED"]    = 1,
+	["DISTANCE"] = 2,
+	["ALTITUDE"] = 3,
+	["PRESSURE"] = 4,
+}
+
+local conversiontbl = {
+	[unitstype.SPEED]    = speed_conversion,
+	[unitstype.DISTANCE] = distance_conversion,
+	[unitstype.ALTITUDE] = altitude_conversion,
+	[unitstype.PRESSURE] = pressure_conversion,
+}
 
 --- Filter out facts that are not considered targets.
 local function istarget(owner)
@@ -36,6 +114,63 @@ local function isthreat(owner)
 		end
 		return false
 	end
+end
+
+--- reduce the accuracy of the position to the precision specified
+local function degradeLL(lat, long, precision)
+	local multiplier = math.pow(10, precision)
+	lat  = math.modf(lat * multiplier) / multiplier
+	long = math.modf(long * multiplier) / multiplier
+	return lat, long
+end
+
+--- set up formatting args for the LL string
+local function getLLformatstr(precision, fmt)
+	local decimals = precision
+	if fmt == posfmt.DDM then
+		if precision > 1 then
+			decimals = precision - 1
+		else
+			decimals = 0
+		end
+	elseif fmt == posfmt.DMS then
+		if precision > 4 then
+			decimals = precision - 2
+		elseif precision > 2 then
+			decimals = precision - 3
+		else
+			decimals = 0
+		end
+	end
+	if decimals == 0 then
+		return "%02.0f"
+	else
+		return "%0"..(decimals+3).."."..decimals.."f"
+	end
+end
+
+local human = {}
+
+human.posfmt = posfmt
+human.altfmt = altfmt
+human.pressurefmt = pressurefmt
+human.distancefmt = distancefmt
+human.speedfmt = speedfmt
+
+function human.convert(value, utype, tounit)
+	local converttbl = conversiontbl[utype]
+
+	if converttbl == nil then
+		return nil
+	end
+
+	local totbl = converttbl[tounit]
+
+	if totbl == nil then
+		return nil
+	end
+
+	return value * totbl.ratio, totbl.symbol
 end
 
 --- enemy air superiority as defined by the US-DOD is
@@ -93,6 +228,101 @@ function human.relationship(side1, side2)
 	end
 end
 
+function human.degrade_position(position, precision)
+	local lat, long = coord.LOtoLL(position)
+	lat, long = degradeLL(lat, long, precision)
+	return coord.LLtoLO(lat, long, 0)
+end
+
+function human.LLtostring(lat, long, precision, fmt)
+	local northing = "N"
+	local easting  = "E"
+	local degsym   = '°'
+
+	if lat < 0 then
+		northing = "S"
+	end
+
+	if long < 0 then
+		easting = "W"
+	end
+
+	lat, long = degradeLL(lat, long, precision)
+	lat  = math.abs(lat)
+	long = math.abs(long)
+
+	local fmtstr = getLLformatstr(precision, fmt)
+
+	if fmt == posfmt.DD then
+		return string.format(fmtstr..degsym, lat)..northing..
+			" "..
+			string.format(fmtstr..degsym, long)..easting
+	end
+
+	-- we give the minutes and seconds a little push in case the division
+	-- from the truncation with this multiplication gives us a value ending
+	-- in .99999...
+	local tolerance = 1e-8
+
+	local latdeg   = math.floor(lat)
+	local latmind  = (lat - latdeg)*60 + tolerance
+	local longdeg  = math.floor(long)
+	local longmind = (long - longdeg)*60 + tolerance
+
+	if fmt == posfmt.DDM then
+		return string.format("%02d"..degsym..fmtstr.."'", latdeg, latmind)..
+			northing..
+			" "..
+			string.format("%03d"..degsym..fmtstr.."'", longdeg, longmind)..
+			easting
+	end
+
+	local latmin   = math.floor(latmind)
+	local latsecd  = (latmind - latmin)*60 + tolerance
+	local longmin  = math.floor(longmind)
+	local longsecd = (longmind - longmin)*60 + tolerance
+
+	return string.format("%02d"..degsym.."%02d'"..fmtstr.."\"",
+			latdeg, latmin, latsecd)..
+		northing..
+		" "..
+		string.format("%03d"..degsym.."%02d'"..fmtstr.."\"",
+			longdeg, longmin, longsecd)..
+		easting
+end
+
+function human.MGRStostring(mgrs, precision)
+	local str = mgrs.UTMZone .. " " .. mgrs.MGRSDigraph
+
+	if precision == 0 then
+		return str
+	end
+
+	local divisor = 10^(5-precision)
+	local fmtstr  = "%0"..precision.."d"
+
+	if precision == 0 then
+		return str
+	end
+
+	return str.." "..string.format(fmtstr, (mgrs.Easting/divisor))..
+		" "..string.format(fmtstr, (mgrs.Northing/divisor))
+end
+
+function human.fmtposition(position, precision, fmt)
+	precision = math.floor(precision)
+	assert(precision >= 0 and precision <= 5,
+		"value error: precision range [0,5]")
+	local lat, long = coord.LOtoLL(position)
+
+	if fmt == posfmt.MGRS then
+		return human.MGRStostring(coord.LLtoMGRS(lat, long),
+			precision)
+	end
+
+	return human.LLtostring(lat, long, precision, fmt)
+end
+
 -- TODO: this needs to be refined. It needs to be able to handle
 -- different character types. Actually it really only makes sense
 -- to support Agents, the trouble is things like factories and
@@ -119,7 +349,7 @@ function human.mission_detail_facts(msn, filter, gridfmt)
 		local intel = fact.position.confidence * dctutils.INTELMAX
 		local line = string.format("%d. %s - %s (%s)\n",
 			k,
-			dctutils.fmtposition(fact.position.value,
+			human.fmtposition(fact.position.value,
 					     intel, gridfmt),
 			tostring(fact.displayname),
 			health)
@@ -163,8 +393,8 @@ end
 function human.mission_location(player)
 	local msn = player:getMission()
 
-	return dctutils.fmtposition(msn:getDescKey("location"), 3,
-				    player:getDescKey("gridfmt"))
+	return human.fmtposition(msn:getDescKey("location"), 3,
+				 player:getDescKey("gridfmt"))
 end
 
 --- Print target details. Targets are found by iterating over the
