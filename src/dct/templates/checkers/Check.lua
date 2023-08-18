@@ -2,7 +2,7 @@
 
 local class = require("libs.namedclass")
 local utils = require("libs.utils")
-local Logger = dct.Logger.getByName("Template")
+local vector = require("dct.libs.vector")
 
 local rc = {
 	["REQUIRED"] = 1,
@@ -15,15 +15,25 @@ local texttbl = {
 }
 
 local valuetype = {
-	["VALUES"] = 1,
-	["INT"]    = 2,
-	["RANGE"]  = 3,
-	["STRING"] = 4,
-	["BOOL"]   = 5,
-	["TABLEKEYS"] = 6,
-	["TABLE"]  = 7,
+	["VALUES"]    = 1, -- enumerated list of allowed values
+	["INT"]       = 2, -- number
+	["RANGE"]     = 3, -- number range
+	["STRING"]    = 4, -- string
+	["BOOL"]      = 5, -- boolean
+	["TABLEKEYS"] = 6, -- enumerated list of allowed values as keys
+                           --   from supplied table
+	["TABLE"]     = 7, -- simple lua table
+	["POINT"]     = 8, -- is a point
+	["LISTKEYS"]  = 9, -- is a list of table keys
+	["LIST"]      = 10, -- a list where all values are of the
+			    --  specified type
 }
 
+--- Used when the item being checked has a single value but from
+-- an enumerated list of values where the data input for key
+-- is used to get the value. Similar to TABLEKEYS except here
+-- the actual value is stored in value and there is a description
+-- string that can accompany each value.
 local function check_values(data, key, values)
 	local val = values[string.upper(data[key])]
 	if type(val) == "table" then
@@ -35,9 +45,9 @@ local function check_values(data, key, values)
 	return true, val
 end
 
+--- checks that the value is a number
 local function check_int(data, key)
 	local val
-
 	if type(data[key]) ~= "number" then
 		val = tonumber(data[key])
 	else
@@ -46,15 +56,17 @@ local function check_int(data, key)
 	return true, val
 end
 
+--- checks that the value is within a range where the values
+-- table defines a min and max.
 local function check_range(data, key, values)
 	local val = tonumber(data[key])
-
 	if values[1] <= val and data[key] <= val then
 		return true, val
 	end
 	return false
 end
 
+--- verifies the value is a string
 local function check_string(data, key)
 	if type(data[key]) == "string" then
 		return true, data[key]
@@ -62,14 +74,20 @@ local function check_string(data, key)
 	return false
 end
 
+--- verifies the value is a boolean
 local function check_bool(data, key)
 	if type(data[key]) == "boolean" then
 		return true, data[key]
 	end
-
 	return false
 end
 
+--- Used when the item being checked has a single value but from
+-- an enumerated list of values defined as keys in a table where
+-- the value of each key will be what the item gets transformed to.
+-- Verifies the value of data[key] exists as an uppercase key
+-- in values. The value returned is the value from the key accessed
+-- in the values table.
 local function check_table_keys(data, key, values)
 	local val = values[string.upper(data[key])]
 	if val ~= nil then
@@ -78,12 +96,44 @@ local function check_table_keys(data, key, values)
 	return false
 end
 
+--- verifies the value refrenced in data by key (data[key])
+-- is a table. This should not be used often.
 local function check_table(data, key)
 	if type(data[key]) == "table" then
 		return true, data[key]
 	end
-
 	return false
+end
+
+--- verify the value is a point or return a point at the map
+-- origin.
+local function check_point(data, key)
+	local val = vector.Vector3D(data[key])
+	return true, val:raw()
+end
+
+--- verify all items in the list are keys in values and translate
+-- to a set.
+local function check_list_keys(data, key, values)
+        local newlist = {}
+        for _, v in ipairs(data[key]) do
+                local val = string.upper(v)
+                if type(v) ~= "string" or values[val] == nil then
+                        return false
+                end
+                newlist[values[val]] = true
+        end
+        return true, newlist
+end
+
+--- verify all items in the list are of a specific type.
+local function check_list(data, key, values)
+        for _, val in ipairs(data[key]) do
+                if type(val) ~= values then
+                        return false
+                end
+        end
+        return true, data[key]
 end
 
 local checktbl = {
@@ -94,6 +144,9 @@ local checktbl = {
 	[valuetype.BOOL]   = check_bool,
 	[valuetype.TABLEKEYS] = check_table_keys,
 	[valuetype.TABLE]  = check_table,
+	[valuetype.POINT]  = check_point,
+	[valuetype.LISTKEYS] = check_list_keys,
+	[valuetype.LIST]   = check_list,
 }
 
 local Check = class("Check")
@@ -102,9 +155,11 @@ function Check:__init(section, options, description)
 
 	for key, val in pairs(options) do
 		if not val.nodoc and val.description == nil then
-			Logger:warn("%s.%s is missing a description entry. "..
+			dct.Logger.getByName("Template"):warn(
+				"%s.%s is missing a description entry. "..
 				"To suppress this add a 'nodoc = true' "..
-				"entry in the definition.", section, key)
+				"entry in the definition.",
+				tostring(section), tostring(key))
 		end
 	end
 	self.section = section
