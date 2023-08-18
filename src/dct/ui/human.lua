@@ -68,11 +68,34 @@ local speedfmt = {
 	["MPH"]   = 3,
 }
 
--- converts meters per second to X speed
+--- converts meters per second to X speed
 local speed_conversion = {
 	[speedfmt.KNOTS] = conversion_entry(1.94384, "kts"),
 	[speedfmt.KPH] = conversion_entry(3.6, "kph"),
 	[speedfmt.MPH] = conversion_entry(2.23694, "mph"),
+}
+
+local tempfmt = {
+	["K"] = 1,
+	["F"] = 2,
+	["C"] = 3,
+}
+
+--- converts kelvins to X temp
+local temp_conversion = {
+	[tempfmt.K] = conversion_entry(1, "K"),
+	[tempfmt.C] = {
+		["symbol"]  = "C",
+		["convert"] = function (value)
+			return value - 273.15
+		end,
+	},
+	[tempfmt.F] = {
+		["symbol"]  = "F",
+		["convert"] = function (value)
+			return (value - 273.15) * 9/5 + 32
+		end,
+	},
 }
 
 local unitstype = {
@@ -80,6 +103,7 @@ local unitstype = {
 	["DISTANCE"] = 2,
 	["ALTITUDE"] = 3,
 	["PRESSURE"] = 4,
+	["TEMP"]     = 5,
 }
 
 local conversiontbl = {
@@ -87,6 +111,7 @@ local conversiontbl = {
 	[unitstype.DISTANCE] = distance_conversion,
 	[unitstype.ALTITUDE] = altitude_conversion,
 	[unitstype.PRESSURE] = pressure_conversion,
+	[unitstype.TEMP]     = temp_conversion,
 }
 
 --- Filter out facts that are not considered targets.
@@ -156,6 +181,8 @@ human.altfmt = altfmt
 human.pressurefmt = pressurefmt
 human.distancefmt = distancefmt
 human.speedfmt = speedfmt
+human.tempfmt = tempfmt
+human.units = unitstype
 
 function human.convert(value, utype, tounit)
 	local converttbl = conversiontbl[utype]
@@ -170,6 +197,9 @@ function human.convert(value, utype, tounit)
 		return nil
 	end
 
+	if type(totbl.convert) == "function" then
+		return totbl.convert(value), totbl.symbol
+	end
 	return value * totbl.ratio, totbl.symbol
 end
 

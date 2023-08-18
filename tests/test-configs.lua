@@ -3,5 +3,5 @@
 require("dcttestlibs")
 require("dct")
 
-assert(dct.settings.ui.gridfmt["Ka-50"] == 3, "ka-50 error")
+assert(dct.settings.ui["Ka-50"].gridfmt == 2, "ka-50 error")
 os.exit(0)

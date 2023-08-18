@@ -4,64 +4,88 @@
 -- Provides config facilities.
 --]]
 
-local utils      = require("libs.utils")
-local enum       = require("dct.enum")
-local dctutils   = require("dct.libs.utils")
-local uihuman    = require("dct.ui.human")
+local class    = require("libs.namedclass")
+local utils    = require("libs.utils")
+local dctenum  = require("dct.enum")
+local dctutils = require("dct.libs.utils")
+local uihuman  = require("dct.ui.human")
+local Checker  = require("dct.templates.checkers.Check")
 
-local function validate_weapon_restrictions(cfgdata, tbl)
-	local path = cfgdata.file
-	local keys = {
-		[1] = {
-			["name"] = "cost",
-			["type"] = "number",
-		},
-		[2] = {
-			["name"] = "category",
-			["type"] = "string",
-			["check"] = function (keydata, t)
-		if enum.weaponCategory[string.upper(t[keydata.name])] ~= nil then
-			t[keydata.name] =
-				enum.weaponCategory[string.upper(t[keydata.name])]
-			return true
+local defaultpayload = {}
+for _, v in pairs(dctenum.weaponCategory) do
+	defaultpayload[v] = dctenum.WPNINFCOST - 1
+end
+
+local CheckPerEntry = class("CheckPerEntry", Checker)
+function CheckPerEntry:check(data)
+	for key, val in pairs(data) do
+		local ok, errkey, msg = Checker.check(self, val)
+		if not ok then
+			return false, string.format(
+				"%s: invalid `%s` %s", tostring(key),
+				tostring(errkey), tostring(msg))
 		end
-		return false
-	end,
-		},
-	}
-	for _, wpndata in pairs(tbl) do
-		wpndata.path = path
-		utils.checkkeys(keys, wpndata)
-		wpndata.path = nil
+	end
+	return true
+end
+
+local function validate_weapon_restrictions(cfg, tbl)
+	local check = CheckPerEntry(nil, {
+			["cost"] = {
+				["nodoc"] = true,
+				["type"] = Checker.valuetype.INT,
+			},
+			["category"] = {
+				["nodoc"] = true,
+				["type"] = Checker.valuetype.TABLEKEYS,
+				["values"] = dctenum.weaponCategory,
+			},
+		})
+
+	local ok, msg = check:check(tbl)
+	if not ok then
+		error(string.format("%s; file: %s", msg, cfg.file))
 	end
 	return tbl
 end
 
-local function validate_payload_limits(cfgdata, tbl)
+--- validates payload limits configuration
+-- This is per airframe with a "default" entry in case an airframe is
+-- not defined. The default is unlimited.
+local function validate_payload_limits(cfg, tbl)
 	local newlimits = {}
-	for wpncat, val in pairs(tbl) do
-		local w = enum.weaponCategory[string.upper(wpncat)]
-		assert(w ~= nil,
-			string.format("invalid weapon category '%s'; file: %s",
-				wpncat, cfgdata.file))
-		newlimits[w] = val
+
+	for planetype, limits in pairs(tbl) do
+		newlimits[planetype] = {}
+		local tmptbl = {}
+
+		for wpncat, val in pairs(limits) do
+			local w = dctenum.weaponCategory[string.upper(wpncat)]
+
+			if w == nil then
+				error(string.format(
+					"invalid weapon category '%s' - "..
+					"plane type %s; file: %s",
+					wpncat, planetype, cfg.file))
+			end
+			tmptbl[w] = val
+		end
+		utils.mergetables(newlimits[planetype], defaultpayload)
+		utils.mergetables(newlimits[planetype], tmptbl)
 	end
+	newlimits["default"] = defaultpayload
 	return newlimits
 end
 
-local function validate_codenamedb(cfgdata, tbl)
+local function validate_codenamedb(cfg, tbl)
 	local newtbl = {}
 	for key, list in pairs(tbl) do
 		local newkey
-		assert(type(key) == "string",
-			string.format("invalid codename category '%s'; file: %s",
-			key, cfgdata.file))
-
 		local upper = string.upper(key)
-		local k = enum.assetType[upper]
+		local k = dctenum.assetType[upper]
 
 		if k == nil then
-			k = enum.assetTypeDeprecated[upper]
+			k = dctenum.assetTypeDeprecated[upper]
 		end
 
 		if k ~= nil then
@@ -69,74 +93,102 @@ local function validate_codenamedb(cfgdata, tbl)
 		elseif key == "default" then
 			newkey = key
 		else
-			assert(nil,
-				string.format("invalid codename category '%s'; file: %s",
-				key, cfgdata.file))
+			error(string.format("invalid codename category "..
+				"'%s'; file: %s", key, cfg.file))
 		end
-		assert(type(list) == "table",
-			string.format("invalid codename value for category "..
-				"'%s', must be a table; file: %s", key, cfgdata.file))
+
+		if type(list) ~= "table" then
+			error(string.format("invalid codename value for "..
+				"category '%s', must be a table; file: %s",
+				key, cfg.file))
+		end
 		newtbl[newkey] = list
 	end
 	return newtbl
 end
 
-local function gridfmt_transform(tbl)
-	local ntbl = {}
-	for k, v in pairs(tbl) do
-		if type(v) == "number" then
-			ntbl[k] = v
-		else
-			ntbl[k] = uihuman.posfmt[string.upper(v)]
-			assert(ntbl[k] ~= nil, "invalid grid format for "..k)
-		end
+local function validate_ui(cfg, tbl)
+	local check = CheckPerEntry(nil, {
+			["gridfmt"] = {
+				["nodoc"] = true,
+				["type"] = Checker.valuetype.TABLEKEYS,
+				["values"] = uihuman.posfmt,
+				["default"] = uihuman.posfmt.DMS,
+			},
+			["distfmt"] = {
+				["nodoc"] = true,
+				["type"] = Checker.valuetype.TABLEKEYS,
+				["values"] = uihuman.distancefmt,
+				["default"] = uihuman.distancefmt.NAUTICALMILE,
+			},
+			["altfmt"] = {
+				["nodoc"] = true,
+				["type"] = Checker.valuetype.TABLEKEYS,
+				["values"] = uihuman.altfmt,
+				["default"] = uihuman.altfmt.FEET,
+			},
+			["speedfmt"] = {
+				["nodoc"] = true,
+				["type"] = Checker.valuetype.TABLEKEYS,
+				["values"] = uihuman.speedfmt,
+				["default"] = uihuman.speedfmt.KNOTS,
+			},
+			["pressurefmt"] = {
+				["nodoc"] = true,
+				["type"] = Checker.valuetype.TABLEKEYS,
+				["values"] = uihuman.pressurefmt,
+				["default"] = uihuman.pressurefmt.INHG,
+			},
+			["tempfmt"] = {
+				["nodoc"] = true,
+				["type"] = Checker.valuetype.TABLEKEYS,
+				["values"] = uihuman.tempfmt,
+				["default"] = uihuman.tempfmt.F,
+			},
+		})
+	local newtbl = {}
+
+	utils.mergetables(newtbl, cfg.default)
+	utils.mergetables(newtbl, tbl)
+
+	local ok, msg = check:check(newtbl)
+	if not ok then
+		error(string.format("%s; file: %s", msg, cfg.file))
 	end
-	return ntbl
+	return newtbl
 end
 
-local function ato_transform(tbl)
+local function merge_defaults(cfgdata, tbl)
+	local newtbl = {}
+	newtbl = utils.mergetables(newtbl, cfgdata.default)
+	newtbl = utils.mergetables(newtbl, tbl)
+	return newtbl
+end
+
+local function validate_ato(cfg, tbl)
 	local ntbl = {}
+
 	for ac, mlist in pairs(tbl) do
-		ntbl[ac] = {}
-		for _, v in pairs(mlist) do
-			local mtype = string.upper(v)
-			local mval  = enum.missionType[mtype]
-			assert(mval ~= nil,
-				string.format("invalid mission type: %s for ac: %s",
-					v, ac))
-			ntbl[ac][mtype] = mval
+		local ok, nlist = dctutils.check_ato(mlist)
+
+		if not ok then
+			error(string.format("%s; aircraft: %s; file: %s",
+				nlist, ac, cfg.file))
 		end
+		ntbl[ac] = nlist
 	end
 	return ntbl
 end
 
-local function validate_ui(cfgdata, tbl)
-	local newtbl = {}
-	utils.mergetables(newtbl, cfgdata.default)
-	for k, v in pairs(tbl) do
-		utils.mergetables(newtbl[k], v)
-		if k == "gridfmt" then
-			newtbl[k] = gridfmt_transform(newtbl[k])
-		elseif k == "ato" then
-			newtbl[k] = ato_transform(newtbl[k])
+local function validate_cost(cfg, tbl)
+	for ac, cost in pairs(tbl) do
+		if type(cost) ~= "number" then
+			error(string.format(
+				"cost not a number; aircraft: %s; file: %s",
+				ac, cfg.file))
 		end
 	end
-	return newtbl
-end
-
-local function validate_blast_effects(cfgdata, tbl)
-	local newtbl = {}
-	newtbl = utils.mergetables(newtbl, cfgdata.default)
-	newtbl = utils.mergetables(newtbl, tbl)
-	return newtbl
-end
-
-local function validate_agents(cfgdata, tbl)
-	local newtbl = {}
-
-	newtbl = utils.mergetables(newtbl, cfgdata.default)
-	newtbl = utils.mergetables(newtbl, tbl)
-	return newtbl
+	return tbl
 end
 
 -- We have a few levels of configuration:
@@ -146,78 +198,59 @@ end
 -- simple algorithm; assign the defaults, then apply the server and
 -- theater configs
 local function theatercfgs(config)
-	local defaultpayload = {}
-	for _,v in pairs(enum.weaponCategory) do
-		defaultpayload[v] = enum.WPNINFCOST - 1
-	end
-
+	local basepath = utils.join_paths(config.server.theaterpath,
+					  "settings")
 	local cfgs = {
 		{
 			["name"] = "restrictedweapons",
-			["file"] = config.server.theaterpath..utils.sep.."settings"..
-				utils.sep.."restrictedweapons.cfg",
+			["file"] = utils.join_paths(basepath,
+					"restrictedweapons.cfg"),
 			["cfgtblname"] = "restrictedweapons",
 			["validate"] = validate_weapon_restrictions,
-			["default"] = {
-				["RN-24"] = {
-					["cost"]     = enum.WPNINFCOST,
-					["category"] = enum.weaponCategory.AG,
-				},
-				["RN-28"] = {
-					["cost"]     = enum.WPNINFCOST,
-					["category"] = enum.weaponCategory.AG,
-				},
-			},
+			["default"] = require("dct.data.restrictedweapons"),
 			["env"] = {
-				["INFCOST"] = enum.WPNINFCOST,
+				["INFCOST"] = dctenum.WPNINFCOST,
 			},
 		}, {
 			["name"] = "payloadlimits",
-			["file"] = config.server.theaterpath..utils.sep.."settings"..
-				utils.sep.."payloadlimits.cfg",
+			["file"] = utils.join_paths(basepath,
+						    "payloadlimits.cfg"),
+			["cfgtblname"] = "payloadlimits",
 			["validate"] = validate_payload_limits,
-			["default"] = defaultpayload,
 		}, {
 			["name"] = "codenamedb",
-			["file"] = config.server.theaterpath..utils.sep.."settings"..
-				utils.sep.."codenamedb.cfg",
+			["file"] = utils.join_paths(basepath,
+						    "codenamedb.cfg"),
 			["validate"] = validate_codenamedb,
 			["default"] = require("dct.data.codenamedb"),
 		}, {
 			["name"] = "ui",
-			["file"] = config.server.theaterpath..utils.sep.."settings"..
-				utils.sep.."ui.cfg",
+			["file"] = utils.join_paths(basepath, "ui.cfg"),
 			["validate"] = validate_ui,
-			["default"] = {
-				["gridfmt"] = {
-					-- default is DMS, no need to list
-					["Ka-50"]         = uihuman.posfmt.DDM,
-					["Mi-8MT"]        = uihuman.posfmt.DDM,
-					["SA342M"]        = uihuman.posfmt.DDM,
-					["SA342L"]        = uihuman.posfmt.DDM,
-					["UH-1H"]         = uihuman.posfmt.DDM,
-					["A-10A"]         = uihuman.posfmt.MGRS,
-					["A-10C"]         = uihuman.posfmt.MGRS,
-					["A-10C_2"]       = uihuman.posfmt.MGRS,
-					["F-5E-3"]        = uihuman.posfmt.DDM,
-					["F-16C_50"]      = uihuman.posfmt.DDM,
-					["FA-18C_hornet"] = uihuman.posfmt.DDM,
-					["M-2000C"]       = uihuman.posfmt.DDM,
-				},
-				["ato"] = {},
-			},
+			["cfgtblname"] = "ui",
+			["default"] = require("dct.data.playerui"),
 		}, {
 			["name"] = "blasteffects",
-			["file"] = config.server.theaterpath..utils.sep.."settings"..
-				utils.sep.."blasteffects.cfg",
-			["validate"] = validate_blast_effects,
+			["file"] = utils.join_paths(basepath,
+						    "blasteffects.cfg"),
+			["validate"] = merge_defaults,
 			["default"] = require("dct.data.blasteffects"),
 		}, {
 			["name"] = "agents",
-			["file"] = config.server.theaterpath..utils.sep..
-				"settings"..utils.sep.."agents.cfg",
-			["validate"] = validate_agents,
+			["file"] = utils.join_paths(basepath, "agents.cfg"),
+			["validate"] = merge_defaults,
 			["default"] = require("dct.data.agents"),
+		}, {
+			["name"] = "ato",
+			["file"] = utils.join_paths(basepath, "ato.cfg"),
+			["validate"] = validate_ato,
+			["cfgtblname"] = "ato",
+		}, {
+			["name"] = "airframecost",
+			["file"] = utils.join_paths(basepath,
+						    "airframecost.cfg"),
+			["validate"] = validate_cost,
+			["cfgtblname"] = "cost",
 		},
 	}
 

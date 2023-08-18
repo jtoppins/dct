@@ -2,7 +2,9 @@
 
 local class   = require("libs.namedclass")
 local dctenum = require("dct.enum")
+local uihuman = require("dct.ui.human")
 local Check   = require("dct.templates.checkers.Check")
+local settings = dct.settings
 
 
 --- @class CheckPlayer
@@ -30,6 +32,60 @@ function CheckPlayer:__init()
 			["description"] =
 				"The squadron the slot is associated with",
 		},
+		["ato"] = {
+			["nodoc"] = true,
+			["agent"] = true,
+			["type"] = Check.valuetype.TABLE,
+			["default"] = {},
+		},
+		["payloadlimits"] = {
+			["nodoc"] = true,
+			["agent"] = true,
+			["type"] = Check.valuetype.TABLE,
+			["default"] = settings.payloadlimits["default"],
+		},
+		["gridfmt"] = {
+			["nodoc"] = true,
+			["agent"] = true,
+			["type"] = Check.valuetype.TABLEKEYS,
+			["values"] = uihuman.posfmt,
+			["default"] = uihuman.posfmt.DMS,
+		},
+		["distfmt"] = {
+			["nodoc"] = true,
+			["agent"] = true,
+			["type"] = Check.valuetype.TABLEKEYS,
+			["values"] = uihuman.distancefmt,
+			["default"] = uihuman.distancefmt.NAUTICALMILE,
+		},
+		["altfmt"] = {
+			["nodoc"] = true,
+			["agent"] = true,
+			["type"] = Check.valuetype.TABLEKEYS,
+			["values"] = uihuman.altfmt,
+			["default"] = uihuman.altfmt.FEET,
+		},
+		["speedfmt"] = {
+			["nodoc"] = true,
+			["agent"] = true,
+			["type"] = Check.valuetype.TABLEKEYS,
+			["values"] = uihuman.speedfmt,
+			["default"] = uihuman.speedfmt.KNOTS,
+		},
+		["pressurefmt"] = {
+			["nodoc"] = true,
+			["agent"] = true,
+			["type"] = Check.valuetype.TABLEKEYS,
+			["values"] = uihuman.pressurefmt,
+			["default"] = uihuman.pressurefmt.INHG,
+		},
+		["tempfmt"] = {
+			["nodoc"] = true,
+			["agent"] = true,
+			["type"] = Check.valuetype.TABLEKEYS,
+			["values"] = uihuman.tempfmt,
+			["default"] = uihuman.tempfmt.F,
+		},
 	})
 end
 
@@ -41,7 +97,30 @@ function CheckPlayer:check(data)
 	data.overwrite = false
 	data.rename = false
 
-	return Check.check(self, data)
+	if next(data.tpldata) == nil then
+		return true
+	end
+
+	local ok, msg = Check.check(self, data)
+	if not ok then
+		return ok, msg
+	end
+
+	local actype = data.tpldata[1]["data"].units[1].type
+	local ui = settings.ui[actype]
+
+	data.ato = settings.ato[actype] or data.ato
+	data.payloadlimits = settings.payloadlimits[actype] or
+			     data.payloadlimits
+	data.cost = settings.airframecost[actype] or data.cost
+
+	if ui ~= nil then
+		for k, v in pairs(ui) do
+			data[k] = v
+		end
+	end
+
+	return true
 end
 
 return CheckPlayer

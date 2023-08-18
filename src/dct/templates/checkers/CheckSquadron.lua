@@ -4,6 +4,7 @@
 
 local class   = require("libs.namedclass")
 local dctenum = require("dct.enum")
+local dctutils = require("dct.libs.utils")
 local Check   = require("dct.templates.checkers.Check")
 
 local issquadron = {
@@ -174,18 +175,12 @@ function CheckSquadron:checkTpldata(data)
 end
 
 function CheckSquadron:checkATO(data)
-	local msnlist = {}
+	local ok, tbl = dctutils.check_ato(data.ato)
 
-	for _, msntype in pairs(data.ato) do
-		local msnstr = string.upper(msntype)
-		if type(msntype) ~= "string" or
-		   dctenum.missionType[msnstr] == nil then
-			return false, "ato",
-				"invalid mission type: "..tostring(msnstr)
-		end
-		msnlist[dctenum.missionType[msnstr]] = true
+	if not ok then
+		return ok, "ato", tbl
 	end
-	data.ato = msnlist
+	data.ato = tbl
 	return true
 end
 

@@ -132,11 +132,26 @@ function utils.not_playergroup(grp)
 	return not isplayer
 end
 
+function utils.check_ato(mlist)
+	local ntbl = {}
+
+	for _, v in pairs(mlist) do
+		local mtype  = enum.missionType[string.upper(v)]
+
+		if mtype == nil then
+			return false, string.format(
+				"invalid mission type: %s", v)
+		end
+		ntbl[mtype] = true
+	end
+	return true, ntbl
+end
+
 function utils.set_ato(sqdn, flight)
 	local sqdnato = sqdn:getDescKey("ato")
 	-- mixed flights are not allowed in DCS
 	local actype = next(flight:getDescKey("unitTypeCnt"))
-	local globalato = dct.settings.ui.ato[actype]
+	local globalato = dct.settings.ato[actype]
 
 	if next(sqdnato) ~= nil then
 		flight:setDescKey("ato", libsutils.shallowclone(sqdnato))
