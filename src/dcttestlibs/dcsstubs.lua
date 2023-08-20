@@ -1022,6 +1022,14 @@ end
 function Airbase:setRadioSilentMode(state)
 	self.silenceATC = state
 end
+
+function Airbase:autoCapture(state)
+	self.autocapture = state
+end
+
+function Airbase:setCoalition(coa)
+	self.coalition = coa
+end
 _G.Airbase = Airbase
 
 

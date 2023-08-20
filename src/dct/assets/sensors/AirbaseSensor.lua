@@ -147,11 +147,9 @@ function AirbaseSensor:notifyOperational()
 		dctutils.buildevent.operational(self.agent, operational))
 end
 
-function AirbaseSensor:getRampSpots()
-	local ab = Airbase.getByName(self.agent.name)
-
-	if ab == nil or
-	   ab:getDesc().category ~= Airbase.Category.AIRDROME then
+function AirbaseSensor:getRampSpots(ab)
+	if self.agent:getDescKey("abcategory") ~=
+			Airbase.Category.AIRDROME then
 		return
 	end
 
@@ -175,15 +173,25 @@ function AirbaseSensor:getRampSpots()
 	end
 end
 
-function AirbaseSensor:setValues()
+--- Set the airbase's departure point. This point will be used when
+-- creating new flights.
+function AirbaseSensor:setDeparturePoint(spawn)
 	local ab = Airbase.getByName(self.agent.name)
-	local translation = vector.Vector3D(
-		self.agent:getDescKey("departure_point"))
-	local location = vector.Vector3D(self.agent:getDescKey("location"))
 
-	self.agent:setDescKey("airdromeId", ab:getID())
-	self.agent:setFact(WS.Facts.factKey.DEPARTURE,
-			   location + translation)
+	if ab ~= nil and (spawn == true or
+	   self.agent:getDescKey("abcategory") == Airbase.Category.SHIP) then
+		local p = ab:getPosition()
+		local dp = vector.Vector3D(
+			self.agent:getDescKey("departure_point"))
+		local theta = math.atan2(p.x.z, p.x.x)
+		local rdp = vector.Vector2D(dp)
+
+		rdp:rotate(theta)
+		dp.x = rdp.x
+		dp.z = rdp.y
+		self.agent:setFact(WS.Facts.factKey.DEPARTURE,
+			vector.Vector3D(p.p) + dp)
+	end
 end
 
 function AirbaseSensor:setup()
@@ -199,15 +207,38 @@ function AirbaseSensor:spawnPost()
 	self.timer:reset()
 	self.timer:start()
 
-	self:setValues()
-	self:getRampSpots()
+	local ab = Airbase.getByName(self.agent.name)
+
+	if ab == nil then
+		self.agent._logger:error("on spawn, no DCS airbase(%s)",
+			self.agent.name)
+		return
+	end
+
+	ab:setCoalition(self.agent.owner)
+	self.agent:setDescKey("airdromeId", ab:getID())
+	self.agent:setDescKey("abcategory", ab:getDesc().category)
+	self:getRampSpots(ab)
+	self:setDeparturePoint(true)
 	self:notifyOperational()
 end
 
 --- By definition a despawned airbase cannot have an operational tower
+-- and set the owner to neutral, as there is no one to own the base.
 function AirbaseSensor:despawnPost()
 	self.timer:stop()
 	self:setSilent(true)
+
+	if self.agent:getDescKey("abcategory") ~=
+			Airbase.Category.AIRDROME then
+		return
+	end
+
+	local ab = Airbase.getByName(self.agent.name)
+
+	if ab then
+		ab:setCoalition(coalition.side.NEUTRAL)
+	end
 end
 
 function AirbaseSensor:handleCapture(event)
@@ -237,7 +268,7 @@ function AirbaseSensor:update()
 	end
 
 	if self:isOperational() then
-		self:setValues()
+		self:setDeparturePoint(false)
 		self:refreshNavaids()
 	end
 

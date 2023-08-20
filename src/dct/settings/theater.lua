@@ -191,6 +191,26 @@ local function validate_cost(cfg, tbl)
 	return tbl
 end
 
+local function validate_general(cfg, tbl)
+	local check = Checker(nil, {
+			["airbase_nosilence"] = {
+				["description"] = [[
+This setting will determine if the ATC tower is disabled by default
+until a DCT airbase object takes ownership. By default all airbases
+are silenced unless DCT is controlling the airbase. Set to true to
+keep DCS's ATC system on for all airbases, including ships.]],
+				["type"] = Checker.valuetype.BOOL,
+				["default"] = false,
+			},
+		})
+	local ok, msg = check.check(tbl)
+
+	if not ok then
+		error(string.format("%s; file: %s", msg, cfg.file))
+	end
+	return tbl
+end
+
 -- We have a few levels of configuration:
 -- 	* server defined config file; <dcs-saved-games>/Config/dct.cfg
 -- 	* theater defined configuration; <theater-path>/settings/<config-files>
@@ -251,6 +271,12 @@ local function theatercfgs(config)
 						    "airframecost.cfg"),
 			["validate"] = validate_cost,
 			["cfgtblname"] = "cost",
+		}, {
+			["name"] = "general",
+			["file"] = utils.join_paths(basepath,
+						    "general.cfg"),
+			["validate"] = validate_general,
+			["default"] = require("dct.data.general"),
 		},
 	}
 
