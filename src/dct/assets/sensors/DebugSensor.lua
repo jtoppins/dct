@@ -33,7 +33,8 @@ function DebugSensor:__init(agent)
 		return
 	end
 
-	self.timer  = Timer(updatetime)
+	-- limit timer to have a minimum timeout of 30 seconds
+	self.timer  = Timer(math.max(updatetime, 30))
 	self.markid = human.getMarkID()
 end
 
