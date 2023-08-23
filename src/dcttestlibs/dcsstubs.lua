@@ -12,7 +12,11 @@ function lfs.writedir()
 end
 
 function lfs.tempdir()
-	return lfs.dct_testdata..utils.sep.."mission"
+	return utils.join_paths(lfs.dct_testdata, "mission")
+end
+
+function lfs.currentdir()
+	return utils.join_paths(lfs.dct_testdata, "gamedir")
 end
 
 local libscheck = require("libs.check")

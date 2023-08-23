@@ -85,6 +85,7 @@ function Systems:__init()
 		"dct.templates.RegionManager",
 		"dct.systems.playerslots",
 		"dct.systems.airbases",
+		"dct.systems.weather",
 	}
 
 	for _, syspath in ipairs(systems) do

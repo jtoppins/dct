@@ -3403,46 +3403,58 @@ mission = {
     }, -- end of ["trigrules"]
     ["version"] = 20,
     ["weather"] = {
-        ["atmosphere_type"] = 0,
-        ["clouds"] = {
-            ["base"] = 300,
-            ["density"] = 0,
-            ["iprecptns"] = 0,
-            ["thickness"] = 200,
-        }, -- end of ["clouds"]
+        ["wind"] = {
+            ["at8000"] = {
+                ["speed"] = 13.591539554826607,
+                ["dir"] = 4,
+            }, -- end of ["at8000"]
+            ["atGround"] = {
+                ["speed"] = 3.284791450479583,
+                ["dir"] = 268,
+            }, -- end of ["atGround"]
+            ["at2000"] = {
+                ["speed"] = 11.478976387723927,
+                ["dir"] = 327,
+            }, -- end of ["at2000"]
+        }, -- end of ["wind"]
+        ["enable_fog"] = false,
+        ["season"] = {
+            ["temperature"] = 27.53,
+        }, -- end of ["season"]
+        ["qnh"] = 762.56,
         ["cyclones"] = {
+            [1] = {
+                ["pressure_spread"] = 921541.0708695,
+                ["centerZ"] = 515.95281362421,
+                ["ellipticity"] = 0.4886921622283,
+                ["rotation"] = 0.17166023076335,
+                ["pressure_excess"] = -1179,
+                ["centerX"] = 2960.4304980415,
+            }, -- end of [1]
         }, -- end of ["cyclones"]
         ["dust_density"] = 0,
-        ["enable_dust"] = "",
-        ["enable_fog"] = "",
+        ["enable_dust"] = false,
+        ["clouds"] = {
+            ["density"] = 5,
+            ["thickness"] = 800,
+            ["preset"] = "Preset7",
+            ["base"] = 2604,
+            ["iprecptns"] = 0,
+        }, -- end of ["clouds"]
+        ["atmosphere_type"] = 0,
+        ["groundTurbulence"] = 7.0104,
+        ["halo"] = {
+            ["preset"] = "off",
+        }, -- end of ["halo"]
+        ["type_weather"] = 0,
+        ["modifiedTime"] = true,
+        ["name"] = "Winter. Clouds & wind",
         ["fog"] = {
             ["thickness"] = 0,
             ["visibility"] = 0,
         }, -- end of ["fog"]
-        ["groundTurbulence"] = 0,
-        ["modifiedTime"] = true,
-        ["name"] = "Winter, clean sky",
-        ["qnh"] = 760,
-        ["season"] = {
-            ["temperature"] = 20,
-        }, -- end of ["season"]
-        ["type_weather"] = 0,
         ["visibility"] = {
             ["distance"] = 80000,
         }, -- end of ["visibility"]
-        ["wind"] = {
-            ["at2000"] = {
-                ["dir"] = 0,
-                ["speed"] = 0,
-            }, -- end of ["at2000"]
-            ["at8000"] = {
-                ["dir"] = 0,
-                ["speed"] = 0,
-            }, -- end of ["at8000"]
-            ["atGround"] = {
-                ["dir"] = 0,
-                ["speed"] = 0,
-            }, -- end of ["atGround"]
-        }, -- end of ["wind"]
     }, -- end of ["weather"]
 } -- end of mission
