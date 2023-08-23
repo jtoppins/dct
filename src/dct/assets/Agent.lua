@@ -247,9 +247,7 @@ end
 -- @param typev type of template that the Agent was composed from
 -- @param owner which coalition the Agent belongs to
 -- @param desc description table for the Agent, stores invariants about
---          the Agent
--- @param tpl [optional] reference to Template object the Agent was
---          composed from
+-- the Agent
 function Agent.create(name, typev, owner, desc)
 	local agent = Agent()
 

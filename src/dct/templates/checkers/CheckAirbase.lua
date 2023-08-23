@@ -135,7 +135,7 @@ in the unit definition stm or miz will be used.]],
 This is the 3D point to which all departing AI aircraft will fly towards
 until the AI Flight Lead can plan a more detailed flight plan. The format is
 a relative position in relation to the airbase's X orientation vector. Where
-a positve x value places the point to the right of the airbase, a positive y
+a positive x value places the point to the right of the airbase, a positive y
 value places the point Y meters AGL above the airbase, and a positive z value
 would place the point ahead of the airbase. By default the departure point
 is just the airbase's location at ]]..tostring(DEFAULT_ALT)..[[ meters AGL.]],

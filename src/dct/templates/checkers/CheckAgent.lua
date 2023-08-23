@@ -29,8 +29,8 @@ Sensors monitor the agent's state. The available sensors are:
 			["type"]    = Check.valuetype.TABLEKEYS,
 			["values"]  = Agent.objectType["actions"],
 			["description"] = [[
-Actions are the set of action object the agent has available to it to
-manipulate its state to a desired goal state. The follow list of actions
+Actions are the set of action objects the agent has available to it to
+manipulate its state to a desired goal state. The following list of actions
 are:
 
 %VALUES%]],

@@ -48,7 +48,7 @@ is incorrect or does not exist.]],
 			["type"] = Check.valuetype.TABLE,
 			["description"] = [[
 Contains all DCS unit type attributes for all unit types that make up the asset.
-This list also contains DCT specific attributes that may charaterize the asset
+This list also contains DCT specific attributes that may characterize the asset
 at a meta level. Such as an asset that represents a base or strategic target.]]
 		},
 		["uniquenames"] = {

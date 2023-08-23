@@ -117,7 +117,7 @@ is damaged. The formula used is:
 			["type"]    = Check.valuetype.RANGE,
 			["values"]  = {0, 1},
 			["description"] = [[
-The normalized damage allowed to be taked by a returning aircraft before
+The normalized damage allowed to be taken by a returning aircraft before
 it is considered a total loss reducing the available pool permanently.]],
 		},
 		["sortie_rate"] = {
