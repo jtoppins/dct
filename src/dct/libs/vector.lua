@@ -18,6 +18,9 @@ end
 local Vector2D = class()
 local mt2d = {}
 function mt2d.__add(vec, rhs)
+	if type(rhs) == "number" then
+		rhs = { x = rhs, y = rhs }
+	end
 	assert(rhs.x ~= nil and rhs.y ~= nil,
 		"value error: rhs value not a 2D vector")
 	local v = {}
@@ -27,6 +30,9 @@ function mt2d.__add(vec, rhs)
 end
 
 function mt2d.__sub(vec, rhs)
+	if type(rhs) == "number" then
+		rhs = { x = rhs, y = rhs }
+	end
 	assert(rhs.x ~= nil and rhs.y ~= nil,
 		"value error: rhs value not a 2D vector")
 	local v = {}

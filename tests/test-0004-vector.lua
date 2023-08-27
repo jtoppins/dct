@@ -16,6 +16,8 @@ local function main()
 		"subtraction broken?")
 	assert((3 * a) == vector.Vector2D({x=15,y=15}), "scalar product broken?")
 	assert((3 * a) / 3 == a, "scalar division broken?")
+	assert((a - 2) == vector.Vector2D({x=3,y=3}),
+		"scalar substraction broken?")
 end
 
 os.exit(main())
