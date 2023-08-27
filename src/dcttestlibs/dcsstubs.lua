@@ -1465,6 +1465,16 @@ function land.getHeight(vec2)
 	assert(vec2.y)
 	return 10
 end
+
+function land.getSurfaceHeightWithSeabed(vec2)
+	assert(vec2.x)
+	assert(vec2.y)
+	return 10, 0
+end
+
+function land.getSurfaceType(--[[vec2]])
+	return land.SurfaceType.LAND
+end
 _G.land = land
 
 local atmosphere = {}
