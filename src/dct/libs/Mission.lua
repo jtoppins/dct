@@ -28,20 +28,21 @@ local missiondata = {
 		["name"]        = "moveto",
 		["short"]       = "moveto",
 	},
+	[dctenum.missionType.GUARD] = {
+		["name"]        = "guard",
+		["short"]       = "guard",
+	},
 	[dctenum.missionType.JTAC] = {
 		["name"]        = "jtac",
 		["short"]       = "jtac",
+		["mType"]       = dctenum.missionType.GUARD,
 	},
 	[dctenum.missionType.AFAC] = {
 		["name"]        = "Airborne Forward Air Controller",
 		["short"]       = "AFAC",
-		["mType"]       = dctenum.missionType.JTAC,
+		["mType"]       = dctenum.missionType.GUARD,
 		["codeType"]    = 5,
 		["codeSubType"] = 3,
-	},
-	[dctenum.missionType.GUARD] = {
-		["name"]        = "guard",
-		["short"]       = "guard",
 	},
 	[dctenum.missionType.CAS] = {
 		["name"]        = "Close Air Support",
@@ -56,12 +57,6 @@ local missiondata = {
 		["mType"]       = dctenum.missionType.GUARD,
 		["codeType"]    = 2,
 		["codeSubType"] = 0,
-	},
-	[dctenum.missionType.SEAD] = {
-		["name"]        = "Suppression of Enemy Air Defense",
-		["short"]       = "SEAD",
-		["mType"]       = dctenum.missionType.GUARD,
-		["codeType"]    = 3,
 	},
 	[dctenum.missionType.TANKER] = {
 		["name"]        = "Refueling Tanker",
@@ -121,25 +116,11 @@ local missiondata = {
 		["codeType"]    = 5,
 		["codeSubType"] = 0,
 	},
-	[dctenum.missionType.TRANSPORT] = {
-		["name"]        = "Air Transport",
-		["short"]       = "TRANS",
-		["mType"]       = dctenum.missionType.TRANSPORT,
-		["codeType"]    = 0,
-		["codeSubType"] = 0,
-	},
-	[dctenum.missionType.CSAR] = {
-		["name"]        = "Combat Search and Rescue",
-		["short"]       = "CSAR",
-		["mType"]       = dctenum.missionType.TRANSPORT,
+	[dctenum.missionType.AREASTRIKE] = {
+		["name"]        = "Area Bombing",
+		["short"]       = "AREA",
+		["mType"]       = dctenum.missionType.ATTACK,
 		["codeType"]    = 5,
-		["codeSubType"] = 2,
-	},
-	[dctenum.missionType.RESUPPLY] = {
-		["name"]        = "Resupply",
-		["short"]       = "RES",
-		["mType"]       = dctenum.missionType.TRANSPORT,
-		["codeType"]    = 0,
 		["codeSubType"] = 0,
 	},
 	[dctenum.missionType.SEARCH] = {
@@ -161,9 +142,37 @@ local missiondata = {
 		["codeSubType"] = 1,
 	},
 	[dctenum.missionType.ESCORT] = {
-		["name"]        = "Escort",
+		["name"]        = "escort",
+		["short"]       = "escort",
+	},
+	[dctenum.missionType.SEAD] = {
+		["name"]        = "Suppression of Enemy Air Defense",
+		["short"]       = "SEAD",
+		["mType"]       = dctenum.missionType.ESCORT,
+		["codeType"]    = 3,
+	},
+	[dctenum.missionType.FIGHTERCOVER] = {
+		["name"]        = "Fighter Escort",
 		["short"]       = "ESC",
 		["codeType"]    = 5,
+		["codeSubType"] = 0,
+	},
+	[dctenum.missionType.TRANSPORT] = {
+		["name"]        = "transport",
+		["short"]       = "transport",
+	},
+	[dctenum.missionType.CSAR] = {
+		["name"]        = "Combat Search and Rescue",
+		["short"]       = "CSAR",
+		["mType"]       = dctenum.missionType.TRANSPORT,
+		["codeType"]    = 5,
+		["codeSubType"] = 2,
+	},
+	[dctenum.missionType.RESUPPLY] = {
+		["name"]        = "Resupply",
+		["short"]       = "RES",
+		["mType"]       = dctenum.missionType.TRANSPORT,
+		["codeType"]    = 0,
 		["codeSubType"] = 0,
 	},
 }

@@ -87,17 +87,19 @@ enum.assetTypeDeprecated = {
 
 enum.missionType = {
 	["INVALID"]    = 0,
-	["MOVETO"]     = 10,
-	["JTAC"]       = 11,
-	["AFAC"]       = 12,
+	["MOVETO"]     = 1,
 
+	-- Guarding based missions, just with different threat and
+	-- target sets
 	["GUARD"]      = 20,
-	["CAS"]        = 21,
-	["CAP"]        = 22,
-	["SEAD"]       = 23,
-	["TANKER"]     = 24,
-	["AWACS"]      = 25,
+	["JTAC"]       = 21,
+	["AFAC"]       = 22,
+	["CAS"]        = 23,
+	["CAP"]        = 24,
+	["TANKER"]     = 25,
+	["AWACS"]      = 26,
 
+	-- Attack based missions
 	["ATTACK"]     = 30,
 	["STRIKE"]     = 31,
 	["BAI"]        = 32,
@@ -105,15 +107,22 @@ enum.missionType = {
 	["ANTISHIP"]   = 34,
 	["DEAD"]       = 35,
 	["SWEEP"]      = 36,
+	["AREASTRIKE"] = 37,
 
+	-- Search based missions
 	["SEARCH"]     = 40,
 	["RECON"]      = 41,
 	["INTERCEPT"]  = 42,
-	["ESCORT"]     = 43,
 
-	["TRANSPORT"]  = 50,
-	["CSAR"]       = 51,
-	["RESUPPLY"]   = 52,
+	-- Escort based missions
+	["ESCORT"]     = 50,
+	["SEAD"]       = 51,
+	["FIGHTERCOVER"] = 52,
+
+	-- Transport based missions
+	["TRANSPORT"]  = 60,
+	["CSAR"]       = 61,
+	["RESUPPLY"]   = 62,
 }
 
 --- Requests that Agents can send to other agents.
