@@ -208,6 +208,7 @@ function Theater:loadOrGenerate()
 	trigger.action.setUserFlag("DCTENABLE_SLOTS",
 				   dct.settings.server.enableslots)
 	self.initdone = true
+	world.onEvent(dctutils.buildevent.initcomplete(self))
 end
 
 function Theater:delayedInit()

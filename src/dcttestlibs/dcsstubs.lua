@@ -74,9 +74,7 @@ function dctstubs.runSched()
 end
 
 function dctstubs.runEventHandlers(event)
-	for obj, _ in pairs(dctstubs.eventhandlers) do
-		obj:onEvent(event)
-	end
+	world.onEvent(event)
 end
 
 function dctstubs.fastForward(time, step)
@@ -735,6 +733,12 @@ end
 
 function world.removeEventHandler(obj)
 	dctstubs.eventhandlers[obj] = nil
+end
+
+function world.onEvent(event)
+	for obj, _ in pairs(dctstubs.eventhandlers) do
+		obj:onEvent(event)
+	end
 end
 
 function world.getAirbases()
