@@ -262,6 +262,14 @@ utils.notifymsg =
 	"use the F10 Menu to validate your loadout before departing."
 
 utils.buildevent = {}
+
+function utils.buildevent.initcomplete(theater)
+	local event = {}
+	event.id = enum.event.DCT_EVENT_INIT_COMPLETE
+	event.initiator = theater
+	return event
+end
+
 --- DEAD definition:
 --   id = id of this event
 --   initiator = asset sending the death notification

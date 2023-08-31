@@ -154,6 +154,7 @@ enum.UNIT_CAT_SCENERY = Unit.Category.STRUCTURE + 1
 
 local eventbase = world.event.S_EVENT_MAX + 2000
 enum.event = {
+	["DCT_EVENT_INIT_COMPLETE"]  = eventbase + 0,
 	["DCT_EVENT_DEAD"]           = eventbase + 1,
 	["DCT_EVENT_OPERATIONAL"]    = eventbase + 3,
 	["DCT_EVENT_CAPTURED"]       = eventbase + 4,

@@ -206,6 +206,7 @@ function Theater:loadOrGenerate()
 	end
 
 	self.initdone = true
+	world.onEvent(dctutils.buildevent.initcomplete(self))
 end
 
 function Theater:delayedInit()
