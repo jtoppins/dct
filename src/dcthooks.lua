@@ -98,13 +98,14 @@ function DCTHooks:isSlotEnabled(slot)
 	end
 
 	local flag = self:rpcSlotEnabled(slot.groupName)
+	local enabled = self:rpcGetFlag("DCTENABLE_SLOTS") >= 1
 	log.write(self.__clsname, log.DEBUG,
 		  string.format("slot(%s) enabled: %s",
 				slot.groupName, tostring(flag)))
 	if flag == nil then
 		flag = true
 	end
-	return flag
+	return enabled and flag
 end
 
 function DCTHooks:isMissionEnabled()

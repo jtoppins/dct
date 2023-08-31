@@ -205,6 +205,8 @@ function Theater:loadOrGenerate()
 		self:_runsys("generate")
 	end
 
+	trigger.action.setUserFlag("DCTENABLE_SLOTS",
+				   dct.settings.server.enableslots)
 	self.initdone = true
 end
 

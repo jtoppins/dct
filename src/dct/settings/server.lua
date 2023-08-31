@@ -86,7 +86,11 @@ local function validate_server_config(cfgdata, tbl)
 			["name"] = "showErrors",
 			["type"] = "boolean",
 			["default"] = cfgdata.default["showErrors"],
-		}
+		}, {
+			["name"] = "enableslots",
+			["type"] = "boolean",
+			["default"] = cfgdata.default["enableslots"],
+		},
 	}
 	tbl.path = cfgdata.file
 	utils.checkkeys(keys, tbl)
@@ -133,6 +137,7 @@ local function servercfgs(config)
 				["whitelists"] = {},
 				["emptyslottimeout"] = 0, -- seconds
 				["showErrors"] = false,
+				["enableslots"] = true,
 			},
 		},}, config)
 	return config
