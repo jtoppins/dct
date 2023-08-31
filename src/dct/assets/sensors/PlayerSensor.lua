@@ -76,7 +76,9 @@ function PlayerSensor:setSync(val)
 end
 
 function PlayerSensor:isEnabled()
-	return self.agent:isSpawned() and self._operstate and self._syncstate
+	local theater = dct.Theater.singleton()
+	return theater.slotsenabled and self.agent:isSpawned() and
+	       self._operstate and self._syncstate
 end
 
 function PlayerSensor:doEnable()

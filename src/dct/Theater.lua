@@ -150,6 +150,7 @@ function Theater:__init()
 	self.cmdrs     = {}
 	self.startdate = os.date("!*t")
 	self.namecntr  = 1000
+	self.slotsenabled = dct.settings.theater.general.slotsenabled or true
 
 	-- Create a weak table for storing commands that should be
 	-- requeued on errors
@@ -300,6 +301,8 @@ function Theater:_onEvent(event)
 			-- Save the state for reloading after a server restart
 			self:export()
 		end
+	elseif event.id == dctenum.event.DCT_EVENT_SLOTS_ENABLE then
+		self.slotstatus = event.condition
 	end
 end
 
