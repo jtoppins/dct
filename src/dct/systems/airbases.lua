@@ -3,6 +3,7 @@
 --- Silence all airbase ATC towers. Only Airbases participating in the
 -- campaign should have functioning ATC towers. Also, disable the
 -- auto-capture feature so DCT can manage airbase ownership itself.
+-- @module dct.systems.airbases
 
 local settings = dct.settings.general or {}
 local Airbases = require("libs.namedclass")("Airbases")

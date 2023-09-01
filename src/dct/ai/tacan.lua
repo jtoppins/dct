@@ -1,6 +1,7 @@
 -- SPDX-License-Identifier: LGPL-3.0
 
 --- Validates and decodes TACAN channels into radio frequencies
+-- @module Tacan
 
 local check = require("libs.check")
 local aienum = require("dct.ai.enum")

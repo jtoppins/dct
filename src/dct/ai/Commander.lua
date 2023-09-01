@@ -1,8 +1,7 @@
---[[
 -- SPDX-License-Identifier: LGPL-3.0
---
--- Defines a side's strategic theater commander.
---]]
+
+--- Defines a side's strategic theater commander.
+-- @classmod Commander
 
 local utils      = require("libs.utils")
 local containers = require("libs.containers")
@@ -61,9 +60,7 @@ local function genstatids()
 	return tbl
 end
 
---[[
 -- For now the commander is only concerned with flight missions
---]]
 local Commander = require("libs.namedclass")("Commander")
 function Commander:__init(theater, side)
 	self.owner        = side

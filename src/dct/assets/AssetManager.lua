@@ -1,6 +1,7 @@
---- SPDX-License-Identifier: LGPL-3.0
---
--- Provides functions to define and manage Assets.
+-- SPDX-License-Identifier: LGPL-3.0
+
+--- Provides functions to define and manage Assets.
+-- @classmod dct.assets.AssetManager
 
 local checklib = require("libs.check")
 local dctenum  = require("dct.enum")

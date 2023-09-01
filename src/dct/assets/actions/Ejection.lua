@@ -1,5 +1,8 @@
 -- SPDX-License-Identifier: LGPL-3.0
 
+--- Ejection module
+-- @module Ejection
+
 local WS = require("dct.assets.worldstate")
 
 local function is_eject_event(_ --[[key]], fact)
@@ -11,8 +14,6 @@ local function any_event(_ --[[key]], fact)
 	return fact.type == WS.Facts.factType.EVENT
 end
 
---- @classmod Ejection
---
 local Ejection = require("libs.namedclass")("Ejection", WS.Action)
 function Ejection:__init(agent)
 	WS.Action.__init(self, agent, 90, {

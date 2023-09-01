@@ -3,6 +3,7 @@
 --- Draw objects on the F10 map.
 -- A common library of functions that support drawing UI elements on
 -- the F10 map.
+-- @module dct.ui.draw
 
 local class    = require("libs.namedclass")
 local dctutils = require("dct.libs.utils")

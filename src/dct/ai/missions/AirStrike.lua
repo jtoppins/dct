@@ -1,4 +1,7 @@
---- SPDX-License-Identifier: LGPL-3.0
+-- SPDX-License-Identifier: LGPL-3.0
+
+--- Airstrike mission
+-- @classmod AirStrike
 
 --[[
 local containers = require("libs.containers")

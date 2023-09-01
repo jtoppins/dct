@@ -1,6 +1,7 @@
 -- SPDX-License-Identifier: LGPL-3.0
---
--- Defines the Theater class.
+
+--- Represents a combat theater where two opposing sides are in conflict.
+--- @module Theater
 
 require("os")
 require("io")
@@ -20,6 +21,7 @@ local RESETFILE = lfs.writedir()..require("libs.utils").sep.."reset.txt"
 
 
 --- tests if a state table is valid
+--- @param state the saved state table read from disk
 local function isStateValid(state)
 	if io.open(RESETFILE) ~= nil then
 		Logger:info("isStateValid(); state reset requested by file")
@@ -59,19 +61,21 @@ local function isStateValid(state)
 end
 
 
---- Systems
--- Component system. Defines a generic way for initializing components
--- of the system without directly tying the two systems together.
--- A system can provide the following methods:
---
--- function __init initialization only init local system data,
---   do not depend on external systems
--- function marshal all the system's data for serialization
--- function unmarshal initializes the system from the saved data
--- function generate all assets, guarentees all Templates are read
--- function postinit run after __init and generate, guarantees all
---   assets are generated and all templates have been loaded
+--- Component system. Defines a generic way for initializing components
+--- of the system without directly tying the two systems together.
+--- A system can provide the following methods:
+---
+--- function __init initialization only init local system data,
+---   do not depend on external systems
+--- function marshal all the system's data for serialization
+--- function unmarshal initializes the system from the saved data
+--- function generate all assets, guarentees all Templates are read
+--- function postinit run after __init and generate, guarantees all
+---   assets are generated and all templates have been loaded
+--- @class Systems
 local Systems = class("System")
+
+--- constructor
 function Systems:__init()
 	self._systemscnt = 0
 	self._systems  = {}
@@ -94,6 +98,7 @@ function Systems:__init()
 	Logger:info("systems init: "..tostring(self._systemscnt))
 end
 
+--- Marshal all data to be saved to disk.
 function Systems:marshal()
 	local tbl = {}
 	for name, sys in pairs(self._systems) do
@@ -104,6 +109,9 @@ function Systems:marshal()
 	return tbl
 end
 
+--- Unmarshal data read from disk and recreate the state that was
+--- saved to disk.
+--- @param tbl table @the saved state table to be restored.
 function Systems:unmarshal(tbl)
 	for name, data in pairs(tbl) do
 		local sys = self:getSystem(name)
@@ -113,7 +121,7 @@ function Systems:unmarshal(tbl)
 	end
 end
 
--- runs a system method that can optionally be provided by a system
+--- runs a system method that can optionally be provided by a system
 function Systems:_runsys(methodname, ...)
 	dctutils.foreach_call(self._systems, pairs, methodname, ...)
 end
@@ -132,10 +140,10 @@ function Systems:addSystem(path)
 end
 
 
---- Theater
--- base class that reads in all region and template information
--- and provides a base interface for manipulating data at a theater
--- level.
+--- Base class that reads in all region and template information
+--- and provides a base interface for manipulating data at a theater
+--- level.
+--- @class Theater : Systems, Observable
 local Theater = class("Theater", Observable, Systems)
 function Theater:__init()
 	Observable.__init(self, Logger)
@@ -168,6 +176,8 @@ function Theater:__init()
 	self.singleton = nil
 end
 
+--- Create a Theater class.
+--- @return Theater
 function Theater.singleton()
 	if dct.theater ~= nil then
 		return dct.theater
@@ -177,6 +187,12 @@ function Theater.singleton()
 	return dct.theater
 end
 
+--- Set delay timings in the clamped command processing loop.
+--- These values will be used in calculating the overall quanta
+--- DCT is allowed to use before yielding to DCS.
+--- @param cmdfreq float @the frequency at which a new command in processed
+--- @param tgtfps number @the FPS target DCT is targeting
+--- @param percent float @percentage of time DCT is allowed to utilize
 function Theater:setTimings(cmdfreq, tgtfps, percent)
 	self._cmdqfreq    = cmdfreq
 	self._targetfps   = tgtfps
@@ -186,6 +202,8 @@ function Theater:setTimings(cmdfreq, tgtfps, percent)
 		self.cmdqdelay)
 end
 
+--- Loads a saved theater state from disk or generate a new state from
+--- Region definitions.
 function Theater:loadOrGenerate()
 	local statetbl
 	local statefile = io.open(settings.statepath)
@@ -212,6 +230,9 @@ function Theater:loadOrGenerate()
 	world.onEvent(dctutils.buildevent.initcomplete(self))
 end
 
+--- Runs theater initialization delayed until several seconds after mission
+--- start. This allows for basic DCT systems to initialize before the
+--- Theater state is restored or generated.
 function Theater:delayedInit()
 	self:loadOrGenerate()
 	self:_runsys("postinit")
@@ -246,7 +267,7 @@ local airbase_events = {
 }
 
 -- some airbases (invisible FARPs seems to be the only one currently)
--- do not trigger takeoff and land events, this function figured out
+-- do not trigger takeoff and land events, this function figures out
 -- if there is a FARP near the event and if so uses that FARP as the
 -- place for the event.
 local function fixup_airbase(event)
@@ -280,8 +301,6 @@ local irrelevants = {
 	[world.event.S_EVENT_BDA]                          = true,
 }
 
--- DCS looks for this function in any table we register with the world
--- event handler
 function Theater:_onEvent(event)
 	if irrelevants[event.id] ~= nil then
 		return
@@ -306,6 +325,9 @@ function Theater:_onEvent(event)
 	end
 end
 
+--- DCS looks for this function in any table we register with the world
+--- event handler `world.addEventHandler`.
+--- @param event table @event DCS is notifying that has occurred
 function Theater:onEvent(event)
 	local ok, err = pcall(self._onEvent, self, event)
 
@@ -314,6 +336,8 @@ function Theater:onEvent(event)
 	end
 end
 
+--- Saves Theater state to disk.
+--- @param suffix string @optional applied to the state filename.
 function Theater:export(_, suffix)
 	local path = settings.statepath
 	local statefile
@@ -361,30 +385,25 @@ function Theater:getCommander(side)
 	return self.cmdrs[side]
 end
 
+--- A monotonically increasing counter that returns the next greater
+--- number each time the function is called.
+--- @return number
 function Theater:getcntr()
 	self.namecntr = self.namecntr + 1
 	return self.namecntr
 end
 
+--- Get access to the Tickets class.
+--- @return dct.systems.tickets class
 function Theater:getTickets()
 	return self:getSystem("dct.systems.tickets")
 end
 
--- do not worry about command priority right now
--- command queue discussion,
---  * central Q
---  * priority ordered in both priority and time
---     priority = time * 128 + P
---     time = (priority - P) / 128
---
---    This allows things of higher priority to be executed first
---    but things that need to be executed at around the same time
---    to also occur.
---
--- delay - amount of delay in seconds before the command is run
--- cmd   - the command to be run
--- requeueOnError - boolean; requeue this command automatically with
---   the given delay if it encounters an error
+--- Queue a @{dct.libs.Command} to be run later.
+--- @param delay amount of delay in seconds before the command is run
+--- @param cmd the @{dct.libs.Command} to be run
+--- @param requeueOnError requeue this command automatically with the
+--- given delay if it encounters an error
 function Theater:queueCommand(delay, cmd, requeueOnError)
 	if delay < self.cmdmindelay then
 		Logger:warn("queueCommand(); delay(%2.2f) less than "..
@@ -400,7 +419,11 @@ function Theater:queueCommand(delay, cmd, requeueOnError)
 		cmd.name, delay, self.cmdq:size())
 end
 
---- execute queued commands
+--- Execute deferred commands. Other systems in DCT can queue functions
+--- that can be executed at a later time, deferred code execution. This
+--- function, `exec`, is registered with the DCS scripting engine.
+--- @param time the simulation time step received from DCS
+--- @return the next time step this function should be executed by DCS.
 function Theater:exec(time)
 	local cmdctr = 0
 

@@ -1,7 +1,7 @@
 -- SPDX-License-Identifier: LGPL-3.0
 
---- @classmod dct.libs.Mission
--- Represents a series of goals to be completed.
+--- Represents a series of goals to be completed.
+-- @classmod dct.libs.Mission
 
 local class      = require("libs.namedclass")
 local utils      = require("libs.utils")
@@ -223,6 +223,7 @@ end
 
 --- Mission class definition. The following members are part of a class
 -- instance.
+-- @type Mission
 -- @field cmdr reference to controlling commander
 -- @field id ID of the mission
 -- @field goalq queue of mission WS.Goal objects
@@ -242,8 +243,8 @@ local Mission = utils.override_ops(class("Mission", Observable, DCTEvents,
 -- @param msntype the type of mission the object represents,
 --          enum.missionType
 -- @param cmdr reference to controlling commander
--- @param goalq queue of mission WS.Goal objects
--- @param desc [optional] description table of the mission
+-- @param desc description table of the mission
+-- @param goalq [optional] queue of mission WS.Goal objects
 -- @param timer [optional] timeout timer
 function Mission:__init(msntype, cmdr, desc, goalq, timer)
 	Observable.__init(self)
@@ -349,6 +350,7 @@ function Mission:iterateChildren()
 end
 
 --- event handler used when one of the mission's goals is completed
+-- @return nil
 function Mission:eventGoalComplete(--[[event]])
 	local g = self.goalq:pophead()
 

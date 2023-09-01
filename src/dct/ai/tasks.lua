@@ -1,8 +1,7 @@
---[[
 -- SPDX-License-Identifier: LGPL-3.0
---
--- Library of functions to generate task tables.
---]]
+
+--- Library of functions to generate task tables for DCS AI.
+-- @module tasks
 
 local class = require("libs.class")
 local utils = require("libs.utils")

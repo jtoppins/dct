@@ -1,9 +1,8 @@
---[[
 -- SPDX-License-Identifier: LGPL-3.0
---
--- enum definitions that are not exposed via the mission environment,
+
+--- enum definitions that are not exposed via the mission environment,
 -- but are critical to getting correct behaviour from DCS.
---]]
+-- @module dct.ai.enum
 
 local enum = {}
 enum.TASKTYPE = {
