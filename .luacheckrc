@@ -11,6 +11,7 @@ read_globals = {
 	"md5",
 
 	-- DCS specific globals
+	"net",
 	"atmosphere",
 	"country",
 	"env",

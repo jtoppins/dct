@@ -36,12 +36,13 @@ end
 -- Marshal the object for serialization.
 -- Returns: table representing object
 --]]
-function Marshallable:marshal()
+function Marshallable:marshal(copy)
+	copy = copy or utils.shallowclone
 	local tbl = {}
 	for attribute, _ in pairs(self._marshalnames or {}) do
 		assert(type(self[attribute]) ~= "function",
 			"value error: cannot marshal functions")
-		tbl[attribute] = self[attribute]
+		tbl[attribute] = copy(self[attribute])
 	end
 	if next(tbl) == nil then
 		return nil
