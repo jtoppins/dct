@@ -37,9 +37,6 @@ read_globals = {
 	"dct",
 }
 
-files["mission/dct-mission-init.lua"] = {
-	globals = {"dctsettings", "luapath", "dct",},
-}
 files["src/dct/settings.lua"] = { globals = {"dctserverconfig",} }
 files["src/dct/Theater.lua"] = { globals = {"theatergoals", "dct"} }
 files["src/dcttestlibs/dcsstubs.lua"] = {

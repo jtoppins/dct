@@ -42,6 +42,10 @@ local function validate_server_config(cfgdata, tbl)
 			["type"] = "boolean",
 			["default"] = cfgdata.default["debug"],
 		}, {
+			["name"] = "hookdebug",
+			["type"] = "boolean",
+			["default"] = cfgdata.default["hookdebug"],
+		}, {
 			["name"] = "profile",
 			["type"] = "boolean",
 			["default"] = cfgdata.default["profile"],
@@ -75,18 +79,6 @@ local function validate_server_config(cfgdata, tbl)
 			["check"] = convert_lists,
 			["default"] = cfgdata.default["whitelists"],
 		}, {
-			["name"] = "statServerHostname",
-			["type"] = "string",
-			["default"] = cfgdata.default["statServerHostname"],
-		}, {
-			["name"] = "statServerPort",
-			["type"] = "number",
-			["default"] = cfgdata.default["statServerPort"],
-		}, {
-			["name"] = "dctid",
-			["type"] = "string",
-			["default"] = cfgdata.default["dctid"],
-		}, {
 			["name"] = "emptyslottimeout",
 			["type"] = "number",
 			["default"] = cfgdata.default["emptyslottimeout"],
@@ -94,7 +86,11 @@ local function validate_server_config(cfgdata, tbl)
 			["name"] = "showErrors",
 			["type"] = "boolean",
 			["default"] = cfgdata.default["showErrors"],
-		}
+		}, {
+			["name"] = "enableslots",
+			["type"] = "boolean",
+			["default"] = cfgdata.default["enableslots"],
+		},
 	}
 	tbl.path = cfgdata.file
 	utils.checkkeys(keys, tbl)
@@ -125,6 +121,7 @@ local function servercfgs(config)
 			["validate"] = validate_server_config,
 			["default"] = {
 				["debug"]       = _G.DCT_TEST or false,
+				["hookdebug"]   = _G.DCT_TEST or false,
 				["profile"]     = false,
 				["statepath"]   =
 					lfs.writedir()..vars.theater.."_"..
@@ -138,11 +135,9 @@ local function servercfgs(config)
 				["period"] = -1, -- mission restart is disabled by default
 				["logger"] = {},
 				["whitelists"] = {},
-				["statServerHostname"] = "localhost",
-				["statServerPort"] = 8095,
-				["dctid"] = "changeme",
 				["emptyslottimeout"] = 0, -- seconds
 				["showErrors"] = false,
+				["enableslots"] = true,
 			},
 		},}, config)
 	return config
