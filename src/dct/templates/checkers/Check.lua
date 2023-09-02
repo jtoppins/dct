@@ -28,6 +28,7 @@ local valuetype = {
 	["LISTKEYS"]  = 9, -- is a list of table keys
 	["LIST"]      = 10, -- a list where all values are of the
 			    --  specified type
+	["UINT"]      = 11, -- unsigned number
 }
 
 --- Used when the item being checked has a single value but from
@@ -137,6 +138,16 @@ local function check_list(data, key, values)
         return true, data[key]
 end
 
+--- verify the value is an unsigned number
+local function check_uint(data, key)
+	local ok, val = check_int(data, key)
+
+	if not ok or val < 0 then
+		return false
+	end
+	return true, val
+end
+
 local checktbl = {
 	[valuetype.VALUES] = check_values,
 	[valuetype.INT]    = check_int,
@@ -148,6 +159,7 @@ local checktbl = {
 	[valuetype.POINT]  = check_point,
 	[valuetype.LISTKEYS] = check_list_keys,
 	[valuetype.LIST]   = check_list,
+	[valuetype.UINT]   = check_uint,
 }
 
 local value_header = {
@@ -158,6 +170,7 @@ local value_header = {
 	[valuetype.BOOL]      = "boolean (true/false)",
 	[valuetype.TABLEKEYS] = "specific values",
 	[valuetype.TABLE]     = "table",
+	[valuetype.UINT]      = "positive number",
 }
 
 local function is_required(option)
