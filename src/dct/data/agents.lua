@@ -28,6 +28,35 @@ local airdefense = {
 	},
 }
 
+local aircraft = {
+	["sensors"] = {
+		["MissionSensor"]   = 0,
+		["PlanningSensor"]  = 0,
+		["LocationSensor"]  = 0, -- TODO: updates the location and avg speed
+					 -- of an asset so other sensors can reference
+					 -- this data
+		["PathSensor"]      = 0,
+		["ThreatSensor"]    = 0,
+		["CoverSensor"]     = 0,
+		["FuelSensor"]      = 0,
+	},
+	["actions"] = {
+		["Idle"]         = 1,
+		["Ejection"]     = 1,
+		["Takeoff"]      = 1,
+		["Land"]         = 1,
+		["EscapeDanger"] = 7,
+		["GotoNode"]     = 1,
+		["GotoNodeType"] = 1,
+		["GotoTarget"]   = 1,
+	},
+	["goals"]   = {
+		["Idle"]         = 1,
+		["ReactToEvent"] = 2,
+		["RTB"]          = 1,
+	},
+}
+
 local groundunits = airdefense
 
 local agents = {}
@@ -86,6 +115,8 @@ agents[dctenum.assetType.SQUADRON]    = {
 		["Idle"]             = 1,
 	},
 }
+agents[dctenum.assetType.AIRPLANE] = aircraft
+agents[dctenum.assetType.HELO] = aircraft
 agents[dctenum.assetType.PLAYER] = {
 	["sensors"] = {
 		["MissionSensor"]   = 0,
