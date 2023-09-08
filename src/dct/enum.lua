@@ -14,6 +14,7 @@ enum.objtype = {
 	["GROUP"]   = 3,
 	["SCENERY"] = 4,
 	["AGENT"]   = 5,
+	["RUNWAY"]  = 6,
 }
 
 -- this is really the template type, it has no bearing on the underlying
@@ -43,6 +44,7 @@ enum.assetType = {
 	["CV"]          = 24,
 	["HELOCARRIER"] = 25,
 	["FARP"]        = 26,
+	["SPAWNPOINT"]  = 27,
 
 	-- Headquarters are children of Bases they are also the only
 	-- Agents the commander sends requests to.
