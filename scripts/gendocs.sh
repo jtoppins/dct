@@ -35,8 +35,8 @@ require("io")
 require("lfs")
 require("dcttestlibs")
 require("dct")
-local Template = require("dct.templates.Template")
-Template.genDocs()
+local object = require("${1}")
+object.genDocs()
 EOF
 
 cd "${cwd}"
