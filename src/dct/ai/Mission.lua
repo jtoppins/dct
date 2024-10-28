@@ -3,9 +3,11 @@
 --- @classmod dct.libs.Mission
 -- Represents a series of goals to be completed.
 
-local class      = require("libs.namedclass")
-local utils      = require("libs.utils")
-local check      = require("libs.check")
+require("libs")
+
+local class      = libs.classnamed
+local utils      = libs.utils
+local check      = libs.check
 local dctenum    = require("dct.enum")
 local dctutils   = require("dct.libs.utils")
 local Observable = require("dct.libs.Observable")
@@ -227,7 +229,7 @@ end
 -- @field id ID of the mission
 -- @field goalq queue of mission WS.Goal objects
 -- @field desc description table of the mission. The description table holds
---  metadata used mainly by Player agents to provide human readiable data
+--  metadata used mainly by Player agents to provide human readable data
 --  about the mission.
 -- @field facts set of facts (intel and targets) that will be passed
 --  to agents that get assigned to the mission
