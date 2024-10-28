@@ -1,4 +1,10 @@
---- SPDX-License-Identifier: LGPL-3.0
+-- SPDX-License-Identifier: LGPL-3.0
+
+--- Check class.
+-- Used to check a table against a set of required/optional fields
+-- that need to be set in the table and verifies the fields values
+-- conform to a specific type.
+-- @module dct.libs.Check
 
 local class = require("libs.namedclass")
 local utils = require("libs.utils")
@@ -264,7 +270,14 @@ local function write_section(level, name, data)
 	end
 end
 
+--- Check class.
+-- @type Check
 local Check = class("Check")
+
+--- Constructor.
+-- @string section section header.
+-- @tparam table options option table.
+-- @string description [optional] summary description.
 function Check:__init(section, options, description)
 	options = options or {}
 
@@ -315,12 +328,13 @@ function Check.genDocs(header, checkers)
 	end
 end
 
---- checks the if the options in data have legal values
+--- checks that if the options in data have legal values.
 --
--- @param data the table of options to check
--- @return bool, true if all options are legal
---   if an option is invalid the function will return a 3 tuple
---   false, option_name, reason
+-- @tparam table data the table of options to check
+-- @treturn[1] bool true if all options are legal
+-- @treturn[2] bool false if an option is invalid
+-- @treturn[2] string option name that is in error
+-- @treturn[2] string reason string
 function Check:check(data)
 	for key, option in pairs(self.options) do
 		if option.deprecated and data[key] ~= nil then
@@ -364,10 +378,10 @@ function Check:agentOptions()
 	return keys
 end
 
---- Documentation generation
---
--- @return a table documenting the options
--- format: {
+--- Documentation generation.
+-- Will return a table of the format:
+-- ```
+-- {
 --    ["section"] = "section name",
 --    ["options"] = {
 --          ["option name"] = {
@@ -376,6 +390,9 @@ end
 --                  ["type"] type of values table
 --                  ["values"] table describing the possible values
 --                             the option can have
+-- ```
+--
+-- @treturn table documenting the options
 function Check:doc()
 	local d = {
 		["section"] = self.section,

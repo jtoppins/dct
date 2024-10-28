@@ -10,10 +10,11 @@ LUALIBSDIR := lua-libs-$(LUALIBSVER)
 
 .PHONY: check check-syntax tests build
 check-syntax:
-	luacheck -q hooks scripts src tests
+	luacheck -q hooks scripts src/dct* tests
 
 tests:
 	rm -f "$(SRCPATH)"/data/*.state
+	rm -f "$(SRCPATH)"/data/*.log
 	@$(MAKE) -C tests
 
 check: check-syntax tests

@@ -7,49 +7,18 @@ export TZ="UTC 0"
 cwd=$(pwd)
 base=$(dirname $0)
 srcroot="${cwd}/${base}/.."
-fail=0
 
 DCT_THEATER="Caucasus_dctdemo"
 DCT_SRC_ROOT="${srcroot}"
 DCT_DATA_ROOT="${DCT_DATA_ROOT:-${srcroot}/data}"
-DCT_TEMPLATE_PATH="${DCT_TEMPLATE_PATH:-${srcroot}/../dcs-mission-oeo-templates}"
-DCT_TEST_LOG="${DCT_DATA_ROOT}/dct_test.log"
-if ! test -d "${DCT_TEMPLATE_PATH}"; then
-	unset DCT_TEMPLATE_PATH
-fi
-LUA_EXEC="${LUA_EXEC:-lua5.1}"
-LUA_LIB_PATH="${LUA_LIB_PATH:-${srcroot}/../lua-libs/src/?.lua}"
-LUA_PATH="${srcroot}/src/?.lua;${LUA_LIB_PATH}"
-LUA_PATH="${LUA_PATH};;"
-export LUA_PATH
 export DCT_DATA_ROOT
-export DCT_TEMPLATE_PATH
-export DCT_TEST_LOG
 export DCT_SRC_ROOT
+export DCT_THEATER
 #echo "lua-path: ${LUA_PATH}"
 #echo "DCT data root: ${DCT_DATA_ROOT}"
-#echo "DCT template path: ${DCT_TEMPLATE_PATH}"
 
 cd "${base}"
-rm -f "${DCT_TEST_LOG}"
-if test $# -gt 0; then
-	tests="$@"
-else
-	tests=$(ls test-*.lua)
-fi
-
-for t in $tests; do
-	result="PASS"
-	echo "==== TEST: $t" >> "$DCT_TEST_LOG"
-	rm -f "${DCT_DATA_ROOT}/${DCT_THEATER}.state"
-	rm -f "${DCT_DATA_ROOT}"/*.state
-	${LUA_EXEC} $(basename ${t})
-	if test $? -ne 0; then
-		result="FAIL"
-		fail=1
-	fi
-	echo "${result}: ${t}"
-	echo "++++ Result: ${result}: $t" >> "$DCT_TEST_LOG"
-done
+busted $@
+rc=$?
 cd "${cwd}"
-exit ${fail}
+exit $rc

@@ -1,18 +1,28 @@
---[[
 -- SPDX-License-Identifier: LGPL-3.0
---
--- common utility functions
---]]
 
-require("os")
+--- common utility functions
+-- @module dct.libs.utils
+
+local myos = require("os")
 require("math")
-local libsutils = require("libs.utils")
-local check = require("libs.check")
+require("libs")
+
+local libsutils = libs.utils
+local check = libs.check
 local enum  = require("dct.enum")
 local vector = require("dct.libs.vector")
+local STM = require("dct.templates.STM")
 local utils = {}
 
+--- The maximum intel level a side can achieve. Intel ranges from [0,5]
+-- and is mainly used to scale the accuracy of coordinates provided to
+-- attacking units. Intel levels of 3 are considered good enough for
+-- visual engagement given other information about the target. Levels
+-- 4+ are considered good enough for GPS targeting.
 utils.INTELMAX = 5
+
+--- An enhanced version of the `coalition.side` DCS table. With two added
+-- entries.
 utils.coalition = {
 	["ALL"]       = -1,
 	["NEUTRAL"]   = coalition.side.NEUTRAL,
@@ -27,10 +37,15 @@ local enemymap = {
 	[coalition.side.RED]     = coalition.side.BLUE,
 }
 
+--- Get the enemy of `side`.
+-- @param side coalition we want the enemy of.
+-- @return the enemy coalition in `utils.coalition` table.
 function utils.getenemy(side)
 	return enemymap[side]
 end
 
+--- Are `side1` and `side2` enemies?
+-- @return bool, true means `side1` and `side2` are enemies.
 function utils.isenemy(side1, side2)
 	if side1 == side2 then
 		return false
@@ -41,11 +56,18 @@ function utils.isenemy(side1, side2)
 	return true
 end
 
+--- Is `grpname` alive according to DCS?
+-- @param grpname [string] name of the DCS group to check.
+-- @return bool, true the group is alive.
 function utils.isalive(grpname)
 	local grp = Group.getByName(grpname)
 	return (grp ~= nil and grp:isExist() and grp:getSize() > 0)
 end
 
+--- Print a stack trace in a well known format, so users know what
+-- to copy when reporting errors.
+-- @param err error object.
+-- @param lvl level in the call stack to start the traceback or zero.
 function utils.errtraceback(err, lvl)
 	lvl = lvl or 0
 	return "\n---[ cut here ]---\n"..
@@ -54,7 +76,10 @@ function utils.errtraceback(err, lvl)
 	       "\n---[ end trace ]---"
 end
 
---- Logs an error message as a result of a failed pcall context
+--- Logs an error message as a result of a failed pcall context.
+-- @param err error object.
+-- @param logger the dct.utils.Logger object to print the trackback to.
+-- @param lvl level in the call stack to start the traceback or one.
 function utils.errhandler(err, logger, lvl)
 	local str = utils.errtraceback(err, lvl or 1)
 	logger:error("%s", str)
@@ -69,6 +94,7 @@ end
 -- @param tbl the table of objects whos keys do not matter and whos values
 -- are the objects to be checked if the object implements the optional
 -- `func` function.
+-- @param iterator callback to iterate over tbl.
 -- @param func the function to check for and execute if exists
 function utils.foreach_call(tbl, iterator, func, ...)
 	check.table(tbl)
@@ -81,10 +107,18 @@ function utils.foreach_call(tbl, iterator, func, ...)
 	end
 end
 
+--- String interpolation, substitute %NAME% where NAME is any arbitrary
+-- string enclosed with parenthesis with a value in `tab`. `tab` is
+-- a table of name=value pairs.
+-- @param s string with possible substitution keys.
+-- @param tab table of name=value pairs used in the substitution.
+-- @return [string] expanded with substitutions.
 function utils.interp(s, tab)
 	return (s:gsub('(%b%%)', function(w) return tab[w:sub(2,-2)] or w end))
 end
 
+--- A nil filter function.
+-- @return true always
 function utils.no_filter()
 	return true
 end
@@ -114,6 +148,11 @@ function utils.airbase_id2name(id)
 	return airbase_id2name_map[id]
 end
 
+--- Reads a DCS group definition and determines if there are any player
+-- units in the group.
+-- @param grp group table to read, this is not a normalized group table
+--     used in templates, this is a raw group definition that can be
+--     read directly from a mission file definition of a group.
 function utils.isplayergroup(grp)
 	local slotcnt = 0
 	for _, unit in ipairs(grp.units) do
@@ -132,6 +171,8 @@ function utils.not_playergroup(grp)
 	return not isplayer
 end
 
+--- Checks list of missions is valid
+-- @todo needed?
 function utils.check_ato(mlist)
 	local ntbl = {}
 
@@ -147,6 +188,8 @@ function utils.check_ato(mlist)
 	return true, ntbl
 end
 
+--- Sets the allowed lists of missions a flight can take.
+-- @todo needed?
 function utils.set_ato(sqdn, flight)
 	local sqdnato = sqdn:getDescKey("ato")
 	-- mixed flights are not allowed in DCS
@@ -170,8 +213,12 @@ function utils.set_ato(sqdn, flight)
 	flight:setDescKey("ato", allmsns)
 end
 
+--- Enumerate non-player groups found in the currently loaded
+-- mission (miz) file.
+-- @return list of non-player groups found in the mission indexed
+--    by group name.
+-- @todo needed? or can be moved to another location?
 function utils.get_miz_groups()
-	local STM = require("dct.templates.STM")
 	local groups = {}
 	for _, coa_data in pairs(env.mission.coalition) do
 		local grps = STM.processCoalition(coa_data,
@@ -183,6 +230,11 @@ function utils.get_miz_groups()
 	return groups
 end
 
+--- Enumerate non-player units found in the currently loaded
+-- mission (miz) file.
+-- @return list of non-player units found in the mission indexed
+--     by unit name.
+-- @todo needed? or can be moved to another location?
 function utils.get_miz_units(logger)
 	local units = {}
 	local groups = utils.get_miz_groups()
@@ -208,7 +260,7 @@ function utils.time(dcsabstime)
 	-- timer.getAbsTime() returns local time of day, but we still need
 	-- to calculate the day
 	dcsabstime = dcsabstime or timer.getAbsTime()
-	local time = os.time({
+	local time = myos.time({
 		["year"]  = env.mission.date.Year,
 		["month"] = env.mission.date.Month,
 		["day"]   = env.mission.date.Day,
@@ -271,8 +323,8 @@ function utils.buildevent.initcomplete(theater)
 end
 
 --- DEAD definition:
---   id = id of this event
---   initiator = asset sending the death notification
+-- @field id of this event
+-- @field initiator asset sending the death notification
 function utils.buildevent.dead(obj)
 	check.table(obj)
 	local event = {}
@@ -282,9 +334,9 @@ function utils.buildevent.dead(obj)
 end
 
 --- OPERATIONAL definition:
---   id = id of this event
---   initiator = base sending the operational notification
---   state = of the base, true == operational
+-- @field id of this event
+-- @field initiator base sending the operational notification
+-- @field state of the base, true == operational
 function utils.buildevent.operational(base, state)
 	check.table(base)
 	check.bool(state)
@@ -296,15 +348,15 @@ function utils.buildevent.operational(base, state)
 end
 
 --- CAPTURED definition:
---   id = id of this event
---   initiator = object that initiated the capture
---   target = the base that has been captured
+-- @field id of this event
+-- @field initiator object that initiated the capture
+-- @field target the base that has been captured
 -- Doesn't exist right now
 
 --- IMPACT definition:
---   id = id of the event
---   initiator = DCTWeapon class causing the impact
---   point = impact point
+-- @field id of this event
+-- @field initiator DCTWeapon class causing the impact
+-- @field point impact point
 function utils.buildevent.impact(wpn)
 	check.table(wpn)
 	local event = {}
@@ -315,9 +367,9 @@ function utils.buildevent.impact(wpn)
 end
 
 --- ADD_ASSET definition:
---  A new asset was added to the asset manager.
---   id = id of this event
---   initiator = asset being added
+-- A new asset was added to the asset manager.
+-- @field id of this event
+-- @field initiator asset being added
 function utils.buildevent.addasset(asset)
 	check.table(asset)
 	local event = {}
@@ -327,8 +379,8 @@ function utils.buildevent.addasset(asset)
 end
 
 --- Goal event definition:
---   id = id of this event
---   initiator = goal
+-- @field id of this event
+-- @field initiator goal
 function utils.buildevent.goalComplete(goal)
 	check.table(goal)
 	local event = {}
@@ -338,8 +390,8 @@ function utils.buildevent.goalComplete(goal)
 end
 
 -- Mission event definitions:
---   id = id of this event
---   initiator = mission object
+-- @field id of this event
+-- @field initiator mission object
 function utils.buildevent.missionStart(msn)
 	check.table(msn)
 	local event = {}
@@ -357,9 +409,9 @@ function utils.buildevent.missionUpdate(msn)
 end
 
 -- Mission event definitions:
---   id = id of this event
---   initiator = mission object
---   result = result of the mission; success, abort, timeout
+-- @field id of this event
+-- @field initiator mission object
+-- @field result of the mission; success, abort, timeout
 function utils.buildevent.missionDone(msn, result)
 	check.table(msn)
 	check.number(result)
@@ -371,9 +423,9 @@ function utils.buildevent.missionDone(msn, result)
 end
 
 --- Mission event definitions:
---   id = id of this event
---   member = member that joined or left
---   initiator = mission object
+-- @field id of this event
+-- @field initiator mission object
+-- @field member that joined or left
 function utils.buildevent.missionJoin(msn, member)
 	local event = {}
 	event.id = enum.event.DCT_EVENT_MISSION_JOIN
@@ -414,11 +466,11 @@ function utils.buildevent.departure(agent, takeofftime)
 end
 
 --- Agent Request:
--- id = id of this event
--- initiator = the agent that initiated the request, for player
+-- @field id of this event
+-- @field initiator the agent that initiated the request, for player
 --   agents they can receive requests they themselves have generated
 --   to allow the actual player to modify the model
--- data = request data, at minimum must be a table with a field of 'id'
+-- @field data request data, at minimum must be a table with a field of 'id'
 function utils.buildevent.agentRequest(agent, data)
 	local event = {}
 	event.id = enum.event.DCT_EVENT_AGENT_REQUEST

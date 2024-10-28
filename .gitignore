@@ -7,6 +7,7 @@
 !.gitattributes
 !.luacheckrc
 !.github
+!.busted
 
 # ignore test artifacts
 data/*.state*

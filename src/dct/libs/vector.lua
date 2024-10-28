@@ -1,11 +1,17 @@
 -- SPDX-License-Identifier: LGPL-3.0
 
 --- vector math library
+-- @module dct.libs.vector
+-- @alias vmath
 
 require("math")
-local class = require("libs.class")
-local utils = require("libs.utils")
+require("libs")
 
+local class = libs.class
+local utils = libs.utils
+
+-- we need to keep this version due to how object references work.
+-- @see libs.utils.override_ops for the common function.
 local function override_ops(cls, mt)
 	local curmt = getmetatable(cls) or {}
 	curmt = utils.mergetables(curmt, mt)
@@ -13,8 +19,11 @@ local function override_ops(cls, mt)
 	return cls
 end
 
--- 2D Vector Math
---
+--- 2D Vector Math.
+-- Metamethods support scalar addition, subtraction, multiplication,
+-- and division. There is also support for strict equality and string
+-- serialization.
+-- @type Vector2D
 local Vector2D = class()
 local mt2d = {}
 function mt2d.__add(vec, rhs)
@@ -65,6 +74,12 @@ function mt2d.__tostring(vec)
 	return string.format("(%g, %g)", vec.x, vec.y)
 end
 
+--- Constructor. Create Vector2D object from `obj`. The constructor
+-- never fails and if no coordinate elements are detected all values
+-- will be zero.
+-- @param obj can be a 2d or 3d object of DCS or Vector class origin
+--     the constructor will select the correct fields to convert to
+--     a normal 2d object based on some DCS particulars.
 function Vector2D:__init(obj)
 	self.x = obj.x or 0
 	if obj.z then
@@ -76,21 +91,27 @@ function Vector2D:__init(obj)
 	self.create = nil
 end
 
+--- Constructor. Create Vector2D object from `x` and `y` coordinates.
+-- The constructor never fails and if no coordinate elements are detected
+-- all values will be zero.
 function Vector2D.create(x, y)
 	local t = { ["x"] = x, ["y"] = y, }
 	return Vector2D(t)
 end
 
+--- Create a raw lua table with 'x' and 'y' keys. Used for passing to
+-- DCS functions.
 function Vector2D:raw()
 	return { ["x"] = self.x, ["y"] = self.y }
 end
 
+--- Calculate the vector magnitude.
 function Vector2D:magnitude()
 	return math.sqrt(self.x^2 + self.y^2)
 end
 
--- standard right-hand rule rotation counter-clockwise for positive values of
--- theta.
+--- Rotate the 2D vector. Using standard right-hand rule rotation,
+-- counter-clockwise for positive values of theta.
 function Vector2D:rotate(theta)
 	local x = self.x * math.cos(theta) - self.y * math.sin(theta)
 	local y = self.x * math.sin(theta) + self.y * math.cos(theta)
@@ -98,8 +119,11 @@ function Vector2D:rotate(theta)
 	self.y = y
 end
 
--- 3D Vector Math
---
+--- 3D Vector Math
+-- Metamethods support scalar addition, subtraction, multiplication,
+-- and division. There is also support for strict equality and string
+-- serialization.
+-- @type Vector3D
 local Vector3D = class()
 local mt3d = {}
 function mt3d.__add(vec, rhs)
@@ -148,6 +172,14 @@ function mt3d.__tostring(vec)
 	return string.format("(%g, %g, %g)", vec.x, vec.y, vec.z)
 end
 
+--- Constructor. Create Vector3D object from `obj` and a `height`
+-- above/below sea-level. The constructor never fails and if no
+-- coordinate elements are detected all values will be zero.
+-- @param obj can be a 2d or 3d object of DCS or Vector class origin
+--     the constructor will select the correct fields to convert to
+--     a normal 3d object based on some DCS particulars.
+-- @param height above/below sea-level, will override any height in
+--     `obj` otherwise can be nil for auto-detection.
 function Vector3D:__init(obj, height)
 	self.x = obj.x or 0
 
@@ -162,33 +194,53 @@ function Vector3D:__init(obj, height)
 	self.create = nil
 end
 
+--- Constructor. Create Vector3D object from `x`, `y`, and a `height`
+-- above/below sea-level. The constructor never fails and if no
+-- coordinate elements are detected all values will be zero.
 function Vector3D.create(x, y, height)
 	local t = { ["x"] = x, ["y"] = height, ["z"] = y, }
 	return Vector3D(t)
 end
 
+--- Create a raw lua table with 'x', 'y', and 'z' keys. Used for passing
+-- to DCS functions.
 function Vector3D:raw()
 	return { ["x"] = self.x, ["y"] = self.y, ["z"] = self.z }
 end
 
+--- Calculate the vector magnitude.
 function Vector3D:magnitude()
 	return math.sqrt(self.x^2 + self.y^2 + self.z^2)
 end
 
--- Vector Math Library table
---
+--- Vector Functions
+-- @section vector
+
 local vmath = {}
 vmath.Vector2D = Vector2D
 vmath.Vector3D = Vector3D
+
+--- Calculate the distance between `vec1` and `vec2`.
+-- @tparam Vector2D|Vector3D vec1 first vector.
+-- @tparam Vector2D|Vector3D vec2 second vector.
+-- @treturn number distance between vec1 and vec2
 function vmath.distance(vec1, vec2)
 	local v = vec2 - vec1
 	return v:magnitude()
 end
 
+--- Calculate the unit vector of `vec`.
+-- @tparam Vector2D|Vector3D vec vector to calculate the unit vector of.
+-- @treturn Vector unit vector of vec
 function vmath.unitvec(vec)
 	return vec / vec:magnitude()
 end
 
+--- Dot product of vectors U and V. The vectors must be of the same
+-- order.
+-- @tparam Vector2D|Vector3D U
+-- @tparam Vector2D|Vector3D V
+-- @treturn number scalar value
 function vmath.dot(U, V)
 	assert((U:isa(Vector2D) and V:isa(Vector2D)) or
 		   (U:isa(Vector3D) and V:isa(Vector3D)),
@@ -204,6 +256,9 @@ function vmath.dot(U, V)
 end
 
 --- Angle between 2D vectors A and B in radians
+-- @tparam Vector2D A
+-- @tparam Vector2D B
+-- @treturn number angle in radians
 function vmath.angle(A, B)
 	local dot = vmath.dot(A, B)
 	return math.acos(dot / (A:magnitude() * B:magnitude()))
