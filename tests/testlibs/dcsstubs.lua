@@ -1,14 +1,18 @@
---- SPDX-License-Identifier: LGPL-3.0
---
--- Provides DCS stubs for the mission scripting environment.
+-- SPDX-License-Identifier: LGPL-3.0
+
+--- Provides DCS stubs for the mission scripting environment.
+-- @module dcttestlibs.dcsstubs
 
 require("os")
-local utils = require("libs.utils")
+require("libs")
+local utils = libs.utils
+local libscheck = libs.check
+local class = libs.class
 
 require("lfs")
 lfs.dct_testdata = os.getenv("DCT_DATA_ROOT") or "."
 function lfs.writedir()
-	return lfs.dct_testdata..utils.sep
+	return utils.join_paths(lfs.dct_testdata, "savedgames")..utils.sep
 end
 
 function lfs.tempdir()
@@ -19,108 +23,9 @@ function lfs.currentdir()
 	return utils.join_paths(lfs.dct_testdata, "gamedir")
 end
 
-local libscheck = require("libs.check")
-local class = require("libs.class")
 local testlog = os.getenv("DCT_TEST_LOG") or
 		lfs.dct_testdata..utils.sep.."dct_test.log"
 local logfile = io.open(testlog, "a+")
-
-local dctcheck = {}
-dctcheck.spawngroups  = 0
-dctcheck.spawnunits   = 0
-dctcheck.spawnstatics = 0
-_G.dctcheck = dctcheck
-
-local dctstubs = {}
-dctstubs.model_time = 0
-dctstubs.schedfunctbl = {}
-dctstubs.eventhandlers = {}
-
-function dctstubs.createPlayer(playername)
-	local grp = Group(4, {
-		["id"] = 9,
-		["name"] = "VMFA251 - Enfield 1-1",
-		["coalition"] = coalition.side.BLUE,
-		["exists"] = true,
-	})
-
-	local unit1 = Unit({
-		["name"] = "pilot1",
-		["exists"] = true,
-		["desc"] = {
-			["typeName"] = "FA-18C_hornet",
-			["displayName"] = "F/A-18C Hornet",
-			["attributes"] = {},
-		},
-	}, grp, playername or "bobplayer")
-
-	return unit1, grp
-end
-
-function dctstubs.setModelTime(time)
-	dctstubs.model_time = time
-end
-
-function dctstubs.addModelTime(time)
-	dctstubs.model_time = dctstubs.model_time + time
-end
-
-function dctstubs.runSched()
-	for func, data in pairs(dctstubs.schedfunctbl) do
-		if dctstubs.model_time > data.time then
-			data.time = func(data.arg, dctstubs.model_time)
-			if not (data.time ~= nil and
-			   type(data.time) == "number") then
-				dctstubs.schedfunctbl[func] = nil
-			end
-		end
-	end
-end
-
-function dctstubs.runEventHandlers(event)
-	world.onEvent(event)
-end
-
-function dctstubs.fastForward(time, step)
-	for _ = 1,time or 100,1 do
-		dctstubs.runSched()
-		dctstubs.addModelTime(step or 3)
-	end
-end
-
-function dctstubs.createEvent(eventdata, player)
-	local event = {}
-	local objref
-
-	if eventdata.object.objtype == Object.Category.UNIT then
-		objref = Unit.getByName(eventdata.object.name)
-	elseif eventdata.object.objtype == Object.Category.STATIC then
-		objref = StaticObject.getByName(eventdata.object.name)
-	elseif eventdata.object.objtype == Object.Category.GROUP then
-		objref = Group.getByName(eventdata.object.name)
-	else
-		assert(false, "other object types not supported")
-	end
-
-	assert(objref, "objref is nil")
-	event.id = eventdata.id
-	event.time = dctstubs.model_time
-	if event.id == world.event.S_EVENT_DEAD then
-		event.initiator = objref
-		objref.clife = 0
-	elseif event.id == world.event.S_EVENT_HIT then
-		event.initiator = player
-		event.weapon = nil
-		event.target = objref
-		objref.clife = objref.clife - eventdata.object.life
-	else
-		assert(false, "other event types not supported: "..
-			tostring(event.id))
-	end
-	return event
-end
-
-_G.dctstubs = dctstubs
 
 -- DCS Singletons
 --
@@ -144,10 +49,12 @@ local function readfile(path)
 end
 
 local env = {}
-env.mission = utils.readlua(lfs.tempdir()..utils.sep.."mission", "mission")
-env.mission.theatre = readfile(lfs.tempdir()..utils.sep.."theatre")
-local dictkeys = utils.readlua(lfs.tempdir()..utils.sep..
-	table.concat({"l10n", "DEFAULT", "dictionary"}, utils.sep), "dictionary")
+env.mission = utils.readlua(utils.join_paths(lfs.tempdir(), "mission"),
+	"mission")
+env.mission.theatre = readfile(utils.join_paths(lfs.tempdir(), "theatre"))
+local dictkeys = utils.readlua(
+		utils.join_paths(lfs.tempdir(), "l10n", "DEFAULT", "dictionary"),
+	"dictionary")
 function env.getValueDictByKey(s)
 	local r = dictkeys[s]
 	if r ~= nil then
@@ -165,11 +72,18 @@ end
 function env.error(msg, _)
 	logfile:write(os.date("%F %X ").."ERROR   "..msg.."\n")
 end
+
+env.counts = {}
+env.counts.spawngroups  = 0
+env.counts.spawnunits   = 0
+env.counts.spawnstatics = 0
 _G.env = env
 
 local timer = {}
+timer.model_time = 0
+timer.schedfunctbl = {}
 function timer.getTime()
-	return dctstubs.model_time
+	return timer.model_time
 end
 function timer.getTime0()
 	--- 15:00:00 mission start time
@@ -180,7 +94,7 @@ function timer.getAbsTime()
 end
 
 function timer.scheduleFunction(fn, arg, time)
-	dctstubs.schedfunctbl[fn] = {["arg"] = arg, ["time"] = time}
+	timer.schedfunctbl[fn] = {["arg"] = arg, ["time"] = time}
 	return fn
 end
 _G.timer = timer
@@ -626,8 +540,8 @@ end
 
 function coalition.addGroup(cntryid, groupcat, groupdata)
 	--print("new group: "..require("libs.json"):encode_pretty(groupdata))
-	dctcheck.spawngroups = dctcheck.spawngroups + 1
-	dctcheck.spawnunits = dctcheck.spawnunits + #(groupdata.units)
+	env.counts.spawngroups = env.counts.spawngroups + 1
+	env.counts.spawnunits = env.counts.spawnunits + #(groupdata.units)
 	groupdata.country = cntryid
 	groupdata.groupCategory = groupcat
 	groupdata.exists = true
@@ -642,7 +556,7 @@ end
 function coalition.addStaticObject(cntryid, groupdata)
 	--print("new static: "..require("libs.json"):encode_pretty(groupdata))
 	assert(groupdata.unitId == nil, "unitId field defined")
-	dctcheck.spawnstatics = dctcheck.spawnstatics + 1
+	env.counts.spawnstatics = env.counts.spawnstatics + 1
 	groupdata.country = cntryid
 	groupdata.exists = true
 	StaticObject(groupdata)
@@ -673,6 +587,7 @@ end
 _G.coalition = coalition
 
 local world = {}
+world.eventhandlers = {}
 world.VolumeType = {
 	["SEGMENT"] = 1,
 	["BOX"]     = 2,
@@ -732,15 +647,15 @@ world.event = {
 function world.addEventHandler(obj)
 	assert(type(obj.onEvent) == "function", "registering an object with "..
 		"no .onEvent function")
-	dctstubs.eventhandlers[obj] = true
+	world.eventhandlers[obj] = true
 end
 
 function world.removeEventHandler(obj)
-	dctstubs.eventhandlers[obj] = nil
+	world.eventhandlers[obj] = nil
 end
 
 function world.onEvent(event)
-	for obj, _ in pairs(dctstubs.eventhandlers) do
+	for obj, _ in pairs(world.eventhandlers) do
 		obj:onEvent(event)
 	end
 end
@@ -1105,6 +1020,12 @@ end
 function Unit:enableEmission(onoff)
 	assert(type(onoff) == "boolean", "must be of type bool")
 end
+
+function Unit:destroy()
+	env.counts.spawnunits = env.counts.spawnunits - 1
+	Coalition.destroy(self)
+end
+
 _G.Unit = Unit
 
 local StaticObject = class(Coalition)
@@ -1134,7 +1055,7 @@ function StaticObject:getLife()
 end
 
 function StaticObject:destroy()
-	dctcheck.spawnstatics = dctcheck.spawnstatics - 1
+	env.counts.spawnstatics = env.counts.spawnstatics - 1
 	Object.destroy(self)
 end
 _G.StaticObject = StaticObject
@@ -1179,7 +1100,7 @@ function Group:destroy()
 	for _, unit in pairs(self.units) do
 		unit:destroy()
 	end
-	dctcheck.spawngroups = dctcheck.spawngroups - 1
+	env.counts.spawngroups = env.counts.spawngroups - 1
 	Object.destroy(self)
 end
 

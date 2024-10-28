@@ -1,19 +1,23 @@
 -- SPDX-License-Identifier: LGPL-3.0
 
-local class    = require("libs.namedclass")
+require("libs")
+
+local class    = libs.classnamed
 local dctutils = require("dct.libs.utils")
 
---- @classmod Memory
--- Memory interface. Provides a common API for interacting with an object
+--- Memory interface. Provides a common API for interacting with an object
 -- that has memory and attempts to remember facts.
+-- @classmod dct.libs.Memory
 local Memory = class("Memory")
+
+--- Constructor.
 function Memory:__init()
 	self.memory = {}
 end
 
---- Looks for a fact in the agent's memory
+--- Looks for a fact in memory.
 --
--- @param test a test function of the form, <bool> test(key, fact),
+-- @param test a test function of the form, `bool test(key, fact)`,
 --   where a true result means the fact we are looking for exists in
 --   the table
 -- @return true, key or false
@@ -26,7 +30,7 @@ function Memory:hasFact(test)
 	return false
 end
 
---- get a known fact from Agent's memory
+--- Get a known fact from memory.
 --
 -- @param key [any] get the fact indexed by key
 -- @return [table] return the fact
@@ -34,7 +38,7 @@ function Memory:getFact(key)
 	return self.memory[key]
 end
 
---- add or overwrite a fact in the Agent's memory
+--- Add or overwrite a fact in the Agent's memory.
 --
 -- @param key [any] value, if nil a key is generated
 -- @param fact [table] the fact object to store
@@ -54,9 +58,9 @@ function Memory:setFact(key, fact)
 	return key
 end
 
---- Deletes all facts where test returns true
+--- Deletes all facts where test returns true.
 --
--- @param test a test function of the form, <bool> test(key, fact),
+-- @param test a test function of the form, `bool test(key, fact)`,
 --   where a true result causes the fact to be deleted
 -- @return table of deleted facts
 function Memory:deleteFacts(test)
@@ -70,14 +74,14 @@ function Memory:deleteFacts(test)
 	return deletedfacts
 end
 
---- Delete all facts in the Agent
+--- Delete all facts in memory.
 function Memory:deleteAllFacts()
 	self.memory = {}
 end
 
---- Iterate over facts the Agent knows about.
+--- Iterate over facts in memory.
 --
--- @param filter a function of the form, <bool> func(obj), used to filter
+-- @param filter a function of the form, `bool func(obj)`, used to filter
 --   facts returned by the iterator, filter must return true to include
 --   the fact in the iteration.
 -- @return an iterator to be used in a for loop

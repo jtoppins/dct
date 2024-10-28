@@ -1,0 +1,11 @@
+local busted = {}
+
+busted._all = {
+	lua = "/usr/bin/lua5.1",
+	lpath = "../data/savedgames/Mods/Tech/DCT/lua/?.lua",
+	output = "plainTerminal",
+	pattern = "test_",
+	ROOT = { ".", },
+}
+
+return busted

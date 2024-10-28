@@ -35,17 +35,24 @@ read_globals = {
 
 	-- DCT specific
 	"dct",
+	"libs",
 }
 
 files["src/dct/settings.lua"] = { globals = {"dctserverconfig",} }
 files["src/dct/Theater.lua"] = { globals = {"theatergoals", "dct"} }
-files["src/dcttestlibs/dcsstubs.lua"] = {
-	globals = {"lfs"},
-	read_globals = {"socket",},
-}
-files["tests/test-0001-data.lua"] = {
-	globals = {"staticTemplate", "metadata",}
-}
 files["tests/*"] = {
-	globals = {"dctstubs", "dctcheck", "dct"},
+	ignore = {"143", },
+	globals = {
+		-- busted globals
+		"describe",
+		"test",
+		"pending",
+		"before_each",
+		"insulate",
+
+		-- DCT specific
+		"dcttest",
+	},
 }
+files["tests/testlibs/dcsstubs.lua"] = { globals = {"lfs",}, }
+files["tests/testlibs/dcttest.lua"] = { globals = {"timer",}, }

@@ -4,12 +4,14 @@
 -- Implements a Subordinate interface that has observable properties.
 -- This means the object inheriting this class has subordinate objects
 -- that are assumed to be observers of the object as well.
+-- @classmod dct.libs.Subordinates
 
-local class = require("libs.class")
+require("libs")
 
+local class = libs.class
 local Subordinates = class()
 
---- constructor
+--- Constructor.
 --
 -- @field _subordinates hashmap(name, true) of asset names
 -- @field _parent reference to object to which this object is a child

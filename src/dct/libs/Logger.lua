@@ -1,15 +1,16 @@
---[[
 -- SPDX-License-Identifier: LGPL-3.0
---
--- Provides logging facilities.
---]]
 
-local class  = require("libs.class")
+--- Provides logging facilities.
+-- @classmod dct.libs.Logger
 
-local settings = _G.dct.settings.server
+require("libs")
+
+local class  = libs.class
 local loggers = {}
 local Logger = class()
 
+--- Logger logging level.
+-- Passed to setLevel to set the associated logging level.
 Logger.level = {
 	["error"] = 0,
 	["warn"]  = 1,
@@ -17,9 +18,11 @@ Logger.level = {
 	["debug"] = 4,
 }
 
+--- Constructor.
+-- @param name facility name
 function Logger:__init(name)
-	assert(name, "value error: name must be provided")
-	self.name   = name
+	local settings = dct.settings.server
+	self.name   = libs.check.string(name)
 	self.fmtstr = "DCT|%s: %s"
 	self.dbgfmt = "DEBUG-DCT|%s: %s"
 	self:setLevel(Logger.level["warn"])
@@ -36,6 +39,8 @@ function Logger:__init(name)
 	end
 end
 
+--- Sets the logging level of the logger object.
+-- @param lvl log level to set
 function Logger:setLevel(lvl)
 	assert(type(lvl) == "number", "invalid log level, not a number")
 	assert(lvl >= Logger.level["error"] and lvl <= Logger.level["debug"],
@@ -48,6 +53,9 @@ function Logger:_log(sink, fmtstr, userfmt, showErrors, ...)
 		string.format(userfmt, ...)), showErrors)
 end
 
+--- Log an error message.
+-- @param userfmt format string same as string.format
+-- @param ... values to format
 function Logger:error(userfmt, ...)
 	if self.showErrors then
 		self.errors = self.errors + 1
@@ -61,6 +69,9 @@ function Logger:error(userfmt, ...)
 	self:_log(env.error, self.fmtstr, userfmt, self.showErrors, ...)
 end
 
+--- Log an warning message.
+-- @param userfmt format string same as string.format
+-- @param ... values to format
 function Logger:warn(userfmt, ...)
 	if self.__lvl < Logger.level["warn"] then
 		return
@@ -68,6 +79,9 @@ function Logger:warn(userfmt, ...)
 	self:_log(env.warning, self.fmtstr, userfmt, false, ...)
 end
 
+--- Log an info message.
+-- @param userfmt format string same as string.format
+-- @param ... values to format
 function Logger:info(userfmt, ...)
 	if self.__lvl < Logger.level["info"] then
 		return
@@ -75,6 +89,9 @@ function Logger:info(userfmt, ...)
 	self:_log(env.info, self.fmtstr, userfmt, false, ...)
 end
 
+--- Log a debug message.
+-- @param userfmt format string same as string.format
+-- @param ... values to format
 function Logger:debug(userfmt, ...)
 	if self.__lvl < Logger.level["debug"] then
 		return
@@ -82,6 +99,8 @@ function Logger:debug(userfmt, ...)
 	self:_log(env.info, self.dbgfmt, userfmt, false, ...)
 end
 
+--- Get the logger associated with name.
+-- @param name facility name
 function Logger.getByName(name)
 	local l = loggers[name]
 	if l == nil then
