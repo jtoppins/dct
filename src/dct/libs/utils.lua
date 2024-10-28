@@ -117,7 +117,7 @@ end
 function utils.isplayergroup(grp)
 	local slotcnt = 0
 	for _, unit in ipairs(grp.units) do
-		if unit.skill == "Client" then
+		if string.upper(unit.skill) == "CLIENT" then
 			slotcnt = slotcnt + 1
 		end
 	end
