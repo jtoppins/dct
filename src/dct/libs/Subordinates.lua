@@ -1,7 +1,6 @@
 -- SPDX-License-Identifier: LGPL-3.0
 
---- @classmod Subordinates
--- Implements a Subordinate interface that has observable properties.
+--- Implements a Subordinate interface that has observable properties.
 -- This means the object inheriting this class has subordinate objects
 -- that are assumed to be observers of the object as well.
 -- @classmod dct.libs.Subordinates

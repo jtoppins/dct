@@ -23,10 +23,10 @@ local function is_departure_event(_, fact)
 	return filter_departure_event(fact)
 end
 
---- @classmod DoDeparture
--- Setup a flight for departure from the airbase. We assume parking
+--- Setup a flight for departure from the airbase. We assume parking
 -- is correctly setup. We just need to generate the departure flight plan
 -- and spawn the flight.
+-- @type DoDeparture
 local DoDeparture = class("DoDeparture", WS.Action)
 function DoDeparture:__init(agent, cost)
 	WS.Action.__init(self, agent, cost or 10, {

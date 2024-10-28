@@ -9,18 +9,14 @@ srcroot="${cwd}/${base}/.."
 
 DCT_SRC_ROOT="${srcroot}"
 DCT_DATA_ROOT=${DCT_DATA_ROOT:-${srcroot}/data}
-DCT_TEMPLATE_PATH=${DCT_TEMPLATE_PATH:-${srcroot}/../dcs-mission-oeo-templates}
 DCT_TEST_LOG="${DCT_DATA_ROOT}/dct_test.log"
 if ! test -d "${DCT_TEMPLATE_PATH}"; then
 	unset DCT_TEMPLATE_PATH
 fi
 LUA_EXEC=${LUA_EXEC:-lua5.1}
-LUA_LIB_PATH=${LUA_LIB_PATH:-${srcroot}/../lua-libs/src/?.lua}
-LUA_PATH="${srcroot}/src/?.lua;${LUA_LIB_PATH}"
-LUA_PATH="${LUA_PATH};;"
+LUA_PATH="${srcroot}/src/?.lua;${srcroot}/tests/?.lua"
 export LUA_PATH
 export DCT_DATA_ROOT
-export DCT_TEMPLATE_PATH
 export DCT_TEST_LOG
 export DCT_SRC_ROOT
 #echo "lua-path: ${LUA_PATH}"
@@ -33,7 +29,7 @@ cat << EOF | ${LUA_EXEC} -
 require("os")
 require("io")
 require("lfs")
-require("dcttestlibs")
+require("testlibs")
 require("dct")
 local object = require("${1}")
 object.genDocs()

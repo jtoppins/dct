@@ -145,8 +145,8 @@ local function checkgoal(sensor, name)
 	end
 end
 
---- @classmod DCSObjectsSensor
 -- Provides a common API for interacting with underlying DCS groups.
+-- @type DCSObjectsSensor
 --
 -- @field agent reference to owning agent
 -- @field _maxdeathgoals maximum death goals ever had by the asset
@@ -154,11 +154,11 @@ end
 -- @field _deathgoals list of current death goals
 -- @field _assets list of asset groups composing the asset
 --
--- @event S_EVENT_DEAD removes dead units from the tracked list and
+-- event S_EVENT_DEAD removes dead units from the tracked list and
 --     recalculates the Agent's overall health
 --
--- @modifies Agent.memory
--- @modifies Agent.desc.tpldata
+-- modifies Agent.memory
+-- modifies Agent.desc.tpldata
 local DCSObjectsSensor = class("DCSObjectsSensor",
 	WS.Sensor, DCTEvents)
 function DCSObjectsSensor:__init(agent)

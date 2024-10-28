@@ -13,6 +13,16 @@ local Stats      = require("dct.libs.Stats")
 local Command    = require("dct.libs.Command")
 local Logger     = dct.Logger.getByName("Commander")
 
+function utils.assettype2mission(assettype)
+	for k, v in pairs(enum.missionTypeMap) do
+		if v[assettype] then
+			return k
+		end
+	end
+	return nil
+end
+
+
 local function add_target(pq, tgt, owner, filterlist)
 	if tgt == nil then
 		return

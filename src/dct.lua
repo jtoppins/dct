@@ -25,4 +25,5 @@ env.info(dct._DESCRIPTION.."; "..dct._COPYRIGHT.."; version: "..
 env.info("DCT: dct.modpath: "..tostring(dct.modpath))
 env.info("DCT: dct.settings.server: "..
 	 libs.json:encode_pretty(dct.settings.server))
+--env.info("DCT: " .. libs.json:encode_pretty(dct))
 return dct

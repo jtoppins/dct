@@ -16,8 +16,8 @@ local function any_event(_ --[[key]], fact)
 	return fact.type == WS.Facts.factType.EVENT
 end
 
---- @classmod Ejection
---
+---
+-- @type Ejection
 local Ejection = class("Ejection", WS.Action)
 function Ejection:__init(agent)
 	WS.Action.__init(self, agent, 90, {

@@ -18,6 +18,27 @@ First we need to discuss the DCT "theater".
 
 ## Theater
 
+### Structure
+
+common (<modpath>) not a zip file:
++ templates
+  - commonpack1.miz
+  - commonpack2.miz
+
+theater (<theaterpath>) not a zip file:
++ settings
+  - blah
++ templates
+  - pack1.miz
+  - pack2.miz
++ layers
+  - ??
+
+mission:
+
+
+
+
 A DCT theater is a directory hierarchy that contains various configuration
 files. The theater is broken up this way so that the same template can
 be utilized in other campaigns without recreating the set of groups over

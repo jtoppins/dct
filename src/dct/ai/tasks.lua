@@ -1,6 +1,6 @@
 -- SPDX-License-Identifier: LGPL-3.0
 
---- Library of functions to generate DCS task tables.
+-- Library of functions to generate DCS task tables.
 
 require("libs")
 local class = libs.class

@@ -9,6 +9,13 @@ LUALIBSURL := https://github.com/jtoppins/lua-libs/archive/$(LUALIBSAR)
 LUALIBSDIR := lua-libs-$(LUALIBSVER)
 
 .PHONY: check check-syntax tests build
+help:
+	@echo 'Targets:'
+	@echo '  check        - Run all unit tests and syntax checks'
+	@echo '  check-syntax - Run luacheck lint checker'
+	@echo '  tests        - Run unit tests'
+	@echo '  build        - Build a releasable package, including docs'
+
 check-syntax:
 	luacheck -q hooks scripts src/dct* tests
 
