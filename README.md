@@ -10,10 +10,9 @@ for persistent dynamic campaigns within the DCS game world.
 directly in the mission editor, these individuals need little to no
 programming skills to provide content to a DCT enabled mission.
 
-Scenarios are created through a theater definition consisting of templates,
-created in the Mission Editor and configuration files. There is an initial
-learning curve but it is no more difficult than initially learning the DCS
-Mission Editor.
+Scenarios are created through a theater definition consisting of templates
+created in the Mission Editor. There is an initial learning curve but it is
+no more difficult than initially learning the DCS Mission Editor.
 
 ## Getting Started
 
@@ -44,14 +43,30 @@ See our documentation [here](https://jtoppins.github.io/dct/quick-start).
 
 ## Contribution Guide
 
-See our [documentation](https://jtoppins.github.io/dct/), in sort contributions
+See our [documentation](https://jtoppins.github.io/dct/), in short contributions
 can be made with a github pull request but features and/or changes need to be
 discussed first. Code is licensed under LGPLv3 and contributions must be
 licensed under the same. For any issues or feature requests please use the
-issue tracker and file a new issue. Please make sure to provide as much detail
+issue tracker and file a new issue. Make sure to provide as much detail
 about the problem or feature as possible. New development is done in feature
 branches which are eventually merged into `master`, base your features and
 fixes off `master`.
+
+### Development Environment Setup
+
+All development is done on [Debian Stable](https://www.debian.org/) using
+[DCS Dedicated Server](https://www.digitalcombatsimulator.com/en/downloads/world/server/).
+You can setup your own development environment by running the setup script.
+The script will ask you if it should installed DCS Dedicated Server for you.
+The DCS server installer is interactive only so you must attend the setup.
+If you choose to not install DCS server (we assume you have already installed)
+the setup is unattended.
+
+Run the following on your system:
+```
+git clone
+sudo ./scripts/devel-setup
+```
 
 ## Contact Us
 

@@ -126,6 +126,7 @@ function utils.foreach_protectedcall(logger, tbl, iterator, func, ...)
 
 	for _, obj in iterator(tbl) do
 		if type(obj[func]) == "function" then
+			logger:debug("calling: %s.%s", obj.__clsname, func)
 			ok, errmsg = pcall(obj[func], obj, ...)
 			if not ok then
 				utils.errhandler(errmsg, logger, 2)
@@ -193,10 +194,10 @@ function utils.isplayergroup(grp)
 	return false
 end
 
-function utils.not_playergroup(grp)
-	local isplayer = utils.isplayergroup(grp)
-	return not isplayer
-end
+--function utils.not_playergroup(grp)
+--	local isplayer = utils.isplayergroup(grp)
+--	return not isplayer
+--end
 
 --- Checks list of missions is valid
 -- @todo needed?
@@ -249,7 +250,10 @@ function utils.get_miz_groups()
 	local groups = {}
 	for _, coa_data in pairs(env.mission.coalition) do
 		local grps = STM.processCoalition(coa_data,
-			nil, utils.not_playergroup, nil)
+			nil, function(grp)
+				return not utils.isplayergroup(grp)
+			end, nil)
+			--nil, utils.not_playergroup, nil)
 		for _, grp in ipairs(grps) do
 			groups[grp.data.name] = grp
 		end
@@ -336,6 +340,7 @@ function utils.build_kick_flagname(name)
 	return name.."_kick"
 end
 
+-- TODO: move to loadout checking system
 utils.notifymsg =
 	"Please read the loadout limits in the briefing and "..
 	"use the F10 Menu to validate your loadout before departing."

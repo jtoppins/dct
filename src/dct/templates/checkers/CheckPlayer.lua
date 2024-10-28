@@ -1,4 +1,4 @@
---- SPDX-License-Identifier: LGPL-3.0
+-- SPDX-License-Identifier: LGPL-3.0
 
 require("libs")
 local class   = libs.classnamed
@@ -8,7 +8,8 @@ local Check   = require("dct.libs.Check")
 local settings = dct.settings
 
 
---- @class CheckPlayer
+--- Check player.
+-- @classmod CheckPlayer
 local CheckPlayer = class("CheckPlayer", Check)
 function CheckPlayer:__init()
 	Check.__init(self, "Player", {

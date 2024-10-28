@@ -1,6 +1,6 @@
---- SPDX-License-Identifier: LGPL-3.0
---
--- Define some basic global enumerations for DCT.
+-- SPDX-License-Identifier: LGPL-3.0
+
+--- Define some basic global enumerations for DCT.
 
 local enum = {}
 
@@ -19,76 +19,72 @@ enum.objtype = {
 
 -- this is really the template type, it has no bearing on the underlying
 -- object used
+--TODO: reorganize type values so the lower 4 bits are dedicated to
+-- subtypes and the upper 4 bits are major types with all F's being
+-- an invalid type.
 enum.assetType = {
-	["INVALID"]     = 0,
-	-- resource types
-	["RESOURCE"]    = 1,  -- an agent that supplies resources to its
-			      -- commander; resources can be one or all
-			      -- of: ammo, supply
-	["AMMODUMP"]    = 2,
-	["FUELDUMP"]    = 3,
-	["C2"]          = 4,
-	["BUNKER"]      = 5,
-	["CHECKPOINT"]  = 6,
+	["INVALID"]     = 256, -- 0x100
 
-	-- strategic assets
-	["MISSILE"]     = 11,
-	["OCA"]         = 12,
+	-- Navigation points in the DCT object space they can also
+	-- be smartobjects and do things like transmit a beacon.
+	["NODE"]        = 00, -- 0x00
+
+	-- resource types supply resources to its commander; resources
+	-- can be one or all of: ammo, fuel, supply, intel
+	["RESOURCE"]    = 16, -- 0x10
+	["AMMODUMP"]    = 17,
+	["FUELDUMP"]    = 18,
+	["C2"]          = 19,
+	["BUNKER"]      = 20,
+	["CHECKPOINT"]  = 21,
 
 	-- Base assets accept character objects from an HQ and spawn
 	-- the characters into the world according to the base's specific
 	-- criteria
-	["ARMYBASE"]    = 21,
-	["AIRBASE"]     = 22,
-	["PORT"]        = 23,
-	["CV"]          = 24,
-	["HELOCARRIER"] = 25,
-	["FARP"]        = 26,
-	["SPAWNPOINT"]  = 27,
+	["SPAWNPOINT"]  = 32, -- 0x20
+	["ARMYBASE"]    = 33,
+	["AIRBASE"]     = 34,
+	["PORT"]        = 35,
+	["CV"]          = 36,
+	["HELOCARRIER"] = 37,
+	["FARP"]        = 38,
 
 	-- Headquarters are children of Bases they are also the only
 	-- Agents the commander sends requests to.
-	["SQUADRON"]    = 31,
-	["ARMYGROUP"]   = 32,
-	["FLEET"]       = 33,
+	["SQUADRON"]    = 48, -- 0x30
+	["ARMYGROUP"]   = 49,
+	["FLEET"]       = 50,
 
 	-- tactical units are the "game pieces", some can move and some
 	-- just occupy an area defined by their template.
-	["GROUND"]      = 41,
-	["JTAC"]        = 42,
-	["AIRPLANE"]    = 43,
-	["HELO"]        = 44,
-	["BASEDEFENSE"] = 45,
-	["EWR"]         = 46,
-	["SAM"]         = 47,
-	["SHORAD"]      = 48,
-	["INFANTRY"]    = 49,
-	["PILOT"]       = 50,
-	["SHIP"]        = 51,
+	-- Ground, Air, and Ship unit groups are split up into different
+	-- spaces.
+	["GROUNDGROUP"] = 64, -- 0x40
+	["INFANTRY"]    = 65,
+	["JTAC"]        = 66,
+	["PILOT"]       = 67,
+	["ARMOR"]       = 68,
+	["MECH"]        = 69,
+	["ARTILLERY"]   = 70,
+	["EWR"]         = 71,
+	["SAM"]         = 72,
+	["SHORAD"]      = 73,
+
+	["AIRGROUP"]    = 80, -- 0x50
+	["AIRPLANE"]    = 81,
+	["HELO"]        = 82,
+
+	["SHIP"]        = 96, -- 0x60
 
 	-- players
-	["PLAYER"]      = 71,
-
-	-- control primitives
-	["SCRIPT"]      = 101,  -- no agent is associated, it is just a
-				-- template that spawns DCS objects, the
-				-- objects are not even tracked or targetable
-	["NODE"]        = 102,  -- navigation points in the DCT object space
-				-- they can also be smartobjects and do things
-				-- like transmit a beacon
+	["PLAYER"]      = 112, -- 0x70
 }
 
-enum.assetTypeDeprecated = {
-	["FACTORY"]        = 1,
-	["FACILITY"]       = 1,
-	["FOB"]            = 21,
-	["SQUADRONPLAYER"] = 31,
-	["LOGISTICS"]      = 41,
-	["SPECIALFORCES"]  = 41,
-}
-
+--TODO: reorganize type values so the lower 4 bits are dedicated to
+-- subtypes and the upper 4 bits are major types with all F's being
+-- an invalid type.
 enum.missionType = {
-	["INVALID"]    = 0,
+	["INVALID"]    = 256, -- 0x100
 	["MOVETO"]     = 1,
 
 	-- Guarding based missions, just with different threat and
