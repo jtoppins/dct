@@ -179,7 +179,7 @@ local function is_required(option)
 	if option.default ~= nil then
 		s = s.."no"
 
-		if not (option.default == "") and
+		if option.default ~= "" and
 		   type(option.default) ~= "table" and
 		   option.type ~= valuetype.VALUES then
 			s = s.."\n - _default:_ "..tostring(option.default)
