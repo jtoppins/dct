@@ -4,8 +4,12 @@
 -- Provides config facilities.
 --]]
 
-local class    = require("libs.namedclass")
-local utils    = require("libs.utils")
+--- Provides facilities for reading theater level configuration.
+-- @submodule dct.settings
+
+require("libs")
+local class    = libs.classnamed
+local utils    = libs.utils
 local dctenum  = require("dct.enum")
 local dctutils = require("dct.libs.utils")
 local uihuman  = require("dct.ui.human")
@@ -283,5 +287,22 @@ local function theatercfgs(config)
 	utils.readconfigs(cfgs, config)
 	return config
 end
+
+--- Theater configuration table.
+-- @table theater
+-- @field one blah
+local theater = {}
+
+-- settings.theater.
+--   * features.
+--   * playeraircraft.
+--     - table keyed on aircraft type maps to table of values for a player aircraft;
+--       cost, ui,
+--   * restrictedweapons.
+--     - table keyed on weapon type maps to table of attributes (cost, category)
+--   * codenamedb.
+--     - table keyed on asset type maps to a name list
+--   * blasteffects.
+--     - table keyed on weapon type maps to explosive mass
 
 return theatercfgs

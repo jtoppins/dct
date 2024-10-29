@@ -3,6 +3,7 @@
 local __libs = {}
 
 __libs.Command      = require("dct.libs.Command")
+__libs.Check        = require("dct.libs.Check")
 __libs.DCTEvents    = require("dct.libs.DCTEvents")
 __libs.Logger       = require("dct.libs.Logger")
 __libs.Marshallable = require("dct.libs.Marshallable")
