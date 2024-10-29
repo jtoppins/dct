@@ -9,6 +9,7 @@ local dct = {
 }
 
 dct.modpath   = lfs.writedir()..libs.utils.join_paths("Mods", "Tech", "DCT")
+dct.settings  = require("dct.settings")
 dct.enum      = require("dct.enum")
 dct.libs      = require("dct.libs")
 _G.dct = dct
@@ -16,6 +17,6 @@ _G.dct = dct
 env.info(dct._DESCRIPTION.."; "..dct._COPYRIGHT.."; version: "..
     dct._VERSION)
 env.info("DCT: dct.modpath: "..tostring(dct.modpath))
---env.info("DCT: dct.settings.server: "..
---	 libs.json:encode_pretty(dct.settings.server))
+env.info("DCT: dct.settings.server: "..
+	 libs.json:encode_pretty(dct.settings.server))
 return dct

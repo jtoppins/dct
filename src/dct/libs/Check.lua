@@ -6,7 +6,7 @@
 -- conform to a specific type.
 -- @module dct.libs.Check
 
-local class = require("libs.namedclass")
+local class = require("libs.classnamed")
 local utils = require("libs.utils")
 local dctutils = require("dct.libs.utils")
 local vector = require("dct.libs.vector")
@@ -293,6 +293,9 @@ function Check:__init(section, options, description)
 	self.section = section
 	self.description = description
 	self.options = options
+	self.rc = nil
+	self.reasontext = nil
+	self.valuetype = nil
 end
 
 Check.rc = rc
