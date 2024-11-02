@@ -31,18 +31,6 @@ Globally enable debug logging and debugging checks.]],
 		["description"] = [[
 Globally enable profiling. Can cause performance issues.]],
 	},
-	["statepath"]   = {
-		["default"] = "",
-		["type"] = Check.valuetype.STRING,
-		["description"] = [[
-]],
-	},
-	["theaterpath"] = {
-		["default"] = "",
-		["type"] = Check.valuetype.STRING,
-		["description"] = [[
-]],
-	},
 	["schedfreq"] = {
 		["default"] = 2,
 		["type"] = Check.valuetype.UNIT,
