@@ -1,12 +1,13 @@
 -- SPDX-License-Identifier: LGPL-3.0
 
---- @classmod dct.systems.weather
--- Weather system. Reads the mission's weather settings and
+--- Weather system. Reads the mission's weather settings and
 -- provides some nice methods for getting data about the
 -- weather; closest VFR altitude, metar for players, etc.
+-- @classmod dct.systems.weather
 
-local class = require("libs.namedclass")
-local utils = require("libs.utils")
+require("libs")
+local class = libs.classnamed
+local utils = libs.utils
 local uihuman = require("dct.ui.human")
 
 local cloudcoverage = {

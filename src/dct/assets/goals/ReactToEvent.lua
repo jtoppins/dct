@@ -1,5 +1,7 @@
 -- SPDX-License-Identifier: LGPL-3.0
 
+require("libs")
+local class = libs.classnamed
 local WS = require("dct.assets.worldstate")
 
 local function is_event(_ --[[key]], fact)
@@ -8,7 +10,7 @@ end
 
 --- Have an agent react to an event registered in the Agent's memory.
 -- @classmod ReactToEvent
-local ReactToEvent = require("libs.namedclass")("ReactToEvent", WS.Goal)
+local ReactToEvent = class("ReactToEvent", WS.Goal)
 function ReactToEvent:__init()
 	WS.Goal.__init(self, WS.WorldState({
 			WS.Property(WS.ID.REACTEDTOEVENT, true),

@@ -6,7 +6,7 @@ require("math")
 local utils    = require("libs.utils")
 local dctenum  = require("dct.enum")
 local dctutils = require("dct.libs.utils")
-local Mission  = require("dct.libs.Mission")
+local Mission  = require("dct.ai.Mission")
 local WS       = require("dct.assets.worldstate")
 
 local function conversion_entry(ratio, symbol)

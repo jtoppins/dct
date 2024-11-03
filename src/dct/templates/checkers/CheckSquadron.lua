@@ -2,10 +2,11 @@
 
 --- @classmod templates.checkers.CheckSquadron
 
-local class   = require("libs.namedclass")
+require("libs")
+local class   = libs.classnamed
 local dctenum = require("dct.enum")
 local dctutils = require("dct.libs.utils")
-local Check   = require("dct.templates.checkers.Check")
+local Check   = require("dct.libs.Check")
 
 local issquadron = {
 	[dctenum.assetType.SQUADRON] = true,

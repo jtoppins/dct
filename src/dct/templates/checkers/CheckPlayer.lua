@@ -1,9 +1,10 @@
 --- SPDX-License-Identifier: LGPL-3.0
 
-local class   = require("libs.namedclass")
+require("libs")
+local class   = libs.classnamed
 local dctenum = require("dct.enum")
 local uihuman = require("dct.ui.human")
-local Check   = require("dct.templates.checkers.Check")
+local Check   = require("dct.libs.Check")
 local settings = dct.settings
 
 
@@ -42,7 +43,7 @@ function CheckPlayer:__init()
 			["nodoc"] = true,
 			["agent"] = true,
 			["type"] = Check.valuetype.TABLE,
-			["default"] = settings.payloadlimits["default"],
+			["default"] = {} --TODO: settings.payloadlimits["default"],
 		},
 		["gridfmt"] = {
 			["nodoc"] = true,
@@ -110,8 +111,11 @@ function CheckPlayer:check(data)
 	local ui = settings.ui[actype]
 
 	data.ato = settings.ato[actype] or data.ato
-	data.payloadlimits = settings.payloadlimits[actype] or
+	data.payloadlimits = {}
+	--[[ TODO
+	settings.payloadlimits[actype] or
 			     data.payloadlimits
+			     --]]
 	data.cost = settings.airframecost[actype] or data.cost
 
 	if ui ~= nil then

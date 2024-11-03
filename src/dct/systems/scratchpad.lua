@@ -1,11 +1,12 @@
 -- SPDX-License-Identifier: LGPL-3.0
---
--- Handles raw player input via a "scratchpad" system. The
--- addition of the F10 menu is handled outside this module.
 
-local class  = require("libs.namedclass")
+--- Handles raw player input via a "scratchpad" system. The
+-- addition of the F10 menu is handled outside this module.
+-- @module dct.systems.scratchpad
+
+require("libs")
+local class  = libs.classnamed
 local WS     = require("dct.assets.worldstate")
-local Logger = dct.Logger.getByName("UI")
 
 local function sanatize(txt)
 	if type(txt) ~= "string" then
@@ -21,7 +22,6 @@ function ScratchPad:__init(theater)
 	self._scratchpad = {}
 	self._theater = theater
 	theater:addObserver(self.event, self, self.__clsname)
-	Logger:debug("init %s", self.__clsname)
 end
 
 function ScratchPad:get(id)

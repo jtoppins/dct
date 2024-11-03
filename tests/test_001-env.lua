@@ -22,3 +22,11 @@ describe("validate stub environment", function()
 		assert.is.equal(lfs.currentdir(), testpath)
 	end)
 end)
+
+describe("validate dct.settings", function()
+	test("populate settings.server table", function()
+		dcttest.setupRuntime()
+		assert.is_true(dct.settings.server.humble == nil and
+				next(dct.settings.server) ~= nil)
+	end)
+end)

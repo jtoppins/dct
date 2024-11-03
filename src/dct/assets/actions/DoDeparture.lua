@@ -1,5 +1,12 @@
 -- SPDX-License-Identifier: LGPL-3.0
 
+--- Setup a flight for departure from the airbase. We assume parking
+-- is correctly setup. We just need to generate the departure flight plan
+-- and spawn the flight.
+-- @classmod dct.assets.actions.DoDeparture
+
+require("libs")
+local class    = libs.classnamed
 local dctenum  = require("dct.enum")
 local dctutils = require("dct.libs.utils")
 local Timer    = require("dct.libs.Timer")
@@ -21,7 +28,7 @@ end
 -- Setup a flight for departure from the airbase. We assume parking
 -- is correctly setup. We just need to generate the departure flight plan
 -- and spawn the flight.
-local DoDeparture = require("libs.namedclass")("DoDeparture", WS.Action)
+local DoDeparture = class("DoDeparture", WS.Action)
 function DoDeparture:__init(agent, cost)
 	WS.Action.__init(self, agent, cost or 10, {
 		-- pre-conditions

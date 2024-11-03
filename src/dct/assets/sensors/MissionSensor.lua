@@ -1,6 +1,7 @@
 -- SPDX-License-Identifier: LGPL-3.0
 
-local class     = require("libs.namedclass")
+require("libs")
+local class     = libs.classnamed
 local dctenum   = require("dct.enum")
 local DCTEvents = require("dct.libs.DCTEvents")
 local WS        = require("dct.assets.worldstate")

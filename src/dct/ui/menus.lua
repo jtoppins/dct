@@ -4,7 +4,7 @@
 
 local utils     = require("libs.utils")
 --local vector    = require("dct.libs.vector")
-local Mission   = require("dct.libs.Mission")
+local Mission   = require("dct.ai.Mission")
 local PlayerMenu= require("dct.ui.PlayerMenu")
 local msncodes  = require("dct.ui.missioncodes")
 local uirequest = require("dct.ui.request")

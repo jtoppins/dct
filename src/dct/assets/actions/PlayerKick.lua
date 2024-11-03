@@ -1,5 +1,7 @@
 -- SPDX-License-Identifier: LGPL-3.0
 
+require("libs")
+local class    = libs.classnamed
 local dctenum  = require("dct.enum")
 local dctutils = require("dct.libs.utils")
 local WS       = require("dct.assets.worldstate")
@@ -37,7 +39,7 @@ end
 -- PlayerJoin - least expensive
 -- Eject      - in the middle
 -- PlayerKick - most expensive
-local PlayerKick = require("libs.namedclass")("PlayerKick", WS.Action)
+local PlayerKick = class("PlayerKick", WS.Action)
 function PlayerKick:__init(agent)
 	WS.Action.__init(self, agent, 100, {
 		-- pre-conditions

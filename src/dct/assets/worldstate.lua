@@ -2,11 +2,13 @@
 
 --- WorldState describes an Agent's view of the world.
 
-local utils      = require("libs.utils")
-local check      = require("libs.check")
-local json       = require("libs.json")
-local class      = require("libs.namedclass")
-local goap       = require("libs.containers.goap")
+require("libs")
+
+local utils      = libs.utils
+local check      = libs.check
+local json       = libs.json
+local class      = libs.classnamed
+local goap       = libs.containers.GOAP
 local dctenum    = require("dct.enum")
 local dctutils   = require("dct.libs.utils")
 local Observable = require("dct.libs.Observable")

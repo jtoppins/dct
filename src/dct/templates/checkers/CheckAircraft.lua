@@ -1,9 +1,10 @@
 -- SPDX-License-Identifier: LGPL-3.0
 
-local class   = require("libs.namedclass")
-local utils   = require("libs.utils")
+require("libs")
+local class   = libs.classnamed
+local utils   = libs.utils
 local dctenum = require("dct.enum")
-local Check   = require("dct.templates.checkers.Check")
+local Check   = require("dct.libs.Check")
 
 local RESERVETIME = 20 * 60 -- 20 minutes
 local adtypes = {

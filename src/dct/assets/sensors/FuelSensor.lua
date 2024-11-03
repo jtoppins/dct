@@ -1,5 +1,7 @@
 -- SPDX-License-Identifier: LGPL-3.0
 
+require("libs")
+local class   = libs.classnamed
 local dctenum = require("dct.enum")
 local Timer   = require("dct.libs.Timer")
 local WS      = require("dct.assets.worldstate")
@@ -68,7 +70,7 @@ end
 --- Monitors how much fuel the aircraft group has remaining. Determins the
 -- point when the aircraft fuel state is at a point that it no longer
 -- has fuel (HASFUEL = false).
-local FuelSensor = require("libs.namedclass")("FuelSensor", WS.Sensor)
+local FuelSensor = class("FuelSensor", WS.Sensor)
 function FuelSensor:__init(agent)
 	if dctenum.assetClass.AIRCRAFT[agent.type] == nil then
 		return nil

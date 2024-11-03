@@ -2,7 +2,7 @@
 
 --- @classmod dct.assets.sensors.DebugSensor
 
-local class   = require("libs.namedclass")
+local class   = require("libs.classnamed")
 local json    = require("libs.json")
 local Timer   = require("dct.libs.Timer")
 local human   = require("dct.ui.human")

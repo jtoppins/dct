@@ -1,8 +1,10 @@
 --- SPDX-License-Identifier: LGPL-3.0
 
+require("libs")
+local class = libs.classnamed
 local WS = require("dct.assets.worldstate")
 
-local Idle = require("libs.namedclass")("Idle", WS.Action)
+local Idle = class("Idle", WS.Action)
 function Idle:__init(agent)
 	WS.Action.__init(self, agent, 1, {}, {
 		WS.Property(WS.ID.IDLE, true),

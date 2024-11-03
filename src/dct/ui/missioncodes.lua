@@ -4,7 +4,7 @@
 -- from the radio menu UI.
 
 local dctenum = require("dct.enum")
-local Mission = require("dct.libs.Mission")
+local Mission = require("dct.ai.Mission")
 local PlayerMenu = require("dct.ui.PlayerMenu")
 
 local function empty() end

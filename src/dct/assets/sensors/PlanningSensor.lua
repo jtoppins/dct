@@ -39,7 +39,7 @@ end
 --      plan = create_plan(goal)
 --      if plan then
 --        transition to doplan state
-local Planning = require("libs.namedclass")("PlanningSensor", WS.Sensor)
+local Planning = require("libs.classnamed")("PlanningSensor", WS.Sensor)
 function Planning:__init(agent)
 	WS.Sensor.__init(self, agent, 70)
 end

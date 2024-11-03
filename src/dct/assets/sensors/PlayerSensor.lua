@@ -1,8 +1,9 @@
 -- SPDX-License-Identifier: LGPL-3.0
 
 require("math")
-local class     = require("libs.namedclass")
-local utils     = require("libs.utils")
+require("libs")
+local class     = libs.classnamed
+local utils     = libs.utils
 local dctenum   = require("dct.enum")
 local dctutils  = require("dct.libs.utils")
 local Timer     = require("dct.libs.Timer")

@@ -4,9 +4,10 @@
 -- Agent interface. Provides a common API for interacting with
 -- underlying DCS groups.
 
-local class      = require("libs.namedclass")
-local utils      = require("libs.utils")
-local check      = require("libs.check")
+require("libs")
+local class      = libs.classnamed
+local utils      = libs.utils
+local check      = libs.check
 local dctenum    = require("dct.enum")
 local dctutils   = require("dct.libs.utils")
 local Logger     = require("dct.libs.Logger")

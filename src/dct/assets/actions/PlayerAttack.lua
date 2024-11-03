@@ -1,5 +1,7 @@
 -- SPDX-License-Identifier: LGPL-3.0
 
+require("libs")
+local class     = libs.classnamed
 local DCTEvents = require("dct.libs.DCTEvents")
 local Timer     = require("dct.libs.Timer")
 local WS        = require("dct.assets.worldstate")
@@ -13,7 +15,7 @@ end
 --- @classmod PlayerAttack
 -- Monitors the player Agent object and waits until all mission targets
 -- are dead.
-local PlayerAttack = require("libs.namedclass")("PlayerAttack", WS.Action,
+local PlayerAttack = class("PlayerAttack", WS.Action,
 	DCTEvents)
 function PlayerAttack:__init(agent, cost)
 	WS.Action.__init(self, agent, cost, {

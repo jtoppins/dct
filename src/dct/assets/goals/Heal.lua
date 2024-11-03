@@ -1,10 +1,12 @@
 -- SPDX-License-Identifier: LGPL-3.0
 
+require("libs")
+local class = libs.classnamed
 local WS = require("dct.assets.worldstate")
 
 --- The Agent desires to heal itself.
 -- @classmod Heal
-local Heal = require("libs.namedclass")("Heal", WS.Goal)
+local Heal = class("Heal", WS.Goal)
 function Heal:__init()
 	WS.Goal.__init(self, WS.WorldState({
 			WS.Property(WS.ID.HEALTH, WS.Health.OPERATIONAL),

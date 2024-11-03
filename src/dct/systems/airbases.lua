@@ -4,8 +4,11 @@
 -- campaign should have functioning ATC towers. Also, disable the
 -- auto-capture feature so DCT can manage airbase ownership itself.
 
+require("libs")
+
+-- TODO: fixup settings
 local settings = dct.settings.general or {}
-local Airbases = require("libs.namedclass")("Airbases")
+local Airbases = libs.classnamed("Airbases")
 function Airbases:__init()
 	for _, ab in pairs(world.getAirbases()) do
 		if not settings.airbase_nosilence then

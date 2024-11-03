@@ -1,8 +1,9 @@
 --- SPDX-License-Identifier: LGPL-3.0
 
-local utils = require("libs.utils")
-local class = require("libs.namedclass")
-local Check = require("dct.templates.checkers.Check")
+require("libs")
+local utils = libs.utils
+local class = libs.classnamed
+local Check = require("dct.libs.Check")
 local ckey  = "coalition"
 
 local function testCoalition(tpl, grp)

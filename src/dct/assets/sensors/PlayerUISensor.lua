@@ -1,13 +1,14 @@
 -- SPDX-License-Identifier: LGPL-3.0
 
 require("math")
-local class     = require("libs.namedclass")
-local pqueue    = require("libs.containers.pqueue")
+require("libs")
+local class     = libs.classnamed
+local pqueue    = libs.containers.PriorityQueue
 local dctenum   = require("dct.enum")
 local dctutils  = require("dct.libs.utils")
 local Timer     = require("dct.libs.Timer")
 local DCTEvents = require("dct.libs.DCTEvents")
-local Mission   = require("dct.libs.Mission")
+local Mission   = require("dct.ai.Mission")
 local human     = require("dct.ui.human")
 local uirequest = require("dct.ui.request")
 local uimenus   = require("dct.ui.menus")

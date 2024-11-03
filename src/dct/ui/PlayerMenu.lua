@@ -1,8 +1,9 @@
 -- SPDX-License-Identifier: LGPL-3.0
 
 require("math")
-local class     = require("libs.namedclass")
-local check     = require("libs.check")
+require("libs")
+local class     = libs.classnamed
+local check     = libs.check
 local dctutils  = require("dct.libs.utils")
 local uirequest = require("dct.ui.request")
 local WS        = require("dct.assets.worldstate")
