@@ -1,26 +1,78 @@
---- SPDX-License-Identifier: LGPL-3.0
---
--- Provides functions to define and manage Assets.
+-- SPDX-License-Identifier: LGPL-3.0
 
-local checklib = require("libs.check")
+--- Provides functions to define and manage Assets.
+-- @classmod dct.systems.AssetManager
+-- @alias AssetManager
+
+require("libs")
+local checklib = libs.check
 local dctenum  = require("dct.enum")
 local dctutils = require("dct.libs.utils")
 local Command  = require("dct.libs.Command")
+local System   = require("dct.libs.System")
 local Observable = require("dct.libs.Observable")
 local Marshallable = require("dct.libs.Marshallable")
-local Agent = require("dct.assets.Agent")
+--local Agent = require("dct.assets.Agent")
 
-local AssetManager = require("libs.namedclass")("AssetManager",
-	Observable, Marshallable)
+--- Iterate over groups and only visit non-player groups.
+local function iterate_nonplayers(grps)
+	local function fnext(state, index)
+		local idx = index
+		local grp
+		repeat
+			idx, grp = next(state, idx)
+			if grp == nil then
+				return nil
+			end
+		until(not dct.libs.utils.isplayergroup(grp))
+		return idx, grp
+	end
+	return fnext, grps, nil
+end
+
+--- Enumerate non-player units found in the currently loaded
+-- mission (miz) file.
+-- @return list of non-player units found in the mission indexed
+--     by unit name.
+local function get_miz_units(logger)
+	local units = {}
+	local miz = dct.templates.MIZ(env)
+
+	for _, grp in iterate_nonplayers(miz.groups) do
+		for _, unit in ipairs(grp.data.units or {}) do
+			local u = {}
+			u.name = unit.name
+			u.category = grp.category
+			u.dead = false
+
+			if units[u.name] ~= nil then
+				logger:error("multiple same named miz placed"..
+					     " objects exist: "..u.name)
+			end
+			units[u.name] = u
+		end
+	end
+	return units
+end
+
+--- Central store for assets managed in DCT.
+local AssetManager = libs.classnamed("AssetManager", System, Observable,
+				     Marshallable)
+AssetManager.enabled = true
+
+--- Constructor.
 function AssetManager:__init(theater)
+	System.__init(self, theater,
+		      System.SYSTEMORDER.ASSETMGR,
+		      System.SYSTEMALIAS.ASSETMGR)
+	Observable.__init(self)
 	Marshallable.__init(self)
-	Observable.__init(self,
-		require("dct.libs.Logger").getByName("AssetManager"))
 	self:_addMarshalNames({
 		"_mizobjs",
 	})
 
 	self.updaterate = 2
+
 	-- The master list of assets, regardless of side, indexed by name.
 	-- Means Asset names must be globally unique.
 	self._assetset = {}
@@ -29,12 +81,38 @@ function AssetManager:__init(theater)
 	-- remember all spawned Asset classes will need to register the names
 	-- of their DCS objects with 'something', this will be the something.
 	self._object2asset = {}
-	self._mizobjs = dctutils.get_miz_units(self._logger)
+	self._mizobjs = get_miz_units(self._logger)
+	self._spawnq = {}
+end
+
+function AssetManager:initialize()
+	self._theater:addObserver(self.onDCSEvent, self,
+				  self.__clsname..".onDCSEvent")
+end
+
+function AssetManager:start()
+	local cmd = Command(self.updaterate, self.__clsname..".update",
+			    self.update, self)
+	cmd:setRequeue(true)
+	self._theater:queueCommand(cmd)
+
+	for assetname, _ in pairs(self._spawnq) do
+		self:getAsset(assetname):spawn(true)
+	end
 	self._spawnq = {}
 
-	theater:addObserver(self.onDCSEvent, self, "AssetManager.onDCSEvent")
-	theater:queueCommand(self.updaterate,
-		Command(self.__clsname..".update", self.update, self), true)
+	for _, unit in pairs(self._mizobjs) do
+		if unit.dead then
+			local func = Unit.getByName
+			if unit.category == Unit.Category.STRUCTURE then
+				func = StaticObject.getByName
+			end
+			local U = func(unit.name)
+			if U then
+				U:destroy()
+			end
+		end
+	end
 end
 
 function AssetManager:remove(asset)
@@ -123,7 +201,7 @@ function AssetManager:update()
 			local ok, err = pcall(asset.update, asset)
 
 			if not ok then
-				dctutils.errhandler(err, asset._logger)
+				dct.libs.utils.errhandler(err, asset._logger)
 			end
 		end
 		if asset:isDead() then
@@ -251,24 +329,37 @@ function AssetManager:unmarshal(data)
 	end
 end
 
-function AssetManager:postinit()
-	for assetname, _ in pairs(self._spawnq) do
-		self:getAsset(assetname):spawn(true)
-	end
-	self._spawnq = {}
+--[[
+--  * Asset Impact Notifier:
+--   (part of the default AssetManager)
+--    - directly notify assets "near" the blast with line of sight
+--      to the impact area as calculated 100m above the impact point
 
-	for _, unit in pairs(self._mizobjs) do
-		if unit.dead then
-			local func = Unit.getByName
-			if unit.category == Unit.Category.STRUCTURE then
-				func = StaticObject.getByName
-			end
-			local U = func(unit.name)
-			if U then
-				U:destroy()
-			end
-		end
+-- If there is a DCT asset of the same name as the DCS base,
+-- notify the DCT asset it has been hit.
+local function handlebase(base, data)
+	local asset = data.theater:getAssetMgr():getAsset(base:getName())
+
+	if asset == nil then
+		return
 	end
+
+	asset:onDCTEvent(data.event)
 end
+
+	local vol = {
+		id = world.VolumeType.SPHERE,
+		params = {
+			point = event.point,
+			radius = 6000, -- allows for > 15000ft runway
+		},
+	}
+	world.searchObjects(Object.Category.BASE, vol, handlebase,
+		{
+			["event"]   = event,
+			["theater"] = self._theater,
+		})
+
+--]]
 
 return AssetManager

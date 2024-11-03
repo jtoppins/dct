@@ -1,173 +1,138 @@
 -- SPDX-License-Identifier: LGPL-3.0
---
--- Defines the Theater class.
 
-require("os")
-require("io")
-require("lfs")
-local class       = require("libs.namedclass")
-local containers  = require("libs.containers")
-local json        = require("libs.json")
-local dctenum     = require("dct.enum")
+--- Defines the Theater class.
+-- @classmod dct.Theater
+
+-- DCS sanitizes its environment so we have to keep a local reference to
+-- the os table.
+local myos = require("os")
+require("libs")
+local class       = libs.classnamed
+local containers  = libs.containers
 local dctutils    = require("dct.libs.utils")
 local Observable  = require("dct.libs.Observable")
 local Command     = require("dct.libs.Command")
-local Commander   = require("dct.ai.Commander")
-local Logger      = dct.Logger.getByName("Theater")
+local Timer       = require("dct.libs.Timer")
 local settings    = dct.settings.server
-local STATE_VERSION = "4"
-local RESETFILE = lfs.writedir()..require("libs.utils").sep.."reset.txt"
 
+--- Component system. Defines a generic way for initializing components
+-- of a Theater without directly tying the two systems together.
+-- @type ComponentSystem
+local ComponentSystem = class("ComponentSystem")
 
---- tests if a state table is valid
-local function isStateValid(state)
-	if io.open(RESETFILE) ~= nil then
-		Logger:info("isStateValid(); state reset requested by file")
-		os.remove(RESETFILE)
-		return false
-	end
-
-	if state == nil then
-		Logger:info("isStateValid(); state object nil")
-		return false
-	end
-
-	if state.complete == true then
-		Logger:info("isStateValid(); theater goals were completed")
-		return false
-	end
-
-	if state.version ~= STATE_VERSION then
-		Logger:warn("isStateValid(); invalid state version")
-		return false
-	end
-
-	if state.theater ~= env.mission.theatre then
-		Logger:warn("isStateValid(); wrong theater; "..
-			"state: '%s'; mission: '%s'", state.theater, env.mission.theatre)
-		return false
-	end
-
-	if state.sortie ~= env.getValueDictByKey(env.mission.sortie) then
-		Logger:warn("isStateValid(); wrong sortie; "..
-			"state: '%s'; mission: '%s'", state.sortie,
-			env.getValueDictByKey(env.mission.sortie))
-		return false
-	end
-
-	return true
-end
-
-
---- Systems
--- Component system. Defines a generic way for initializing components
--- of the system without directly tying the two systems together.
--- A system can provide the following methods:
---
--- function __init initialization only init local system data,
---   do not depend on external systems
--- function marshal all the system's data for serialization
--- function unmarshal initializes the system from the saved data
--- function generate all assets, guarentees all Templates are read
--- function postinit run after __init and generate, guarantees all
---   assets are generated and all templates have been loaded
-local Systems = class("System")
-function Systems:__init()
+--- Constructor.
+function ComponentSystem:__init(logger)
 	self._systemscnt = 0
 	self._systems  = {}
+	self._orderedsystems = {}
+	self._aliassystems = {}
+	self._initialized = false
 
-	local systems = {
-		"dct.assets.AssetManager",
-		"dct.systems.scratchpad",
-		"dct.systems.tickets",
-		"dct.systems.weaponstracking",
-		"dct.systems.blasteffects",
-		"dct.templates.RegionManager",
-		"dct.systems.playerslots",
-		"dct.systems.airbases",
-		"dct.systems.weather",
-	}
-
-	for _, syspath in ipairs(systems) do
-		self:addSystem(syspath)
-	end
-	Logger:info("systems init: "..tostring(self._systemscnt))
-end
-
-function Systems:marshal()
-	local tbl = {}
-	for name, sys in pairs(self._systems) do
-		if type(sys.marshal) == "function" then
-			tbl[name] = sys:marshal()
-		end
-	end
-	return tbl
-end
-
-function Systems:unmarshal(tbl)
-	for name, data in pairs(tbl) do
-		local sys = self:getSystem(name)
-		if sys ~= nil and type(sys.unmarshal) == "function" then
-			sys:unmarshal(data)
-		end
+	if self._logger == nil then
+		self._logger = logger or
+				dct.libs.Logger.getByName(self.__clsname)
 	end
 end
 
--- runs a system method that can optionally be provided by a system
-function Systems:_runsys(methodname, ...)
-	dctutils.foreach_call(self._systems, pairs, methodname, ...)
+--- Runs a system method that can optionally be provided by a system.
+-- The call is run in a protected context so that one system does not
+-- affect the rest of the theater. Any errors will be reported via the
+-- logger.
+function ComponentSystem:_runsys(methodname, ...)
+	dctutils.foreach_protectedcall(self._logger, self._orderedsystems,
+				       ipairs, methodname, ...)
 end
 
-function Systems:getSystem(path)
-	return self._systems[path]
+--- Search for a registered System by name, if it doesn't exist by name
+-- search the alias list.
+-- @tparam string name of the System registered with the Theater.
+-- @treturn[1] System the registered system being sought
+-- @treturn[2] nil
+function ComponentSystem:getSystem(name)
+	local sys = self._systems[name]
+
+	if sys == nil then
+		local alias = self._aliassystems[name]
+		sys = self._systems[alias]
+	end
+	return sys
 end
 
-function Systems:addSystem(path)
-	if self._systems[path] ~= nil then
+--- Register a new System class. It is only valid to register a system
+-- before the initialize() method is called. After a call to the initialize()
+-- method all attempts to register a new system will be ignored and logged.
+-- @tparam System sys the System instance to register.
+-- @tparam bool force by default registration does not let you overwrite
+--         previously registered Systems. Set to true to force registration
+--         and delete any previously registered System with the same alias.
+function ComponentSystem:register(sys, force)
+	force = force or false
+
+	if sys == nil then
+		dctutils.errhandler(
+			"value error: sys cannot be nil", self._logger)
 		return
 	end
-	self._systems[path] = require(path)(self)
-	Logger:info("init "..path)
+
+	if self._initialized then
+		dctutils.errhandler(
+			"cannot register a system after Theater:initialize() is called",
+			self._logger)
+		return
+	end
+
+	local alias = self._aliassystems[sys._alias]
+
+	if force and alias ~= nil then
+		self._systems[alias] = nil
+		self._aliassystems[alias] = nil
+		self._logger:info("system override: %s", alias)
+	end
+
+	if self._systems[sys.__clsname] ~= nil or
+	   self._aliassystems[sys._alias] ~= nil then
+		self._logger:error("System '%s' already registered or its alias.",
+			sys.__clsname)
+		return
+	end
+
+	self._systems[sys.__clsname] = sys
+	self._aliassystems[sys._alias] = sys.__clsname
+	table.insert(self._orderedsystems, sys)
+	self._logger:info("registered system: %s", sys.__clsname)
 	self._systemscnt = self._systemscnt + 1
 end
 
-
---- Theater
--- base class that reads in all region and template information
--- and provides a base interface for manipulating data at a theater
--- level.
-local Theater = class("Theater", Observable, Systems)
-function Theater:__init()
-	Observable.__init(self, Logger)
-	self.savestatefreq = 7*60 -- seconds
-	self.cmdmindelay   = 2
-	self.uicmddelay    = self.cmdmindelay
-	self:setTimings(settings.schedfreq, settings.tgtfps,
-		settings.percentTimeAllowed)
-	self.statef    = false
-	self.initdone  = false
-	self.qtimer    = require("dct.libs.Timer")(self.quanta, os.clock)
-	self.cmdq      = containers.PriorityQueue()
-	self.cmdrs     = {}
-	self.startdate = os.date("!*t")
-	self.namecntr  = 1000
-
-	-- Create a weak table for storing commands that should be
-	-- requeued on errors
-	self.requeueOnError = setmetatable({}, { __mode = "k" })
-
-	Systems.__init(self)
-	for _, val in pairs(coalition.side) do
-		self.cmdrs[val] = Commander(self, val)
+--- Register built-in enabled systems with the Theater as their default
+-- could have been changed. This removes the need for a custom theater
+-- to have to register each individual system even if it is built-in.
+-- Then sort systems into priority order and run all registered systems'
+-- initialize method.
+function ComponentSystem:initialize()
+	for _, system in dct.systems.iterateEnabled() do
+		self:register(system(self))
 	end
 
-	self:queueCommand(5, Command(self.__clsname..".delayedInit",
-		self.delayedInit, self))
-	self:queueCommand(100, Command(self.__clsname..".export",
-		self.export, self), true)
-	self.singleton = nil
+	self._initialized = true
+	table.sort(self._orderedsystems)
+	self:_runsys("initialize")
+	self._logger:info("systems initialized: %d", self._systemscnt)
 end
 
+--- Run all registered systems' start method.
+function ComponentSystem:start()
+	self:_runsys("start")
+end
+
+--- Base class that reads in all region and template information
+-- and provides a base interface for manipulating data at a theater
+-- level.
+-- @type Theater
+local Theater = class("Theater", Observable, ComponentSystem)
+
+--- Create a Theater class. Implements a singleton pattern so only one Theater
+-- class can ever exist in a given mission instance.
+-- @treturn Theater
 function Theater.singleton()
 	if dct.theater ~= nil then
 		return dct.theater
@@ -177,6 +142,33 @@ function Theater.singleton()
 	return dct.theater
 end
 
+--- Constructor. Creates instances of all objects the Theater may
+-- need including systems.
+function Theater:__init()
+	self._logger = dct.libs.Logger.getByName("Theater")
+	Observable.__init(self)
+	ComponentSystem.__init(self)
+	self._running = false
+	self.cmdmindelay   = 2
+	self:setTimings(settings.schedfreq, settings.tgtfps,
+		settings.percentTimeAllowed)
+	self.qtimer    = Timer(self.quanta, myos.clock)
+	self.cmdq      = containers.PriorityQueue()
+	self.namecntr  = 1000
+
+	-- Create a weak table for storing commands that should be
+	-- requeued on errors
+	self.requeueOnError = setmetatable({}, { __mode = "k" })
+	trigger.action.setUserFlag("DCTENABLE_SLOTS", settings.enableslots)
+	self.singleton = nil
+end
+
+--- Set delay timings in the clamped command processing loop.
+-- These values will be used in calculating the overall quanta
+-- DCT is allowed to use before yielding to DCS.
+-- @param cmdfreq float @the frequency at which a new command in processed
+-- @param tgtfps number @the FPS target DCT is targeting
+-- @param percent float @percentage of time DCT is allowed to utilize
 function Theater:setTimings(cmdfreq, tgtfps, percent)
 	self._cmdqfreq    = cmdfreq
 	self._targetfps   = tgtfps
@@ -186,44 +178,35 @@ function Theater:setTimings(cmdfreq, tgtfps, percent)
 		self.cmdqdelay)
 end
 
-function Theater:loadOrGenerate()
-	local statetbl
-	local statefile = io.open(settings.statepath)
+--- Initialize the theater, reading saved state or creating a new theater.
+-- Run all component initialize() methods.
+function Theater:initialize()
+	ComponentSystem.initialize(self)
+	self:queueCommand(5, Command(self.__clsname..".start",
+		self.start, self))
+end
 
-	if statefile ~= nil then
-		statetbl = json:decode(statefile:read("*all"))
-		statefile:close()
-	end
-
-	if isStateValid(statetbl) then
-		Logger:info("restoring saved state")
-		self.statef = true
-		self.startdate = statetbl.startdate
-		self.namecntr  = statetbl.namecntr
-		self:unmarshal(statetbl.systems)
-	else
-		Logger:info("generating new theater")
-		self:_runsys("generate")
-	end
-
-	trigger.action.setUserFlag("DCTENABLE_SLOTS",
-				   dct.settings.server.enableslots)
-	self.initdone = true
+--- Start the theater, run all system start methods, and emit DCT
+-- started event.
+function Theater:start()
+	ComponentSystem.start(self)
 	world.onEvent(dctutils.buildevent.initcomplete(self))
 end
 
-function Theater:delayedInit()
-	self:loadOrGenerate()
-	self:_runsys("postinit")
-
-	-- TODO: temporary, spawn all generated assets
-	-- eventually we will want to spawn only a set of assets
-	for _, asset in self:getAssetMgr():iterate() do
-		if asset.type ~= dctenum.assetType.PLAYER and
-		   not asset:isSpawned() then
-			asset:spawn()
-		end
+--- Run the theater. Registers `Theater.exec` and `Theater.onEvent` with the
+-- DCS mission scripting engine API so DCT can periodically execute code
+-- and receive events from DCS. These two theater functions are the only
+-- functions registered with DCS.
+function Theater:run()
+	if self._running == true then
+		return
 	end
+
+	self._running = true
+	self:queueCommand(5, Command(self.__clsname..".initialize",
+		self.initialize, self))
+	world.addEventHandler(self)
+	timer.scheduleFunction(self.exec, self, timer.getTime() + 20)
 end
 
 local airbase_cats = {
@@ -246,7 +229,7 @@ local airbase_events = {
 }
 
 -- some airbases (invisible FARPs seems to be the only one currently)
--- do not trigger takeoff and land events, this function figured out
+-- do not trigger takeoff and land events, this function figures out
 -- if there is a FARP near the event and if so uses that FARP as the
 -- place for the event.
 local function fixup_airbase(event)
@@ -280,114 +263,46 @@ local irrelevants = {
 	[world.event.S_EVENT_BDA]                          = true,
 }
 
--- DCS looks for this function in any table we register with the world
--- event handler
+--- Actual event handler so that the event handlers can be executed under
+-- a protected context.
+-- @tparam DCSEvent event event table received from DCS.
 function Theater:_onEvent(event)
 	if irrelevants[event.id] ~= nil then
 		return
 	end
 	fixup_airbase(event)
 	self:notify(event)
-	if event.id == world.event.S_EVENT_MISSION_END then
-		-- Only delete the active state if there is an end mission event
-		-- and tickets are complete, otherwise when a server is
-		-- shutdown gracefully the state will be deleted.
-		if self:getTickets():isComplete() then
-			-- Save the now-ended state with a timestamped filename
-			self:export(nil, os.time())
-			local ok, err = os.remove(settings.statepath)
-			if not ok then
-				Logger:error("unable to remove statefile; "..err)
-			end
-		elseif self.initdone then
-			-- Save the state for reloading after a server restart
-			self:export()
-		end
-	end
 end
 
+--- DCS looks for this function in any table we register with the world
+-- event handler.
+-- @tparam DCSEvent event event table received from DCS.
 function Theater:onEvent(event)
 	local ok, err = pcall(self._onEvent, self, event)
 
 	if not ok then
-		dctutils.errhandler(err, Logger)
+		dctutils.errhandler(err, self._logger)
 	end
 end
 
-function Theater:export(_, suffix)
-	local path = settings.statepath
-	local statefile
-	local msg
-
-	if suffix ~= nil then
-		local noext, ext = string.match(path, "^(.+)(%.[^/\\]+)$")
-		path = noext.."_"..tostring(suffix)..ext
-	end
-
-	statefile, msg = io.open(path, "w+")
-
-	if statefile == nil then
-		Logger:error("export(); unable to open '"..path..
-			"'; msg: "..tostring(msg))
-		return self.savestatefreq
-	end
-
-	local exporttbl = {
-		["version"]  = STATE_VERSION,
-		["complete"] = self:getTickets():isComplete(),
-		["date"]     = os.date("*t", dctutils.zulutime(timer.getAbsTime())),
-		["theater"]  = env.mission.theatre,
-		["sortie"]   = env.getValueDictByKey(env.mission.sortie),
-		["systems"]  = self:marshal(),
-		["startdate"] = self.startdate,
-		["namecntr"]  = self.namecntr,
-	}
-
-	statefile:write(json:encode(exporttbl))
-	statefile:flush()
-	statefile:close()
-	return self.savestatefreq
-end
-
-function Theater:getRegionMgr()
-	return self:getSystem("dct.templates.RegionManager")
-end
-
-function Theater:getAssetMgr()
-	return self:getSystem("dct.assets.AssetManager")
-end
-
-function Theater:getCommander(side)
-	return self.cmdrs[side]
-end
-
+--- Monotonically increasing counter.
 function Theater:getcntr()
 	self.namecntr = self.namecntr + 1
 	return self.namecntr
 end
 
-function Theater:getTickets()
-	return self:getSystem("dct.systems.tickets")
-end
-
--- do not worry about command priority right now
--- command queue discussion,
---  * central Q
---  * priority ordered in both priority and time
---     priority = time * 128 + P
---     time = (priority - P) / 128
+--- Queue a command that needs to be executed later.
+-- @tparam number delay amount of delay in seconds before the command is run.
+-- @tparam Command cmd the Command to execute later.
+-- @tparam bool requeueOnError requeue this command automatically with
+--   the given delay if it encounters an error.
 --
---    This allows things of higher priority to be executed first
---    but things that need to be executed at around the same time
---    to also occur.
---
--- delay - amount of delay in seconds before the command is run
--- cmd   - the command to be run
--- requeueOnError - boolean; requeue this command automatically with
---   the given delay if it encounters an error
+-- TODO: the Command object can declare its initial delay and if it should
+-- be requeued on error. This will simplify Theater to not have to keep
+-- a seperate table for requeue commands.
 function Theater:queueCommand(delay, cmd, requeueOnError)
 	if delay < self.cmdmindelay then
-		Logger:warn("queueCommand(); delay(%2.2f) less than "..
+		self._logger:warn("queueCommand(); delay(%2.2f) less than "..
 			    "schedular minimum(%2.2f), setting to schedular "..
 			    "minumum", delay, self.cmdmindelay)
 		delay = self.cmdmindelay
@@ -396,7 +311,7 @@ function Theater:queueCommand(delay, cmd, requeueOnError)
 		self.requeueOnError[cmd] = delay
 	end
 	self.cmdq:push(timer.getTime() + delay, cmd)
-	Logger:debug("queueCommand(); cmd(%s), delay: %d, cmdq size: %d",
+	self._logger:debug("queueCommand(); cmd(%s), delay: %d, cmdq size: %d",
 		cmd.name, delay, self.cmdq:size())
 end
 
@@ -415,7 +330,7 @@ function Theater:exec(time)
 		local ok, requeue = cmd:execute(time)
 
 		if not ok then
-			dctutils.errhandler(requeue, Logger, 2)
+			dctutils.errhandler(requeue, self._logger, 2)
 			local delay = self.requeueOnError[cmd]
 
 			if delay ~= nil then
@@ -428,14 +343,14 @@ function Theater:exec(time)
 		cmdctr = cmdctr + 1
 		self.qtimer:update()
 		if self.qtimer:expired() then
-			Logger:debug("exec(); quanta reached, quanta: %5.2fms",
+			self._logger:debug("exec(); quanta reached, quanta: %5.2fms",
 				     self.quanta * 1000)
 			break
 		end
 	end
 	self.qtimer:update()
 	if settings.profile then
-		Logger:debug("exec(); time taken: %4.2fms; cmds executed: %d",
+		self._logger:debug("exec(); time taken: %4.2fms; cmds executed: %d",
 			     self.qtimer.timeout * 1000, cmdctr)
 	end
 	return time + self.cmdqdelay

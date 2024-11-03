@@ -90,12 +90,13 @@ function utils.errhandler(err, logger, lvl)
 end
 
 --- Calls an optional function for a set of objects defined in tbl.
---
--- @param tbl the table of objects whos keys do not matter and whos values
--- are the objects to be checked if the object implements the optional
--- `func` function.
--- @param iterator callback to iterate over tbl.
--- @param func the function to check for and execute if exists
+-- @tparam table tbl the table of objects whos keys do not matter and
+-- whos values are the objects to be checked if the object implements
+-- the optional `func` function.
+-- @tparam function iterator callback to iterate over tbl, used in
+--   for loop.
+-- @tparam string func the name of the function to check for and
+--   execute if exists.
 function utils.foreach_call(tbl, iterator, func, ...)
 	check.table(tbl)
 	check.func(iterator)
@@ -103,6 +104,32 @@ function utils.foreach_call(tbl, iterator, func, ...)
 	for _, obj in iterator(tbl) do
 		if type(obj[func]) == "function" then
 			obj[func](obj, ...)
+		end
+	end
+end
+
+--- Call an optional function for a set of objected defined in tbl
+-- in a protected context.
+-- @tparam Logger logger to report errors
+-- @tparam table tbl the table of objects whos keys do not matter and
+-- whos values are the objects to be checked if the object implements
+-- the optional `func` function.
+-- @tparam function iterator callback to iterate over tbl, used in
+--   for loop.
+-- @tparam string func the name of the function to check for and
+--   execute if exists.
+function utils.foreach_protectedcall(logger, tbl, iterator, func, ...)
+	check.table(tbl)
+	check.func(iterator)
+
+	local ok, errmsg
+
+	for _, obj in iterator(tbl) do
+		if type(obj[func]) == "function" then
+			ok, errmsg = pcall(obj[func], obj, ...)
+			if not ok then
+				utils.errhandler(errmsg, logger, 2)
+			end
 		end
 	end
 end
