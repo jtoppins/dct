@@ -1,26 +1,36 @@
---- SPDX-License-Identifier: LGPL-3.0
---
--- Provides functions to define and manage Assets.
+-- SPDX-License-Identifier: LGPL-3.0
 
-local checklib = require("libs.check")
+--- Provides functions to define and manage Assets.
+-- @classmod dct.systems.AssetManager
+-- @alias AssetManager
+
+require("libs")
+local checklib = libs.check
 local dctenum  = require("dct.enum")
 local dctutils = require("dct.libs.utils")
 local Command  = require("dct.libs.Command")
+local System   = require("dct.libs.System")
 local Observable = require("dct.libs.Observable")
 local Marshallable = require("dct.libs.Marshallable")
-local Agent = require("dct.assets.Agent")
+--local Agent = require("dct.assets.Agent")
 
-local AssetManager = require("libs.namedclass")("AssetManager",
-	Observable, Marshallable)
+local AssetManager = libs.classnamed("AssetManager", System, Observable,
+				     Marshallable)
+AssetManager.enabled = true
+
+--- Constructor.
 function AssetManager:__init(theater)
+	System.__init(self, theater,
+		      System.SYSTEMORDER.ASSETMGR,
+		      System.SYSTEMALIAS.ASSETMGR)
+	Observable.__init(self, dct.libs.Logger.getByName(self.__clsname))
 	Marshallable.__init(self)
-	Observable.__init(self,
-		require("dct.libs.Logger").getByName("AssetManager"))
 	self:_addMarshalNames({
 		"_mizobjs",
 	})
 
 	self.updaterate = 2
+
 	-- The master list of assets, regardless of side, indexed by name.
 	-- Means Asset names must be globally unique.
 	self._assetset = {}
@@ -31,10 +41,36 @@ function AssetManager:__init(theater)
 	self._object2asset = {}
 	self._mizobjs = dctutils.get_miz_units(self._logger)
 	self._spawnq = {}
+end
 
-	theater:addObserver(self.onDCSEvent, self, "AssetManager.onDCSEvent")
-	theater:queueCommand(self.updaterate,
-		Command(self.__clsname..".update", self.update, self), true)
+function AssetManager:initialize()
+	self._theater:addObserver(self.onDCSEvent, self,
+				  self.__clsname..".onDCSEvent")
+end
+
+function AssetManager:start()
+	local cmd = Command(self.updaterate, self.__clsname..".update",
+			    self.update, self)
+	cmd:setRequeue(true)
+	self._theater:queueCommand(cmd)
+
+	for assetname, _ in pairs(self._spawnq) do
+		self:getAsset(assetname):spawn(true)
+	end
+	self._spawnq = {}
+
+	for _, unit in pairs(self._mizobjs) do
+		if unit.dead then
+			local func = Unit.getByName
+			if unit.category == Unit.Category.STRUCTURE then
+				func = StaticObject.getByName
+			end
+			local U = func(unit.name)
+			if U then
+				U:destroy()
+			end
+		end
+	end
 end
 
 function AssetManager:remove(asset)
@@ -251,24 +287,37 @@ function AssetManager:unmarshal(data)
 	end
 end
 
-function AssetManager:postinit()
-	for assetname, _ in pairs(self._spawnq) do
-		self:getAsset(assetname):spawn(true)
-	end
-	self._spawnq = {}
+--[[
+--  * Asset Impact Notifier:
+--   (part of the default AssetManager)
+--    - directly notify assets "near" the blast with line of sight
+--      to the impact area as calculated 100m above the impact point
 
-	for _, unit in pairs(self._mizobjs) do
-		if unit.dead then
-			local func = Unit.getByName
-			if unit.category == Unit.Category.STRUCTURE then
-				func = StaticObject.getByName
-			end
-			local U = func(unit.name)
-			if U then
-				U:destroy()
-			end
-		end
+-- If there is a DCT asset of the same name as the DCS base,
+-- notify the DCT asset it has been hit.
+local function handlebase(base, data)
+	local asset = data.theater:getAssetMgr():getAsset(base:getName())
+
+	if asset == nil then
+		return
 	end
+
+	asset:onDCTEvent(data.event)
 end
+
+	local vol = {
+		id = world.VolumeType.SPHERE,
+		params = {
+			point = event.point,
+			radius = 6000, -- allows for > 15000ft runway
+		},
+	}
+	world.searchObjects(Object.Category.BASE, vol, handlebase,
+		{
+			["event"]   = event,
+			["theater"] = self._theater,
+		})
+
+--]]
 
 return AssetManager

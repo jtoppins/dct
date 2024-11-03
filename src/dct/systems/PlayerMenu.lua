@@ -1,7 +1,14 @@
+-- A general player menu and request system that allows a user to
+-- 1. define the top level menus for the F10 other DCS menu system
+-- 2. allow other systems to register a top level menu and request
+--    handler with the system
+-- 3. automatically handle dispatch of requests and automatic redraw
+--    of menu entries
 -- SPDX-License-Identifier: LGPL-3.0
 
 --- UI Menus
 
+--[[
 local utils     = require("libs.utils")
 --local vector    = require("dct.libs.vector")
 local Mission   = require("dct.ai.Mission")
@@ -71,7 +78,6 @@ local function _get_mission(menu, agent)
 		end
 	end
 
-	--[[
 	local cmdr = dct.theater:getCommander(agent.owner)
 	local location = vector.Vector2D(agent:getDescKey("location"))
 	local msnList = cmdr:getTopMissions(agent, 10, true)
@@ -89,7 +95,6 @@ local function _get_mission(menu, agent)
 			dctenum.requestType.MISSION_REQUEST,
 			msn.type, { mission = msn:getID() })
 	end
-	--]]
 
 	menu:addRqstCmd("Join (Scratchpad)", uirequest.mission_join)
 	msncodes(menu:addMenu("Join (Input Code)"))
@@ -107,7 +112,6 @@ local function create_mission(menu, agent)
 	end
 end
 
---[[
 --- Manage Mission menu items
 -- F5: Air Refueling
 --   F1: Request Rescue Tkr
@@ -119,7 +123,6 @@ end
 local function create_tanker(menu, agent)
 	-- TODO: refresh tankers periodically
 end
---]]
 
 local function menu_entry(title, id, handler, iscmd)
 	iscmd = iscmd or false
@@ -169,3 +172,6 @@ local function create_menus(agent)
 end
 
 return create_menus
+--]]
+
+return { __clsname = "PlayerMenu", }
