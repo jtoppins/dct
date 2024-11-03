@@ -2,13 +2,15 @@
 --
 -- Provides functions for handling templates.
 
-local class    = require("libs.namedclass")
-local check    = require("libs.check")
-local utils    = require("libs.utils")
+require("libs")
+local class    = libs.classnamed
+local check    = libs.check
+local utils    = libs.utils
 local dctenum  = require("dct.enum")
 local STM      = require("dct.templates.STM")
 local Agent    = require("dct.assets.Agent")
-local Logger   = dct.Logger.getByName("Template")
+local Logger   = dct.libs.Logger.getByName("Template")
+local Checker  = require("dct.libs.Check")
 
 -- TODO: setup a respawn attribute
 
@@ -193,7 +195,6 @@ end
 -- Generate markdown styled documentation for all options a campaign
 -- designer can use to specify a template.
 function Template.genDocs()
-	local Checker = require("dct.templates.checkers.Check")
 	local header = [[
 # Template Attributes
 

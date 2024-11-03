@@ -4,14 +4,15 @@
 
 require("lfs")
 require("math")
-local class      = require("libs.namedclass")
-local utils      = require("libs.utils")
+require("libs")
+local class      = libs.classnamed
+local utils      = libs.utils
 local dctenum    = require("dct.enum")
 local dctutils   = require("dct.libs.utils")
 local vector     = require("dct.libs.vector")
 local Marshallable = require("dct.libs.Marshallable")
 local Template   = require("dct.templates.Template")
-local Logger     = dct.Logger.getByName("Region")
+local Logger     = dct.libs.Logger.getByName("Region")
 
 local tplkind = {
 	["TEMPLATE"]  = 1,
@@ -25,6 +26,7 @@ local DOMAIN = {
 }
 
 local initasset = {
+	--[[
 	[dctenum.assetType.RESOURCE]    = true,
 	[dctenum.assetType.AMMODUMP]    = true,
 	[dctenum.assetType.FUELDUMP]    = true,
@@ -45,6 +47,7 @@ local initasset = {
 	[dctenum.assetType.SAM]         = true,
 	[dctenum.assetType.SHORAD]      = true,
 	[dctenum.assetType.SHIP]        = true,
+	--]]
 }
 
 local function processlimits(_, tbl)

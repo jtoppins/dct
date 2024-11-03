@@ -122,21 +122,19 @@ function dcttest.setupRuntime()
 	setupDCSEnv()
 	require("dct")
 
-	--[[
 	local function sanitizeModule(name)
 		_G[name] = nil
 		package.loaded[name] = nil
 	end
 
 	do
-		sanitizeModule('os')
-		sanitizeModule('io')
-		sanitizeModule('lfs')
-		_G['require'] = nil
-		_G['loadlib'] = nil
-		_G['package'] = nil
+		--sanitizeModule('os')
+		--sanitizeModule('io')
+		--sanitizeModule('lfs')
+		--_G['require'] = nil
+		--_G['loadlib'] = nil
+		--_G['package'] = nil
 	end
-	--]]
 end
 
 function dcttest.createPlayer(playername)

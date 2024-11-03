@@ -1,11 +1,12 @@
 --- SPDX-License-Identifier: LGPL-3.0
 
-local class    = require("libs.namedclass")
-local utils    = require("libs.utils")
+require("libs")
+local class    = libs.classnamed
+local utils    = libs.utils
 local dctenum  = require("dct.enum")
 local vector   = require("dct.libs.vector")
 local Goal     = require("dct.assets.DeathGoals")
-local Check    = require("dct.templates.checkers.Check")
+local Check    = require("dct.libs.Check")
 
 -- represents the amount of damage that can be taken before
 -- that state is no longer considered valid.

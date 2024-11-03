@@ -1,13 +1,12 @@
---[[
 -- SPDX-License-Identifier: LGPL-3.0
---
--- Weapon blasteffect and enhacement system
+
+--- Weapon blasteffect and enhacement system
 --
 -- This listens for DCT impact events and trigger enhanced
 -- explosions based on those impact events. This also searches
 -- for airbases within the area of the impact and will send
 -- a DCT hit event to the airbase if found.
---]]
+-- @module dct.systems.blasteffects
 
 --[[
 -- return the distance in meters from the center of a blast from an
@@ -23,7 +22,9 @@ local function calcRadiusFromMass(mass)
 end
 --]]
 
-local class   = require("libs.namedclass")
+require("libs")
+
+local class   = libs.classnamed
 local dctenum = require("dct.enum")
 local Marshallable = require("dct.libs.Marshallable")
 

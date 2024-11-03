@@ -1,10 +1,10 @@
---[[
 -- SPDX-License-Identifier: LGPL-3.0
---
--- Weapons impact tracking system
---]]
 
-local class    = require("libs.namedclass")
+--- Weapons impact tracking system
+-- @module dct.systems.weaponstracking
+
+require("libs")
+local class    = libs.classnamed
 local dctutils = require("dct.libs.utils")
 local vector   = require("dct.libs.vector")
 local Logger   = require("dct.libs.Logger").getByName("System")

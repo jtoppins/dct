@@ -3,12 +3,13 @@
 --- Defines the accounting of a ticket system.
 
 require("math")
-local class    = require("libs.namedclass")
-local utils    = require("libs.utils")
+require("libs")
+local class    = libs.classnamed
+local utils    = libs.utils
 local Timer    = require("dct.libs.Timer")
 local Marshallable = require("dct.libs.Marshallable")
 local Command  = require("dct.libs.Command")
-local Check    = require("dct.templates.checkers.Check")
+local Check    = require("dct.libs.Check")
 local UPDATE_TIME = 120
 
 local coa_list = {"red", "blue", "neutral"}

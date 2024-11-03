@@ -1,5 +1,7 @@
 --- SPDX-License-Identifier: LGPL-3.0
 
+require("libs")
+local class    = libs.classnamed
 local dctenum  = require("dct.enum")
 local dctutils = require("dct.libs.utils")
 local WS       = require("dct.assets.worldstate")
@@ -13,7 +15,7 @@ local function any_event(_ --[[key]], fact)
 	return fact.type == WS.Facts.factType.EVENT
 end
 
-local PlayerJoin = require("libs.namedclass")("PlayerJoin", WS.Action)
+local PlayerJoin = class("PlayerJoin", WS.Action)
 function PlayerJoin:__init(agent)
 	WS.Action.__init(self, agent, 1, {
 		-- pre-conditions

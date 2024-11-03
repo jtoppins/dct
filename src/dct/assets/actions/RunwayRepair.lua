@@ -1,13 +1,15 @@
 -- SPDX-License-Identifier: LGPL-3.0
 
-local utils    = require("libs.utils")
+require("libs")
+local class    = libs.classnamed
+local utils    = libs.utils
 local Timer    = require("dct.libs.Timer")
 local WS       = require("dct.assets.worldstate")
 local REPAIR_TIME = 3600 -- 1 hour
 
 --- @classmod RunwayRepair
 -- Repairs an airbase runway based on time remaining to repair.
-local RunwayRepair = require("libs.namedclass")("RunwayRepair", WS.Action)
+local RunwayRepair = class("RunwayRepair", WS.Action)
 function RunwayRepair:__init(agent, cost)
 	WS.Action.__init(self, agent, cost or 10, {
 		-- pre-conditions

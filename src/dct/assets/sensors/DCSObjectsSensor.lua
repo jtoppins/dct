@@ -1,7 +1,9 @@
 -- SPDX-License-Identifier: LGPL-3.0
 
 require("math")
-local utils        = require("libs.utils")
+require("libs")
+local class        = libs.classnamed
+local utils        = libs.utils
 local dctenum      = require("dct.enum")
 local DCTEvents    = require("dct.libs.DCTEvents")
 local Timer        = require("dct.libs.Timer")
@@ -157,7 +159,7 @@ end
 --
 -- @modifies Agent.memory
 -- @modifies Agent.desc.tpldata
-local DCSObjectsSensor = require("libs.namedclass")("DCSObjectsSensor",
+local DCSObjectsSensor = class("DCSObjectsSensor",
 	WS.Sensor, DCTEvents)
 function DCSObjectsSensor:__init(agent)
 	WS.Sensor.__init(self, agent, 5)

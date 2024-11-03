@@ -4,7 +4,9 @@
 -- A common library of functions that support drawing UI elements on
 -- the F10 map.
 
-local class    = require("libs.namedclass")
+require("libs")
+
+local class    = libs.classnamed
 local dctutils = require("dct.libs.utils")
 
 local markindex = 10
