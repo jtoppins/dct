@@ -10,7 +10,6 @@ local Mission  = require("dct.ai.Mission")
 local WS       = require("dct.assets.worldstate")
 local uidraw   = require("dct.ui.draw")
 local human    = require("dct.ui.human")
-local loadout  = require("dct.ui.loadouts")
 
 local function post_msg(agent, key, msg, displaytime)
 	displaytime = displaytime or 30
@@ -168,27 +167,6 @@ function TheaterUpdateCmd:_execute()
 end
 --]]
 
-local function checkpayload(agent)
-	local key = "checkpayload_msg"
-	if agent:WS():get(WS.ID.INAIR).value == true then
-		post_msg(agent, key,
-			"Payload check is only allowed when landed at "..
-			"a friendly airbase")
-		return
-	end
-
-	local ok, totals = loadout.check(agent)
-	local msg = loadout.summary(totals)
-	local header
-
-	if ok then
-		header = "Valid loadout, you may depart. Good luck!\n\n"
-	else
-		header = "You are over budget! Re-arm before departing, "..
-			 "or you will be punished!\n\n"
-	end
-	post_msg(agent, key, header..msg)
-end
 
 local function mission_join(agent, data)
 	local theater = dct.Theater.singleton()
@@ -281,7 +259,6 @@ _request.post_msg        = post_msg
 _request.defer_request   = defer_request
 _request.scratchpad_get  = scratchpad_get
 _request.scratchpad_set  = scratchpad_set
-_request.checkpayload    = checkpayload
 _request.mission_join    = mission_join
 _request.mission_request = mission_request
 _request.mission_brief   = mission_brief

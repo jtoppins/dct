@@ -2,7 +2,9 @@
 --
 -- Creates a container for managing region objects.
 
-local utils        = require("libs.utils")
+require("libs")
+local class        = libs.classnamed
+local utils        = libs.utils
 local dctenum      = require("dct.enum")
 local vector       = require("dct.libs.vector")
 local Marshallable = require("dct.libs.Marshallable")
@@ -14,7 +16,7 @@ local settings = dct.settings.server
 -- of a Region within the collection.
 --
 -- @field regions holds the table of regions indexed by Region.name
-local RegionManager = require("libs.namedclass")("RegionManager",
+local RegionManager = class("RegionManager",
 	Marshallable)
 function RegionManager:__init(theater)
 	self.regions = {}

@@ -3,8 +3,17 @@
 -- Implements a loadout point buy system to limit player loadouts.
 -- Assumes a single player slot per group and it is the first slot.
 
+--[[
 local dctenum  = require("dct.enum")
 local dctutils = require("dct.libs.utils")
+
+local WPNINFCOST = 5000
+
+enum.weaponCategory = {
+	["AA"] = 1,
+	["AG"] = 2,
+	["GUN"] = 3,
+}
 
 local isAAMissile = {
 	[Weapon.MissileCategory.AAM] = true,
@@ -151,4 +160,30 @@ function loadout.check(player)
 
 end
 
+local function checkpayload(agent)
+	local key = "checkpayload_msg"
+	if agent:WS():get(WS.ID.INAIR).value == true then
+		post_msg(agent, key,
+			"Payload check is only allowed when landed at "..
+			"a friendly airbase")
+		return
+	end
+
+	local ok, totals = loadout.check(agent)
+	local msg = loadout.summary(totals)
+	local header
+
+	if ok then
+		header = "Valid loadout, you may depart. Good luck!\n\n"
+	else
+		header = "You are over budget! Re-arm before departing, "..
+			 "or you will be punished!\n\n"
+	end
+	post_msg(agent, key, header..msg)
+end
+
+
 return loadout
+--]]
+
+return { __clsname = "RestrictedWeapons", }
