@@ -1,7 +1,6 @@
 --- SPDX-License-Identifier: LGPL-3.0
-
---- Define some basic global enumerations for DCT.
--- @module enum
+--
+-- Define some basic global enumerations for DCT.
 
 local enum = {}
 

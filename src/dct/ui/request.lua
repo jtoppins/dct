@@ -1,7 +1,6 @@
 -- SPDX-License-Identifier: LGPL-3.0
 
 --- UI Requests
--- @module dct.ui.request
 
 --local utils    = require("libs.utils")
 --local dctenum  = require("dct.enum")

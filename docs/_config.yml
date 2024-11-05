@@ -1,0 +1,14 @@
+title: Dynamic Campaign Tools
+tagline: Dynamic Campaigns for DCS
+description: Mission scripting framework for persistent Digital Combat Simulator (DCS) missions.
+remote_theme: pmarsceill/just-the-docs
+aux_links_new_tab: true
+github_link: "https://github.com/jtoppins/dct"
+discord_link: "https://discord.gg/6z8uERVW5Y"
+release_link: "https://github.com/jtoppins/dct/releases/latest"
+aux_links:
+        "DCT on GitHub":
+                - "https://github.com/jtoppins/dct"
+        "Contact Us":
+                - "https://discord.gg/6z8uERVW5Y"
+color_scheme: light

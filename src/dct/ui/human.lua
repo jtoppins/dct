@@ -389,10 +389,9 @@ function human.mission_detail_facts(msn, filter, gridfmt)
 	return result
 end
 
---- Print all the assets assigned to the Mission assigned
--- to player.
+--- Print all the assets assigned to the Mission(msn).
 --
--- @param player the Player agent to get the mission from
+-- @param msn the mission to print the assets assigned
 -- @return string listing all the assets assigned
 function human.mission_assigned(player)
 	local assetmgr = dct.Theater.singleton():getAssetMgr()

@@ -2,7 +2,6 @@
 
 --- Provides a basic Command class to call an arbitrary function
 -- at a later time via the Command's execute function.
--- @module Command
 
 local class = require("libs.namedclass")
 local utils = require("libs.utils")
@@ -19,8 +18,6 @@ local cmdpriority = {
 	["NORMAL"] = 64,
 }
 
---- Command class to run a deferred function.
--- @type Command
 local Command = class("Command")
 function Command:__init(name, func, ...)
 	self.name = check.string(name)

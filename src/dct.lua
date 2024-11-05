@@ -1,8 +1,5 @@
 -- SPDX-License-Identifier: LGPL-3.0
 
---- Dynamic Campaign Tools.
---- @module dct
-
 local utils = require("libs.utils")
 
 local dct = {

@@ -158,6 +158,7 @@ end
 -- a lua table. Then create a Template object at the same time checking
 -- the template's data is valid.
 --
+-- @param region the region object the Template belongs to
 -- @param dctfile the file path of the .dct file describing the template
 -- @param stmfile [optional] the file path of the .stm file describing the
 --          template
