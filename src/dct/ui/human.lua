@@ -1,9 +1,12 @@
 -- SPDX-License-Identifier: LGPL-3.0
 
---- common functions to convert data to human readable formats
+--- Common functions to convert data to human readable formats.
+-- @module dct.ui.human
 
 require("math")
-local utils    = require("libs.utils")
+require("libs")
+
+local utils    = libs.utils
 local dctenum  = require("dct.enum")
 local dctutils = require("dct.libs.utils")
 local Mission  = require("dct.ai.Mission")
@@ -114,7 +117,7 @@ local conversiontbl = {
 	[unitstype.TEMP]     = temp_conversion,
 }
 
---- Filter out facts that are not considered targets.
+-- Filter out facts that are not considered targets.
 local function istarget(owner)
 	return function (fact)
 		if fact.type == WS.Facts.factType.CHARACTER and
@@ -128,7 +131,7 @@ local function istarget(owner)
 	end
 end
 
---- Filter out facts that are not considered threats.
+-- Filter out facts that are not considered threats.
 local function isthreat(owner)
 	return function (fact)
 		if fact.type == WS.Facts.factType.CHARACTER and
@@ -141,7 +144,7 @@ local function isthreat(owner)
 	end
 end
 
---- reduce the accuracy of the position to the precision specified
+-- reduce the accuracy of the position to the precision specified
 local function degradeLL(lat, long, precision)
 	local multiplier = math.pow(10, precision)
 	lat  = math.modf(lat * multiplier) / multiplier
@@ -149,7 +152,7 @@ local function degradeLL(lat, long, precision)
 	return lat, long
 end
 
---- set up formatting args for the LL string
+-- set up formatting args for the LL string
 local function getLLformatstr(precision, fmt)
 	local decimals = precision
 	if fmt == posfmt.DDM then
@@ -184,6 +187,14 @@ human.speedfmt = speedfmt
 human.tempfmt = tempfmt
 human.units = unitstype
 
+--- Convert from DCS native unit to another unit of measure using
+-- conversion tables.
+-- @tparam number value value to convert
+-- @tparam human.units utype the type of unit of measure
+-- @tparam  human.*fmt touint the unit of measure to convert to.
+-- @treturn[1] number converted value
+-- @treturn[1] number unit symbol
+-- @treturn[2] nil on error
 function human.convert(value, utype, tounit)
 	local converttbl = conversiontbl[utype]
 
@@ -233,6 +244,8 @@ function human.threat(value)
 	return "high"
 end
 
+--- A textual representation of the strengths of value.
+-- @tparam number value
 function human.strength(value)
 	if value == nil then
 		return "Unknown"
@@ -248,6 +261,9 @@ function human.strength(value)
 	return "Excellent"
 end
 
+--- Text representation of the relationship between two sides.
+-- @tparam coalition.side side1
+-- @tparam coalition.side side2
 function human.relationship(side1, side2)
 	if side1 == side2 then
 		return "Friendly"
