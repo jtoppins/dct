@@ -63,7 +63,7 @@ describe("validate dct.libs", function()
 		end)
 
 		test("delayed execution", function()
-			local cmd = dct.libs.Command("test cmd", f, 1, 2, 3)
+			local cmd = dct.libs.Command(5, "test cmd", f, 1, 2, 3)
 			local _, r = cmd:execute(500)
 			assert.is.equal(r, 506)
 		end)
