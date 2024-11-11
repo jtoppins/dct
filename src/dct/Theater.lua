@@ -314,6 +314,12 @@ function Theater:_onEvent(event)
 	end
 	fixup_airbase(event)
 	self:notify(event)
+
+	if dct.event.ID.DCT_EVENT_THEATER_END == event.id then
+		local code = string.format([[a_end_mission("%s", "%s", 10)]],
+					   event.winner, event.msg)
+		net.dostring_in("mission", string.format("%q", code))
+	end
 end
 
 --- DCS looks for this function in any table we register with the world
