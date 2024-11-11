@@ -156,9 +156,6 @@ function Theater:__init()
 	self.cmdq      = containers.PriorityQueue()
 	self.namecntr  = 1000
 
-	-- Create a weak table for storing commands that should be
-	-- requeued on errors
-	self.requeueOnError = setmetatable({}, { __mode = "k" })
 	trigger.action.setUserFlag("DCTENABLE_SLOTS", settings.enableslots)
 	self.singleton = nil
 end
@@ -182,7 +179,7 @@ end
 -- Run all component initialize() methods.
 function Theater:initialize()
 	ComponentSystem.initialize(self)
-	self:queueCommand(5, Command(self.__clsname..".start",
+	self:queueCommand(Command(5, self.__clsname..".start",
 		self.start, self))
 end
 
@@ -203,7 +200,7 @@ function Theater:run()
 	end
 
 	self._running = true
-	self:queueCommand(5, Command(self.__clsname..".initialize",
+	self:queueCommand(Command(5, self.__clsname..".initialize",
 		self.initialize, self))
 	world.addEventHandler(self)
 	timer.scheduleFunction(self.exec, self, timer.getTime() + 20)
@@ -292,27 +289,17 @@ function Theater:getcntr()
 end
 
 --- Queue a command that needs to be executed later.
--- @tparam number delay amount of delay in seconds before the command is run.
 -- @tparam Command cmd the Command to execute later.
--- @tparam bool requeueOnError requeue this command automatically with
---   the given delay if it encounters an error.
---
--- TODO: the Command object can declare its initial delay and if it should
--- be requeued on error. This will simplify Theater to not have to keep
--- a seperate table for requeue commands.
-function Theater:queueCommand(delay, cmd, requeueOnError)
-	if delay < self.cmdmindelay then
+function Theater:queueCommand(cmd)
+	if cmd.delay < self.cmdmindelay then
 		self._logger:warn("queueCommand(); delay(%2.2f) less than "..
 			    "schedular minimum(%2.2f), setting to schedular "..
-			    "minumum", delay, self.cmdmindelay)
-		delay = self.cmdmindelay
+			    "minumum", cmd.delay, self.cmdmindelay)
+		cmd.delay = self.cmdmindelay
 	end
-	if requeueOnError then
-		self.requeueOnError[cmd] = delay
-	end
-	self.cmdq:push(timer.getTime() + delay, cmd)
+	self.cmdq:push(timer.getTime() + cmd.delay, cmd)
 	self._logger:debug("queueCommand(); cmd(%s), delay: %d, cmdq size: %d",
-		cmd.name, delay, self.cmdq:size())
+		cmd.name, cmd.delay, self.cmdq:size())
 end
 
 --- execute queued commands
@@ -331,13 +318,13 @@ function Theater:exec(time)
 
 		if not ok then
 			dctutils.errhandler(requeue, self._logger, 2)
-			local delay = self.requeueOnError[cmd]
 
-			if delay ~= nil then
-				self:queueCommand(delay, cmd, true)
+			if cmd.requeueOnError == true then
+				self:queueCommand(cmd)
 			end
 		elseif ok and type(requeue) == "number" then
-			self:queueCommand(requeue, cmd)
+			cmd.delay = requeue
+			self:queueCommand(cmd)
 		end
 
 		cmdctr = cmdctr + 1

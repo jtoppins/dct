@@ -37,16 +37,22 @@ local cmdpriority = {
 local Command = class("Command")
 
 --- Class constructor.
--- @param name name of the Command, used in log output to differentiate.
--- @param func the function to execute later
+-- @tparam number delay amount of delay in seconds before the command is run.
+-- @tparam string name name of the Command, used in log output to
+--   differentiate.
+-- @tparam function func the function to execute later. The function should
+--   return either a number representing how long the command should be
+--   requeued for before being executed again, otherwise nil to signal the
+--   command should not be requeue.
 -- @param ... arguments to pass to the function
--- @return none
-function Command:__init(name, func, ...)
+function Command:__init(delay, name, func, ...)
 	self._logger = dct.libs.Logger.getByName("Command")
+	self.delay = check.number(delay)
 	self.name = check.string(name)
 	self.func = check.func(func)
 	self.prio = cmdpriority.NORMAL
 	self.args = {select(1, ...)}
+	self.requeueOnError = false
 	self.PRIORITY = nil
 
 	if (dct.settings and dct.settings.server and
@@ -60,6 +66,11 @@ end
 -- lower value is higher priority; total of 127 priority values
 Command.PRIORITY = cmdpriority
 
+--- Set if the command should be requeued on error.
+function Command:setRequeue(state)
+	self.requeueOnError = check.bool(state)
+end
+
 --- Execute the deferred function.
 -- The deferred function is called in a protected context where the
 -- function can take an arbitrary parameter list and returns the same
@@ -69,7 +80,12 @@ Command.PRIORITY = cmdpriority
 -- This could be beneficial when trying to debug stuttering.
 -- @param self reference to Command object
 -- @param time time-step the command is executed
--- @return variable, depends on func
+-- @treturn[1] bool true the command executed without error
+-- @treturn[1] nil do not requeue the command
+-- @treturn[2] bool true the command executed without error
+-- @treturn[2] number delay time the command should be requeued for
+-- @treturn[3] bool false the command experienced an error
+-- @treturn[3] string error message
 Command.execute = execute
 
 return Command
