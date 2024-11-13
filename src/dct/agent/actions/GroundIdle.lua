@@ -3,7 +3,7 @@
 require("libs")
 local class = libs.classnamed
 local aitasks = require("dct.ai.tasks")
-local WS = require("dct.assets.worldstate")
+local WS = require("dct.agent.worldstate")
 
 local GroundIdle = class("GroundIdle", WS.Action)
 function GroundIdle:__init(agent)

@@ -8,7 +8,7 @@ local check    = libs.check
 local utils    = libs.utils
 local dctenum  = require("dct.enum")
 local STM      = require("dct.templates.STM")
-local Agent    = require("dct.assets.Agent")
+local Agent    = require("dct.agent.Agent")
 local Logger   = dct.libs.Logger.getByName("Template")
 local Checker  = require("dct.libs.Check")
 

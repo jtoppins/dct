@@ -7,7 +7,7 @@ local dctenum    = require("dct.enum")
 local vector     = require("dct.libs.vector")
 local DCTEvents  = require("dct.libs.DCTEvents")
 local uidraw     = require("dct.ui.draw")
-local WS         = require("dct.assets.worldstate")
+local WS         = require("dct.agent.worldstate")
 
 local linecolor = { 1, 0,    0, 1     }
 local fillcolor = { 1, 0.25, 0, 0.075 }

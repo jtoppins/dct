@@ -2,7 +2,7 @@
 
 require("libs")
 local class = libs.classnamed
-local WS = require("dct.assets.worldstate")
+local WS = require("dct.agent.worldstate")
 
 local Idle = class("Idle", WS.Action)
 function Idle:__init(agent)

@@ -1,7 +1,7 @@
 -- SPDX-License-Identifier: LGPL-3.0
 
 local Queue  = require("libs.containers.queue")
-local WS     = require("dct.assets.worldstate")
+local WS     = require("dct.agent.worldstate")
 
 local function maxorder(l, r)
 	return l.score > r.score

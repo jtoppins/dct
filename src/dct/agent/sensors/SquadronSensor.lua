@@ -6,7 +6,7 @@ local dctenum     = require("dct.enum")
 local dctutils    = require("dct.libs.utils")
 local Timer       = require("dct.libs.Timer")
 local DCTEvents   = require("dct.libs.DCTEvents")
-local WS          = require("dct.assets.worldstate")
+local WS          = require("dct.agent.worldstate")
 local UPDATE_TIME = 60
 
 -- TODO: Instead of a squadron being assigned a mission squadrons will

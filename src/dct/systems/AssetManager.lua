@@ -315,7 +315,7 @@ end
 
 function AssetManager:unmarshal(data)
 	for _, assettbl in pairs(data.assets) do
-		local asset = Agent()
+		local asset = dct.agent.Agent()
 		asset:unmarshal(assettbl)
 		self:add(asset)
 		if asset:isSpawned() then

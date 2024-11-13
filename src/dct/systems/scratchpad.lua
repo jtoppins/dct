@@ -6,7 +6,7 @@
 
 require("libs")
 local class  = libs.classnamed
-local WS     = require("dct.assets.worldstate")
+local WS     = require("dct.agent.worldstate")
 
 local function sanatize(txt)
 	if type(txt) ~= "string" then
