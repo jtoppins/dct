@@ -1,8 +1,8 @@
 -- SPDX-License-Identifier: LGPL-3.0
 
---- @classmod dct.assets.Agent
--- Agent interface. Provides a common API for interacting with
+--- Agent interface. Provides a common API for interacting with
 -- underlying DCS groups.
+-- @classmod dct.agent.Agent
 
 require("libs")
 local class      = libs.classnamed
@@ -12,13 +12,12 @@ local dctenum    = require("dct.enum")
 local dctutils   = require("dct.libs.utils")
 local Logger     = require("dct.libs.Logger")
 local aitasks    = require("dct.ai.tasks")
-local WS         = require("dct.assets.worldstate")
+local WS         = require("dct.agent.worldstate")
 local Marshallable = require("dct.libs.Marshallable")
 local Observable = require("dct.libs.Observable")
 local Subordinates = require("dct.libs.Subordinates")
 local Memory     = require("dct.libs.Memory")
 local INVALID_OWNER = -1
-local agentcomponents = { "sensors", "actions", "goals" }
 
 --- common logging interfaces for the Agent class.
 local AgentLogger = class("AgentLogger", Logger)
@@ -105,38 +104,6 @@ local function filter_template_data(tpldata)
 	return cpytbl
 end
 
-
-local function load_module(subpath, objtype)
-	local path = "dct.assets."..subpath.."."..objtype
-	Logger.getByName("Agent"):debug("init - load_module: %s",
-		tostring(path))
-	return require(path)
-end
-
-local objecttypes = {}
-local objtbl = {}
-local basepath = table.concat({dct.modpath, "lua", "dct", "assets"},
-			      utils.sep)
-Logger.getByName("Agent"):debug("init - basepath: %s", tostring(basepath))
-for _, subpath in ipairs(agentcomponents) do
-	objtbl[subpath] = {}
-	objecttypes[subpath] = {}
-	for file in lfs.dir(basepath..utils.sep..subpath) do
-		local st, _, cap1 = string.find(file, "([^.]+)%.lua$")
-
-		if st then
-			local obj = load_module(subpath, cap1)
-			local objtype = string.upper(obj.__clsname)
-
-			assert(objtbl[subpath][objtype] == nil,
-				string.format("type taken %s(%s)",
-				subpath, objtype))
-			objtbl[subpath][objtype] = obj
-			objecttypes[subpath][objtype] = objtype
-		end
-	end
-end
-
 --- Designers can specify what set of actions an Agent can have,
 -- this is done by defining a list where the index is the name of the
 -- action and the value is the cost of the action.
@@ -151,6 +118,9 @@ end
 -- By changing the relative weighting of a given goal the asset
 -- will attempt to do that goal more or less often.
 local function set_ai_objects(agent, template)
+	local agentcomponents = { "sensors", "actions", "goals" }
+	local objtbl = dct.agent
+
 	for _, objkind in ipairs(agentcomponents) do
 		local t = {}
 		for objtype, val in pairs(template[objkind] or {}) do
@@ -240,7 +210,6 @@ function Agent:__init()
 
 	self.filter_no_controller = nil
 	self.create               = nil
-	self.objectType           = nil
 end
 
 --- Create a new Agent object
@@ -270,9 +239,7 @@ function Agent.filter_no_controller(grp)
 	return nocontroller[grp.category] == nil
 end
 
-Agent.objectType = objecttypes
-
---- Destroys the Agent, deleting all associated DCS object, without emitting
+--- Destroys the Agent, deleting all associated DCS objects, without emitting
 -- a death event to listeners.
 function Agent:destroy()
 	self:despawn()

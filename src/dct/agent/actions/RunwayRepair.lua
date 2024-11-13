@@ -4,7 +4,7 @@ require("libs")
 local class    = libs.classnamed
 local utils    = libs.utils
 local Timer    = require("dct.libs.Timer")
-local WS       = require("dct.assets.worldstate")
+local WS       = require("dct.agent.worldstate")
 local REPAIR_TIME = 3600 -- 1 hour
 
 --- @classmod RunwayRepair

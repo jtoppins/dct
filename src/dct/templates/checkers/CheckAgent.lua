@@ -5,7 +5,6 @@ local class   = libs.classnamed
 local utils   = libs.utils
 local dctenum = require("dct.enum")
 local Check   = require("dct.libs.Check")
-local Agent   = require("dct.assets.Agent")
 
 local notagent = {
 	[dctenum.assetType.INVALID] = true,
@@ -18,7 +17,7 @@ function CheckAgent:__init()
 		["sensors"] = {
 			["default"] = {},
 			["type"]    = Check.valuetype.TABLEKEYS,
-			["values"]  = Agent.objectType["sensors"],
+			["values"]  = dct.agent.sensors,
 			["description"] = [[
 Sensors monitor the agent's state. The available sensors are:
 
@@ -27,7 +26,7 @@ Sensors monitor the agent's state. The available sensors are:
 		["actions"] = {
 			["default"] = {},
 			["type"]    = Check.valuetype.TABLEKEYS,
-			["values"]  = Agent.objectType["actions"],
+			["values"]  = dct.agent.actions,
 			["description"] = [[
 Actions are the set of action objects the agent has available to it to
 manipulate its state to a desired goal state. The following list of actions
@@ -38,7 +37,7 @@ are:
 		["goals"] = {
 			["default"] = {},
 			["type"]    = Check.valuetype.TABLEKEYS,
-			["values"]  = Agent.objectType["goals"],
+			["values"]  = dct.agent.goals,
 			["description"] = [[
 Goals represent desired world states that an Agent attempts to achieve. The
 following goals are available:

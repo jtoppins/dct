@@ -7,8 +7,8 @@ local utils        = libs.utils
 local dctenum      = require("dct.enum")
 local DCTEvents    = require("dct.libs.DCTEvents")
 local Timer        = require("dct.libs.Timer")
-local Goal         = require("dct.assets.DeathGoals")
-local WS           = require("dct.assets.worldstate")
+local Goal         = require("dct.agent.DeathGoals")
+local WS           = require("dct.agent.worldstate")
 local aitasks      = require("dct.ai.tasks")
 local UPDATE_TIME  = 300
 

@@ -6,7 +6,7 @@ local class     = libs.classnamed
 local check     = libs.check
 local dctutils  = require("dct.libs.utils")
 local uirequest = require("dct.ui.request")
-local WS        = require("dct.assets.worldstate")
+local WS        = require("dct.agent.worldstate")
 
 local function _request(data)
 	local theater = dct.Theater.singleton()

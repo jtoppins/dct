@@ -11,7 +11,7 @@ local dctenum  = require("dct.enum")
 local dctutils = require("dct.libs.utils")
 local Timer    = require("dct.libs.Timer")
 local vector   = require("dct.libs.vector")
-local WS       = require("dct.assets.worldstate")
+local WS       = require("dct.agent.worldstate")
 local aitasks  = require("dct.ai.tasks")
 local TIMEOUT  = 30
 
