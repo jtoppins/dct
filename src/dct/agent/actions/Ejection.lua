@@ -5,7 +5,7 @@
 
 require("libs")
 local class = libs.classnamed
-local WS = require("dct.assets.worldstate")
+local WS = require("dct.agent.worldstate")
 
 local function is_eject_event(_ --[[key]], fact)
 	return fact.type == WS.Facts.factType.EVENT and

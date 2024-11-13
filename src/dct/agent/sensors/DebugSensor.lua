@@ -6,7 +6,7 @@ local class   = require("libs.classnamed")
 local json    = require("libs.json")
 local Timer   = require("dct.libs.Timer")
 local human   = require("dct.ui.human")
-local WS      = require("dct.assets.worldstate")
+local WS      = require("dct.agent.worldstate")
 
 local function debug_details(agent)
 	local goal = agent:getGoal()

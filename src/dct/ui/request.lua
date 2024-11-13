@@ -7,7 +7,7 @@
 local dctutils = require("dct.libs.utils")
 local Command  = require("dct.libs.Command")
 local Mission  = require("dct.ai.Mission")
-local WS       = require("dct.assets.worldstate")
+local WS       = require("dct.agent.worldstate")
 local uidraw   = require("dct.ui.draw")
 local human    = require("dct.ui.human")
 

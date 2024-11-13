@@ -4,7 +4,7 @@ require("libs")
 local class    = libs.classnamed
 local dctenum  = require("dct.enum")
 local dctutils = require("dct.libs.utils")
-local WS       = require("dct.assets.worldstate")
+local WS       = require("dct.agent.worldstate")
 
 local function is_join_event(_ --[[key]], fact)
 	return fact.type == WS.Facts.factType.EVENT and

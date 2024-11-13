@@ -8,8 +8,8 @@ local dctenum   = require("dct.enum")
 local dctutils  = require("dct.libs.utils")
 local Timer     = require("dct.libs.Timer")
 local DCTEvents = require("dct.libs.DCTEvents")
-local loadout   = require("dct.ui.loadouts")
-local WS        = require("dct.assets.worldstate")
+--local loadout   = require("dct.ui.loadouts")
+local WS        = require("dct.agent.worldstate")
 local UPDATE_TIME = 30
 
 local function playerIsDead()

@@ -14,6 +14,7 @@ dct.settings  = require("dct.settings")
 dct.enum      = require("dct.enum")
 dct.libs      = require("dct.libs")
 dct.ui        = require("dct.ui")
+dct.agent     = require("dct.agent")
 dct.systems   = require("dct.systems")
 
 env.info(dct._DESCRIPTION.."; "..dct._COPYRIGHT.."; version: "..

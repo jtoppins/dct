@@ -4,7 +4,7 @@ require("libs")
 local class     = libs.classnamed
 local dctenum   = require("dct.enum")
 local DCTEvents = require("dct.libs.DCTEvents")
-local WS        = require("dct.assets.worldstate")
+local WS        = require("dct.agent.worldstate")
 
 -- TODO: need to work out how Missions get assigned to an Agent and what
 -- the final set of events are from a Mission. Should probably follow

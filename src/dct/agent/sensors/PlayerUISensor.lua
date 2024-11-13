@@ -11,8 +11,8 @@ local DCTEvents = require("dct.libs.DCTEvents")
 local Mission   = require("dct.ai.Mission")
 local human     = require("dct.ui.human")
 local uirequest = require("dct.ui.request")
-local uimenus   = require("dct.ui.menus")
-local WS        = require("dct.assets.worldstate")
+--local uimenus   = require("dct.ui.menus")
+local WS        = require("dct.agent.worldstate")
 local UPDATE_TIME = 5
 
 local result_msgs = {

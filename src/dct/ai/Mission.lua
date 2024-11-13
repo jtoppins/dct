@@ -13,7 +13,6 @@ local dctutils   = require("dct.libs.utils")
 local Observable = require("dct.libs.Observable")
 local DCTEvents  = require("dct.libs.DCTEvents")
 local Memory     = require("dct.libs.Memory")
-local WS         = require("dct.assets.worldstate")
 
 local missionResult = {
 	["ABORT"]   = 0,
@@ -184,7 +183,7 @@ for k, v in pairs(dctenum.missionType) do
 end
 
 local function is_character_fact(fact)
-	return fact.type == WS.Facts.factType.CHARACTER
+	return fact.type == dct.agent.WS.Facts.factType.CHARACTER
 end
 
 local function check_desc(desc)

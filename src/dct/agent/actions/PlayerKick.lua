@@ -4,7 +4,7 @@ require("libs")
 local class    = libs.classnamed
 local dctenum  = require("dct.enum")
 local dctutils = require("dct.libs.utils")
-local WS       = require("dct.assets.worldstate")
+local WS       = require("dct.agent.worldstate")
 
 local reasons = {
 	[dctenum.kickCode.LOADOUT] =

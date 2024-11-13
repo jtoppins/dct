@@ -2,7 +2,7 @@
 
 require("libs")
 local class = libs.classnamed
-local WS = require("dct.assets.worldstate")
+local WS = require("dct.agent.worldstate")
 
 --- The Agent desires to heal itself.
 -- @classmod Heal

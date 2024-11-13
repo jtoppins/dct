@@ -4,7 +4,7 @@ require("libs")
 local class     = libs.classnamed
 local DCTEvents = require("dct.libs.DCTEvents")
 local Timer     = require("dct.libs.Timer")
-local WS        = require("dct.assets.worldstate")
+local WS        = require("dct.agent.worldstate")
 local UPDATE_TIME = 60
 
 local function is_target(fact)
