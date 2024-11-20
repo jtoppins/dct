@@ -247,7 +247,7 @@ function wsmt.__tostring(ws)
 		tbl[v.id] = v.value
 	end
 
-	return require("libs.json"):encode(tbl)
+	return libs.json:encode(tbl)
 end
 
 --- Represents an abstract symbol state relative to the agent
