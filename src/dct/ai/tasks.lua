@@ -470,6 +470,14 @@ function tasks.task.bombing(pt, alt, wpntype, wpnexpend, attackqty,
 		aienum.TASKTYPE.TASK
 end
 
+function tasks.task.strafing(pt, alt, wpntype, wpnexpend, attackqty,
+			     dir, grpatk)
+	local task, tasktype = tasks.task.bombing(pt, alt, wpntype, wpnexpend,
+						  attackqty, dir, grpatk)
+	task.id = 'Strafing'
+	return task, tasktype
+end
+
 function tasks.task.bombingRunway(id, wpntype, wpnexpend, attackqty, dir,
 				  grpatk)
 	local params = {}
@@ -534,7 +542,13 @@ function tasks.task.fac(freq, mod, callid, callnum, prio)
 	return create_task_tbl('FAC', params), aienum.TASKTYPE.TASK
 end
 
-function tasks.task.wrappedaction(optiontbl)
+function tasks.task.wrappedCommand(cmdtbl)
+	local params = {}
+	params.action = cmdtbl
+	return create_task_tbl('WrappedAction', params), aienum.TASKTYPE.TASK
+end
+
+function tasks.task.wrappedOption(optiontbl)
 	local params = {}
 	params.action = {
 		["id"] = "Option",
@@ -544,6 +558,19 @@ function tasks.task.wrappedaction(optiontbl)
 		},
 	}
 	return create_task_tbl('WrappedAction', params), aienum.TASKTYPE.TASK
+end
+
+function tasks.task.combo(orderedlist)
+	return create_task_tbl('ComboTask', orderedlist),
+		aienum.TASKTYPE.TASK
+end
+
+function tasks.task.controlled(task, startcondition, stopcondition)
+	local params = {}
+	params.task = task
+	params.condition = startcondition
+	params.stopCondition = stopcondition
+	return create_task_tbl('ControlledTask', params), aienum.TASKTYPE.TASK
 end
 
 tasks.Waypoint = class()
@@ -674,20 +701,19 @@ function tasks.Waypoint:raw()
 	end
 	tbl = utils.mergetables(tbl, self.point:raw())
 	if next(self.tasks) then
-		tbl.task = {
-			["id"] = "ComboTask",
-			["params"] = {
-				["tasks"] = {},
-			},
-		}
+		local t = {}
 
 		for _, task in ipairs(self.tasks) do
 			local data = task.data
 			if task.type == aienum.TASKTYPE.OPTION then
-				data = tasks.task.wrappedaction(task.data)
+				data = tasks.task.wrappedOption(task.data)
+			elseif task.type == aienum.TASKTYPE.COMMAND then
+				data = tasks.task.wrappedCommand(task.data)
 			end
-			table.insert(tbl.task.params.tasks, data)
+			table.insert(t, data)
 		end
+
+		tbl.task = tasks.task.combo(t)
 	end
 	return tbl
 end

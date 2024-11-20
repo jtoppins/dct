@@ -105,22 +105,25 @@ describe("validate dct.ai", function()
 							["task"] = {
 								["id"] = "ComboTask",
 								["params"] = {
-									["tasks"] = {
-										{
-											["id"] = "WrappedAction",
-											["params"] = {
-												["action"] = {
-													["id"] = "Option",
-													["params"] = {
-														["name"] = AI.Option.Air.id.REACTION_ON_THREAT,
-														["value"] = AI.Option.Air.val.REACTION_ON_THREAT.PASSIVE_DEFENCE,
-													},
+									{
+										["id"] = "WrappedAction",
+										["params"] = {
+											["action"] = {
+												["id"] = "Option",
+												["params"] = {
+													["name"] = AI.Option.Air.id.REACTION_ON_THREAT,
+													["value"] = AI.Option.Air.val.REACTION_ON_THREAT.PASSIVE_DEFENCE,
 												},
 											},
-										}, {
-											["id"] = "EPLRS",
-											["params"] = {
-												["value"] = true,
+										},
+									}, {
+										["id"] = "WrappedAction",
+										["params"] = {
+											["action"] = {
+												["id"] = "EPLRS",
+												["params"] = {
+													["value"] = true,
+												},
 											},
 										},
 									},
@@ -141,26 +144,24 @@ describe("validate dct.ai", function()
 							["task"] = {
 								["id"] = "ComboTask",
 								["params"] = {
-									["tasks"] = {
-										{
-											["id"] = "Orbit",
-											["params"] = {
-												["altitude"] = 6500,
-												["pattern"] = "Race-Track",
-												["point"] = {
-													["x"] = 100,
-													["y"] = -450,
-												},
-												["point2"] = {
-													["x"] = 400,
-													["y"] = -600,
-												},
-												["speed"] = 190,
+									{
+										["id"] = "Orbit",
+										["params"] = {
+											["altitude"] = 6500,
+											["pattern"] = "Race-Track",
+											["point"] = {
+												["x"] = 100,
+												["y"] = -450,
 											},
-										}, {
-											["id"] = "Tanker",
-											["params"] = {},
+											["point2"] = {
+												["x"] = 400,
+												["y"] = -600,
+											},
+											["speed"] = 190,
 										},
+									}, {
+										["id"] = "Tanker",
+										["params"] = {},
 									},
 								},
 							},
