@@ -739,7 +739,7 @@ function Agent:doTasksForeachGroup(tasktbl, push, filter)
 	end
 
 	self._logger:debug("applying tasktbl to groups: %s",
-		require("libs.json"):encode_pretty(tasktbl))
+		libs.json:encode_pretty(tasktbl))
 	for _, grp in self:iterateGroups(Agent.filter_no_controller) do
 		_do_one_obj(Group.getByName(grp.data.name), tasktbl,
 			    push, filter)
@@ -762,7 +762,7 @@ function Agent:doTasksForeachUnit(tasktbl, push, filter)
 	end
 
 	self._logger:debug("applying tasktbl to units: %s",
-		require("libs.json"):encode_pretty(tasktbl))
+		libs.json:encode_pretty(tasktbl))
 	for _, grp in self:iterateGroups(Agent.filter_no_controller) do
 		for _, unit in ipairs(grp.data.units or {}) do
 			_do_one_obj(Unit.getByName(unit.name), tasktbl,
