@@ -1,12 +1,11 @@
---[[
 -- SPDX-License-Identifier: LGPL-3.0
---
--- Library of functions to generate task tables.
---]]
 
-local class = require("libs.class")
-local utils = require("libs.utils")
-local check = require("libs.check")
+--- Library of functions to generate DCS task tables.
+
+require("libs")
+local class = libs.class
+local utils = libs.utils
+local check = libs.check
 local vector = require("dct.libs.vector")
 local aienum = require("dct.ai.enum")
 
@@ -46,7 +45,6 @@ function tasks.pushTask(controller, task)
 	controller:pushTask(task)
 end
 
---[[
 --  {
 --    type = cmd|option|task,
 --    data = {
@@ -54,7 +52,6 @@ end
 --      param = <value>,
 --    },
 --  }
---]]
 function tasks.execute(controller, tasklist, taskfunc)
 	assert(controller,
 	       "value error: controller need to be a DCS controller instance.")
@@ -168,7 +165,7 @@ function tasks.command.createTACAN(unit, callsign, channel, mode,
 				   name, aa, bearing, mobile)
 	local bcntype = aienum.BEACON.TYPE.TACAN
 	local system = aienum.BEACON.SYSTEM.TACAN
-	local freq = require("dct.ai.tacan").getFrequency(channel, mode)
+	local freq = dct.ai.Tacan.getFrequency(channel, mode)
 	local extra = {}
 
 	extra.channel = channel
@@ -695,17 +692,17 @@ function tasks.Waypoint:raw()
 	return tbl
 end
 
-tasks.Mission = class()
-function tasks.Mission:__init(airborne)
+tasks.Route = class()
+function tasks.Route:__init(airborne, wpts)
 	self.airborne = airborne
-	self.waypoints = {}
+	self.waypoints = wpts or {}
 end
 
-function tasks.Mission:addWaypoint(wpt)
+function tasks.Route:addWaypoint(wpt)
 	table.insert(self.waypoints, wpt)
 end
 
-function tasks.Mission:raw()
+function tasks.Route:raw()
 	local params = {}
 	params.airborne = self.airborne
 	params.route = {}
