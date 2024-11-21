@@ -197,7 +197,7 @@ end
 -- started event.
 function Theater:start()
 	ComponentSystem.start(self)
-	world.onEvent(dctutils.buildevent.initcomplete(self))
+	world.onEvent(dct.event.build.initcomplete(self))
 end
 
 --- Run the theater. Registers `Theater.exec` and `Theater.onEvent` with the

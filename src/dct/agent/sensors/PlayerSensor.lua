@@ -59,7 +59,7 @@ function PlayerSensor:__init(agent)
 		[world.event.S_EVENT_DEAD]     = self.handleLoseTicket,
 		[world.event.S_EVENT_CRASH]    = self.handleLoseTicket,
 		[world.event.S_EVENT_LAND]     = self.handleLand,
-		[dctenum.event.DCT_EVENT_OPERATIONAL] = self.handleBaseState,
+		[dct.event.ID.DCT_EVENT_OPERATIONAL] = self.handleBaseState,
 	})
 
         -- delete the agent's marshal/unmarshal functions as Player
@@ -90,7 +90,7 @@ function PlayerSensor:postFact(key, fact)
 	self.agent:setFact(key, fact)
 	self.agent:WS():get(WS.ID.REACTEDTOEVENT).value = false
 	self.agent:replan()
-	if fact.event.id == dctenum.event.DCT_EVENT_PLAYER_KICK then
+	if fact.event.id == dct.event.ID.DCT_EVENT_PLAYER_KICK then
 		self:setSync(false)
 		self:doEnable()
 	end
@@ -121,14 +121,14 @@ function PlayerSensor:handleBirth(event)
 	self.agent:setFact(WS.Facts.factKey.LOSETICKET,
 		WS.Facts.Value(WS.Facts.factType.LOSETICKET, false))
 	self:postFact(self._keyjoin, WS.Facts.Event(
-		dctutils.buildevent.playerJoin(event.initiator:getName())))
+		dct.event.build.playerJoin(event.initiator:getName())))
 end
 
 function PlayerSensor:handleTakeoff(--[[event]])
 	local ok = loadout.check(self.agent)
 	if not ok then
 		self:postFact(self._keykick, WS.Facts.Event(
-			dctutils.buildevent.playerKick(
+			dct.event.build.playerKick(
 				dctenum.kickCode.LOADOUT, self)))
 		return
 	end
@@ -174,14 +174,14 @@ function PlayerSensor:handleLoseTicket(--[[event]])
 	self.agent:setFact(WS.Facts.factKey.LOSETICKET,
 		WS.Facts.Value(WS.Facts.factType.LOSETICKET, true))
 	self:postFact(self._keykick, WS.Facts.Event(
-		dctutils.buildevent.playerKick(dctenum.kickCode.DEAD, self)))
+		dct.event.build.playerKick(dctenum.kickCode.DEAD, self)))
 end
 
 function PlayerSensor:handleBaseState(event)
 	if event.initiator.name ~= self.agent:getDescKey("basedat") then
 		self.agent._logger:warn(
 			"received unknown event %s(%d) from initiator(%s)",
-			utils.getkey(dctenum.event, event.id),
+			utils.getkey(dct.event.ID, event.id),
 			event.id, event.initiator.name)
 		return
 	end
@@ -210,7 +210,7 @@ function PlayerSensor:update()
 	if self.birth and not dctutils.isalive(self.agent.name) then
 		self.birth = false
 		self:postFact(self._keykick, WS.Facts.Event(
-			dctutils.buildevent.playerKick(dctenum.kickCode.EMPTY,
+			dct.event.build.playerKick(dctenum.kickCode.EMPTY,
 						       self)))
 	end
 

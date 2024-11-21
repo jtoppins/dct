@@ -454,8 +454,8 @@ local function handleAddAsset(region, event)
 end
 
 local handlers = {
-	[dctenum.event.DCT_EVENT_DEAD] = handleDead,
-	[dctenum.event.DCT_EVENT_ADD_ASSET] = handleAddAsset,
+	[dct.event.ID.DCT_EVENT_DEAD] = handleDead,
+	[dct.event.ID.DCT_EVENT_ADD_ASSET] = handleAddAsset,
 }
 
 function Region:onDCTEvent(event)

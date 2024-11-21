@@ -25,7 +25,6 @@ end
 require("libs")
 
 local class   = libs.classnamed
-local dctenum = require("dct.enum")
 local Marshallable = require("dct.libs.Marshallable")
 
 local function getCorrectedExplosiveMass(wpntypename)
@@ -79,7 +78,7 @@ function BlastEffects:addImpact(point, powers)
 end
 
 function BlastEffects:event(event)
-	if event.id ~= dctenum.event.DCT_EVENT_IMPACT then
+	if event.id ~= dct.event.ID.DCT_EVENT_IMPACT then
 		return
 	end
 

@@ -7,7 +7,6 @@
 
 require("libs")
 local class    = libs.classnamed
-local dctenum  = require("dct.enum")
 local dctutils = require("dct.libs.utils")
 local Timer    = require("dct.libs.Timer")
 local vector   = require("dct.libs.vector")
@@ -17,7 +16,7 @@ local TIMEOUT  = 30
 
 local function filter_departure_event(fact)
 	return fact.type == WS.Facts.factType.EVENT and
-	       fact.event.id == dctenum.event.DCT_EVENT_DEPARTURE
+	       fact.event.id == dct.event.ID.DCT_EVENT_DEPARTURE
 end
 
 local function is_departure_event(_, fact)
@@ -37,7 +36,7 @@ function DoDeparture:__init(agent, cost)
 	}, {
 		-- effects
 		WS.Property(WS.ID.REACTEDTOEVENT,
-			    dctenum.event.DCT_EVENT_DEPARTURE),
+			    dct.event.ID.DCT_EVENT_DEPARTURE),
 	}, 100)
 
 	self.timer = Timer(TIMEOUT)
@@ -112,7 +111,7 @@ function DoDeparture:isComplete()
 
 	if not self.agent:hasFact(is_departure_event) then
 		self.agent:WS():get(WS.ID.REACTEDTOEVENT).value =
-			dctenum.event.DCT_EVENT_DEPARTURE
+			dct.event.ID.DCT_EVENT_DEPARTURE
 	end
 
 	return true

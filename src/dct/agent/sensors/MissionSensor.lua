@@ -2,7 +2,6 @@
 
 require("libs")
 local class     = libs.classnamed
-local dctenum   = require("dct.enum")
 local DCTEvents = require("dct.libs.DCTEvents")
 local WS        = require("dct.agent.worldstate")
 
@@ -36,10 +35,10 @@ function MissionSensor:__init(agent)
 	DCTEvents.__init(self)
 
 	self:_overridehandlers({
-		[dctenum.event.DCT_EVENT_MISSION_JOIN]   = self.missionJoin,
-		[dctenum.event.DCT_EVENT_MISSION_UPDATE] = self.missionUpdate,
-		[dctenum.event.DCT_EVENT_MISSION_LEAVE]  = self.missionDone,
-		[dctenum.event.DCT_EVENT_MISSION_DONE]   = self.missionDone,
+		[dct.event.ID.DCT_EVENT_MISSION_JOIN]   = self.missionJoin,
+		[dct.event.ID.DCT_EVENT_MISSION_UPDATE] = self.missionUpdate,
+		[dct.event.ID.DCT_EVENT_MISSION_LEAVE]  = self.missionDone,
+		[dct.event.ID.DCT_EVENT_MISSION_DONE]   = self.missionDone,
 	})
 end
 

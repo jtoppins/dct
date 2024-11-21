@@ -6,7 +6,6 @@
 
 require("libs")
 local checklib = libs.check
-local dctenum  = require("dct.enum")
 local dctutils = require("dct.libs.utils")
 local Command  = require("dct.libs.Command")
 local System   = require("dct.libs.System")
@@ -114,7 +113,7 @@ function AssetManager:add(asset)
 		self._object2asset[objname] = asset.name
 	end
 
-	self:notify(dctutils.buildevent.addasset(asset))
+	self:notify(dct.event.build.addasset(asset))
 end
 
 function AssetManager:getAsset(name)
@@ -190,7 +189,7 @@ end
 
 local handlers = {
 	[world.event.S_EVENT_DEAD] = handleDead,
-	[dctenum.event.DCT_EVENT_DEAD] = handleAssetDeath,
+	[dct.event.ID.DCT_EVENT_DEAD] = handleAssetDeath,
 }
 
 function AssetManager:doOneObject(obj, event)
@@ -227,7 +226,7 @@ function AssetManager:onDCSEvent(event)
 		[world.event.S_EVENT_EJECTION]        = true,
 		[world.event.S_EVENT_HIT]             = true,
 		[world.event.S_EVENT_DEAD]            = true,
-		[dctenum.event.DCT_EVENT_DEAD]        = true,
+		[dct.event.ID.DCT_EVENT_DEAD]         = true,
 		--[world.event.S_EVENT_UNIT_LOST]     = true,
 	}
 	local objmap = {
