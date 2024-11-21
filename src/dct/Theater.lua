@@ -9,11 +9,13 @@ local myos = require("os")
 require("libs")
 local class       = libs.classnamed
 local containers  = libs.containers
+local utils       = libs.utils
 local dctutils    = require("dct.libs.utils")
 local Observable  = require("dct.libs.Observable")
 local Command     = require("dct.libs.Command")
 local Timer       = require("dct.libs.Timer")
 local settings    = dct.settings.server
+local writedir    = lfs.writedir()
 
 --- Component system. Defines a generic way for initializing components
 -- of a Theater without directly tying the two systems together.
@@ -32,6 +34,10 @@ function ComponentSystem:__init(logger)
 		self._logger = logger or
 				dct.libs.Logger.getByName(self.__clsname)
 	end
+end
+
+function ComponentSystem:iterateSystems()
+	return next, self._systems, nil
 end
 
 --- Runs a system method that can optionally be provided by a system.
@@ -149,6 +155,10 @@ function Theater:__init()
 	Observable.__init(self)
 	ComponentSystem.__init(self)
 	self._running = false
+	self.name = string.lower(env.mission.theatre).."_"..
+		string.lower(env.getValueDictByKey(env.mission.sortie))
+	self.map = env.mission.theatre
+	self._path = utils.join_paths(writedir, "DCT", "theaters", self.name)
 	self.cmdmindelay   = 2
 	self:setTimings(settings.schedfreq, settings.tgtfps,
 		settings.percentTimeAllowed)
@@ -204,6 +214,11 @@ function Theater:run()
 		self.initialize, self))
 	world.addEventHandler(self)
 	timer.scheduleFunction(self.exec, self, timer.getTime() + 20)
+end
+
+--- Accessor to get the path where the theater definition is stored.
+function Theater:getPath()
+	return self._path
 end
 
 local airbase_cats = {
@@ -293,8 +308,8 @@ end
 function Theater:queueCommand(cmd)
 	if cmd.delay < self.cmdmindelay then
 		self._logger:warn("queueCommand(); delay(%2.2f) less than "..
-			    "schedular minimum(%2.2f), setting to schedular "..
-			    "minumum", cmd.delay, self.cmdmindelay)
+			    "scheduler minimum(%2.2f), setting to scheduler "..
+			    "minimum", cmd.delay, self.cmdmindelay)
 		cmd.delay = self.cmdmindelay
 	end
 	self.cmdq:push(timer.getTime() + cmd.delay, cmd)
