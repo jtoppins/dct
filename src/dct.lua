@@ -17,6 +17,7 @@ dct.ui        = require("dct.ui")
 dct.ai        = require("dct.ai")
 dct.agent     = require("dct.agent")
 dct.systems   = require("dct.systems")
+dct.Theater   = require("dct.Theater")
 
 env.info(dct._DESCRIPTION.."; "..dct._COPYRIGHT.."; version: "..
     dct._VERSION)
