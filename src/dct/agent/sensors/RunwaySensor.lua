@@ -3,7 +3,6 @@
 require("libs")
 local class      = libs.classnamed
 local utils      = libs.utils
-local dctenum    = require("dct.enum")
 local vector     = require("dct.libs.vector")
 local DCTEvents  = require("dct.libs.DCTEvents")
 local uidraw     = require("dct.ui.draw")
@@ -110,7 +109,7 @@ function RunwaySensor:__init(agent)
 	self._runways  = {}
 
 	self:_overridehandlers({
-		[dctenum.event.DCT_EVENT_IMPACT] = self.handleImpact,
+		[dct.event.ID.DCT_EVENT_IMPACT] = self.handleImpact,
 	})
 end
 

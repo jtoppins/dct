@@ -21,7 +21,7 @@ local reasons = {
 
 local function is_kick_event(_ --[[key]], fact)
 	return fact.type == WS.Facts.factType.EVENT and
-	       fact.event.id == dctenum.event.DCT_EVENT_PLAYER_KICK
+	       fact.event.id == dct.event.ID.DCT_EVENT_PLAYER_KICK
 end
 
 --- @classmod PlayerKick

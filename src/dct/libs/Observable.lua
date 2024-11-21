@@ -8,12 +8,11 @@ require("libs")
 
 local class = libs.class
 local utils = libs.utils
-local enum  = require("dct.enum")
 
 local function notify(self, event)
 	self._logger:debug("notify; event.id: %d (%s)",
 		event.id, tostring(utils.getkey(world.event, event.id) or
-			utils.getkey(enum.event, event.id)))
+			utils.getkey(dct.event.ID, event.id)))
 	for obj, val in pairs(self._observers) do
 		self._logger:debug("+ executing handler: %s", val.name)
 		val.func(obj, event)

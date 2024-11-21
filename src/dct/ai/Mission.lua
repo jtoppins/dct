@@ -9,7 +9,6 @@ local class      = libs.classnamed
 local utils      = libs.utils
 local check      = libs.check
 local dctenum    = require("dct.enum")
-local dctutils   = require("dct.libs.utils")
 local Observable = require("dct.libs.Observable")
 local DCTEvents  = require("dct.libs.DCTEvents")
 local Memory     = require("dct.libs.Memory")
@@ -265,7 +264,7 @@ function Mission:__init(msntype, cmdr, desc, goalq, timer)
 
 	setmetatable(self._suptmsns, { __mode = "k", })
 	self:_overridehandlers({
-		[dctenum.event.DCT_EVENT_GOAL_COMPLETE] =
+		[dct.event.ID.DCT_EVENT_GOAL_COMPLETE] =
 			self.eventGoalComplete,
 	})
 
@@ -357,14 +356,14 @@ function Mission:eventGoalComplete(--[[event]])
 	g = self.goalq:peekhead()
 
 	if g == nil then
-		self:notify(dctutils.buildevent.missionDone(self,
+		self:notify(dct.event.build.missionDone(self,
 			missionResult.SUCCESS))
 		return
 	end
 
 	g:addObserver(self.onDCTEvent, self, string.format(
 		      "Misison(%s).onDCTEvent", self.__clsname))
-	self:notify(dctutils.buildevent.missionUpdate(self))
+	self:notify(dct.event.build.missionUpdate(self))
 end
 
 --- remove any references or return any targets that may have been
@@ -391,7 +390,7 @@ end
 
 --- Aborts a mission for all observers of the mission.
 function Mission:abort()
-	self:notify(dctutils.buildevent.missionDone(self,
+	self:notify(dct.event.build.missionDone(self,
 		missionResult.ABORT))
 end
 
@@ -457,7 +456,7 @@ function Mission:assign(agent)
 	self:addObserver(agent.onDCTEvent, agent, agent.name)
 	self._assigned[agent.name] = self._assignedcnt
 	self:copyFacts(agent)
-	self:notify(dctutils.buildevent.missionJoin(self, agent))
+	self:notify(dct.event.build.missionJoin(self, agent))
 end
 
 --- Remove Agent from this Mission
@@ -468,7 +467,7 @@ function Mission:remove(agent)
 		return
 	end
 
-	self:notify(dctutils.buildevent.missionLeave(self, agent))
+	self:notify(dct.event.build.missionLeave(self, agent))
 	self:removeObserver(agent)
 	self._assigned[agent.name] = nil
 	self._assignedcnt = self._assignedcnt - 1
@@ -488,7 +487,7 @@ function Mission:update()
 
 	self._timer:update()
 	if self._timer:expired() then
-		self:notify(dctutils.buildevent.missionDone(self,
+		self:notify(dct.event.build.missionDone(self,
 			missionResult.TIMEOUT))
 	end
 end

@@ -3,7 +3,6 @@
 require("libs")
 local class       = libs.classnamed
 local dctenum     = require("dct.enum")
-local dctutils    = require("dct.libs.utils")
 local vector      = require("dct.libs.vector")
 local Timer       = require("dct.libs.Timer")
 local DCTEvents   = require("dct.libs.DCTEvents")
@@ -36,7 +35,7 @@ function AirbaseSensor:__init(agent)
 	local handlers = {}
 
 	if AirbaseSensor.capturable[self.agent.type] == true then
-		handlers[dctenum.event.DCT_EVENT_CAPTURED] =
+		handlers[dct.event.ID.DCT_EVENT_CAPTURED] =
 			self.handleCapture
 	end
 
@@ -145,7 +144,7 @@ function AirbaseSensor:notifyOperational()
 
 	self:setSilent(not operational)
 	self.agent:notify(
-		dctutils.buildevent.operational(self.agent, operational))
+		dct.event.build.operational(self.agent, operational))
 end
 
 function AirbaseSensor:getRampSpots(ab)

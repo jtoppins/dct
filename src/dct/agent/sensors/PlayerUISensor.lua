@@ -4,7 +4,6 @@ require("math")
 require("libs")
 local class     = libs.classnamed
 local pqueue    = libs.containers.PriorityQueue
-local dctenum   = require("dct.enum")
 local dctutils  = require("dct.libs.utils")
 local Timer     = require("dct.libs.Timer")
 local DCTEvents = require("dct.libs.DCTEvents")
@@ -107,15 +106,15 @@ function PlayerUISensor:__init(agent)
 
 	self:_overridehandlers({
 		[world.event.S_EVENT_BIRTH] = self.handleBirth,
-		[dctenum.event.DCT_EVENT_AGENT_REQUEST] =
+		[dct.event.ID.DCT_EVENT_AGENT_REQUEST] =
 			self.handleAgentRequest,
-		[dctenum.event.DCT_EVENT_MISSION_JOIN] =
+		[dct.event.ID.DCT_EVENT_MISSION_JOIN] =
 			self.handleMissionJoin,
-		[dctenum.event.DCT_EVENT_MISSION_LEAVE] =
+		[dct.event.ID.DCT_EVENT_MISSION_LEAVE] =
 			self.handleMissionLeave,
-		[dctenum.event.DCT_EVENT_MISSION_DONE] =
+		[dct.event.ID.DCT_EVENT_MISSION_DONE] =
 			self.handleMissionDone,
-		[dctenum.event.DCT_EVENT_MISSION_UPDATE] =
+		[dct.event.ID.DCT_EVENT_MISSION_UPDATE] =
 			self.handleMissionUpdate,
 	})
 end
