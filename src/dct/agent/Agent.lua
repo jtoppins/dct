@@ -496,7 +496,7 @@ function Agent:setHealth(val, donotify)
 		if donotify and val == WS.Health.DEAD then
 			self._logger:debug("notifying asset death for "..
 					   self.name)
-			self:notify(dctutils.buildevent.dead(self))
+			self:notify(dct.event.build.dead(self))
 		end
 	end
 end

@@ -12,6 +12,7 @@ _G.dct = dct
 dct.modpath   = lfs.writedir()..libs.utils.join_paths("Mods", "Tech", "DCT")
 dct.settings  = require("dct.settings")
 dct.enum      = require("dct.enum")
+dct.event     = require("dct.event")
 dct.libs      = require("dct.libs")
 dct.ui        = require("dct.ui")
 dct.ai        = require("dct.ai")

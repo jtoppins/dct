@@ -10,7 +10,6 @@ local json       = libs.json
 local class      = libs.classnamed
 local goap       = libs.containers.GOAP
 local dctenum    = require("dct.enum")
-local dctutils   = require("dct.libs.utils")
 local Observable = require("dct.libs.Observable")
 
 --- Agent states
@@ -340,7 +339,7 @@ function Goal:WS()
 end
 
 function Goal:complete()
-	self:notify(dctutils.buildevent.goalComplete(self))
+	self:notify(dct.event.build.goalComplete(self))
 end
 
 --- Calculates the relevance of a goal for a particular agent's

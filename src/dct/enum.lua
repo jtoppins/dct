@@ -133,27 +133,6 @@ enum.requestType = {
 }
 
 enum.UNIT_CAT_SCENERY = Unit.Category.STRUCTURE + 1
-
-local eventbase = world.event.S_EVENT_MAX + 2000
-enum.event = {
-	["DCT_EVENT_INIT_COMPLETE"]  = eventbase + 0,
-	["DCT_EVENT_DEAD"]           = eventbase + 1,
-	["DCT_EVENT_OPERATIONAL"]    = eventbase + 3,
-	["DCT_EVENT_CAPTURED"]       = eventbase + 4,
-	["DCT_EVENT_IMPACT"]         = eventbase + 5,
-	["DCT_EVENT_ADD_ASSET"]      = eventbase + 6,
-	["DCT_EVENT_GOAL_COMPLETE"]  = eventbase + 7,
-	["DCT_EVENT_MISSION_START"]  = eventbase + 8,
-	["DCT_EVENT_MISSION_UPDATE"] = eventbase + 9,
-	["DCT_EVENT_MISSION_DONE"]   = eventbase + 10,
-	["DCT_EVENT_MISSION_JOIN"]   = eventbase + 11,
-	["DCT_EVENT_MISSION_LEAVE"]  = eventbase + 12,
-	["DCT_EVENT_PLAYER_KICK"]    = eventbase + 13,
-	["DCT_EVENT_PLAYER_JOIN"]    = eventbase + 14,
-	["DCT_EVENT_DEPARTURE"]      = eventbase + 15,
-	["DCT_EVENT_AGENT_REQUEST"]  = eventbase + 16,
-}
-
 enum.kickCode = require("dct.libs.kickinfo").kickCode
 
 return enum

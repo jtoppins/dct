@@ -33,7 +33,7 @@ function SquadronSensor:__init(agent)
 	self._operstate = false
 
 	self:_overridehandlers({
-		[dctenum.event.DCT_EVENT_OPERATIONAL] =
+		[dct.event.ID.DCT_EVENT_OPERATIONAL] =
 			self.handleAirbaseState,
 	})
 end

@@ -5,7 +5,6 @@
 require("libs")
 local class        = libs.classnamed
 local utils        = libs.utils
-local dctenum      = require("dct.enum")
 local vector       = require("dct.libs.vector")
 local Marshallable = require("dct.libs.Marshallable")
 local Region       = require("dct.templates.Region")
@@ -109,8 +108,8 @@ function RegionManager:unmarshal(data)
 end
 
 local relevants = {
-	[dctenum.event.DCT_EVENT_DEAD]      = true,
-	[dctenum.event.DCT_EVENT_ADD_ASSET] = true,
+	[dct.event.ID.DCT_EVENT_DEAD]      = true,
+	[dct.event.ID.DCT_EVENT_ADD_ASSET] = true,
 }
 
 function RegionManager:onDCTEvent(event)
