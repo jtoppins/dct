@@ -1,8 +1,6 @@
---[[
 -- SPDX-License-Identifier: LGPL-3.0
---
--- Name lists for various asset types
---]]
+
+--- BlastEffects default correction table.
 
 local tntrel = {
 	["TNT"]      = 1,
@@ -13,12 +11,18 @@ local tntrel = {
 	["H6"]       = 1.356,
 }
 
--- exmass - mass of explosive compound in kilograms
+--- TNT equivalent mass.
+-- @tparam number exmass mass of explosive compound in kilograms.
+-- @tparam number tntfactor mass equivalence ratio to convert a given
+--    compound mass into its TNT equivalent mass.
 local function tnt_equiv_mass(exmass, tntfactor)
 	tntfactor = tntfactor or tntrel.TNT
 	return exmass * tntfactor
 end
 
+--- Mass equivalence table.
+-- The table keys are Weapon typenames for each weapon that DCS uses an
+-- incorrect TNT warhead mass for.
 local wpnmass = {
 	["M_117"]        = tnt_equiv_mass(201),
 
