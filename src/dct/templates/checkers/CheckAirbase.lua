@@ -5,6 +5,7 @@ local class    = libs.classnamed
 local utils    = libs.utils
 local dctenum  = require("dct.enum")
 local vector   = require("dct.libs.vector")
+local aienum   = require("dct.ai.enum")
 local TACAN    = require("dct.ai.tacan")
 local aitasks  = require("dct.ai.tasks")
 local Check    = require("dct.libs.Check")
@@ -13,21 +14,21 @@ local DEFAULT_ALT = 610
 local PARKING_START = 1000
 local takeoffvalues = {
 	["INAIR"]   = {
-		["value"] = dctenum.airbaseTakeoff.INAIR,
+		["value"] = aienum.airbaseTakeoff.INAIR,
 		["description"] = [[
 aircraft will depart the field already in the air 1500ft above the field]],
 	},
 	["RUNWAY"]  = {
-		["value"] = dctenum.airbaseTakeoff.RUNWAY,
+		["value"] = aienum.airbaseTakeoff.RUNWAY,
 		["description"] = [[aircraft will depart from the runway]],
 	},
 	["PARKING"] = {
-		["value"] = dctenum.airbaseTakeoff.PARKING,
+		["value"] = aienum.airbaseTakeoff.PARKING,
 		["description"] = [[
 aircraft will depart the airfield from ramp parking only cold]],
 	},
 	["GROUND"] = {
-		["value"] = dctenum.airbaseTakeoff.GROUND,
+		["value"] = aienum.airbaseTakeoff.GROUND,
 		["description"] = [[
 aircraft will depart the airfield from ramp parking if fixed wing and from
 ground spots, if defined, for helicopters.]]
@@ -36,18 +37,18 @@ ground spots, if defined, for helicopters.]]
 
 local landingvalues = {
 	["TERMINAL"] = {
-		["value"] = dctenum.airbaseRecovery.TERMINAL,
+		["value"] = aienum.airbaseRecovery.TERMINAL,
 		["description"] = [[
 aircraft will get within 10nm of the airbase before despawning]],
 	},
 	["LAND"]     = {
-		["value"] = dctenum.airbaseRecovery.LAND,
+		["value"] = aienum.airbaseRecovery.LAND,
 		["description"] = [[
 aircraft will land on the runway or ramp helipads only and immediately
 despawn 30 seconds after doing so]],
 	},
 	["TAXI"]     = {
-		["value"] = dctenum.airbaseRecovery.TAXI,
+		["value"] = aienum.airbaseRecovery.TAXI,
 		["description"] = [[
 aircraft will land using runway or helipads, including ground spots, and
 be despawned after 5 minutes of the land event firing]],
@@ -268,7 +269,7 @@ local function find_ground_parking(data)
 
 				index = index + 1
 				spot.Term_Index = index
-				spot.Term_Type = dctenum.parkingType.GROUND
+				spot.Term_Type = aienum.parkingType.GROUND
 				spot.vTerminalPos =
 					vector.Vector3D.create(unit.x, unit.y,
 						land.getHeight(unit)):raw()
