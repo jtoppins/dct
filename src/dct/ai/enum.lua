@@ -6,6 +6,29 @@
 --]]
 
 local enum = {}
+
+enum.parkingType = {
+	["GROUND"]      = 1,
+	["RUNWAY"]      = 16,
+	["HELO"]        = 40,
+	["HARDSHELTER"] = 68,
+	["AIRPLANE"]    = 72,
+	["OPENAIR"]     = 104,
+}
+
+enum.airbaseTakeoff = {
+	["INAIR"]   = 1,
+	["RUNWAY"]  = 2,
+	["PARKING"] = 3,
+	["GROUND"]  = 4,
+}
+
+enum.airbaseRecovery = {
+	["TERMINAL"] = 1,
+	["LAND"]     = 2,
+	["TAXI"]     = 3,
+}
+
 enum.TASKTYPE = {
 	["COMMAND"] = 1,
 	["OPTION"]  = 2,

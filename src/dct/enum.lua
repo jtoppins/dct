@@ -132,35 +132,6 @@ enum.requestType = {
 	["REARM"]      = 1,
 }
 
-enum.parkingType = {
-	["GROUND"]      = 1,
-	["RUNWAY"]      = 16,
-	["HELO"]        = 40,
-	["HARDSHELTER"] = 68,
-	["AIRPLANE"]    = 72,
-	["OPENAIR"]     = 104,
-}
-
-enum.airbaseTakeoff = {
-	["INAIR"]   = 1,
-	["RUNWAY"]  = 2,
-	["PARKING"] = 3,
-	["GROUND"]  = 4,
-}
-
-enum.airbaseRecovery = {
-	["TERMINAL"] = 1,
-	["LAND"]     = 2,
-	["TAXI"]     = 3,
-}
-
-enum.weaponCategory = {
-	["AA"] = 1,
-	["AG"] = 2,
-	["GUN"] = 3,
-}
-
-enum.WPNINFCOST = 5000
 enum.UNIT_CAT_SCENERY = Unit.Category.STRUCTURE + 1
 
 local eventbase = world.event.S_EVENT_MAX + 2000
