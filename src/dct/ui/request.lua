@@ -66,41 +66,6 @@ local function defer_request(agent, data)
 		      WS.Facts.Value(WS.Facts.factType.CMDPENDING, true))
 end
 
-local function scratchpad_get(agent)
-	if not dctutils.isalive(agent.name) then
-		return
-	end
-
-	local fact = agent:getFact(WS.Facts.factKey.SCRATCHPAD)
-	local msg = "Scratch Pad: "
-
-	if fact then
-		msg = msg .. tostring(fact.value.value)
-	else
-		msg = msg .. "nil"
-	end
-	post_msg(agent, "scratchpad_msg", msg)
-end
-
-local function scratchpad_set(agent)
-	local theater = dct.Theater.singleton()
-	local gid = agent:getDescKey("groupId")
-	local pos = Group.getByName(agent.name):getUnit(1):getPoint()
-	local scratchpad = theater:getSystem("dct.systems.scratchpad")
-	local mark = uidraw.Mark("edit me", pos, false,
-				 uidraw.Mark.scopeType.GROUP, gid)
-
-	scratchpad:set(mark.id, {
-		["name"] = agent.name,
-		["mark"] = mark,
-	})
-	mark:draw()
-	local msg = "Look on F10 MAP for user mark with contents \""..
-		"edit me\"\n Edit body with your scratchpad "..
-		"information. Click off the mark when finished. "..
-		"The mark will automatically be deleted."
-	post_msg(agent, "scratchpad_msg", msg)
-end
 
 --[[
 local function addAirbases(allAirbases, outList, side, ownerFilter)
@@ -257,8 +222,6 @@ end
 local _request = {}
 _request.post_msg        = post_msg
 _request.defer_request   = defer_request
-_request.scratchpad_get  = scratchpad_get
-_request.scratchpad_set  = scratchpad_set
 _request.mission_join    = mission_join
 _request.mission_request = mission_request
 _request.mission_brief   = mission_brief
