@@ -6,10 +6,11 @@ require("math")
 require("libs")
 local class    = libs.classnamed
 local utils    = libs.utils
-local Timer    = require("dct.libs.Timer")
-local Marshallable = require("dct.libs.Marshallable")
 local Command  = require("dct.libs.Command")
 local Check    = require("dct.libs.Check")
+local Marshallable = require("dct.libs.Marshallable")
+local System   = require("dct.libs.System")
+local Timer    = require("dct.libs.Timer")
 local UPDATE_TIME = 120
 
 local coa_list = {"red", "blue", "neutral"}
@@ -181,25 +182,65 @@ function CheckGoals:check(data)
 	return true
 end
 
-local Tickets = class("Tickets", Marshallable)
+local Tickets = class("Tickets", System, Marshallable)
+
+Tickets.enabled = true
+
 function Tickets:__init(theater)
+	System.__init(self, theater, System.SYSTEMORDER.TICKETS,
+		      System.SYSTEMALIAS.TICKET)
 	Marshallable.__init(self)
-	self.cfgfile = dct.settings.server.theaterpath..utils.sep..
-		"theater.goals"
 	self.tickets = {}
 	self.timeout = false
 	self.complete = false
 
-	self:readconfig()
-
 	self:_addMarshalNames({
 		"tickets",
 		"complete"})
+end
 
+function Tickets:initialize()
+	local goalspath = utils.join_paths(self._theater:getPath(),
+					   "theater.goals")
+	local goals = utils.readlua(goalspath)
+	local checker = CheckGoals()
+	local ok, key, msg = checker:check(goals)
+
+	if not ok then
+		self._logger("invalid `%s` %s; file: %s",
+			     tostring(key), tostring(msg),
+			     tostring(goalspath))
+	end
+
+	if goals.time > 0 then
+		self.timer = Timer(goals.time, timer.getAbsTime)
+		self.timeout = true
+	end
+
+	for _, val in ipairs(coa_list) do
+		local s = coalition.side[string.upper(val)]
+		self.tickets[s] = goals[val]
+		self.tickets[s].name = val
+	end
+
+	assert(self.tickets[coalition.side.BLUE] ~= nil and
+		self.tickets[coalition.side.BLUE].start > 0 and
+		self.tickets[coalition.side.RED] ~= nil and
+		self.tickets[coalition.side.RED].start > 0,
+		string.format("Theater Goals: Red and Blue coalitions "..
+			      "must be defined and have tickets > 0; %s",
+			      goalspath))
+end
+
+function Tickets:start()
 	if self.timeout then
 		self.timer:start()
-		theater:queueCommand(UPDATE_TIME,
-			Command("Tickets.update", self.update, self))
+		local cmd = Command(UPDATE_TIME,
+				    self.__clsname..".update",
+				    self.update,
+				    self)
+		cmd:setRequeue(true)
+		self._theater:queueCommand(cmd)
 	end
 end
 
@@ -238,41 +279,14 @@ function Tickets:marshal()
 	return data
 end
 
-function Tickets:readconfig()
-	local goals = utils.readlua(self.cfgfile)
-	local checker = CheckGoals()
-	local ok, key, msg = checker:check(goals)
-
-	if not ok then
-		error(string.format("invalid `%s` %s; file: %s",
-			tostring(key), tostring(msg), tostring(self.cfgfile)))
-	end
-
-	if goals.time > 0 then
-		self.timer = Timer(goals.time, timer.getAbsTime)
-		self.timeout = true
-	end
-	for _, val in ipairs(coa_list) do
-		local s = coalition.side[string.upper(val)]
-		self.tickets[s] = goals[val]
-		self.tickets[s].name = val
-	end
-
-	assert(self.tickets[coalition.side.BLUE] ~= nil and
-		self.tickets[coalition.side.BLUE].start > 0 and
-		self.tickets[coalition.side.RED] ~= nil and
-		self.tickets[coalition.side.RED].start > 0,
-		string.format("Theater Goals: Red and Blue coalitions must be "..
-			"defined and have tickets > 0; %s", self.cfgfile))
-end
-
 function Tickets:getConfig(side)
 	return self.tickets[side]
 end
 
 function Tickets:getPlayerCost(side)
 	assert(side == coalition.side.RED or side == coalition.side.BLUE,
-		string.format("value error: side(%d) is not red or blue", side))
+		string.format("value error: side(%d) is not red or blue",
+			      side))
 	return self.tickets[side]["player_cost"]
 end
 
