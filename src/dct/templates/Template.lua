@@ -7,10 +7,7 @@ local class    = libs.classnamed
 local check    = libs.check
 local utils    = libs.utils
 local dctenum  = require("dct.enum")
-local STM      = require("dct.templates.STM")
 local Agent    = require("dct.agent.Agent")
-local Logger   = dct.libs.Logger.getByName("Template")
-local Checker  = require("dct.libs.Check")
 
 -- TODO: setup a respawn attribute
 
@@ -138,6 +135,7 @@ end
 local Template = class("Template")
 function Template:__init(data)
 	check.table(data)
+	self._logger = dct.libs.Logger.getByName("Template")
 
 	self._valid = validate(data)
 	if not self._valid then
@@ -191,32 +189,6 @@ function Template.fromFile(dctfile, stmfile)
 	return Template(template)
 end
 
---- class function to generate Template documentation.
--- Generate markdown styled documentation for all options a campaign
--- designer can use to specify a template.
-function Template.genDocs()
-	local header = [[
-# Template Attributes
-
-Listing of all template attributes that are either automatically determined
-from the template file or directly specified in the .dct file.
-
-Most attributes can be modified event after an asset has been generated
-from its template. Meaning campaign progression can be saved but, for example,
-the target description of a given template is modified before the saved
-campaign is loaded. This target description change will be reflected in
-the in-game mission briefing when the campaign is loaded from the save.
-However, if an attribute specifies `agent: true` this means that once the
-asset has been generated this setting cannot be changed by modifying the
-underlying template and the value is fixed for the lifetime of that asset.
-
-Additionally, most attributes are not required and when not provided
-reasonable defaults based on template type, composition, and other factors
-will be considered when selecting the default.
-]]
-
-	Checker.genDocs(header, checkers)
-end
 
 --- Create a DCT game object from the template definition.
 --
@@ -273,8 +245,6 @@ end
 --- generate an asset name.
 -- An asset must have a unique name or it will not be added to the
 -- AssetManager. This function guarantees compliance with this requirement.
---
--- @param template template date used to generate the unique name from
 -- @return a predictable unique name
 function Template:genName()
 	local name = self.name

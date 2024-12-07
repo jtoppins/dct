@@ -38,7 +38,8 @@ System.SYSTEMALIAS = {
 }
 
 System.SYSTEMORDER = {
-	["ASSETMGR"]     = System.PRIORITY.CORE + 2,
+	["TEMPLATEDB"]   = System.PRIORITY.CORE + 3,
+	["ASSETMGR"]     = System.PRIORITY.CORE + 4,
 	["WPNIMPACT"]    = System.PRIORITY.CORE + 5,
 	["TICKETS"]      = System.PRIORITY.CORE + 6,
 	["PERSISTENCE"]  = System.PRIORITY.STATE + 1,
