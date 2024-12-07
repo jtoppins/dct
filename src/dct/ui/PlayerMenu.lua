@@ -7,6 +7,9 @@ local check     = libs.check
 local dctutils  = require("dct.libs.utils")
 local uirequest = require("dct.ui.request")
 local WS        = require("dct.agent.worldstate")
+local removeGroupItem = missionCommands.removeItemForGroup
+local addGroupMenu    = missionCommands.addSubMenuForGroup
+local addGroupCmd     = missionCommands.addCommandForGroup
 
 local function _request(data)
 	local theater = dct.Theater.singleton()
@@ -37,102 +40,104 @@ local function do_request(data)
 	local ok, err = pcall(_request, data)
 
 	if not ok then
-		dctutils.errhandler(err, dct.Logger.getByName("UI"))
+		dctutils.errhandler(err, dct.libs.Logger.getByName("UI"))
 	end
 end
 
-
-local PlayerCmd = class("PlayerCmd")
-function PlayerCmd:__init(title, handler, data, parent, player)
-	local ppath = nil
-	if parent ~= nil then
-		ppath = parent.path
-		self.gid = parent.gid
-		self.name = parent.name
-	elseif player ~= nil then
-		self.gid = player:getDescKey("groupId")
-		self.name = player.name
-	end
-
+local MenuItem = class("MenuItem")
+function MenuItem:__init(title)
 	self.title = title
-	self.parent = parent
-	self.path = missionCommands.addCommandForGroup(self.gid, title, ppath,
-						       handler, data)
 end
 
-function PlayerCmd.create(title, callback, val, args, parent, player)
+function MenuItem:clone()
+	return libs.utils.deepcopy(self)
+end
+
+function MenuItem:draw(--[[gid, parent, player]])
+	assert(false, "must be overridden")
+end
+
+local PlayerCmd = class("PlayerCmd", MenuItem)
+function PlayerCmd:__init(title, handler, data)
+	MenuItem.__init(self, title)
+	self.handler = handler
+	self.data = data
+end
+
+function PlayerCmd.create(title, callback, val, args)
 	check.func(callback)
 	if args == nil then
 		args = {}
 	end
 
-	if parent ~= nil then
-		args.name = parent.name
-	elseif player ~= nil then
-		args.name = player.name
-	end
 	args.callback = callback
 	args.value = val
 
-	return PlayerCmd(title, do_request, args, parent, player)
+	return PlayerCmd(title, do_request, args)
 end
 
-function PlayerCmd:destroy()
-	missionCommands.removeItemForGroup(self.gid, self.path)
-end
-
-
-local PlayerMenu = class("PlayerMenu")
-function PlayerMenu:__init(title, parent, player, create)
-	local ppath = nil
-	if parent ~= nil then
-		ppath = parent.path
-		self.gid = parent.gid
-		self.name = parent.name
-	elseif player ~= nil then
-		self.gid = player:getDescKey("groupId")
-		self.name = player.name
+function PlayerCmd:draw(gid, parent, player)
+	self.gid = gid
+	if player then
+		self.data.name = player.name
 	end
+	self.path = addGroupCmd(self.gid, self.title, parent.path,
+				self.handler, self.data)
+end
 
-	self.title = title
-	self.parent = parent
-	self.path = missionCommands.addSubMenuForGroup(self.gid, title, ppath)
-	self.player = player
-	self.create_cb = create
+function PlayerCmd:remove()
+	removeGroupItem(self.gid, self.path)
+	self.path = nil
+	self.gid = nil
+	if self.data then
+		self.data.name = nil
+	end
+end
+
+local PlayerMenu = class("PlayerMenu", MenuItem)
+function PlayerMenu:__init(title)
+	MenuItem.__init(self, title)
 	self.children = {}
+end
 
-	-- create the initial menu
-	if self.create_cb ~= nil then
-		self.create_cb(self, player)
+--- Write the menu and display to player
+function PlayerMenu:draw(gid, parent, player)
+	self.gid = gid
+	self.path = addGroupMenu(self.gid, self.title, parent.path)
+
+	for _, entry in ipairs(self.children) do
+		entry:draw(self.gid, self, player)
 	end
+end
+
+--- Remove the menu and all children.
+function PlayerMenu:remove()
+	self:clear()
+	self.children = {}
+	removeGroupItem(self.gid, self.path)
+	self.path = nil
+	self.gid = nil
 end
 
 --- Clear the menu of all entries but do not destroy the root menu item.
 -- Reverse loop over all menu entries removing children first.
 function PlayerMenu:clear()
 	for i = #self.children, 1, -1 do
-		self.children[i]:destroy()
-		table.remove(self.children, i)
+		self.children[i]:remove()
 	end
 end
 
---- Reset the menu using the original initialization function the
--- menu was created with.
-function PlayerMenu:reset()
-	self:clear()
-	self.create_cb(self, self.player)
-end
-
-function PlayerMenu:destroy()
-	self:clear()
-	self.children = {}
-	missionCommands.removeItemForGroup(self.gid, self.path)
+function PlayerMenu:deleteAll()
+	for i = #self.children, 1, -1 do
+		self.children[i]:remove()
+		table.remove(self.children, i)
+	end
 end
 
 --- Remove a specific menu entry.
 --
 -- @param entry the entry we want to delete
-function PlayerMenu:remove(entry)
+function PlayerMenu:delete(entry)
 	for i = #self.children, 1, -1 do
 		if self.children[i] == entry then
 			table.remove(self.children, i)
@@ -145,28 +150,20 @@ function PlayerMenu:children()
 	return self.children
 end
 
-function PlayerMenu:setCreateCB(callback)
-	self.create_cb = callback
-end
-
-function PlayerMenu:getCreateCB()
-	return self.create_cb
-end
-
 function PlayerMenu:addMenu(title)
-	local menu = PlayerMenu(title, self)
+	local menu = PlayerMenu(title)
 	table.insert(self.children, menu)
 	return menu
 end
 
 function PlayerMenu:addCmd(title, handler, data)
-	local cmd = PlayerCmd(title, handler, data, self)
+	local cmd = PlayerCmd(title, handler, data)
 	table.insert(self.children, cmd)
 	return cmd
 end
 
 function PlayerMenu:addRqstCmd(title, callback, val, args)
-	local cmd = PlayerCmd.create(title, callback, val, args, self)
+	local cmd = PlayerCmd.create(title, callback, val, args)
 	table.insert(self.children, cmd)
 	return cmd
 end

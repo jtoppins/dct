@@ -198,25 +198,9 @@ StimuliFact.stimType = {
 }
 
 local PlayerMenuFact = class("PlayerMenu", Fact)
-function PlayerMenuFact:__init(menu, menutype)
+function PlayerMenuFact:__init(menu)
 	Fact.__init(self, factType.PLAYERMENU)
-	self.object    = Attribute(menu)
-	self.objtype   = Attribute(check.tblkey(menutype,
-						PlayerMenuFact.menuType,
-						"PlayerMenuFact.menuType"))
-	PlayerMenuFact.menuType = nil
-end
-
-PlayerMenuFact.menuType = {
-	["SCRATCHPAD"] = 1,
-	["INTEL"]      = 2,
-	["GROUNDCREW"] = 3,
-	["MISSION"]    = 4,
-	["TANKER"]     = 5,
-}
-
-function PlayerMenuFact.buildKey(menutype)
-	return string.format("menu%d", menutype)
+	self.object = Attribute(menu)
 end
 
 --- Agent received an event from the world and needs to react to it.

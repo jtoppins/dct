@@ -35,6 +35,7 @@ System.SYSTEMALIAS = {
 	["TICKETS"]     = "TicketSystem", -- defines end state win critera
 	["PERSISTENCE"] = "SaveSystem", -- saves theater state
 	["GENERATION"]  = "GenerationSystem", -- generates a new theater
+	["MENU"]        = "MenuSystem",
 }
 
 System.SYSTEMORDER = {
@@ -43,6 +44,7 @@ System.SYSTEMORDER = {
 	["WPNIMPACT"]    = System.PRIORITY.CORE + 5,
 	["TICKETS"]      = System.PRIORITY.CORE + 6,
 	["PERSISTENCE"]  = System.PRIORITY.STATE + 1,
+	["MENU"]         = System.PRIORITY.INFRA + 2,
 }
 
 --- Constructor.
