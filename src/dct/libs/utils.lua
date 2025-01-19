@@ -89,6 +89,30 @@ function utils.errhandler(err, logger, lvl)
 	end
 end
 
+--- Iterate a set of objects and return objects that have a given method.
+-- @tparam table tbl the table of objects whos keys do not matter and
+-- whos values are the objects to be checked if the object implements
+-- the optional `func` function.
+-- @tparam function iterator callback to iterate over tbl, used in
+--   for loop.
+-- @tparam string func the name of the function to check for and
+--   execute if exists.
+function utils.iterate_func(tbl, iterator, func)
+	local itr, state, start = iterator(tbl)
+	local function fnext(s, index)
+		local idx = index
+		local sys
+		repeat
+			idx, sys = itr(s, idx)
+			if sys == nil then
+				return nil
+			end
+		until(type(sys[func]) == "function")
+		return idx, sys
+	end
+	return fnext, state, start
+end
+
 --- Calls an optional function for a set of objects defined in tbl.
 -- @tparam table tbl the table of objects whos keys do not matter and
 -- whos values are the objects to be checked if the object implements
@@ -101,14 +125,12 @@ function utils.foreach_call(tbl, iterator, func, ...)
 	check.table(tbl)
 	check.func(iterator)
 
-	for _, obj in iterator(tbl) do
-		if type(obj[func]) == "function" then
-			obj[func](obj, ...)
-		end
+	for _, obj in utils.iterate_func(tbl, iterator, func) do
+		obj[func](obj, ...)
 	end
 end
 
---- Call an optional function for a set of objected defined in tbl
+--- Call an optional function for a set of objects defined in tbl
 -- in a protected context.
 -- @tparam Logger logger to report errors
 -- @tparam table tbl the table of objects whos keys do not matter and
@@ -124,12 +146,11 @@ function utils.foreach_protectedcall(logger, tbl, iterator, func, ...)
 
 	local ok, errmsg
 
-	for _, obj in iterator(tbl) do
-		if type(obj[func]) == "function" then
-			ok, errmsg = pcall(obj[func], obj, ...)
-			if not ok then
-				utils.errhandler(errmsg, logger, 2)
-			end
+	for _, obj in utils.iterate_func(tbl, iterator, func) do
+		logger:debug("calling: %s.%s", obj.__clsname, func)
+		ok, errmsg = pcall(obj[func], obj, ...)
+		if not ok then
+			utils.errhandler(errmsg, logger, 2)
 		end
 	end
 end

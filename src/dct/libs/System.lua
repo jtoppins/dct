@@ -73,7 +73,18 @@ end
 -- cached for later use, this is the method to do it in. Inter-system
 -- interaction should not be done now however, you should wait until the
 -- start method as system initialization cannot be guaranteed.
+--
+-- Sometimes a system doesn't know if it needs to be enabled until it has
+-- the ability to read some configuration data. If that configuration data
+-- doesn't exist the system should not stay loaded because the system is
+-- effectivally unconfigured and in an invalid state. Instead of forcing
+-- each system to come up with a way to handle this, instead allow the
+-- `initialize` function to return an error result.
+-- @return[1] true success
+-- @return[2] false error
+-- @return[2] error message
 function System:initialize()
+	return true
 end
 
 --- Start.

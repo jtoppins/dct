@@ -36,8 +36,8 @@ function ComponentSystem:__init(logger)
 	end
 end
 
-function ComponentSystem:iterateSystems()
-	return next, self._systems, nil
+function ComponentSystem:iterateSystems(func)
+	return dctutils.iterate_func(self._orderedsystems, ipairs, func)
 end
 
 --- Runs a system method that can optionally be provided by a system.
@@ -109,6 +109,17 @@ function ComponentSystem:register(sys, force)
 	self._systemscnt = self._systemscnt + 1
 end
 
+--- Unregister sys from the Theater.
+-- @param sys the System to remove
+function ComponentSystem:unregister(sys, msg)
+	self._systems[sys.__clsname] = nil
+	if self._aliassystems[sys._alias] == sys.__clsname then
+		self._aliassystems[sys._alias] = nil
+	end
+	self._systemscnt = self._systemscnt - 1
+	self._logger:error("unregister: %s; %s", sys.__clsname, tostring(msg))
+end
+
 --- Register built-in enabled systems with the Theater as their default
 -- could have been changed. This removes the need for a custom theater
 -- to have to register each individual system even if it is built-in.
@@ -121,7 +132,22 @@ function ComponentSystem:initialize()
 
 	self._initialized = true
 	table.sort(self._orderedsystems)
-	self:_runsys("initialize")
+	self._logger:info("initializing systems")
+
+	for _, sys in dctutils.iterate_func(self._orderedsystems, ipairs,
+			"initialize") do
+		self._logger:debug("calling: %s.initialize", sys.__clsname)
+		local ok, errmsg = sys:initialize()
+		if not ok then
+			self:unregister(sys, errmsg)
+		end
+	end
+
+	self._orderedsystems = {}
+	for _, sys in pairs(self._systems) do
+		table.insert(self._orderedsystems, sys)
+	end
+	table.sort(self._orderedsystems)
 	self._logger:info("systems initialized: %d", self._systemscnt)
 end
 
