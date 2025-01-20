@@ -167,7 +167,7 @@ function WeaponImpactTracker:_update(time)
 	local impacts = {}
 	for id, wpn in pairs(self.trackedwpns) do
 		wpn:update(time, self.lookahead)
-		if wpn:hasImpacted() then
+		if wpn:hasImpacted() and not wpn:exist() then
 			table.insert(impacts, wpn)
 			self.trackedwpns[id] = nil
 		elseif not wpn:exist() then
