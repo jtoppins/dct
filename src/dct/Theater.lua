@@ -15,7 +15,6 @@ local Observable  = require("dct.libs.Observable")
 local Command     = require("dct.libs.Command")
 local Timer       = require("dct.libs.Timer")
 local settings    = dct.settings.server
-local writedir    = lfs.writedir()
 
 --- Component system. Defines a generic way for initializing components
 -- of a Theater without directly tying the two systems together.
@@ -184,7 +183,8 @@ function Theater:__init()
 	self.name = string.lower(env.mission.theatre).."_"..
 		string.lower(env.getValueDictByKey(env.mission.sortie))
 	self.map = env.mission.theatre
-	self._path = utils.join_paths(writedir, "DCT", "theaters", self.name)
+	self._path = utils.join_paths(dct.theaterpath, self.name)
+	self._settingspath = utils.join_paths(self._path, "settings")
 	self.cmdmindelay   = 2
 	self:setTimings(settings.schedfreq, settings.tgtfps,
 		settings.percentTimeAllowed)
@@ -245,6 +245,10 @@ end
 --- Accessor to get the path where the theater definition is stored.
 function Theater:getPath()
 	return self._path
+end
+
+function Theater:getSettingsPath()
+	return self._settingspath
 end
 
 local airbase_cats = {

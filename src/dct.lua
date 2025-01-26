@@ -2,6 +2,12 @@
 
 require("libs")
 
+-- Can be changed to point to the game's install path, it depends
+-- on where the mod is installed, the game directory or a user's
+-- savedgames directory. Use `lfs.currentdir()` to point to where
+-- the game is installed.
+local BASEPATH = lfs.writedir()
+
 local dct = {
     _VERSION = "%VERSION%",
     _DESCRIPTION = "DCT: DCS Dynamic Campaign Tools",
@@ -9,7 +15,15 @@ local dct = {
 }
 
 _G.dct = dct
-dct.modpath   = lfs.writedir()..libs.utils.join_paths("Mods", "Tech", "DCT")
+-- Where the DCT code is stored
+dct.modpath = libs.utils.join_paths(BASEPATH, "Mods", "Tech", "DCT")
+-- DCT config file path, always stored in savedgames dir
+dct.cfgpath = libs.utils.join_paths(lfs.writedir(), "Config", "dct.cfg")
+-- DCT Theaters are always stored in the savedgames directory
+dct.theaterpath = libs.utils.join_paths(lfs.writedir(), "DCT", "theaters")
+-- DCT Templates are always stored in the savedgames directory
+dct.templatepath = libs.utils.join_paths(lfs.writedir(), "DCT", "templates")
+
 dct.settings  = require("dct.settings")
 dct.enum      = require("dct.enum")
 dct.event     = require("dct.event")

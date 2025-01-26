@@ -228,8 +228,7 @@ function sconfig_mt.__index(tbl, key)
 	utils.readconfigs({
 		{
 			["name"] = "server",
-			["file"] = lfs.writedir()..
-				utils.join_paths("Config", "dct.cfg"),
+			["file"] = dct.cfgpath,
 			["validate"] = validate_server_config,
 		},}, newtbl)
 	utils.mergetables(tbl, newtbl.server)
