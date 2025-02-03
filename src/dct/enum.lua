@@ -17,114 +17,99 @@ enum.objtype = {
 	["RUNWAY"]  = 6,
 }
 
--- this is really the template type, it has no bearing on the underlying
--- object used
+-- This is really the template type, it has no bearing on the underlying
+-- object used. The values of the lower 4 bits are dedicated to
+-- subtypes and the upper 4 bits are major types with 0x100 being
+-- an invalid type.
 enum.assetType = {
 	["INVALID"]     = 0,
-	-- resource types
-	["RESOURCE"]    = 1,  -- an agent that supplies resources to its
-			      -- commander; resources can be one or all
-			      -- of: ammo, supply
-	["AMMODUMP"]    = 2,
-	["FUELDUMP"]    = 3,
-	["C2"]          = 4,
-	["BUNKER"]      = 5,
-	["CHECKPOINT"]  = 6,
 
-	-- strategic assets
-	["MISSILE"]     = 11,
-	["OCA"]         = 12,
+	-- 0b0000 0000 0000 0000
+	--    ^     ^    ^    ^--- subtype
+	--    |     |    +---- Base types (1) Resource, (2) Base, (4) HQ
+	--    |     +----- Unit types (1) Ground, (2) Air, (4) Ship
+	--
+	-- resource types supply resources to its commander; resources
+	-- can be one or all of: ammo, fuel, supply, intel
+	["RESOURCE"]    = 16, -- 0x10
+	["AMMODUMP"]    = 17,
+	["FUELDUMP"]    = 18,
+	["C2"]          = 19,
 
 	-- Base assets accept character objects from an HQ and spawn
 	-- the characters into the world according to the base's specific
 	-- criteria
-	["ARMYBASE"]    = 21,
-	["AIRBASE"]     = 22,
-	["PORT"]        = 23,
-	["CV"]          = 24,
-	["HELOCARRIER"] = 25,
-	["FARP"]        = 26,
-	["SPAWNPOINT"]  = 27,
+	["BASE"]        = 32, -- 0x20
+	["AIRBASE"]     = 33,
+	["FARP"]        = 34,
+	["CV"]          = 35,
+	["HELOCARRIER"] = 36,
 
-	-- Headquarters are children of Bases they are also the only
+	-- Headquarters are based at Bases and are also the only
 	-- Agents the commander sends requests to.
-	["SQUADRON"]    = 31,
-	["ARMYGROUP"]   = 32,
-	["FLEET"]       = 33,
+	["HQ"]          = 48, -- 0x40
+	["SQUADRON"]    = 49,
 
 	-- tactical units are the "game pieces", some can move and some
 	-- just occupy an area defined by their template.
-	["GROUND"]      = 41,
-	["JTAC"]        = 42,
-	["AIRPLANE"]    = 43,
-	["HELO"]        = 44,
-	["BASEDEFENSE"] = 45,
-	["EWR"]         = 46,
-	["SAM"]         = 47,
-	["SHORAD"]      = 48,
-	["INFANTRY"]    = 49,
-	["PILOT"]       = 50,
-	["SHIP"]        = 51,
+	-- Ground, Air, and Ship unit groups are split up into different
+	-- spaces.
+	["GROUND_UNIT"] = 256, -- 0x100
+	["EWR"]         = 257,
+	["SAM"]         = 258,
+	["SHORAD"]      = 259,
 
-	-- players
-	["PLAYER"]      = 71,
+	["AIR_UNIT"]    = 512, -- 0x200
+	["AIRPLANE"]    = 513,
+	["HELO"]        = 514,
 
-	-- control primitives
-	["SCRIPT"]      = 101,  -- no agent is associated, it is just a
-				-- template that spawns DCS objects, the
-				-- objects are not even tracked or targetable
-	["NODE"]        = 102,  -- navigation points in the DCT object space
-				-- they can also be smartobjects and do things
-				-- like transmit a beacon
-}
-
-enum.assetTypeDeprecated = {
-	["FACTORY"]        = 1,
-	["FACILITY"]       = 1,
-	["FOB"]            = 21,
-	["SQUADRONPLAYER"] = 31,
-	["LOGISTICS"]      = 41,
-	["SPECIALFORCES"]  = 41,
+	["SHIP_UNIT"]   = 1024, -- 0x400
 }
 
 enum.missionType = {
+	-- 0b0000 0000 0000 0000
+	--    ^     ^    ^    ^--- mission subtype
+	--    |     |    +---- types (1) MoveTo, (2) Guard, (4) Attack,
+	--    |     |               (8) Search
+	--    |     +----- types (1) Escort, (2) Transport
+
 	["INVALID"]    = 0,
-	["MOVETO"]     = 1,
+	["MOVETO"]     = 16, -- 0x10
 
 	-- Guarding based missions, just with different threat and
 	-- target sets
-	["GUARD"]      = 20,
-	["JTAC"]       = 21,
-	["AFAC"]       = 22,
-	["CAS"]        = 23,
-	["CAP"]        = 24,
-	["TANKER"]     = 25,
-	["AWACS"]      = 26,
+	["GUARD"]      = 32, -- 0x20
+	["JTAC"]       = 33,
+	["AFAC"]       = 34,
+	["CAS"]        = 35,
+	["CAP"]        = 36,
+	["TANKER"]     = 37,
+	["AWACS"]      = 38,
 
 	-- Attack based missions
-	["ATTACK"]     = 30,
-	["STRIKE"]     = 31,
-	["BAI"]        = 32,
-	["OCA"]        = 33,
-	["ANTISHIP"]   = 34,
-	["DEAD"]       = 35,
-	["SWEEP"]      = 36,
-	["AREASTRIKE"] = 37,
+	["ATTACK"]     = 64, -- 0x40
+	["STRIKE"]     = 65,
+	["BAI"]        = 66,
+	["OCA"]        = 67,
+	["ANTISHIP"]   = 68,
+	["DEAD"]       = 69,
+	["SWEEP"]      = 70,
+	["AREASTRIKE"] = 71,
 
 	-- Search based missions
-	["SEARCH"]     = 40,
-	["RECON"]      = 41,
-	["INTERCEPT"]  = 42,
+	["SEARCH"]     = 128, -- 0x80
+	["RECON"]      = 129,
+	["INTERCEPT"]  = 130,
 
 	-- Escort based missions
-	["ESCORT"]     = 50,
-	["SEAD"]       = 51,
-	["FIGHTERCOVER"] = 52,
+	["ESCORT"]     = 256, -- 0x100
+	["SEAD"]       = 257,
+	["FIGHTERCOVER"] = 258,
 
 	-- Transport based missions
-	["TRANSPORT"]  = 60,
-	["CSAR"]       = 61,
-	["RESUPPLY"]   = 62,
+	["TRANSPORT"]  = 512, -- 0x200
+	["CSAR"]       = 513,
+	["RESUPPLY"]   = 514,
 }
 
 --- Requests that Agents can send to other agents.

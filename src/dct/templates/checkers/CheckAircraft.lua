@@ -8,8 +8,8 @@ local Check   = require("dct.libs.Check")
 
 local RESERVETIME = 20 * 60 -- 20 minutes
 local adtypes = {
-	[dctenum.assetType.AIRPLANE] = true,
-	[dctenum.assetType.HELO]     = true,
+	--[dctenum.assetType.AIRPLANE] = true,
+	--[dctenum.assetType.HELO]     = true,
 }
 
 local dct_attrs = {

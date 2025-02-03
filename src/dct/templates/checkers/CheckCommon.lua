@@ -2,19 +2,17 @@
 
 require("libs")
 local class   = libs.classnamed
-local utils   = libs.utils
 local dctenum = require("dct.enum")
 local dctutils= require("dct.libs.utils")
 local Check   = require("dct.libs.Check")
 
 local ishq = {
 	[dctenum.assetType.SQUADRON] = true,
-	[dctenum.assetType.ARMYGROUP] = true,
-	[dctenum.assetType.FLEET] = true,
+	--[dctenum.assetType.ARMYGROUP] = true,
+	--[dctenum.assetType.FLEET] = true,
 }
 
-local assettypes = utils.mergetables({}, dctenum.assetTypeDeprecated)
-assettypes = utils.mergetables(assettypes, dctenum.assetType)
+local assettypes = dctenum.assetType
 
 local CheckCommon = class("CheckCommon", Check)
 function CheckCommon:__init()
@@ -291,12 +289,6 @@ function CheckCommon:checkDefaults(data)
 end
 
 function CheckCommon:check(data)
-	if dctenum.assetTypeDeprecated[string.upper(data.objtype)] ~= nil then
-		dct.Logger.getByName("Template"):warn(
-			"%s: is a deprecated objtype; file %s",
-			tostring(data.objtype), tostring(data.filedct))
-	end
-
 	for _, check in ipairs({ Check.check,
 				 self.checkDefaults, }) do
 		local ok, key, msg = check(self, data)

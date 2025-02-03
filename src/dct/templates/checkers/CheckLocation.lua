@@ -38,8 +38,8 @@ end
 
 local noloc = {
 	[dctenum.assetType.SQUADRON]   = true,
-	[dctenum.assetType.ARMYGROUP]  = true,
-	[dctenum.assetType.FLEET]      = true,
+	--[dctenum.assetType.ARMYGROUP]  = true,
+	--[dctenum.assetType.FLEET]      = true,
 }
 
 function CheckLocation:check(data)
