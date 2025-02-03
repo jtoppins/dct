@@ -1,5 +1,0 @@
-objtype = "squadronplayer"
-name = "VF102"
-coalition = "blue"
-ato = {"CAP", "STRIKE", "OCA",}
-airbase = "CVN-71 Theodore Roosevelt"

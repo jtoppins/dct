@@ -1,5 +1,0 @@
-objtype = "squadronplayer"
-name = "42TAB"
-coalition = "red"
-ato = {"CAS", "STRIKE", "SEAD", "BAI"}
-airbase = "Krymsk"
