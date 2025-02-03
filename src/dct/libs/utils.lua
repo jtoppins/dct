@@ -11,7 +11,6 @@ local libsutils = libs.utils
 local check = libs.check
 local enum  = require("dct.enum")
 local vector = require("dct.libs.vector")
-local STM = require("dct.templates.STM")
 local utils = {}
 
 --- The maximum intel level a side can achieve. Intel ranges from [0,5]
@@ -259,49 +258,6 @@ function utils.set_ato(sqdn, flight)
 		allmsns[val] = true
 	end
 	flight:setDescKey("ato", allmsns)
-end
-
---- Enumerate non-player groups found in the currently loaded
--- mission (miz) file.
--- @return list of non-player groups found in the mission indexed
---    by group name.
--- @todo needed? or can be moved to another location?
-function utils.get_miz_groups()
-	local groups = {}
-	for _, coa_data in pairs(env.mission.coalition) do
-		local grps = STM.processCoalition(coa_data,
-			nil, utils.not_playergroup, nil)
-		for _, grp in ipairs(grps) do
-			groups[grp.data.name] = grp
-		end
-	end
-	return groups
-end
-
---- Enumerate non-player units found in the currently loaded
--- mission (miz) file.
--- @return list of non-player units found in the mission indexed
---     by unit name.
--- @todo needed? or can be moved to another location?
-function utils.get_miz_units(logger)
-	local units = {}
-	local groups = utils.get_miz_groups()
-
-	for _, grp in pairs(groups) do
-		for _, unit in ipairs(grp.data.units or {}) do
-			local u = {}
-			u.name = unit.name
-			u.category = grp.category
-			u.dead = false
-
-			if units[u.name] ~= nil then
-				logger:error("multiple same named miz placed"..
-					" objects exist: "..u.name)
-			end
-			units[u.name] = u
-		end
-	end
-	return units
 end
 
 function utils.time(dcsabstime)
