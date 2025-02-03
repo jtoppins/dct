@@ -80,7 +80,7 @@ function AssetManager:__init(theater)
 	-- remember all spawned Asset classes will need to register the names
 	-- of their DCS objects with 'something', this will be the something.
 	self._object2asset = {}
-	self._mizobjs = get_miz_units(self._logger)
+	self._mizobjs = {} --get_miz_units(self._logger)
 	self._spawnq = {}
 end
 
