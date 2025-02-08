@@ -15,5 +15,8 @@ data/*.orig
 data/*.new
 data/*.log
 
+# ignore build directory
+build/
+
 # ignore release zip files
 *.zip
