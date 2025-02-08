@@ -7,6 +7,8 @@ VERSION    ?= $(shell git describe)
 .PHONY: check check-syntax tests build
 help:
 	@echo 'Targets:'
+	@echo '  clean        - Remove all build artifacts'
+	@echo '  dist-clean   - clean target plus remove build results'
 	@echo '  check        - Run all unit tests and syntax checks'
 	@echo '  check-syntax - Run luacheck lint checker'
 	@echo '  tests        - Run unit tests'
@@ -14,6 +16,9 @@ help:
 
 clean:
 	rm -rf $(BUILDPATH)
+
+dist-clean: clean
+	rm *.zip
 
 check-syntax:
 	luacheck -q hooks scripts src/dct* tests
