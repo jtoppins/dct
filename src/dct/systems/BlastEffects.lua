@@ -28,12 +28,13 @@ local BlastEffects = class("BlastEffects", System, Marshallable, DCTEvents)
 BlastEffects.enabled = true
 
 --- Constructor.
-function BlastEffects:__init(theater)
+function BlastEffects:__init(theater, ageout)
+	ageout = ageout or 2
 	System.__init(self, theater, System.PRIORITY.ADDON)
 	Marshallable.__init(self)
 	DCTEvents.__init(self)
+	self.impact_age_out = ageout
 	self._corrections = utils.deepcopy(default_correction_table)
-	self.impact_age_out = 2
 	self._impacts = {}
 
 	self:_addMarshalNames({
@@ -48,14 +49,19 @@ end
 -- Load any theater specific settings and any theater specific warhead
 -- corrections.
 function BlastEffects:initialize()
+	local removetbl = {}
 	for idx, impact in pairs(self._impacts) do
 		for _, power in pairs(impact.powers) do
 			trigger.action.explosion(impact.point, power)
 		end
 		impact.age = impact.age + 1
 		if impact.age > self.impact_age_out then
-			table.remove(self._impacts, idx)
+			table.insert(removetbl, idx)
 		end
+	end
+
+	for i = #removetbl, 1, -1 do
+		table.remove(self._impacts, removetbl[i])
 	end
 	return true
 end
@@ -74,7 +80,7 @@ end
 function BlastEffects:overrideCorrections(corrections)
 	utils.mergetables(self._corrections, corrections)
 	for k, v in pairs(self._corrections) do
-		if v < 0 then
+		if tonumber(v) < 0 then
 			self._corrections[k] = nil
 		end
 	end
@@ -83,6 +89,7 @@ end
 --- Gives the corrected mass for the provided weapon type.
 -- @tparam string Weapon typename
 -- @treturn number corrected TNT mass equivalent in kilograms
+-- @return nil if the weapon type does not need correction
 function BlastEffects:getCorrectedPower(wpntypename)
 	return self._corrections[wpntypename]
 end
@@ -97,6 +104,14 @@ function BlastEffects:addImpact(point, powers)
 	table.insert(self._impacts, impact)
 end
 
+--- Trigger an explosion if the corrected power is greater than the
+-- original power.
+function BlastEffects:triggerExplosion(point, power, correctedpower)
+	if correctedpower ~= nil and correctedpower > power then
+		trigger.action.explosion(point, correctedpower)
+	end
+end
+
 --- Event handler for processing DCT impact events.
 function BlastEffects:handleImpact(event)
 	local correctedpower = self:getCorrectedPower(event.initiator.type)
@@ -106,11 +121,8 @@ function BlastEffects:handleImpact(event)
 		correctedpower,
 	})
 
-	if correctedpower ~= nil and
-	   correctedpower > event.initiator.power then
-		trigger.action.explosion(event.point,
-					 event.initiator.correctedpower)
-	end
+	self:triggerExplosion(event.point, event.initiator.power,
+			      correctedpower)
 end
 
 return BlastEffects
