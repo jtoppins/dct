@@ -16,7 +16,7 @@ local dct = {
 
 _G.dct = dct
 -- Where the DCT code is stored
-dct.modpath = libs.utils.join_paths(BASEPATH, "Mods", "Tech", "DCT")
+dct.modpath = libs.utils.join_paths(BASEPATH, "Mods", "tech", "DCT")
 -- DCT config file path, always stored in savedgames dir
 dct.cfgpath = libs.utils.join_paths(lfs.writedir(), "Config", "dct.cfg")
 -- DCT Theaters are always stored in the savedgames directory

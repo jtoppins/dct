@@ -1,7 +1,8 @@
 MAKEFLAGS  := --no-print-directory
 SRCPATH    := $(CURDIR)
 BUILDPATH  ?= $(CURDIR)/build
-MODPATH    := $(BUILDPATH)/Mods/Tech/DCT
+INSTALLPATH ?= Mods/tech/DCT
+MODPATH    := $(BUILDPATH)/$(INSTALLPATH)
 VERSION    ?= $(shell git describe)
 
 .PHONY: check check-syntax tests build
@@ -37,8 +38,9 @@ build-setup: build-clean
 	mkdir -p "$(MODPATH)"
 
 build-src: build-setup
-	cp -aL "$(SRCPATH)"/data/savedgames/Mods/Tech/DCT/lua \
-		"$(MODPATH)"
+	mkdir -p "$(MODPATH)"/lua
+	cp -aL "$(SRCPATH)"/scripts "$(MODPATH)"
+	cp -aL "$(SRCPATH)"/src/* "$(MODPATH)"/lua
 	sed -e "s:%VERSION%:$(VERSION):" "$(SRCPATH)"/entry.lua.tpl > \
 		"$(MODPATH)"/entry.lua
 	sed -e "s:%VERSION%:$(VERSION):" "$(SRCPATH)"/src/dct.lua > \
