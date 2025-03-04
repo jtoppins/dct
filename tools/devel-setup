@@ -1,0 +1,19 @@
+#!/bin/sh
+
+set -e
+set -u
+
+## Install all required Debian packages to support development
+# and installation
+sudo apt install -y \
+	lua5.1 \
+	lua-filesystem \
+	lua-busted \
+	lua-check \
+	lua-json \
+	lua-doc \
+	lua-md5 \
+	lua-zip \
+	lua-markdown \
+	bash-completion \
+	make
