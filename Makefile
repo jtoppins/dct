@@ -64,6 +64,8 @@ LUA                   = lua5.1
 LUACC                 = luac
 LUACHECK              = luacheck
 LUATESTS              = busted
+PATCH                 = patch
+PATCHFLAGS            = --ignore-whitespace -s -N -r -
 TZ                    = "UTC 0"
 MOD_INSTALL_PATH      := $(INSTALLPREFIX)Mods/tech/DCT
 LUA_INSTALL_PATH      := $(MOD_INSTALL_PATH)/lua
@@ -71,6 +73,8 @@ CONFIG_INSTALL_PATH   := $(INSTALLPREFIX)Config
 HOOKS_INSTALL_PATH    := $(INSTALLPREFIX)Scripts/Hooks
 MISSION_INSTALL_PATH  := $(INSTALLPREFIX)Missions
 DCT_DATA_ROOT         := $(srctree)/data
+MISSIONSCRIPTING      = $(realpath $(GAMEROOT)/Scripts/MissionScripting.lua)
+DCS_PATCHFILE         = $(srctree)/patches/dcs.patch
 
 export PREFIX DCT_VERSION
 export INSTALL INSTALLFLAGS ZIP TAR SED LUA LUACC LUACHECK LUABUSTED TZ
@@ -79,6 +83,7 @@ export MISSION_INSTALL_PATH DCT_DATA_ROOT
 
 generated_files := entry.lua src/dct.lua
 rm-files := $(generated_files)
+install-targets = dct_install
 
 PHONY += all
 __all: all
@@ -103,20 +108,32 @@ quiet_cmd_dct_install = INSTALL DCT
 		find $(INSTALLPREFIX) \( -name '*.lua.in' \) -type f -print \
 			| xargs rm -rf
 
+_do_patch = $(PATCH) $(PATCHFLAGS) $(1) $(2) || true
+patchfile = $(if $(Q),@set -e; echo "PATCH   $(shell basename $(1))"; \
+	    $(call _do_patch,$(1),$(2)), $(call _do_patch,$(1),$(2)))
+
 PHONY += dct_install demomiz_install install patch_game
 dct_install: generated
 	$(if $(PREFIX),,$(error PREFIX not defined.))
 	$(call cmd,dct_install)
 
+patch_game:
+ifeq ($(MISSIONSCRIPTING),)
+	@echo "Due to permission errors you need to apply the following"
+	@echo "patch manually to '<DCS_GAME_ROOT>/Scripts/MissionScripting.lua':"
+	@cat $(DCS_PATCHFILE)
+else
+	$(if $(wildcard $(MISSIONSCRIPTING)),,$(error no GAMEROOT defined))
+	$(call patchfile,$(MISSIONSCRIPTING),$(DCS_PATCHFILE))
+endif
+
 demomiz_install:
 	$(error TODO: write me; install the demo mission that comes with DCT)
 
-patch_game:
-	$(error TODO: write me; patch the game to load DCT)
+install-targets += patch_game
+#install-targets += demomiz_install
 
-install: dct_install
-#install: patch_game
-#install: demomiz_install
+install: $(install-targets)
 
 PHONY += check syntax tests
 check: syntax tests
@@ -136,7 +153,7 @@ generated: $(generated_files)
 
 PHONY += clean distclean
 distclean: clean
-	$(Q)rm *.zip
+	$(Q)rm -f *.zip
 
 clean:
 	$(call cmd,rmfiles)
@@ -150,9 +167,16 @@ help:
 	@echo '  syntax       - Run luacheck lint checker'
 	@echo '  tests        - Run unit tests'
 	@echo '  install      - Install mod into the directory specified by'
-	@echo '                 PREFIX and patch the game specificed in'
-	@echo '                 GAMEROOT'
+	@echo '                 PREFIX'
 	@echo '  dist         - Build a releasable package, including docs'
+	@echo ''
+	@echo 'Variables:'
+	@echo '  PREFIX       - the location where you want DCT installed'
+	@echo ''
+	@echo 'Example:'
+	@echo '  make install PREFIX=/mnt/c/Users/userfoo/Saved\ Games/DCS'
+	@echo ''
+	@echo 'This will install DCT into "userfoo" saved games folder'
 
 quiet_cmd_rmfiles = CLEAN  $(rm-files)
       cmd_rmfiles = rm -rf $(rm-files)

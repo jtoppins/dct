@@ -16,4 +16,5 @@ sudo apt install -y \
 	lua-zip \
 	lua-markdown \
 	bash-completion \
-	make
+	make \
+	patch
