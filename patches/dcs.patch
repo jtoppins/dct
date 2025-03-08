@@ -1,0 +1,14 @@
+--- original.lua	2025-03-03 20:51:38.230006258 -0500
++++ MissionScripting.lua	2025-03-03 21:14:27.849610346 -0500
+@@ -1,6 +1,11 @@
+ --Initialization script for the Mission lua Environment (SSE)
+ 
+ dofile('Scripts/ScriptingSystem.lua')
++local dctmod = table.concat({lfs.writedir(), "Mods", "tech", "DCT"},
++			    package.config:sub(1,1))
++if lfs.attributes(dctmod) ~= nil then
++	dofile(dctmod.."/lua/dctinit.lua")
++end
+ 
+ --Sanitize Mission Scripting environment
+ --This makes unavailable some unsecure functions. 
