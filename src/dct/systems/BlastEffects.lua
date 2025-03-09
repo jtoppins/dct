@@ -108,6 +108,8 @@ end
 -- original power.
 function BlastEffects:triggerExplosion(point, power, correctedpower)
 	if correctedpower ~= nil and correctedpower > power then
+		self._logger:debug("  + enhancing explosion: %d",
+				   correctedpower)
 		trigger.action.explosion(point, correctedpower)
 	end
 end
@@ -116,6 +118,9 @@ end
 function BlastEffects:handleImpact(event)
 	local correctedpower = self:getCorrectedPower(event.initiator.type)
 
+	self._logger:debug("received impact event: %s fired from %s",
+			   event.initiator.type,
+			   event.initiator.shootername)
 	self:addImpact(event.point, {
 		event.initiator.power,
 		correctedpower,
