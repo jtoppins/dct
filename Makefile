@@ -103,10 +103,16 @@ quiet_cmd_dct_install = INSTALL DCT
 		cp -aL "$(srctree)"/hooks/* $(HOOKS_INSTALL_PATH); \
 		$(INSTALL) $(INSTALLFLAGS) -m 644 -t $(MOD_INSTALL_PATH) \
 			"$(srctree)"/entry.lua; \
-		$(INSTALL) $(INSTALLFLAGS) -m 644 -t $(CONFIG_INSTALL_PATH) \
+		$(INSTALL) $(INSTALLFLAGS) --backup=numbered -m 644 \
+			-t $(CONFIG_INSTALL_PATH) \
 			"$(srctree)"/data/savedgames/Config/dct.cfg; \
 		find $(INSTALLPREFIX) \( -name '*.lua.in' \) -type f -print \
 			| xargs rm -rf
+
+quiet_cmd_dct_remove = RM      DCT
+      cmd_dct_remove = \
+		rm -rf $(MOD_INSTALL_PATH); \
+		rm -f $(HOOKS_INSTALL_PATH)/dct-*
 
 _do_patch = $(PATCH) $(PATCHFLAGS) $(1) $(2) || true
 patchfile = $(if $(Q),@set -e; echo "PATCH   $(shell basename $(1))"; \
@@ -114,8 +120,7 @@ patchfile = $(if $(Q),@set -e; echo "PATCH   $(shell basename $(1))"; \
 
 PHONY += dct_install demomiz_install install patch_game
 dct_install: generated
-	$(if $(PREFIX),,$(error PREFIX not defined.))
-	$(call cmd,dct_install)
+	$(if $(PREFIX),$(call cmd,dct_install),$(error PREFIX not defined.))
 
 patch_game:
 ifeq ($(MISSIONSCRIPTING),)
@@ -134,6 +139,10 @@ install-targets += patch_game
 #install-targets += demomiz_install
 
 install: $(install-targets)
+
+PHONY += uninstall
+uninstall:
+	$(if $(PREFIX),$(call cmd,dct_remove),$(error PREFIX not defined.))
 
 PHONY += check syntax tests
 check: syntax tests
@@ -168,6 +177,7 @@ help:
 	@echo '  tests        - Run unit tests'
 	@echo '  install      - Install mod into the directory specified by'
 	@echo '                 PREFIX'
+	@echo '  uninstall    - Uninstall mod that was installed to PREFIX'
 	@echo '  dist         - Build a releasable package, including docs'
 	@echo ''
 	@echo 'Variables:'
