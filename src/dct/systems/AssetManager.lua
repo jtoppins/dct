@@ -12,6 +12,7 @@ local Observable = require("dct.libs.Observable")
 local Marshallable = require("dct.libs.Marshallable")
 --local Agent = require("dct.assets.Agent")
 
+--[[
 --- Iterate over groups and only visit non-player groups.
 local function iterate_nonplayers(grps)
 	libs.check.table(grps)
@@ -53,6 +54,7 @@ local function get_miz_units(logger)
 	end
 	return units
 end
+--]]
 
 --- Central store for assets managed in DCT.
 local AssetManager = libs.classnamed("AssetManager", System, Observable,

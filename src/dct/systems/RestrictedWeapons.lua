@@ -18,12 +18,15 @@ local Command       = require("dct.libs.Command")
 local System        = require("dct.libs.System")
 local DCTEvents     = require("dct.libs.DCTEvents")
 local WS            = require("dct.agent.worldstate")
+local uirequest     = require("dct.ui.request")
 local builtin_restrictions = require("dct.systems.data.restrictedweapons")
 
 -- TODO: listen for birth events and post this message to any player agents
+--[[
 local notifymsg =
 	"Please read the loadout limits in the briefing and "..
 	"use the F10 Menu to validate your loadout before departing."
+--]]
 
 local function validate_restrictions(cfg, tbl)
 	local CheckRestrictedWeapons = CheckPerEntry(nil, {
@@ -90,7 +93,7 @@ function RestrictedWeapons.check(agent)
 	local key = "checkpayload_msg"
 
 	if agent:WS():get(WS.ID.INAIR).value == true then
-		post_msg(agent, key,
+		uirequest.post_msg(agent, key,
 			"Payload check is only allowed when landed at "..
 			"a friendly airbase")
 		return
@@ -107,7 +110,7 @@ function RestrictedWeapons.check(agent)
 		header = "You are over budget! Re-arm before departing, "..
 			 "or you will be punished!\n\n"
 	end
-	post_msg(agent, key, header..msg)
+	uirequest.post_msg(agent, key, header..msg)
 end
 
 --- Constructor.
@@ -279,7 +282,7 @@ function RestrictedWeapons:enforcePolicy(name)
                 return
         end
 
-        asset:onDCTEvent(dct.event.build.playerKick(kickCode.LOADOUT))
+        asset:onDCTEvent(dct.event.build.playerKick(dctenum.kickCode.LOADOUT))
 end
 
 return RestrictedWeapons
