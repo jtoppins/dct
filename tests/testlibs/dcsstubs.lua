@@ -220,9 +220,9 @@ Weapon.MissileCategory = {
 }
 
 Weapon.WarheadType = {
-	["AP"]            = 0,
-	["HE"]            = 1,
-	["SHAPED_CHARGE"] = 2,
+	["AP"]               = 0,
+	["HE"]               = 1,
+	["SHAPED_EXPLOSIVE"] = 2,
 }
 _G.Weapon = Weapon
 
