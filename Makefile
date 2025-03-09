@@ -150,7 +150,7 @@ check: syntax tests
 syntax:
 	$(Q)$(LUACHECK) -q hooks src/dct* tests
 
-rm-test-files := data/*.state data/*.log
+rm-test-files := data/savedgames/*.state data/*.log
 rm-files += $(rm-test-files)
 
 tests: generated
