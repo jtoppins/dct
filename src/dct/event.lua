@@ -24,6 +24,7 @@ _event.ID = {
 	["DCT_EVENT_PLAYER_JOIN"]    = eventbase + 13,
 	["DCT_EVENT_DEPARTURE"]      = eventbase + 14,
 	["DCT_EVENT_AGENT_REQUEST"]  = eventbase + 15,
+	["DCT_EVENT_THEATER_END"]    = eventbase + 16,
 }
 
 function _event.notify(event)
@@ -194,6 +195,17 @@ function _event.build.agentRequest(agent, data)
 	event.id = _event.ID.DCT_EVENT_AGENT_REQUEST
 	event.initiator = agent
 	event.data = data
+	return event
+end
+
+--- Theater end event
+-- @tparam string winner coalition.side winner of the campaign
+-- @tparam string msg text displayed to players
+function _event.build.theaterEnd(winner, msg)
+	local event = {}
+	event.id = _event.ID.DCT_EVENT_THEATER_END
+	event.winner = winner
+	event.msg = msg
 	return event
 end
 

@@ -331,10 +331,8 @@ function Tickets:setComplete(winner)
 	end
 
 	self.complete = true
-	local code = string.format([[a_end_mission("%s", "%s", 10)]],
-		winner.name, winner.win_message)
-
-	net.dostring_in("mission", string.format("%q", code))
+	dct.event.notify(dct.event.build.theaterEnd(winner.name,
+						    winner.win_message))
 end
 
 function Tickets:isComplete()
