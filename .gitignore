@@ -9,6 +9,10 @@
 !.github
 !.busted
 
+# ignore generated files
+entry.lua
+src/dct.lua
+
 # ignore test artifacts
 data/*.state*
 data/*.orig
