@@ -311,16 +311,22 @@ function Agent:graph()
 	return self._plangraph
 end
 
+local function goalfacts(fact)
+	if fact.type == WS.Facts.factType.GOAL then
+		return true
+	end
+	return false
+end
+
 --- get the list of Goals the Agent wants to achieve, it includes
 -- the current goal desired by the assigned Mission as well.
 --
 -- @return list of worldstate.Goal objects
 function Agent:goals()
 	local goals = utils.shallowclone(self._goals)
-	local msn = self:getMission()
 
-	if msn ~= nil then
-		table.insert(goals, msn:goal())
+	for _, fact in self:iterateFacts(goalfacts) do
+		table.insert(goals, fact.goal)
 	end
 	return goals
 end

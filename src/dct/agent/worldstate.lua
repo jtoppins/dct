@@ -67,6 +67,7 @@ local factType = {
 	["CMDPENDING"]  = 11, -- Value
 	["SCRATCHPAD"]  = 12, -- Value
 	["PLAYERMENU"]  = 13, -- objref (a player menu object)
+	["GOAL"]        = 14, -- objref (Goal object)
 }
 
 --- Unique fact keys that represents data that should only exist
@@ -224,6 +225,14 @@ local EventFact = class("EventFact", Fact)
 function EventFact:__init(event)
 	Fact.__init(self, factType.EVENT)
 	self.event = event
+end
+
+--- Goal fact to augment the Agent's basic set of goals. These goals can
+-- be used to have the Agent target a specific object.
+local GoalFact = class("GoalFact", Fact)
+function GoalFact:__init(goal)
+	Fact.__init(self, factType.GOAL)
+	self.goal = goal
 end
 
 --- Normalized value [0,1] representing something.
@@ -476,6 +485,7 @@ _ws.Facts = {
 	["Character"] = CharacterFact,
 	["Stimuli"]   = StimuliFact,
 	["Event"]     = EventFact,
+	["Goal"]      = GoalFact,
 	["Value"]     = ValueFact,
 	["PlayerMsg"] = PlayerMsgFact,
 	["PlayerMenu"]= PlayerMenuFact,
