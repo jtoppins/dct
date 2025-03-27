@@ -143,11 +143,10 @@ end
 
 local agentmt = {}
 function agentmt.__tostring(agent)
-	return string.format("N:%s, T:%s, G:%s, A:%s",
+	return string.format("N:%s, T:%s, P:%s",
 			     agent.name,
 			     utils.getkey(dctenum.assetType, agent.type),
-			     tostring(agent:getGoal()),
-			     tostring(agent:getAction()))
+			     tostring(agent:getPlan()))
 end
 
 --- Agent interface. Provides a common API for interacting with
@@ -243,7 +242,6 @@ end
 -- a death event to listeners.
 function Agent:destroy()
 	self:despawn()
-	self:setMission(nil)
 	self:replan()
 	self._goals = {}
 	self._actions = {}
@@ -349,42 +347,22 @@ end
 -- we are doing something.
 function Agent:replan()
 	self:WS():get(WS.ID.IDLE).value = false
-	self._plan = nil
+	self:setPlan(nil)
 	dctutils.foreach_call(self._sensors, ipairs, "onReplan")
 end
 
 --- Set the current plan the Agent needs to execute.
 --
--- @param goal worldstate.Goal that the Agent is trying to achieve
--- @param plan a Queue of worldstate.Action objects the Agent should execute
-function Agent:setPlan(goal, plan)
-	self._plan = {}
-	self._plan.goal = goal
-	self._plan.plan = plan
+-- @param plan the plan to execute.
+function Agent:setPlan(plan)
+	self._plan = plan
 end
 
-function Agent:getPlan()
-	if self._plan == nil then
-		return nil
-	end
-	return self._plan.plan
-end
-
---- Return the plan Goal the Agent is attempting to achieve.
+--- Get the plan the agent is currently attempting to execute.
 --
--- @return worldstate.Goal
-function Agent:getGoal()
-	if self._plan == nil then
-		return nil
-	end
-	return self._plan.goal
-end
-
-function Agent:getAction()
-	if self._plan == nil then
-		return nil
-	end
-	return self._plan.action
+-- @return worldstate.Plan
+function Agent:getPlan()
+	return self._plan
 end
 
 --- Required by the AssetManager, returns the list of DCS groups/static the
@@ -501,59 +479,15 @@ function Agent:setHealth(val, donotify)
 	end
 end
 
---- get the Mission object currently assigned to the Agent
---
---- @return Mission or nil is no mission assigned
-function Agent:getMission()
-	return self._msn
-end
-
---- assign Mission object to Agent
---
--- @param msn Mission object reference
-function Agent:setMission(msn)
-	self._msn = msn
-end
-
---- Handle DCS and DCT objects sent to the Agent
+--- Handle DCS and DCT events sent to the Agent
 function Agent:onDCTEvent(event)
 	dctutils.foreach_call(self._sensors, ipairs, "onDCTEvent", event)
-	local action = self:getAction()
-	if action ~= nil and
-	   type(action.onDCTEvent) == "function" then
-		action:onDCTEvent(event)
+	if self:getPlan() ~= nil then
+		self:getPlan():onDCTEvent(event)
 	end
 end
 
-function Agent:executePlan()
-	if self._plan == nil then
-		return
-	end
-
-	local plan = self:getPlan()
-	local goal = self:getGoal()
-	local action = self:getAction()
-
-	if plan:empty() then
-		goal:complete()
-		self:replan()
-		return
-	end
-
-	if action == nil then
-		self._plan.action = plan:peekhead()
-		action = self._plan.action
-		action:enter(self)
-	end
-
-	if action:isComplete(self) then
-		plan:pophead()
-		dctutils.foreach_call(self._sensors, ipairs, "onActionComplete")
-		self._plan.action = nil
-	end
-end
-
---- Update function run periodically
+--- Update function is run periodically.
 function Agent:update()
 	if not self:isSpawned() or self:isDead() then
 		return
@@ -566,7 +500,9 @@ function Agent:update()
 		end
 	end
 
-	self:executePlan()
+	if self:getPlan() ~= nil then
+		self:getPlan():execute(self)
+	end
 end
 
 -- Have the DCS objects associated with this asset been spawned?

@@ -411,6 +411,62 @@ end
 
 Sensor.isSuitable = isSuitableStub
 
+local planmt = {}
+function planmt.__tostring(tbl)
+	return string.format("(G:%s, A:%s, sz:%d)",
+		tostring(tbl.goal), tostring(tbl.curaction),
+		tbl.actionq:size())
+end
+
+local Plan = utils.override_ops(class("Plan"), planmt)
+
+--- Constructor.
+--
+-- @param actions a Queue of worldstate.Action objects the Agent should
+--                execute.
+-- @param goal worldstate.Goal that the Agent is trying to achieve
+function Plan:__init(actions, goal)
+	self.actionq   = actions
+	self.goal      = goal
+	self.curaction = nil
+end
+
+--- Return the plan Goal.
+--
+-- @return worldstate.Goal
+function Plan:getGoal()
+	return self.goal
+end
+
+function Plan:onDCTEvent(event)
+	if self.curaction ~= nil and
+	   type(self.curaction.onDCTEvent) == "function" then
+		self.curaction:onDCTEvent(event)
+	end
+end
+
+--- Execute plan.
+function Plan:execute(agent)
+	local action = self.curaction
+
+	if self.actionq:empty() then
+		self.goal:complete()
+		agent:replan()
+		return
+	end
+
+	if action == nil then
+		self.curaction = self.actionq:peekhead()
+		action = self.curaction
+		action:enter(agent)
+	end
+
+	if action:isComplete(self) then
+		self.actionq:pophead()
+		self.curaction = nil
+	end
+end
+
 local _ws = {}
 _ws.Attribute = Attribute
 _ws.Facts = {
@@ -433,6 +489,7 @@ _ws.Action = Action
 _ws.Node = goap.StateNode
 _ws.Graph = goap.Graph
 _ws.find_plan = goap.find_plan
+_ws.Plan = Plan
 _ws.Goal = Goal
 _ws.Sensor = Sensor
 
