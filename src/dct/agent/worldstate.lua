@@ -279,6 +279,10 @@ function WorldState.createAll()
 	return ws
 end
 
+local function isSuitableStub(--[[agent]])
+	return false
+end
+
 --- add __lt handler for Actions so they can be ordered correctly,
 -- higher order numbers will cause the action to execute later in
 -- the plan
@@ -307,7 +311,10 @@ function Action:__init(agent, cost, precond, effects, order)
 	goap.Action.__init(self, cost, precond, effects)
 	self.order = order or 1
 	self.agent = agent
+	self.isSuitable = nil
 end
+
+Action.isSuitable = isSuitableStub
 
 --- Called when this action becomes the active action
 -- @return none
@@ -332,7 +339,10 @@ function Goal:__init(desiredws, weight, iaus)
 	self.desiredws = desiredws
 	self.iaus = iaus
 	self.weight = weight or 1
+	self.isSuitable = nil
 end
+
+Goal.isSuitable = isSuitableStub
 
 function Goal:WS()
 	return self.desiredws
@@ -396,7 +406,10 @@ local Sensor = utils.override_ops(class("Sensor"), sensormt)
 function Sensor:__init(agent, order)
 	self.agent = agent
 	self.order = order
+	self.isSuitable = nil
 end
+
+Sensor.isSuitable = isSuitableStub
 
 local _ws = {}
 _ws.Attribute = Attribute

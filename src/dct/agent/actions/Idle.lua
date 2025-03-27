@@ -11,6 +11,10 @@ function Idle:__init(agent)
 	})
 end
 
+function Idle.isSuitable()
+	return true
+end
+
 function Idle:enter()
 	self.agent:WS():get(WS.ID.IDLE).value = true
 end

@@ -225,6 +225,10 @@ function DCSObjectsSensor:setAgentHealth()
 			       1.0))
 end
 
+function DCSObjectsSensor.isSuitable(agent)
+	return agent:getDescKey("tpldata") ~= nil
+end
+
 -- Adds an object (group or static) to the monitored list for this
 -- asset. This list will be needed later to save state.
 function DCSObjectsSensor:setup()

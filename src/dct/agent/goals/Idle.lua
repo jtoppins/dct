@@ -13,4 +13,8 @@ function Idle:__init()
 		}), 0.01)
 end
 
+function Idle.isSuitable()
+	return true
+end
+
 return Idle

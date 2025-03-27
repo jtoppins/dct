@@ -38,6 +38,11 @@ function DebugSensor:__init(agent)
 	self.markid = human.getMarkID()
 end
 
+function DebugSensor.isSuitable(agent)
+	local d = agent:getDescKey("debug")
+	return d ~= nil and tonumber(d) > 0
+end
+
 function DebugSensor:spawnPost()
 	if self.timer then
 		self.timer:reset()

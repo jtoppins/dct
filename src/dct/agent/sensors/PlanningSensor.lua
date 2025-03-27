@@ -44,6 +44,10 @@ function Planning:__init(agent)
 	WS.Sensor.__init(self, agent, 70)
 end
 
+function Planning.isSuitable()
+	return true
+end
+
 function Planning:update()
 	if self.agent._plan then
 		return false
