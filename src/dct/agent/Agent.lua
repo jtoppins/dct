@@ -234,6 +234,20 @@ function Agent.filter_no_controller(grp)
 	return nocontroller[grp.category] == nil
 end
 
+function Agent:printDetail()
+	local str = tostring(self)
+
+	str = str..string.format("\ndesc: %s", libs.json:encode_pretty(self.desc))
+	for _, lst in ipairs({"sensors", "actions", "goals",}) do
+		str = str..string.format("\n%s: {", lst)
+		for _, obj in ipairs(self["_"..lst]) do
+			str = str..string.format("\n\t%s", obj.__clsname)
+		end
+		str = str..string.format("\n}")
+	end
+	return str
+end
+
 --- Destroys the Agent, deleting all associated DCS objects, without emitting
 -- a death event to listeners.
 function Agent:destroy()

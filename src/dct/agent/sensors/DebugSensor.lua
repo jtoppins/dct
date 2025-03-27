@@ -5,16 +5,15 @@
 local class   = require("libs.classnamed")
 local json    = require("libs.json")
 local Timer   = require("dct.libs.Timer")
-local human   = require("dct.ui.human")
+local draw    = require("dct.ui.draw")
 local WS      = require("dct.agent.worldstate")
 
 local function debug_details(agent)
-	local goal = agent:getGoal()
-	local msg = tostring(agent).."\n  mission: "..
-		    tostring(agent:getMission())
+	local plan = agent:getPlan()
+	local msg = agent:printDetail()
 
-	if goal then
-		msg = msg.."\n  goal_ws: "..tostring(goal:WS())
+	if plan ~= nil then
+		msg = msg.."\n  goal_ws: "..tostring(plan:getGoal():WS())
 	end
 
 	msg = msg.."\n  agent_ws: "..tostring(agent:WS())
@@ -35,7 +34,9 @@ function DebugSensor:__init(agent)
 
 	-- limit timer to have a minimum timeout of 30 seconds
 	self.timer  = Timer(math.max(updatetime, 30))
-	self.markid = human.getMarkID()
+	self.mark = draw.Mark(tostring(self.agent),
+			      self.agent:getDescKey("location"),
+			      true)
 end
 
 function DebugSensor.isSuitable(agent)
@@ -66,9 +67,10 @@ function DebugSensor:update()
 		return false
 	end
 
-	trigger.action.removeMark(self.markid)
-	trigger.action.markToAll(self.markid, tostring(self.agent),
-				 self.agent:getDescKey("location"))
+	self.mark:remove()
+	self.mark.text = tostring(self.agent)
+	self.mark.pos = self.agent:getDescKey("location")
+	self.mark:draw()
 	self.agent._logger:info(debug_details(self.agent))
 	self.timer:reset()
 	self.timer:start()

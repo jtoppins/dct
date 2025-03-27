@@ -201,6 +201,7 @@ function DCSObjectsSensor:__init(agent)
 	self._hasDeathGoals = agent:getDescKey("hasDeathGoals") or false
 	self._tpldata       = agent.desc.tpldata
 	self.healthkey      = self.__clsname..".health"
+	self.fromgroup      = false
 
 	self:_overridehandlers({
 		[world.event.S_EVENT_DEAD] = self.handleDead,
@@ -231,8 +232,9 @@ end
 
 -- Adds an object (group or static) to the monitored list for this
 -- asset. This list will be needed later to save state.
-function DCSObjectsSensor:setup()
+function DCSObjectsSensor:setup(fromgroup)
 	self._assets = {}
+	self.fromgroup = fromgroup
 
 	for _, grp in ipairs(self._tpldata) do
 		setup_death_goal(self, grp.data, grp.category)
@@ -319,8 +321,10 @@ function DCSObjectsSensor:marshal()
 end
 
 function DCSObjectsSensor:spawn()
-	for _, grp in pairs(self._assets) do
-		_spawn(remove_dct_keys(grp))
+	if self.fromgroup ~= true then
+		for _, grp in pairs(self._assets) do
+			_spawn(remove_dct_keys(grp))
+		end
 	end
 
 	self:checkGoals(true)
