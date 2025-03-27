@@ -196,14 +196,10 @@ function Agent:__init()
 	self._setup     = false
 	self._spawned   = false
 	self._plan      = nil
-	self._msn       = nil
-	self._intel     = {}
-	for _, side in pairs(coalition.side) do
-		self._intel[side]    = 0
-	end
+	self._intel     = 0
 
 	self:_addMarshalNames(utils.mergetables({
-		"_spawned", "_dead", "_intel",
+		"_spawned", "_intel",
 		"desc", "name", "type", "owner",
 	}, Subordinates.getNames()))
 
@@ -291,20 +287,6 @@ function Agent:marshal()
 		end
 	end
 	return tbl
-end
-
--- Magic function used by the Marshallable class.
--- Handle the intel table special because even though its keys
--- were numbers when the state was serialized in json's wisdom
--- it decided to convert them to strings. So we need to convert
--- back so we can access the data in our lookups.
-function Agent:_unmarshalpost(data)
-	for _, tbl in ipairs({"_intel", }) do
-		self[tbl] = {}
-		for k, v in pairs(data[tbl]) do
-			self[tbl][tonumber(k)] = v
-		end
-	end
 end
 
 --- Reads a marshaled Agent from the provided table(data)
@@ -431,23 +413,21 @@ function Agent:setDescKey(key, val)
 	self.desc[key] = val
 end
 
---- An intel level of zero implies the given side has no idea about
--- the asset.
+--- Get the intel level that the opposing side is supposed to know about
+-- this agent. An intel level of zero implies the opposing side has no
+-- idea about the asset.
 --
--- @param side get the intel level the specified side has on this asset
 -- @return number, intel level [0-5]
-function Agent:getIntel(side)
-	return self._intel[side]
+function Agent:getIntel()
+	return self._intel
 end
 
---- Set the intel level for the given side.
+--- Set the intel level for the agent.
 --
--- @param side side to modify level for
 -- @param val the new intel level
 -- @return none
-function Agent:setIntel(side, val)
-	assert(type(val) == "number", "value error: must be a number")
-	self._intel[side] = val
+function Agent:setIntel(val)
+	self._intel = tonumber(val)
 end
 
 --- Is the asset considered dead yet?
