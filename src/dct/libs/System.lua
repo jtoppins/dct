@@ -35,10 +35,12 @@ System.SYSTEMALIAS = {
 	["TICKETS"]     = "TicketSystem", -- defines end state win critera
 	["PERSISTENCE"] = "SaveSystem", -- saves theater state
 	["GENERATION"]  = "GenerationSystem", -- generates a new theater
+	["TEMPLATEDB"]  = "TemplateDB", -- template database
 }
 
 System.SYSTEMORDER = {
-	["ASSETMGR"]     = System.PRIORITY.CORE + 2,
+	["TEMPLATEDB"]   = System.PRIORITY.CORE + 3,
+	["ASSETMGR"]     = System.PRIORITY.CORE + 4,
 	["WPNIMPACT"]    = System.PRIORITY.CORE + 5,
 	["TICKETS"]      = System.PRIORITY.CORE + 6,
 	["PERSISTENCE"]  = System.PRIORITY.STATE + 1,
