@@ -87,7 +87,7 @@ function CheckPlayer:__init()
 			["values"] = uihuman.tempfmt,
 			["default"] = uihuman.tempfmt.F,
 		},
-	})
+	}, nil, 5)
 end
 
 function CheckPlayer:check(data)

@@ -270,15 +270,25 @@ local function write_section(level, name, data)
 	end
 end
 
+local checkmt = {}
+function checkmt.__lt(self, other)
+	return self.order < other.order
+end
+
+function checkmt.__tostring(self)
+	return self.__clsname
+end
+
 --- Check class.
 -- @type Check
-local Check = class("Check")
+local Check = utils.override_ops(class("Check"), checkmt)
 
 --- Constructor.
 -- @string section section header.
 -- @tparam table options option table.
 -- @string description [optional] summary description.
-function Check:__init(section, options, description)
+function Check:__init(section, options, description, order)
+	self.order = order or 100
 	options = options or {}
 
 	for key, val in pairs(options) do

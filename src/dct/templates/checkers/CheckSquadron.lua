@@ -150,7 +150,7 @@ the average skill of the squadron.]],
 		},
 	}, [[Squadrons can come in three forms players only, mixed, and
 ai only. Squadrons that only have players are not required to define
-templates.]])
+templates.]], 4)
 end
 
 function CheckSquadron:checkTpldata(data)

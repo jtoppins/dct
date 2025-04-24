@@ -4,13 +4,11 @@
 
 require("libs")
 local class    = libs.classnamed
-local check    = libs.check
 local utils    = libs.utils
 local dctenum  = require("dct.enum")
-local STM      = require("dct.templates.STM")
-local Agent    = require("dct.agent.Agent")
-local Logger   = dct.libs.Logger.getByName("Template")
-local Checker  = require("dct.libs.Check")
+
+-- TODO: create defaults for every attribue so that a template
+--       can be generated from a single DCS unit group
 
 -- TODO: setup a respawn attribute
 
@@ -23,19 +21,48 @@ local Checker  = require("dct.libs.Check")
 -- and adds a Fact that is a list of unit names that should be queried
 -- for what their radars see
 
+local group_category_map = {
+	[Group.Category.AIRPLANE]   = "AIRPLANE",
+	[Group.Category.HELICOPTER] = "HELO",
+	[Group.Category.GROUND]     = "GROUND",
+	[Group.Category.SHIP]       = "SHIP",
+	[Group.Category.TRAIN]      = "INVALID",
+}
+
 -- The order of these checkers matters as some mutate the template data
 -- which later checkers rely on.
-local checkers = {
-	require("dct.templates.checkers.CheckCommon")(),
-	require("dct.templates.checkers.CheckAgent")(),
-	require("dct.templates.checkers.CheckAirbase")(),
-	require("dct.templates.checkers.CheckSquadron")(),
-	require("dct.templates.checkers.CheckPlayer")(),
-	require("dct.templates.checkers.CheckTpldata")(),
-	require("dct.templates.checkers.CheckCoalition")(),
-	require("dct.templates.checkers.CheckAircraft")(),
-	require("dct.templates.checkers.CheckLocation")(),
-}
+local checkers = nil
+
+local function set_checkers()
+	local tbl = {}
+	for _, ctor in pairs(dct.templates.checkers) do
+		table.insert(tbl, ctor())
+	end
+	table.sort(tbl)
+	return tbl
+end
+
+local function tpldata_from_dcsgroup(grp)
+	local name = grp:getName()
+	local grpcategory = grp:getCategory()
+	local tpldata = {}
+	local grpdata = {}
+	local units = {}
+
+	for idx, unit in pairs(grp:getUnits()) do
+		units[idx] = {
+			["name"] = unit:getName(),
+			["type"] = unit:getTypeName(),
+		}
+	end
+
+	grpdata.category = grpcategory
+	grpdata.data = {}
+	grpdata.data.name = name
+	grpdata.data.units = units
+	table.insert(tpldata, grpdata)
+	return tpldata
+end
 
 local function rename(name, regionname, unique)
 	local n = name
@@ -65,14 +92,6 @@ end
 local function makeNamesUnique(data)
 	for _, grp in ipairs(data or {}) do
 		rename_group(grp, nil, true)
-	end
-end
-
---- prepend all group and unit names with the region name the Template
--- belongs to.
-local function add_region_name_to_objects(data, regionname)
-	for _, grp in ipairs(data or {}) do
-		rename_group(grp, regionname, false)
 	end
 end
 
@@ -108,184 +127,129 @@ local function genCodename(template)
 	return typetbl[idx]
 end
 
+local templatemt = {}
+function templatemt.__tostring(tpl)
+	return string.format("%s.%s", tpl.packname, tpl.name)
+end
+
+--- Template.
+-- Represents a game template from which one or many game assets can be
+-- created.
+local Template = utils.override_ops(class("Template"), templatemt)
+function Template:__init(packname, data)
+	libs.check.string(packname)
+	libs.check.table(data)
+
+	self._logger  = dct.libs.Logger.getByName("Template")
+	self._valid   = false
+	self.data     = data
+
+	self._valid = self:validate()
+
+	self.name     = string.lower(data.name)
+	self.packname = string.lower(packname)
+	self.objtype  = data.objtype
+
+	-- remove static functions
+	self.fromZone = nil
+	self.fromGroup = nil
+	self.fromDCSGroup = nil
+end
+
+function Template.fromZone(packname, zone)
+	local tpl = Template(packname, zone)
+	return tpl
+end
+
+function Template.fromGroup(packname --[[, grp]])
+	-- TODO: write conversion of grp to a data table
+	-- local grpdata = grptbl_to_data(grp)
+	local tpl = Template(packname --[[, grpdata]])
+	return tpl
+end
+
+function Template.fromDCSGroup(grp)
+	local name = grp:getName()
+	local owner = grp:getCoalition()
+	local objtype = group_category_map[grp:getCategory()]
+	local tpldata = tpldata_from_dcsgroup(grp)
+
+	local data = {}
+	data.name      = name
+	data.coalition = utils.getkey(coalition.side, owner)
+	data.tpldata   = tpldata
+	data.objtype   = objtype
+	data.overwrite = false
+	-- TODO: check if this group is a player slot
+
+	local tpl = Template("dcs", data)
+	return tpl
+end
+
 --- Validates user `data` according to the checkers defined in `checkers`.
 --
 -- @param data data to validate
 -- @return bool, true on successful validation with no errors; false otherwise
-local function validate(data)
+function Template:validate()
 	local copyoptions = {}
 
+	if checkers == nil then
+		checkers = set_checkers()
+	end
+
 	for _, checker in ipairs(checkers) do
-		local ok, key, msg = checker:check(data)
+		local ok, key, msg = checker:check(self.data)
 
 		if not ok then
-			Logger:error("%s: invalid `%s` %s; file: %s",
-				tostring(data.name), tostring(key),
-				tostring(msg), tostring(data.filedct))
+			self._logger:error("%s: invalid `%s` %s",
+				tostring(self), tostring(key), tostring(msg))
 			return ok
 		end
 
 		utils.mergetables(copyoptions, checker:agentOptions())
 	end
-	utils.mergetables(copyoptions, {["regionname"] = true,})
-	data.agentDescKeys = copyoptions
+	self.agentDescKeys = copyoptions
 	return true
 end
 
---- Template
--- Represents a game template from which one or many game assets can be
--- created.
-local Template = class("Template")
-function Template:__init(data)
-	check.table(data)
-
-	self._valid = validate(data)
-	if not self._valid then
-		return
-	end
-
-	-- TODO: write this classification function, more design is needed
-	--classify(data)
-
-	-- remove static functions
-	self.fromFile = nil
-	self.genDocs  = nil
-
-	-- merge data into template
-	utils.mergetables(self, utils.deepcopy(data))
-	self._joinedregion = false
-end
-
---- Read the .dct and optionally the .stm files for a given Template into
--- a lua table. Then create a Template object at the same time checking
--- the template's data is valid.
---
--- @param region the region object the Template belongs to
--- @param dctfile the file path of the .dct file describing the template
--- @param stmfile [optional] the file path of the .stm file describing the
---          template
--- @return a Template object
-function Template.fromFile(dctfile, stmfile)
-	assert(dctfile ~= nil, "dctfile is required")
-
-	local template = utils.readlua(dctfile)
-	-- support older templates
-	if template.metadata then
-		template = template.metadata
-	end
-
-	if template.desc == "false" then
-		template.desc = nil
-	end
-
-	if stmfile ~= nil then
-		-- call order matters here as we want items in the dct file
-		-- to override items defined in the stm file.
-		template = utils.mergetables(
-			STM.transform(utils.readlua(stmfile, "staticTemplate")),
-			template)
-	end
-	template.file = nil
-	template.filedct = dctfile
-	template.filestm = stmfile
-	return Template(template)
-end
-
---- class function to generate Template documentation.
--- Generate markdown styled documentation for all options a campaign
--- designer can use to specify a template.
-function Template.genDocs()
-	local header = [[
-# Template Attributes
-
-Listing of all template attributes that are either automatically determined
-from the template file or directly specified in the .dct file.
-
-Most attributes can be modified event after an asset has been generated
-from its template. Meaning campaign progression can be saved but, for example,
-the target description of a given template is modified before the saved
-campaign is loaded. This target description change will be reflected in
-the in-game mission briefing when the campaign is loaded from the save.
-However, if an attribute specifies `agent: true` this means that once the
-asset has been generated this setting cannot be changed by modifying the
-underlying template and the value is fixed for the lifetime of that asset.
-
-Additionally, most attributes are not required and when not provided
-reasonable defaults based on template type, composition, and other factors
-will be considered when selecting the default.
-]]
-
-	Checker.genDocs(header, checkers)
-end
-
---- Create a DCT game object from the template definition.
---
--- @return the object created
-function Template:createObject()
-	return Agent.create(self:genName(),
-			    self.objtype,
-			    self.coalition,
-			    self:genDesc())
-end
-
---- Generate any subordinate assets that are defined in the template.
---
--- @param region the Region instance to look up template names
--- @param assetmgr the AssetManager instance to store generated assets
--- @param parent asset object
-function Template:generate(region, assetmgr, parent)
-	for name, _ in pairs(self.subordinates) do
-		local tpl = region:getTemplateByName(name)
-
-		if tpl then
-			local sub = tpl:createObject()
-
-			parent:addSubordinate(sub)
-			-- have subordinate observe the parent
-			parent:addObserver(sub.onDCTEvent, sub, sub.name)
-			assetmgr:add(sub)
-			tpl:generate(region, assetmgr, sub)
-		end
-	end
-end
-
---- is the Template valid, a Template can fail validation without killing
+--- Is the Template valid, a Template can fail validation without killing
 -- the game. It is up to the user of the Template to make sure the Template
 -- is valid.
 function Template:isValid()
 	return self._valid
 end
 
-function Template:joinRegion(region)
-	if self._joinedregion then
-		return
-	end
-
-	self.regionname = region.name
-	self.regionprio = region.priority
-
-	if self.rename then
-		add_region_name_to_objects(self.tpldata, region.name)
-	end
-	self._joinedregion = true
+function Template:getName()
+	return tostring(self)
 end
 
---- generate an asset name.
+--- Generate an asset name.
 -- An asset must have a unique name or it will not be added to the
 -- AssetManager. This function guarantees compliance with this requirement.
---
--- @param template template date used to generate the unique name from
 -- @return a predictable unique name
 function Template:genName()
 	local name = self.name
 
-	if self.rename then
-		name = self.regionname.."_"..self.coalition.."_"..self.name
-		if self.uniquenames == true then
+	if self.data.rename then
+		name = self.packname.."."..self.name.."_"..self.data.coalition
+		if self.data.uniquenames == true then
 			name = name.." #"..dct.Theater.singleton():getcntr()
 		end
 	end
 	return name
+end
+
+--- Associate this Template with the given agent.
+function Template:attach(agent)
+	agent.desc = self:genDesc()
+	agent:setDescKey("template", tostring(self))
+end
+
+--- Create a DCT game object from the template definition.
+--
+-- @return the object created
+function Template:getAgentArgs()
+	return self:genName(), self.data.coalition, self.objtype
 end
 
 --- Generate the description table from the Template. Is usually given
@@ -293,12 +257,10 @@ end
 function Template:genDesc()
 	local desc = {}
 	for k, _ in pairs(self.agentDescKeys) do
-		if type(self[k]) ~= "function" then
-			desc[k] = utils.deepcopy(self[k])
-		end
+		desc[k] = utils.deepcopy(self.data[k])
 	end
 
-	if self.uniquenames == true then
+	if self.data.uniquenames == true then
 		desc.codename = genCodename(self)
 		desc.locationmethod = genLocationMethod()
 		makeNamesUnique(desc.tpldata)

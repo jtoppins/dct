@@ -33,7 +33,7 @@ but some types require this field be set by the designer.
 _Note: These values cannot be lat-long or degrees decimal coordinates, they
 must be DCS internal map coordinates._]],
 		},
-	})
+	}, nil, 9)
 end
 
 local noloc = {

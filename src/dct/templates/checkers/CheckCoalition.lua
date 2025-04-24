@@ -61,7 +61,7 @@ coalitions in templates are consistent with in-game results.
 
 %VALUES%]],
 		},
-	})
+	}, nil, 7)
 end
 
 function CheckCoalition:check(data)

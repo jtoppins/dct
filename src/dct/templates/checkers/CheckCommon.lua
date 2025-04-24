@@ -261,7 +261,7 @@ Falloff rate:
 Every 2 minutes a side's regional influence is reduced by 50%.]],
 		},
 	}, [[This section describes attributes common or mostly common to
-all template types.]])
+all template types.]], 1)
 end
 
 function CheckCommon:checkDefaults(data)
