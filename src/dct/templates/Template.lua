@@ -180,6 +180,7 @@ function Template.fromDCSGroup(grp)
 	data.tpldata   = tpldata
 	data.objtype   = objtype
 	data.overwrite = false
+	data.rename    = false
 	-- TODO: check if this group is a player slot
 
 	local tpl = Template("dcs", data)
@@ -228,7 +229,7 @@ end
 -- AssetManager. This function guarantees compliance with this requirement.
 -- @return a predictable unique name
 function Template:genName()
-	local name = self.name
+	local name = self.data.name
 
 	if self.data.rename then
 		name = self.packname.."."..self.name.."_"..self.data.coalition
