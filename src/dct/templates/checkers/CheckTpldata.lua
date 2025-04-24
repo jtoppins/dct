@@ -247,7 +247,7 @@ region name.]],
 Defines if a template is suppose to have group/unit data.]],
 		},
 	}, [[Describes the actual DCS object that will be spawned/tracked
-in association with an asset created from this template.]])
+in association with an asset created from this template.]], 6)
 end
 
 function CheckTpldata:check(data)

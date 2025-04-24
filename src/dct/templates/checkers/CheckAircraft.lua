@@ -60,7 +60,7 @@ data.]],
 A decimal value representing a percentage of internal fuel remaining before
 the aircraft starts considering to air-2-air refuel.]],
 		},
-	})
+	}, nil, 8)
 end
 
 local function calc_reserve(data, acdesc)

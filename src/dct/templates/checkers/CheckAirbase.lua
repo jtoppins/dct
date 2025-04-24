@@ -188,7 +188,7 @@ gets spawned.]],
 		},
 	}, [[Configuration specifically related to airbase assets. In this
 case an airbase can be a land based airfield, aircraft carrier, or
-destroyer with a few helicopters.]])
+destroyer with a few helicopters.]], 3)
 end
 
 function CheckAirbase:checkCarrier(data)
