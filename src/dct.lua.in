@@ -31,6 +31,7 @@ dct.libs      = require("dct.libs")
 dct.ui        = require("dct.ui")
 dct.ai        = require("dct.ai")
 dct.agent     = require("dct.agent")
+dct.templates = require("dct.templates")
 dct.systems   = require("dct.systems")
 dct.Theater   = require("dct.Theater")
 
