@@ -242,7 +242,9 @@ end
 
 --- Associate this Template with the given agent.
 function Template:attach(agent)
-	agent.desc = self:genDesc()
+	for k, v in pairs(self:genDesc()) do
+		agent:setDescKey(k, v)
+	end
 	agent:setDescKey("template", tostring(self))
 end
 
