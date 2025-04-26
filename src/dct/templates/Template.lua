@@ -143,11 +143,10 @@ function Template:__init(packname, data)
 	self._logger  = dct.libs.Logger.getByName("Template")
 	self._valid   = false
 	self.data     = data
-
-	self._valid = self:validate()
-
 	self.name     = string.lower(data.name)
 	self.packname = string.lower(packname)
+
+	self._valid   = self:validate()
 	self.objtype  = data.objtype
 
 	-- remove static functions
