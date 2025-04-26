@@ -143,11 +143,10 @@ function Template:__init(packname, data)
 	self._logger  = dct.libs.Logger.getByName("Template")
 	self._valid   = false
 	self.data     = data
-
-	self._valid = self:validate()
-
 	self.name     = string.lower(data.name)
 	self.packname = string.lower(packname)
+
+	self._valid   = self:validate()
 	self.objtype  = data.objtype
 
 	-- remove static functions
@@ -180,6 +179,7 @@ function Template.fromDCSGroup(grp)
 	data.tpldata   = tpldata
 	data.objtype   = objtype
 	data.overwrite = false
+	data.rename    = false
 	-- TODO: check if this group is a player slot
 
 	local tpl = Template("dcs", data)
@@ -228,7 +228,7 @@ end
 -- AssetManager. This function guarantees compliance with this requirement.
 -- @return a predictable unique name
 function Template:genName()
-	local name = self.name
+	local name = self.data.name
 
 	if self.data.rename then
 		name = self.packname.."."..self.name.."_"..self.data.coalition
@@ -241,7 +241,9 @@ end
 
 --- Associate this Template with the given agent.
 function Template:attach(agent)
-	agent.desc = self:genDesc()
+	for k, v in pairs(self:genDesc()) do
+		agent:setDescKey(k, v)
+	end
 	agent:setDescKey("template", tostring(self))
 end
 

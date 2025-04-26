@@ -44,18 +44,23 @@ function Planning:__init(agent)
 	WS.Sensor.__init(self, agent, 70)
 end
 
+function Planning.isSuitable()
+	return true
+end
+
 function Planning:update()
-	if self.agent._plan then
+	if self.agent:getPlan() ~= nil then
 		return false
 	end
 
 	for _, entry in ipairs(score_goals(self)) do
-		local _, plan = WS.find_plan(self.agent:graph(),
+		local _, actions = WS.find_plan(self.agent:graph(),
 					     self.agent:WS(),
 					     entry.goal:WS(),
 					     nil, nil, true)
-		if plan then
-			self.agent:setPlan(entry.goal, list2queue(plan))
+		if actions then
+			self.agent:setPlan(WS.Plan(list2queue(actions),
+						   entry.goal))
 			break
 		end
 	end

@@ -17,6 +17,10 @@ function ReactToEvent:__init()
 		}), 2)
 end
 
+function ReactToEvent.isSuitable()
+	return true
+end
+
 function ReactToEvent:relevance(agent)
 	local score = 0
 

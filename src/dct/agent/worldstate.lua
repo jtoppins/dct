@@ -67,6 +67,7 @@ local factType = {
 	["CMDPENDING"]  = 11, -- Value
 	["SCRATCHPAD"]  = 12, -- Value
 	["PLAYERMENU"]  = 13, -- objref (a player menu object)
+	["GOAL"]        = 14, -- objref (Goal object)
 }
 
 --- Unique fact keys that represents data that should only exist
@@ -226,6 +227,14 @@ function EventFact:__init(event)
 	self.event = event
 end
 
+--- Goal fact to augment the Agent's basic set of goals. These goals can
+-- be used to have the Agent target a specific object.
+local GoalFact = class("GoalFact", Fact)
+function GoalFact:__init(goal)
+	Fact.__init(self, factType.GOAL)
+	self.goal = goal
+end
+
 --- Normalized value [0,1] representing something.
 local ValueFact = class("ValueFact", Fact)
 function ValueFact:__init(t, val, conf, delay)
@@ -279,6 +288,10 @@ function WorldState.createAll()
 	return ws
 end
 
+local function isSuitableStub(--[[agent]])
+	return false
+end
+
 --- add __lt handler for Actions so they can be ordered correctly,
 -- higher order numbers will cause the action to execute later in
 -- the plan
@@ -307,7 +320,10 @@ function Action:__init(agent, cost, precond, effects, order)
 	goap.Action.__init(self, cost, precond, effects)
 	self.order = order or 1
 	self.agent = agent
+	self.isSuitable = nil
 end
+
+Action.isSuitable = isSuitableStub
 
 --- Called when this action becomes the active action
 -- @return none
@@ -332,7 +348,10 @@ function Goal:__init(desiredws, weight, iaus)
 	self.desiredws = desiredws
 	self.iaus = iaus
 	self.weight = weight or 1
+	self.isSuitable = nil
 end
+
+Goal.isSuitable = isSuitableStub
 
 function Goal:WS()
 	return self.desiredws
@@ -396,6 +415,65 @@ local Sensor = utils.override_ops(class("Sensor"), sensormt)
 function Sensor:__init(agent, order)
 	self.agent = agent
 	self.order = order
+	self.isSuitable = nil
+end
+
+Sensor.isSuitable = isSuitableStub
+
+local planmt = {}
+function planmt.__tostring(tbl)
+	return string.format("(G:%s, A:%s, sz:%d)",
+		tostring(tbl.goal), tostring(tbl.curaction),
+		tbl.actionq:size())
+end
+
+local Plan = utils.override_ops(class("Plan"), planmt)
+
+--- Constructor.
+--
+-- @param actions a Queue of worldstate.Action objects the Agent should
+--                execute.
+-- @param goal worldstate.Goal that the Agent is trying to achieve
+function Plan:__init(actions, goal)
+	self.actionq   = actions
+	self.goal      = goal
+	self.curaction = nil
+end
+
+--- Return the plan Goal.
+--
+-- @return worldstate.Goal
+function Plan:getGoal()
+	return self.goal
+end
+
+function Plan:onDCTEvent(event)
+	if self.curaction ~= nil and
+	   type(self.curaction.onDCTEvent) == "function" then
+		self.curaction:onDCTEvent(event)
+	end
+end
+
+--- Execute plan.
+function Plan:execute(agent)
+	local action = self.curaction
+
+	if self.actionq:empty() then
+		self.goal:complete()
+		agent:replan()
+		return
+	end
+
+	if action == nil then
+		self.curaction = self.actionq:peekhead()
+		action = self.curaction
+		action:enter(agent)
+	end
+
+	if action:isComplete(self) then
+		self.actionq:pophead()
+		self.curaction = nil
+	end
 end
 
 local _ws = {}
@@ -407,6 +485,7 @@ _ws.Facts = {
 	["Character"] = CharacterFact,
 	["Stimuli"]   = StimuliFact,
 	["Event"]     = EventFact,
+	["Goal"]      = GoalFact,
 	["Value"]     = ValueFact,
 	["PlayerMsg"] = PlayerMsgFact,
 	["PlayerMenu"]= PlayerMenuFact,
@@ -420,6 +499,7 @@ _ws.Action = Action
 _ws.Node = goap.StateNode
 _ws.Graph = goap.Graph
 _ws.find_plan = goap.find_plan
+_ws.Plan = Plan
 _ws.Goal = Goal
 _ws.Sensor = Sensor
 

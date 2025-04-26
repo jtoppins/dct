@@ -17,13 +17,26 @@ local Marshallable = require("dct.libs.Marshallable")
 local Observable = require("dct.libs.Observable")
 local Subordinates = require("dct.libs.Subordinates")
 local Memory     = require("dct.libs.Memory")
-local INVALID_OWNER = -1
+local Template   = require("dct.templates.Template")
+
+-- TODO: remove the idea of a mission being assigned to an Agent and
+-- instead add Goal objects to an Agent's memory.
+-- TODO: ensure that when a goal object is removed from an Agent and
+-- the Goal is the current active goal replanning is triggered.
+-- TODO: Instead of missions trying to remember which participants
+-- were given which goals have the mission simply set the goal
+-- as no longer needed so agents with the goal will remove it from
+-- memory. We can do this by using the ageout field.
 
 --- common logging interfaces for the Agent class.
 local AgentLogger = class("AgentLogger", Logger)
-function AgentLogger:__init(cls)
+function AgentLogger:__init(cls, debug)
 	Logger.__init(self, cls.__clsname)
 	self.cls = cls
+
+	if debug == true then
+		self:setLevel(Logger.level.debug)
+	end
 end
 
 function AgentLogger:error(fmt, ...)
@@ -104,50 +117,29 @@ local function filter_template_data(tpldata)
 	return cpytbl
 end
 
---- Designers can specify what set of actions an Agent can have,
--- this is done by defining a list where the index is the name of the
--- action and the value is the cost of the action.
--- example:
---    ["Attack"] = 5,
+--- Setup sensors, actions, and goals of an Agent.
 --
--- Designers can also specify the personality of an Agent by defining
--- which goals an asset can attempt to do.
--- example:
---    ["KillTarget"] = 5,
---
--- By changing the relative weighting of a given goal the asset
--- will attempt to do that goal more or less often.
-local function set_ai_objects(agent, template)
+-- @param agent a dct.agent.Agent instance.
+local function setup_ai(agent)
 	local agentcomponents = { "sensors", "actions", "goals" }
 	local objtbl = dct.agent
 
 	for _, objkind in ipairs(agentcomponents) do
-		local t = {}
-		for objtype, val in pairs(template[objkind] or {}) do
-			local ctor = objtbl[objkind][string.upper(objtype)]
-
-			if ctor then
-				table.insert(t, ctor(agent, val))
-			else
-				agent._logger:error("invalid %s: %s",
-					tostring(objkind), tostring(objtype))
+		for _, ctor in pairs(objtbl[objkind]) do
+			if ctor.isSuitable(agent) == true then
+				table.insert(agent["_"..objkind], ctor(agent))
 			end
 		end
-
-		if objkind == "sensors" then
-			table.sort(t)
-		end
-		agent["_"..objkind] = t
 	end
+	table.sort(agent._sensors)
 end
 
 local agentmt = {}
 function agentmt.__tostring(agent)
-	return string.format("N:%s, T:%s, G:%s, A:%s",
+	return string.format("N:%s, T:%s, P:%s",
 			     agent.name,
 			     utils.getkey(dctenum.assetType, agent.type),
-			     tostring(agent:getGoal()),
-			     tostring(agent:getAction()))
+			     tostring(agent:getPlan()))
 end
 
 --- Agent interface. Provides a common API for interacting with
@@ -172,61 +164,66 @@ end
 --
 -- Other fields typically managed internally:
 -- @field _ws current world state for the agent
--- @field _setup [bool] has the Agent been setup?
 -- @field _spawned [bool] have the DCS objects associated with this been
 --     spawned
--- @field _dead [bool] is the Agent dead?
 -- @field _plangraph graph of actions the agent can use, is configured in
 --     the setup() method.
 local Agent = utils.override_ops(class("Agent", Marshallable, Memory,
 				       Observable, Subordinates), agentmt)
-function Agent:__init()
+function Agent:__init(name, owner, agenttype, debug)
 	Marshallable.__init(self)
-	Observable.__init(self, AgentLogger(self))
+	Observable.__init(self, AgentLogger(self, debug))
 	Subordinates.__init(self)
 	Memory.__init(self)
+	self.name       = name or "unknown"
+	self.type       = agenttype or dctenum.assetType.INVALID
+	self.owner      = owner or coalition.side.NEUTRAL
 	self.desc       = {}
-	self.name       = "unknown"
-	self.type       = dctenum.assetType.INVALID
-	self.owner      = INVALID_OWNER
-	self._sensors    = {}
-	self._actions    = {}
-	self._goals      = {}
+
+	self._sensors   = {}
+	self._actions   = {}
+	self._goals     = {}
 	self._factcntr  = 1
 	self._ws        = WS.WorldState.createAll()
-	self._setup     = false
 	self._spawned   = false
 	self._plan      = nil
-	self._msn       = nil
-	self._intel     = {}
-	for _, side in pairs(coalition.side) do
-		self._intel[side]    = 0
-	end
+	self._intel     = 0
 
 	self:_addMarshalNames(utils.mergetables({
-		"_spawned", "_dead", "_intel",
+		"_spawned", "_intel",
 		"desc", "name", "type", "owner",
 	}, Subordinates.getNames()))
 
+	if debug == true then
+		self:setDescKey("debug", 120)
+	end
+
 	self.filter_no_controller = nil
-	self.create               = nil
+	self.fromDCSGroup         = nil
+	self.fromTemplate         = nil
 end
 
---- Create a new Agent object
--- @param name name of the Agent, must be globally unique
--- @param typev type of template that the Agent was composed from
--- @param owner which coalition the Agent belongs to
--- @param desc description table for the Agent, stores invariants about
--- the Agent
-function Agent.create(name, typev, owner, desc)
-	local agent = Agent()
+function Agent.fromDCSGroup(grp, debug)
+	local tpl = Template.fromDCSGroup(grp)
 
-	agent.name  = check.string(name)
-	agent.type  = check.tblkey(typev, dctenum.assetType,
-				   "dctenum.assetType")
-	agent.owner = check.tblkey(owner, coalition.side, "coalition.side")
-	agent.desc  = check.table(desc)
-	agent:setup()
+	if tpl:isValid() ~= true then
+		return
+	end
+
+	local name, owner, objtype = tpl:getAgentArgs()
+	local agent = Agent(name, owner, objtype, debug)
+	for k, v in pairs(tpl:genDesc()) do
+		agent:setDescKey(k, v)
+	end
+	agent:setup(true)
+	agent:spawn()
+	return agent
+end
+
+function Agent.fromTemplate(tpl, debug)
+	local name, owner, objtype = tpl:getAgentArgs()
+	local agent = Agent(name, owner, objtype, debug)
+	tpl:attach(agent)
 	return agent
 end
 
@@ -239,11 +236,27 @@ function Agent.filter_no_controller(grp)
 	return nocontroller[grp.category] == nil
 end
 
+--- Format a string that contains detailed info about the Agent and its
+-- attributes.
+function Agent:printDetail()
+	local str = tostring(self)
+
+	str = str..string.format("\ndesc: %s",
+				 libs.json:encode_pretty(self.desc))
+	for _, lst in ipairs({"sensors", "actions", "goals",}) do
+		str = str..string.format("\n%s: {", lst)
+		for _, obj in ipairs(self["_"..lst]) do
+			str = str..string.format("\n\t%s", obj.__clsname)
+		end
+		str = str..string.format("\n}")
+	end
+	return str
+end
+
 --- Destroys the Agent, deleting all associated DCS objects, without emitting
 -- a death event to listeners.
 function Agent:destroy()
 	self:despawn()
-	self:setMission(nil)
 	self:replan()
 	self._goals = {}
 	self._actions = {}
@@ -251,26 +264,20 @@ function Agent:destroy()
 	self._sensors = {}
 end
 
---- Finalizes the Agent and runs the setup function for all sensors
-function Agent:setup()
-	local tpl = self:getTemplate()
-	if tpl == nil then
-		return
+--- Finalizes the Agent and  the setup function for all sensors
+function Agent:setup(fromgroup)
+	-- Agents created from a DCS group object should not be able to be
+	-- marshallable because we have no template to recreate the group
+	-- from.
+	if fromgroup == true then
+		self.marshal   = nil
+		self.unmarshal = nil
+		self.getTemplate = nil
 	end
 
-	self:setIntel(self.owner, dctutils.INTELMAX)
-	self:setIntel(dctutils.getenemy(self.owner), tpl.intel)
-	set_ai_objects(self, tpl)
-
-	if next(self._sensors) == nil or next(self._goals) == nil or
-	   next(self._actions) == nil then
-		self._logger:warn("sensors, goals & actions tables should "..
-				  "not be empty")
-	end
-
+	setup_ai(self)
+	dctutils.foreach_call(self._sensors, ipairs, "setup", fromgroup)
 	self._plangraph = WS.Graph(self, self._actions)
-	dctutils.foreach_call(self._sensors, ipairs, "setup")
-	self._setup = true
 end
 
 --- Marshals the Agent to a lua table which can be serialized later
@@ -295,20 +302,6 @@ function Agent:marshal()
 	return tbl
 end
 
--- Magic function used by the Marshallable class.
--- Handle the intel table special because even though its keys
--- were numbers when the state was serialized in json's wisdom
--- it decided to convert them to strings. So we need to convert
--- back so we can access the data in our lookups.
-function Agent:_unmarshalpost(data)
-	for _, tbl in ipairs({"_intel", }) do
-		self[tbl] = {}
-		for k, v in pairs(data[tbl]) do
-			self[tbl][tonumber(k)] = v
-		end
-	end
-end
-
 --- Reads a marshaled Agent from the provided table(data)
 --
 -- @param data the marshalled table of the Agent
@@ -331,16 +324,22 @@ function Agent:graph()
 	return self._plangraph
 end
 
+local function goalfacts(fact)
+	if fact.type == WS.Facts.factType.GOAL then
+		return true
+	end
+	return false
+end
+
 --- get the list of Goals the Agent wants to achieve, it includes
 -- the current goal desired by the assigned Mission as well.
 --
 -- @return list of worldstate.Goal objects
 function Agent:goals()
 	local goals = utils.shallowclone(self._goals)
-	local msn = self:getMission()
 
-	if msn ~= nil then
-		table.insert(goals, msn:goal())
+	for _, fact in self:iterateFacts(goalfacts) do
+		table.insert(goals, fact.goal)
 	end
 	return goals
 end
@@ -349,46 +348,26 @@ end
 -- we are doing something.
 function Agent:replan()
 	self:WS():get(WS.ID.IDLE).value = false
-	self._plan = nil
+	self:setPlan(nil)
 	dctutils.foreach_call(self._sensors, ipairs, "onReplan")
 end
 
 --- Set the current plan the Agent needs to execute.
 --
--- @param goal worldstate.Goal that the Agent is trying to achieve
--- @param plan a Queue of worldstate.Action objects the Agent should execute
-function Agent:setPlan(goal, plan)
-	self._plan = {}
-	self._plan.goal = goal
-	self._plan.plan = plan
+-- @param plan the plan to execute.
+function Agent:setPlan(plan)
+	self._plan = plan
 end
 
-function Agent:getPlan()
-	if self._plan == nil then
-		return nil
-	end
-	return self._plan.plan
-end
-
---- Return the plan Goal the Agent is attempting to achieve.
+--- Get the plan the agent is currently attempting to execute.
 --
--- @return worldstate.Goal
-function Agent:getGoal()
-	if self._plan == nil then
-		return nil
-	end
-	return self._plan.goal
+-- @return worldstate.Plan
+function Agent:getPlan()
+	return self._plan
 end
 
-function Agent:getAction()
-	if self._plan == nil then
-		return nil
-	end
-	return self._plan.action
-end
-
---- Required by the AssetManager, returns the list of DCS groups/static the
--- Agent is composed of.
+--- Required by the AssetManager, returns the list of DCS group/static names
+-- the Agent is composed of.
 --
 -- @return list of DCS group/static names
 function Agent:getObjectNames()
@@ -402,20 +381,18 @@ end
 
 --- Get a reference to the backing Template object that created this Agent
 function Agent:getTemplate()
-	local rgnmgr = dct.Theater.singleton():getRegionMgr()
-	local region = rgnmgr:getRegion(self.desc.regionname)
+	local tpldb = dct.Theater.singleton():getSystem(
+				dct.libs.System.SYSTEMALIAS.TEMPLATEDB)
 
-	if region == nil then
-		self._logger:error("Cannot find Region(%s)",
-				   self.desc.regionname)
+	if tpldb == nil then
 		return nil
 	end
 
-	local T = region:getTemplateByName(self.desc.name)
+	local T = tpldb:get(self.desc.template)
 
 	if T == nil then
 		self._logger:error("No Template found (%s)",
-			self.desc.regionname.."."..self.desc.name)
+			self.desc.template)
 	end
 
 	return T
@@ -435,7 +412,7 @@ end
 function Agent:getDescKey(key)
 	local val = self.desc[key]
 
-	if val == nil then
+	if val == nil and type(self.getTemplate) == "function" then
 		local T = self:getTemplate()
 
 		if T == nil then
@@ -453,23 +430,21 @@ function Agent:setDescKey(key, val)
 	self.desc[key] = val
 end
 
---- An intel level of zero implies the given side has no idea about
--- the asset.
+--- Get the intel level that the opposing side is supposed to know about
+-- this agent. An intel level of zero implies the opposing side has no
+-- idea about the asset.
 --
--- @param side get the intel level the specified side has on this asset
 -- @return number, intel level [0-5]
-function Agent:getIntel(side)
-	return self._intel[side]
+function Agent:getIntel()
+	return self._intel
 end
 
---- Set the intel level for the given side.
+--- Set the intel level for the agent.
 --
--- @param side side to modify level for
 -- @param val the new intel level
 -- @return none
-function Agent:setIntel(side, val)
-	assert(type(val) == "number", "value error: must be a number")
-	self._intel[side] = val
+function Agent:setIntel(val)
+	self._intel = tonumber(val)
 end
 
 --- Is the asset considered dead yet?
@@ -501,59 +476,15 @@ function Agent:setHealth(val, donotify)
 	end
 end
 
---- get the Mission object currently assigned to the Agent
---
---- @return Mission or nil is no mission assigned
-function Agent:getMission()
-	return self._msn
-end
-
---- assign Mission object to Agent
---
--- @param msn Mission object reference
-function Agent:setMission(msn)
-	self._msn = msn
-end
-
---- Handle DCS and DCT objects sent to the Agent
+--- Handle DCS and DCT events sent to the Agent
 function Agent:onDCTEvent(event)
 	dctutils.foreach_call(self._sensors, ipairs, "onDCTEvent", event)
-	local action = self:getAction()
-	if action ~= nil and
-	   type(action.onDCTEvent) == "function" then
-		action:onDCTEvent(event)
+	if self:getPlan() ~= nil then
+		self:getPlan():onDCTEvent(event)
 	end
 end
 
-function Agent:executePlan()
-	if self._plan == nil then
-		return
-	end
-
-	local plan = self:getPlan()
-	local goal = self:getGoal()
-	local action = self:getAction()
-
-	if plan:empty() then
-		goal:complete()
-		self:replan()
-		return
-	end
-
-	if action == nil then
-		self._plan.action = plan:peekhead()
-		action = self._plan.action
-		action:enter(self)
-	end
-
-	if action:isComplete(self) then
-		plan:pophead()
-		dctutils.foreach_call(self._sensors, ipairs, "onActionComplete")
-		self._plan.action = nil
-	end
-end
-
---- Update function run periodically
+--- Update function is run periodically.
 function Agent:update()
 	if not self:isSpawned() or self:isDead() then
 		return
@@ -566,11 +497,13 @@ function Agent:update()
 		end
 	end
 
-	self:executePlan()
+	if self:getPlan() ~= nil then
+		self:getPlan():execute(self)
+	end
 end
 
--- Have the DCS objects associated with this asset been spawned?
--- Returns: boolean
+--- Have the DCS objects associated with this asset been spawned?
+-- @return true if DCS objects spawned
 function Agent:isSpawned()
 	return self._spawned
 end
@@ -590,7 +523,8 @@ local actions = {
 }
 
 local function spawn_despawn(self, action, ignore)
-	local assetmgr = dct.Theater.singleton():getAssetMgr()
+	local assetmgr = dct.Theater.singleton():getSystem(
+				dct.libs.System.ASSETMGR)
 
 	for name, _ in self:iterateSubordinates() do
 		local asset = assetmgr:getAsset(name)
@@ -604,7 +538,6 @@ local function spawn_despawn(self, action, ignore)
 end
 
 --- Spawn any DCS objects associated with this asset.
--- @return none
 function Agent:spawn(ignore)
 	if not ignore and self:isSpawned() then
 		self._logger:error("runtime bug - already spawned")
@@ -615,6 +548,8 @@ function Agent:spawn(ignore)
 	spawn_despawn(self, "spawn", ignore)
 	self._spawned = true
 	dctutils.foreach_call(self._sensors, ipairs, "spawnPost")
+	-- TODO: set Agent's world state based on the states of the
+	-- underlying DCS objects, should mainly be handled by the sensors
 end
 
 -- Remove any DCS objects associated with this asset from the game world.
