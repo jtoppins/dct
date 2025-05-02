@@ -181,10 +181,14 @@ function DCSObjectsSensor:__init(agent)
 end
 
 function DCSObjectsSensor:setAgentHealth()
+	local health = self._curdeathgoals / self._maxdeathgoals
+
 	self.agent:setFact(WS.Facts.factKey.HEALTH,
-		WS.Facts.Value(WS.Facts.factType.HEALTH,
-			       self._curdeathgoals / self._maxdeathgoals,
-			       1.0))
+		WS.Facts.Value(WS.Facts.factType.HEALTH, health, 1.0))
+
+	if health <= 0 then
+		self.agent:setHealth(WS.Health.DEAD)
+	end
 end
 
 function DCSObjectsSensor.isSuitable(agent)
