@@ -321,9 +321,16 @@ function Action:__init(agent, cost, precond, effects, order)
 	self.order = order or 1
 	self.agent = agent
 	self.isSuitable = nil
+	self.Result = nil
 end
 
 Action.isSuitable = isSuitableStub
+
+Action.Result = {
+	["SUCCESS"]  = 1,  -- action completed successfully
+	["CONTINUE"] = 0,  -- action is still running
+	["FAIL"]     = -1, -- action can no longer be completed
+}
 
 --- Called when this action becomes the active action
 -- @return none
@@ -331,9 +338,11 @@ function Action:enter()
 end
 
 --- Determine if the action is complete.
--- @return bool, true action is complete
+-- @return 1 if action was completed successfully
+-- @return 0 if action is still working
+-- @return -1 if action can not longer be completed
 function Action:isComplete()
-	return true
+	return Action.Result.FAIL
 end
 
 local goalmt = {}
@@ -470,9 +479,13 @@ function Plan:execute(agent)
 		action:enter(agent)
 	end
 
-	if action:isComplete(self) then
+	local rc = action:isComplete(self)
+	if rc ~= Action.Result.CONTINUE then
 		self.actionq:pophead()
 		self.curaction = nil
+		if rc == Action.Result.FAIL then
+			agent:replan()
+		end
 	end
 end
 
