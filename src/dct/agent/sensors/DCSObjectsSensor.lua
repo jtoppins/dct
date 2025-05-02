@@ -5,12 +5,10 @@ require("libs")
 local class        = libs.classnamed
 local utils        = libs.utils
 local dctenum      = require("dct.enum")
-local dctutils     = require("dct.libs.utils")
 local DCTEvents    = require("dct.libs.DCTEvents")
 local Timer        = require("dct.libs.Timer")
 local Goal         = require("dct.agent.DeathGoals")
 local WS           = require("dct.agent.worldstate")
-local vector       = require("dct.libs.vector")
 local aitasks      = require("dct.ai.tasks")
 local UPDATE_TIME  = 300
 
@@ -147,35 +145,6 @@ local function checkgoal(sensor, name)
 	end
 end
 
---- update the location of all individual units and the overall agent's
--- location. Assume agents running this function do not have groups that
--- consist of static objects.
-local function update_location(self)
-	local center, n
-
-	for _, grp in pairs(self._assets) do
-		for _, unit in ipairs(grp.data.units) do
-			local U = Unit.getByName(unit.name)
-
-			if U then
-				local pt = vector.Vector2D(U:getPoint()):raw()
-
-				unit.x = pt.x
-				unit.y = pt.y
-				center, n = dctutils.centroid2D(pt, center, n)
-
-				-- update azimuth of where the unit is pointing
-				local pos = U:getPosition()
-				unit.heading = math.atan2(pos.x.z, pos.x.x)
-			end
-		end
-	end
-
-	if center ~= nil then
-		self.agent:setDescKey("location", center:raw())
-	end
-end
-
 --- @classmod DCSObjectsSensor
 -- Provides a common API for interacting with underlying DCS groups.
 --
@@ -208,15 +177,7 @@ function DCSObjectsSensor:__init(agent)
 		[world.event.S_EVENT_CRASH] = self.handleDead,
 	})
 
-	local timeout = UPDATE_TIME
-	local speed = agent:getDescKey("speedMax") or 0
-
-	if speed > 0 then
-		self.updateLocation = update_location
-		-- have the update rate be quicker for moving agents
-		timeout = 30
-	end
-	self.timer = Timer(timeout)
+	self.timer = Timer(UPDATE_TIME)
 end
 
 function DCSObjectsSensor:setAgentHealth()
@@ -301,10 +262,6 @@ function DCSObjectsSensor:update()
 	end
 
 	self:checkGoals()
-	if self.updateLocation then
-		rc = true
-		self:updateLocation()
-	end
 
 	self.timer:reset()
 	self.timer:start()
@@ -312,9 +269,7 @@ function DCSObjectsSensor:update()
 end
 
 function DCSObjectsSensor:marshal()
-	if self.updateLocation then
-		self:updateLocation()
-	end
+	self.agent:updateLocation()
 	self:checkGoals()
 	self.agent:setDescKey("maxdeathgoals", self._maxdeathgoals)
 	self.agent:setDescKey("hasDeathGoals", self._hasDeathGoals)
@@ -349,16 +304,12 @@ function DCSObjectsSensor:spawnPost()
 		aitasks.wraptask(aitasks.command.setImmortal(immortal)),
 	})
 
-	if self.updateLocation then
-		self:updateLocation()
-	end
+	self.agent:updateLocation()
 end
 
 function DCSObjectsSensor:despawn()
 	self.timer:stop()
-	if self.updateLocation then
-		self:updateLocation()
-	end
+	self.agent:updateLocation()
 	self:checkGoals()
 	for name, grp in pairs(self._assets) do
 		local object
