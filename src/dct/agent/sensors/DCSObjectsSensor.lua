@@ -145,6 +145,23 @@ local function checkgoal(sensor, name)
 	end
 end
 
+--- Find the lowest fuel value for all units of the agent.
+--
+-- @param agent the Agent class reference we are concerned with
+-- @return the lowest fuel state for all members of the group
+local function find_lowest_fuel_forall_units(agent)
+	local fuel = 100
+
+	for _, unit in agent:iterateUnits() do
+		local U = Unit.getByName(unit.name)
+
+		if U then
+			fuel = math.min(fuel, U:getFuel())
+		end
+	end
+	return fuel
+end
+
 --- @classmod DCSObjectsSensor
 -- Provides a common API for interacting with underlying DCS groups.
 --
@@ -267,6 +284,10 @@ function DCSObjectsSensor:update()
 
 	self:checkGoals()
 
+	local fuelfact = self.agent:getFact(WS.Facts.factKey.FUEL)
+	fuelfact.updatetime = timer.getTime()
+	fuelfact.value.value = find_lowest_fuel_forall_units(self.agent)
+
 	self.timer:reset()
 	self.timer:start()
 	return rc
@@ -292,6 +313,8 @@ function DCSObjectsSensor:spawn()
 end
 
 function DCSObjectsSensor:spawnPost()
+	local fuel = 100
+	local inair = true
 	local ignore = false
 	local immortal = false
 
@@ -302,6 +325,19 @@ function DCSObjectsSensor:spawnPost()
 	if self.agent:getDescKey("immortal") == true then
 		immortal = true
 	end
+
+	for _, unit in self.agent:iterateUnits() do
+		local U = Unit.getByName(unit.name)
+
+		if U then
+			fuel = math.min(fuel, U:getFuel())
+			inair = inair and U:inAir()
+		end
+	end
+
+	self.agent:setFact(WS.Facts.factKey.FUEL, WS.Facts.Value(
+		WS.Facts.factType.FUEL, fuel))
+	self.agent:WS():get(WS.ID.INAIR).value = (inair == true)
 
 	self.agent:doTasksForeachGroup({
 		aitasks.wraptask(aitasks.command.setInvisible(ignore)),
