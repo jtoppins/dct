@@ -712,7 +712,7 @@ end
 
 function Controller:setOption(id, value)
 	assert(type(id) == "number", "value error: id must be a number")
-	assert(value, "value error: value cannot be nil")
+	assert(value ~= nil, "value error: value cannot be nil")
 end
 
 function Controller:setOnOff(value)

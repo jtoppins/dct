@@ -12,7 +12,11 @@ local aienum = require("dct.ai.enum")
 local function create_task_tbl(id, params)
 	local task = {}
 	task.id     = id
-	task.params = params or {}
+	if params == nil then
+		task.params = {}
+	else
+		task.params = params
+	end
 	return task
 end
 
@@ -82,7 +86,9 @@ end
 tasks.option = {}
 function tasks.option.create(optid, value)
 	check.number(optid)
-	assert(value, "value error: value cannot be nil")
+	assert(value ~= nil,
+		string.format("value error: value is nil for optid(%d)",
+			optid))
 	return create_task_tbl(optid, value), aienum.TASKTYPE.OPTION
 end
 
