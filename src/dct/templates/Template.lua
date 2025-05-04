@@ -143,7 +143,11 @@ function Template:__init(packname, data)
 	self._logger  = dct.libs.Logger.getByName("Template")
 	self._valid   = false
 	self.data     = data
-	self.name     = string.lower(data.name)
+	if data.dcsgroup == true then
+		self.name = data.name
+	else
+		self.name = string.lower(data.name)
+	end
 	self.packname = string.lower(packname)
 
 	self._valid   = self:validate()
@@ -180,6 +184,7 @@ function Template.fromDCSGroup(grp)
 	data.objtype   = objtype
 	data.overwrite = false
 	data.rename    = false
+	data.dcsgroup  = true
 	-- TODO: check if this group is a player slot
 
 	local tpl = Template("dcs", data)

@@ -211,11 +211,11 @@ function Agent.fromDCSGroup(grp, debug)
 		return
 	end
 
-	local name, owner, objtype = tpl:getAgentArgs()
-	local agent = Agent(name, owner, objtype, debug)
-	for k, v in pairs(tpl:genDesc()) do
-		agent:setDescKey(k, v)
-	end
+	local tpldb = dct.Theater.singleton():getSystem(
+			dct.libs.System.SYSTEMALIAS.TEMPLATEDB)
+	tpldb:add(tpl)
+
+	local agent = Agent.fromTemplate(tpl, debug)
 	agent:setup(true)
 	agent:spawn()
 	return agent
@@ -273,7 +273,6 @@ function Agent:setup(fromgroup)
 	if fromgroup == true then
 		self.marshal   = nil
 		self.unmarshal = nil
-		self.getTemplate = nil
 	end
 
 	setup_ai(self)
@@ -420,7 +419,7 @@ function Agent:getDescKey(key)
 			return nil
 		end
 
-		val = T[key]
+		val = T.data[key]
 	end
 	return val
 end
