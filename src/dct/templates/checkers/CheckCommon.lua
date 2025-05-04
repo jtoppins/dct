@@ -6,21 +6,13 @@ local dctenum = require("dct.enum")
 local dctutils= require("dct.libs.utils")
 local Check   = require("dct.libs.Check")
 
-local ishq = {
-	[dctenum.assetType.SQUADRON] = true,
-	--[dctenum.assetType.ARMYGROUP] = true,
-	--[dctenum.assetType.FLEET] = true,
-}
-
-local assettypes = dctenum.assetType
-
 local CheckCommon = class("CheckCommon", Check)
 function CheckCommon:__init()
 	Check.__init(self, "Common", {
 		["objtype"] = {
 			["agent"] = true,
 			["type"] = Check.valuetype.TABLEKEYS,
-			["values"] = assettypes,
+			["values"] = dctenum.assetType,
 			["description"] = [[
 Defines the type of game object (Asset) that will be created from the
 template. Allowed values can be found in `assetType` table.
@@ -278,7 +270,9 @@ function CheckCommon:checkDefaults(data)
 	end
 
 	if data.basedat == "" then
-		if ishq[data.objtype] then
+		local is_bit_set = dct.libs.utils.is_bit_set
+
+		if is_bit_set(dctenum.assetType.HQ, data.objtype) then
 			return false, "basedat",
 			       "required for headquarters assets"
 		else

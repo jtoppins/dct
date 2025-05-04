@@ -6,12 +6,7 @@ local utils   = libs.utils
 local dctenum = require("dct.enum")
 local Check   = require("dct.libs.Check")
 
-local RESERVETIME = 20 * 60 -- 20 minutes
-local adtypes = {
-	--[dctenum.assetType.AIRPLANE] = true,
-	--[dctenum.assetType.HELO]     = true,
-}
-
+local RESERVETIME = 30 * 60 -- 30 minutes
 local dct_attrs = {
 	["DCT_CAS"] = "DCT CAS",
 	["DCT_LL"] = "DCT Low Level Attack",
@@ -52,7 +47,6 @@ it is returning home. If not provided it will be auto calculated from game
 data.]],
 		},
 		["refuelpct"] = {
-			["agent"] = true,
 			["default"] = 0.45,
 			["type"] = Check.valuetype.RANGE,
 			["values"] = {0, 1},
@@ -68,7 +62,7 @@ local function calc_reserve(data, acdesc)
 		return
 	end
 
-	data.reservefuel = acdesc.Kmax * RESERVETIME
+	data.reservefuel = math.min(acdesc.Kmax * RESERVETIME, 908)
 end
 
 local function calc_cruise(data, acdesc)
@@ -86,15 +80,10 @@ local function calc_cruise(data, acdesc)
 	data.cruisespeed = speed * ratio
 end
 
-local function modify_actions(data)
-	if data.attributes["Refuelable"] == true then
-		data.goals["Refuel"] = 1
-		data.actions["A2A_Refuel"] = 2
-	end
-end
-
 function CheckAircraft:check(data)
-	if adtypes[data.objtype] == nil then
+	local bit = dct.libs.utils.is_bit_set(dctenum.assetType.AIR_UNIT,
+					      data.objtype)
+	if bit ~= true then
 		return true
 	end
 
@@ -109,7 +98,6 @@ function CheckAircraft:check(data)
 	calc_reserve(data, acdesc)
 	calc_cruise(data, acdesc)
 	utils.mergetables(data.attributes, airframe_attr_fixups[actype])
-	modify_actions(data)
 	return true
 end
 
