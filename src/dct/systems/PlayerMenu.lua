@@ -79,7 +79,7 @@ local function _get_mission(menu, agent)
 	end
 
 	local cmdr = dct.theater:getCommander(agent.owner)
-	local location = vector.Vector2D(agent:getDescKey("location"))
+	local location = vector.Vector2D(agent:getPoint())
 	local msnList = cmdr:getTopMissions(agent, 10, true)
 	local rqstListMenu = menu:addMenu("Request (List)")
 

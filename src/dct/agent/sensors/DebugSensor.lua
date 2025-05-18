@@ -35,7 +35,7 @@ function DebugSensor:__init(agent)
 	-- limit timer to have a minimum timeout of 30 seconds
 	self.timer  = Timer(math.max(updatetime, 30))
 	self.mark = draw.Mark(tostring(self.agent),
-			      self.agent:getDescKey("location"),
+			      self.agent:getPoint(),
 			      true)
 end
 

@@ -481,8 +481,12 @@ function Agent:updateLocation()
 	end
 
 	if agentloc ~= nil then
-		self:setDescKey("location", agentloc:raw())
+		self:setDescKey("location", agentloc)
 	end
+end
+
+function Agent:getPoint()
+	return self:getDescKey("location")
 end
 
 --- Is the asset considered dead yet?
