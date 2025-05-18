@@ -6,7 +6,7 @@ local utils   = libs.utils
 local dctenum = require("dct.enum")
 local Check   = require("dct.libs.Check")
 
-local RESERVETIME = 30 * 60 -- 30 minutes
+local RESERVETIME = 20 * 60 -- 20 minutes
 local dct_attrs = {
 	["DCT_CAS"] = "DCT CAS",
 	["DCT_LL"] = "DCT Low Level Attack",
@@ -62,7 +62,7 @@ local function calc_reserve(data, acdesc)
 		return
 	end
 
-	data.reservefuel = math.min(acdesc.Kmax * RESERVETIME, 908)
+	data.reservefuel = math.min(0.8 * acdesc.Kmax * RESERVETIME, 908)
 end
 
 local function calc_cruise(data, acdesc)
