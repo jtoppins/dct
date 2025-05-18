@@ -200,8 +200,7 @@ end
 function DCSObjectsSensor:setAgentHealth()
 	local health = self._curdeathgoals / self._maxdeathgoals
 
-	self.agent:setFact(WS.Facts.factKey.HEALTH,
-		WS.Facts.Value(WS.Facts.factType.HEALTH, health, 1.0))
+	self.agent:setFact(WS.Facts.factKey.HEALTH, WS.Facts.Value(health))
 
 	if health <= 0 then
 		self.agent:setHealth(WS.Health.DEAD)
@@ -335,8 +334,7 @@ function DCSObjectsSensor:spawnPost()
 		end
 	end
 
-	self.agent:setFact(WS.Facts.factKey.FUEL, WS.Facts.Value(
-		WS.Facts.factType.FUEL, fuel))
+	self.agent:setFact(WS.Facts.factKey.FUEL, WS.Facts.Value(fuel))
 	self.agent:WS():get(WS.ID.INAIR).value = (inair == true)
 
 	self.agent:doTasksForeachGroup({

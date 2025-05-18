@@ -9,29 +9,17 @@ local check      = libs.check
 local json       = libs.json
 local class      = libs.classnamed
 local goap       = libs.containers.GOAP
-local dctenum    = require("dct.enum")
 local Observable = require("dct.libs.Observable")
 
 --- Agent states
 local id = {
-	["IDLE"]        = "idle",        -- <bool>
-	["INAIR"]       = "inAir",       -- <bool>
-	["HEALTH"]      = "health",      -- <enum> WS.Health
-	["HASAMMO"]     = "hasAmmo",     -- <bool>
-	["HASFUEL"]     = "hasFuel",     -- <bool>
-	["HASCARGO"]    = "hasCargo",    -- <bool>
-	["SENSORSON"]   = "sensorsOn",   -- <bool>
-	["ROE"]         = "roe",         -- <enum> AI.Option.Air.val.ROE.*
-	["TARGETDEAD"]  = "targetDead",  -- <bool>
-	-- TARGETDEAD must be a bool otherwise we cannot reason a target not
-	-- being dead, like in the case of protecting a convoy. The "target"
-	-- then should not be dead.
-	["ATTARGETPOS"] = "atTargetPos", -- <bool>
-	["ATNODE"]      = "atNode",      -- <handle>
-	["ATNODETYPE"]  = "atNodeType",  -- <enum>
-	["STANCE"]      = "stance",      -- <enum>
-	["REACTEDTOEVENT"]    = "reactedToEvent",    -- <event-id>
-	["DISTURBANCEEXISTS"] = "disturbanceExists", -- <stim-type>
+	["IDLE"]           = "idle",           -- <bool>
+	["INAIR"]          = "inAir",          -- <bool>
+	["ROE"]            = "roe",            -- <enum> AI.Option.Air.val.ROE.*
+	["HEALTH"]         = "health",         -- <enum> WS.Health
+	["ATNODETYPE"]     = "atNodeType",     -- <enum>
+	["STANCE"]         = "stance",         -- <enum>
+	["REACTEDTOEVENT"] = "reactedToEvent", -- <event-id>
 }
 
 local healthType = {
@@ -44,51 +32,23 @@ local healthType = {
 --- Stance types the agent can have
 local stanceType = {
 	["DEFAULT"]   = "default",    -- whatever the setting were at spawn
-	["MOVING"]    = "moving",     -- agent is relocating
-	["FLEEING"]   = "fleeing",    -- running away, weapons hold
-	["GUARDING"]  = "guarding",   -- combat ready, weapons engage per tasking
-	["SEARCHING"] = "searching",  -- not combat ready, sensors on
-	["ATTACKING"] = "attacking",  -- fangs out
-	["LAUNCHING"] = "launching",  -- agent is launching aircraft
+	["REFUELING"] = "refueling",  -- agent is A2A refueling
 }
 
 --- Fact types
 local factType = {
-	["DISTURBANCE"] = 1, -- ex: a missile being shot or an explosion
-	["EVENT"]       = 2,
-	["NODE"]        = 3, -- <name>, <type>, [<path>]
-	["CHARACTER"]   = 4, -- <position>, <obj-type>, <obj-name>
-	["FUEL"]        = 5, -- Value
-	["HEALTH"]      = 6, -- Value
-	["AMMO"]        = 7, -- Value
-	["CARGO"]       = 8, -- objref (SmartObject)
-	["PLAYERMSG"]   = 9, -- msg object
-	["LOSETICKET"]  = 10, -- Value
-	["CMDPENDING"]  = 11, -- Value
-	["SCRATCHPAD"]  = 12, -- Value
-	["PLAYERMENU"]  = 13, -- objref (a player menu object)
-	["GOAL"]        = 14, -- objref (Goal object)
+	["GOAL"]        = 1, -- objref (Goal object)
+	["NODE"]        = 2, -- <name>, <type>, [<path>]
+	["VALUE"]       = 3, -- Value
+	["EVENT"]       = 4,
 }
 
 --- Unique fact keys that represents data that should only exist
 -- once in the agent's memory
 local factKey = {
-	["WELCOMEMSG"]    = "welcome_msg",
-	["KICKMSG"]       = "kick_msg",
-	["BLOCKSLOTMSG"]  = "blockslot_msg",
-	["LANDSAFEMSG"]   = "landsafe_msg",
-	["MSNBRIEFMSG"]   = "mission_brief_msg",
-	["MSNLEAVEMSG"]   = "mission_leave_msg",
-	["MSNDONEMSG"]    = "mission_done_msg",
-	["MSNUPDATEMSG"]  = "mission_update_msg",
-	["MSNSTATUSMSG"]  = "mission_status_msg",
-	["CMDMSG"]        = "cmdpending_msg",
-	["CMDPENDING"]    = "cmdpending",
-	["SCRATCHPAD"]    = "scratchpad",
-	["LOSETICKET"]    = "loseticket",
 	["HEALTH"]        = "health",
-	["DEPARTURE"]     = "departure",
 	["FUEL"]          = "fuel",
+	["BINGO"]         = "bingo",
 }
 
 local attrmt = {}
@@ -127,7 +87,6 @@ end
 -- @field owner      which coalition owns the object coalition.side
 -- @field event      reference to event object
 -- @field value      value representing something
--- @field delay      numeric value
 -- @field path       a DCS compatible route table providing a valid path to
 --                   the node
 local Fact = utils.override_ops(class("Fact"), factmt)
@@ -136,33 +95,15 @@ function Fact:__init(t)
 	self.updatetime = timer.getTime()
 end
 
---- Represents either a DCT or DCS agent that an agent knows about.
--- A CharacterFact will always have the following attributes:
--- @field object     reference to object, confidence is how relevant the
---                   object is to the agent/mission, primary mission
---                   targets will have an importance of 1. Less important
---                   targets will have a value less than 1. Any characters
---                   with an importance of zero(0) are there as a threat
---                   reference only for planning/threat analysis.
--- @field objtype    type of object being referenced
---
--- And may have the following Attributes based on the knowledge the Agent
--- has about these characters:
--- @field position   vector3D, confidence is distance normalized based on
---                   the agent's attack range where a value greater than
---                   zero(0) is in-range.
--- @field velocity   vector3D, confidence has no meaning
--- @field owner      which coalition owns the object coalition.side
--- @field status     the status (WS.ID.HEALTH) of the object
-local CharacterFact = class("CharacterFact", Fact)
-function CharacterFact:__init(obj, importance, objtype)
-	Fact.__init(self, factType.CHARACTER)
-	self.object    = Attribute(obj, importance)
-	self.objtype   = Attribute(check.tblkey(objtype, dctenum.objtype,
-				   "dctenum.objtype"))
+--- Goal fact to augment the Agent's basic set of goals. These goals can
+-- be used to have the Agent target a specific object.
+local GoalFact = class("GoalFact", Fact)
+function GoalFact:__init(goal)
+	Fact.__init(self, factType.GOAL)
+	self.goal = goal
 end
 
---- Represents a point/area in the world the agents knows about. Optionally
+--- Represents a point/area in the world the agent knows about. Optionally
 -- can have a path to the node.
 local NodeFact = class("NodeFact", Fact)
 function NodeFact:__init(node, importance, ntype, path)
@@ -176,48 +117,14 @@ end
 
 NodeFact.nodeType = {
 	["INVALID"]    = 0,
-	["RALLYPOINT"] = 1, -- a node that can be retreated to
-	["STATION"]    = 2, -- a guard position
-	["PARKING"]    = 3, -- a parking spot at an airbase
-	["HOMEBASE"]   = 4,
+	["HOMEBASE"]   = 1,
 }
 
---- Some sort of disturbance the Agent detects that can trigger an change
--- in plan/response.
-local StimuliFact = class("StimuliFact", Fact)
-function StimuliFact:__init(stimtype, intensity)
-	Fact.__init(self, factType.DISTURBANCE)
-	self.objtype = Attribute(check.tblkey(stimtype, StimuliFact.stimType,
-				 "StimuliFact.stimType"), intensity)
-	self.stimType = nil
-end
-StimuliFact.stimType = {
-	["INVALID"]   = 0,
-	["EXPLOSION"] = 1, -- like a shell impacting close by
-	["LAUNCH"]    = 2, -- like a HARM launch, etc
-	["CONTACT"]   = 3, -- like a radar contact
-}
-
-local PlayerMenuFact = class("PlayerMenu", Fact)
-function PlayerMenuFact:__init(menu, menutype)
-	Fact.__init(self, factType.PLAYERMENU)
-	self.object    = Attribute(menu)
-	self.objtype   = Attribute(check.tblkey(menutype,
-						PlayerMenuFact.menuType,
-						"PlayerMenuFact.menuType"))
-	PlayerMenuFact.menuType = nil
-end
-
-PlayerMenuFact.menuType = {
-	["SCRATCHPAD"] = 1,
-	["INTEL"]      = 2,
-	["GROUNDCREW"] = 3,
-	["MISSION"]    = 4,
-	["TANKER"]     = 5,
-}
-
-function PlayerMenuFact.buildKey(menutype)
-	return string.format("menu%d", menutype)
+--- Normalized value [0,1] representing something.
+local ValueFact = class("ValueFact", Fact)
+function ValueFact:__init(val, conf)
+	Fact.__init(self, factType.VALUE)
+	self.value = Attribute(val, conf)
 end
 
 --- Agent received an event from the world and needs to react to it.
@@ -225,28 +132,6 @@ local EventFact = class("EventFact", Fact)
 function EventFact:__init(event)
 	Fact.__init(self, factType.EVENT)
 	self.event = event
-end
-
---- Goal fact to augment the Agent's basic set of goals. These goals can
--- be used to have the Agent target a specific object.
-local GoalFact = class("GoalFact", Fact)
-function GoalFact:__init(goal)
-	Fact.__init(self, factType.GOAL)
-	self.goal = goal
-end
-
---- Normalized value [0,1] representing something.
-local ValueFact = class("ValueFact", Fact)
-function ValueFact:__init(t, val, conf, delay)
-	Fact.__init(self, t)
-	self.value = Attribute(val, conf)
-	self.delay = delay
-end
-
---- Message fact that needs to be displayed to the player.
-local PlayerMsgFact = class("PlayerMsgFact", ValueFact)
-function PlayerMsgFact:__init(msg, delay)
-	ValueFact.__init(self, factType.PLAYERMSG, msg, nil, delay)
 end
 
 local wsmt = {}
@@ -273,14 +158,8 @@ function WorldState.createAll()
 			val = healthType.OPERATIONAL
 		elseif v == id.ROE then
 			val = -1
-		elseif v == id.IDLE then
-			val = false
-		elseif v == id.HASFUEL or v == id.HASAMMO then
-			val = true
 		elseif v == id.ATNODETYPE then
 			val = NodeFact.nodeType.INVALID
-		elseif v == id.DISTURBANCEEXISTS then
-			val = StimuliFact.stimType.INVALID
 		end
 		ws:add(goap.Property(v, val))
 	end
@@ -494,14 +373,10 @@ _ws.Attribute = Attribute
 _ws.Facts = {
 	["factType"]  = factType,
 	["factKey"]   = factKey,
-	["Node"]      = NodeFact,
-	["Character"] = CharacterFact,
-	["Stimuli"]   = StimuliFact,
-	["Event"]     = EventFact,
 	["Goal"]      = GoalFact,
+	["Node"]      = NodeFact,
 	["Value"]     = ValueFact,
-	["PlayerMsg"] = PlayerMsgFact,
-	["PlayerMenu"]= PlayerMenuFact,
+	["Event"]     = EventFact,
 }
 _ws.ID = id
 _ws.Stance = stanceType
