@@ -4,7 +4,7 @@ require("libs")
 local class = libs.classnamed
 local WS = require("dct.agent.worldstate")
 
-local function is_event(_ --[[key]], fact)
+local function is_event(fact)
 	return fact.type == WS.Facts.factType.EVENT
 end
 

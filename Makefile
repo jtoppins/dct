@@ -63,6 +63,7 @@ SED                   = sed
 LUA                   = lua5.1
 LUACC                 = luac
 LUACHECK              = luacheck
+LUACHECK_OPTS         = $(if $(Q),-q)
 LUATESTS              = busted
 PATCH                 = patch
 PATCHFLAGS            = --ignore-whitespace -s -N -r -
@@ -90,9 +91,11 @@ __all: all
 
 PHONY += all
 all: generated
+	$(Q)$(MAKE) -C lua-libs
 
 PHONY += generated
 generated: $(generated_files)
+	$(Q)$(MAKE) -C lua-libs generated
 
 quiet_cmd_dct_install = INSTALL DCT
       cmd_dct_install = \
@@ -147,8 +150,8 @@ uninstall:
 PHONY += check syntax tests
 check: syntax tests
 
-syntax:
-	$(Q)$(LUACHECK) -q hooks src/dct* tests
+syntax: generated
+	$(Q)$(LUACHECK) $(LUACHECK_OPTS) hooks src/dct* tests
 
 rm-test-files := data/savedgames/*.state data/*.log
 rm-files += $(rm-test-files)
@@ -157,15 +160,13 @@ tests: generated
 	$(Q)rm -f $(rm-test-files)
 	$(Q)(cd tests; busted)
 
-PHONY += generated
-generated: $(generated_files)
-
 PHONY += clean distclean
 distclean: clean
 	$(Q)rm -f *.zip
 
 clean:
 	$(call cmd,rmfiles)
+	$(Q)$(MAKE) -C lua-libs clean
 
 PHONY += help
 help:

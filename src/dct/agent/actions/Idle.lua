@@ -23,7 +23,7 @@ end
 -- action because there is nothing else to do. Force a higher
 -- priority goal to be selected and force replanning
 function Idle:isComplete()
-	return false
+	return WS.Action.Result.CONTINUE
 end
 
 return Idle

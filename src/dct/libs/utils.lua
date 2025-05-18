@@ -63,6 +63,12 @@ function utils.isalive(grpname)
 	return (grp ~= nil and grp:isExist() and grp:getSize() > 0)
 end
 
+--- Test if a bit is set.
+function utils.is_bit_set(bit, value)
+	local bitval = bit * 2
+	return (value % bitval) >= bit
+end
+
 --- Print a stack trace in a well known format, so users know what
 -- to copy when reporting errors.
 -- @param err error object.

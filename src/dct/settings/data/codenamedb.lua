@@ -202,10 +202,6 @@ local default = {
 
 local codenamedb = {
 	[enum.assetType.SAM]     = samsite,
-	[enum.assetType.PORT]    = port,
-	[enum.assetType.OCA]     = oca,
-	[enum.assetType.MISSILE] = missilesite,
-	[enum.assetType.BUNKER]  = bunker,
 	[enum.assetType.C2]      = c2,
 	["default"]              = default,
 }

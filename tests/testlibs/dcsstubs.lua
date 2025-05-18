@@ -308,6 +308,8 @@ AI.Option = {
 			-- OPTION_RADIO_* value: attribute list
 			["JETT_TANKS_IF_EMPTY"]     = 25,
 			["FORCED_ATTACK"]           = 26,
+			["PREFER_VERTICAL"]         = 32,
+			["ALLOW_FORMATION_SIDE_SWAP"] = 35,
 		},
 		["val"] = {
 			-- ROE Descriptions:
@@ -710,7 +712,7 @@ end
 
 function Controller:setOption(id, value)
 	assert(type(id) == "number", "value error: id must be a number")
-	assert(value, "value error: value cannot be nil")
+	assert(value ~= nil, "value error: value cannot be nil")
 end
 
 function Controller:setOnOff(value)

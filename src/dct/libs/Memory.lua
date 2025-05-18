@@ -17,13 +17,13 @@ end
 
 --- Looks for a fact in memory.
 --
--- @param test a test function of the form, `bool test(key, fact)`,
+-- @param test a test function of the form, `bool test(fact, key)`,
 --   where a true result means the fact we are looking for exists in
 --   the table
 -- @return true, key or false
 function Memory:hasFact(test)
 	for key, fact in pairs(self.memory) do
-		if test(key, fact) then
+		if test(fact, key) then
 			return true, key
 		end
 	end
@@ -60,13 +60,13 @@ end
 
 --- Deletes all facts where test returns true.
 --
--- @param test a test function of the form, `bool test(key, fact)`,
+-- @param test a test function of the form, `bool test(fact, key)`,
 --   where a true result causes the fact to be deleted
 -- @return table of deleted facts
 function Memory:deleteFacts(test)
 	local deletedfacts = {}
 	for key, fact in pairs(self.memory) do
-		if test(key, fact) then
+		if test(fact, key) then
 			self.memory[key] = nil
 			deletedfacts[key] = fact
 		end
@@ -81,9 +81,9 @@ end
 
 --- Iterate over facts in memory.
 --
--- @param filter a function of the form, `bool func(obj)`, used to filter
---   facts returned by the iterator, filter must return true to include
---   the fact in the iteration.
+-- @param filter a function of the form, `bool filter(fact)`,
+--   used to filter facts returned by the iterator, filter must return
+--   true to include the fact in the iteration.
 -- @return an iterator to be used in a for loop
 function Memory:iterateFacts(filter)
 	filter = filter or dctutils.no_filter

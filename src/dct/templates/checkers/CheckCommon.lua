@@ -2,19 +2,9 @@
 
 require("libs")
 local class   = libs.classnamed
-local utils   = libs.utils
 local dctenum = require("dct.enum")
 local dctutils= require("dct.libs.utils")
 local Check   = require("dct.libs.Check")
-
-local ishq = {
-	[dctenum.assetType.SQUADRON] = true,
-	[dctenum.assetType.ARMYGROUP] = true,
-	[dctenum.assetType.FLEET] = true,
-}
-
-local assettypes = utils.mergetables({}, dctenum.assetTypeDeprecated)
-assettypes = utils.mergetables(assettypes, dctenum.assetType)
 
 local CheckCommon = class("CheckCommon", Check)
 function CheckCommon:__init()
@@ -22,7 +12,7 @@ function CheckCommon:__init()
 		["objtype"] = {
 			["agent"] = true,
 			["type"] = Check.valuetype.TABLEKEYS,
-			["values"] = assettypes,
+			["values"] = dctenum.assetType,
 			["description"] = [[
 Defines the type of game object (Asset) that will be created from the
 template. Allowed values can be found in `assetType` table.
@@ -280,7 +270,9 @@ function CheckCommon:checkDefaults(data)
 	end
 
 	if data.basedat == "" then
-		if ishq[data.objtype] then
+		local is_bit_set = dct.libs.utils.is_bit_set
+
+		if is_bit_set(dctenum.assetType.HQ, data.objtype) then
 			return false, "basedat",
 			       "required for headquarters assets"
 		else
@@ -291,12 +283,6 @@ function CheckCommon:checkDefaults(data)
 end
 
 function CheckCommon:check(data)
-	if dctenum.assetTypeDeprecated[string.upper(data.objtype)] ~= nil then
-		dct.Logger.getByName("Template"):warn(
-			"%s: is a deprecated objtype; file %s",
-			tostring(data.objtype), tostring(data.filedct))
-	end
-
 	for _, check in ipairs({ Check.check,
 				 self.checkDefaults, }) do
 		local ok, key, msg = check(self, data)

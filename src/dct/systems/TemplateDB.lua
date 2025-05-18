@@ -119,6 +119,13 @@ function TemplateDB:add(tpl)
 	self._logger:debug("  adding template: %s", tplname)
 end
 
+--- Get the Template class for the given `name`.
+-- @tparam string name of the Template to get
+-- @treturn Template the template
+function TemplateDB:get(name)
+	return self._db[name]
+end
+
 --- Load a template pack.
 -- Associates a trigger zone with unit/static groups by the
 -- name of the group which follows the format; `<zone name>:<group name>`.

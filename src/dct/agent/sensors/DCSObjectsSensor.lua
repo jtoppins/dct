@@ -5,12 +5,10 @@ require("libs")
 local class        = libs.classnamed
 local utils        = libs.utils
 local dctenum      = require("dct.enum")
-local dctutils     = require("dct.libs.utils")
 local DCTEvents    = require("dct.libs.DCTEvents")
 local Timer        = require("dct.libs.Timer")
 local Goal         = require("dct.agent.DeathGoals")
 local WS           = require("dct.agent.worldstate")
-local vector       = require("dct.libs.vector")
 local aitasks      = require("dct.ai.tasks")
 local UPDATE_TIME  = 300
 
@@ -147,33 +145,21 @@ local function checkgoal(sensor, name)
 	end
 end
 
---- update the location of all individual units and the overall agent's
--- location. Assume agents running this function do not have groups that
--- consist of static objects.
-local function update_location(self)
-	local center, n
+--- Find the lowest fuel value for all units of the agent.
+--
+-- @param agent the Agent class reference we are concerned with
+-- @return the lowest fuel state for all members of the group
+local function find_lowest_fuel_forall_units(agent)
+	local fuel = 100
 
-	for _, grp in pairs(self._assets) do
-		for _, unit in ipairs(grp.data.units) do
-			local U = Unit.getByName(unit.name)
+	for _, unit in agent:iterateUnits() do
+		local U = Unit.getByName(unit.name)
 
-			if U then
-				local pt = vector.Vector2D(U:getPoint()):raw()
-
-				unit.x = pt.x
-				unit.y = pt.y
-				center, n = dctutils.centroid2D(pt, center, n)
-
-				-- update azimuth of where the unit is pointing
-				local pos = U:getPosition()
-				unit.heading = math.atan2(pos.x.z, pos.x.x)
-			end
+		if U then
+			fuel = math.min(fuel, U:getFuel())
 		end
 	end
-
-	if center ~= nil then
-		self.agent:setDescKey("location", center:raw())
-	end
+	return fuel
 end
 
 --- @classmod DCSObjectsSensor
@@ -208,22 +194,18 @@ function DCSObjectsSensor:__init(agent)
 		[world.event.S_EVENT_CRASH] = self.handleDead,
 	})
 
-	local timeout = UPDATE_TIME
-	local speed = agent:getDescKey("speedMax") or 0
-
-	if speed > 0 then
-		self.updateLocation = update_location
-		-- have the update rate be quicker for moving agents
-		timeout = 30
-	end
-	self.timer = Timer(timeout)
+	self.timer = Timer(UPDATE_TIME)
 end
 
 function DCSObjectsSensor:setAgentHealth()
+	local health = self._curdeathgoals / self._maxdeathgoals
+
 	self.agent:setFact(WS.Facts.factKey.HEALTH,
-		WS.Facts.Value(WS.Facts.factType.HEALTH,
-			       self._curdeathgoals / self._maxdeathgoals,
-			       1.0))
+		WS.Facts.Value(WS.Facts.factType.HEALTH, health, 1.0))
+
+	if health <= 0 then
+		self.agent:setHealth(WS.Health.DEAD)
+	end
 end
 
 function DCSObjectsSensor.isSuitable(agent)
@@ -301,10 +283,10 @@ function DCSObjectsSensor:update()
 	end
 
 	self:checkGoals()
-	if self.updateLocation then
-		rc = true
-		self:updateLocation()
-	end
+
+	local fuelfact = self.agent:getFact(WS.Facts.factKey.FUEL)
+	fuelfact.updatetime = timer.getTime()
+	fuelfact.value.value = find_lowest_fuel_forall_units(self.agent)
 
 	self.timer:reset()
 	self.timer:start()
@@ -312,9 +294,7 @@ function DCSObjectsSensor:update()
 end
 
 function DCSObjectsSensor:marshal()
-	if self.updateLocation then
-		self:updateLocation()
-	end
+	self.agent:updateLocation()
 	self:checkGoals()
 	self.agent:setDescKey("maxdeathgoals", self._maxdeathgoals)
 	self.agent:setDescKey("hasDeathGoals", self._hasDeathGoals)
@@ -333,6 +313,8 @@ function DCSObjectsSensor:spawn()
 end
 
 function DCSObjectsSensor:spawnPost()
+	local fuel = 100
+	local inair = true
 	local ignore = false
 	local immortal = false
 
@@ -344,21 +326,30 @@ function DCSObjectsSensor:spawnPost()
 		immortal = true
 	end
 
+	for _, unit in self.agent:iterateUnits() do
+		local U = Unit.getByName(unit.name)
+
+		if U then
+			fuel = math.min(fuel, U:getFuel())
+			inair = inair and U:inAir()
+		end
+	end
+
+	self.agent:setFact(WS.Facts.factKey.FUEL, WS.Facts.Value(
+		WS.Facts.factType.FUEL, fuel))
+	self.agent:WS():get(WS.ID.INAIR).value = (inair == true)
+
 	self.agent:doTasksForeachGroup({
 		aitasks.wraptask(aitasks.command.setInvisible(ignore)),
 		aitasks.wraptask(aitasks.command.setImmortal(immortal)),
 	})
 
-	if self.updateLocation then
-		self:updateLocation()
-	end
+	self.agent:updateLocation()
 end
 
 function DCSObjectsSensor:despawn()
 	self.timer:stop()
-	if self.updateLocation then
-		self:updateLocation()
-	end
+	self.agent:updateLocation()
 	self:checkGoals()
 	for name, grp in pairs(self._assets) do
 		local object

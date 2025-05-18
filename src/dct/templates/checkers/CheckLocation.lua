@@ -36,17 +36,13 @@ must be DCS internal map coordinates._]],
 	}, nil, 9)
 end
 
-local noloc = {
-	[dctenum.assetType.SQUADRON]   = true,
-	[dctenum.assetType.ARMYGROUP]  = true,
-	[dctenum.assetType.FLEET]      = true,
-}
-
 function CheckLocation:check(data)
 	local loc = data.location
 
 	if loc == nil or next(loc) == nil then
-		if noloc[data.objtype] == true then
+		local is_bit_set = dct.libs.utils.is_bit_set
+
+		if is_bit_set(dctenum.assetType.HQ, data.objtype) then
 			return true
 		end
 

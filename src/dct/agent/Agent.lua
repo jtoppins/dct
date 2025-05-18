@@ -11,6 +11,7 @@ local check      = libs.check
 local dctenum    = require("dct.enum")
 local dctutils   = require("dct.libs.utils")
 local Logger     = require("dct.libs.Logger")
+local vector     = require("dct.libs.vector")
 local aitasks    = require("dct.ai.tasks")
 local WS         = require("dct.agent.worldstate")
 local Marshallable = require("dct.libs.Marshallable")
@@ -210,11 +211,11 @@ function Agent.fromDCSGroup(grp, debug)
 		return
 	end
 
-	local name, owner, objtype = tpl:getAgentArgs()
-	local agent = Agent(name, owner, objtype, debug)
-	for k, v in pairs(tpl:genDesc()) do
-		agent:setDescKey(k, v)
-	end
+	local tpldb = dct.Theater.singleton():getSystem(
+			dct.libs.System.SYSTEMALIAS.TEMPLATEDB)
+	tpldb:add(tpl)
+
+	local agent = Agent.fromTemplate(tpl, debug)
 	agent:setup(true)
 	agent:spawn()
 	return agent
@@ -272,7 +273,6 @@ function Agent:setup(fromgroup)
 	if fromgroup == true then
 		self.marshal   = nil
 		self.unmarshal = nil
-		self.getTemplate = nil
 	end
 
 	setup_ai(self)
@@ -419,7 +419,7 @@ function Agent:getDescKey(key)
 			return nil
 		end
 
-		val = T[key]
+		val = T.data[key]
 	end
 	return val
 end
@@ -445,6 +445,48 @@ end
 -- @return none
 function Agent:setIntel(val)
 	self._intel = tonumber(val)
+end
+
+--- Update the location of all individual units and the overall agent's
+-- location. Assume agents running this function do not have groups that
+-- consist of static objects. The "center" of the Agent is simply the
+-- first unit.
+function Agent:updateLocation()
+	local agentloc = nil
+	local speed = self:getDescKey("speedMax") or 0
+
+	if speed <= 0 then
+		return
+	end
+
+	for _, grp in ipairs(self.desc.tpldata or {}) do
+		for _, unit in ipairs(grp.data.units) do
+			local U = Unit.getByName(unit.name)
+
+			if U then
+				local pt = vector.Vector3D(U:getPoint())
+
+				unit.x = pt.x
+				unit.y = pt.y
+
+				if agentloc == nil then
+					agentloc = pt
+				end
+
+				-- update azimuth of where the unit is pointing
+				local pos = U:getPosition()
+				unit.heading = math.atan2(pos.x.z, pos.x.x)
+			end
+		end
+	end
+
+	if agentloc ~= nil then
+		self:setDescKey("location", agentloc)
+	end
+end
+
+function Agent:getPoint()
+	return self:getDescKey("location")
 end
 
 --- Is the asset considered dead yet?
