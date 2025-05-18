@@ -3,6 +3,7 @@
 local __a = {}
 
 __a.WS         = require("dct.agent.worldstate")
+__a.utils      = require("dct.agent.utils")
 __a.actions    = require("dct.agent.actions")
 __a.goals      = require("dct.agent.goals")
 __a.sensors    = require("dct.agent.sensors")
