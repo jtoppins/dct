@@ -34,18 +34,30 @@ end
 -- Execute Task List
 
 local function doCommand(controller, task)
+	dct.libs.Logger.getByName("AI"):debug(
+		"sending command to controller %s",
+		libs.json:encode_pretty(task))
 	controller:setCommand(task)
 end
 
 local function doOption(controller, task)
+	dct.libs.Logger.getByName("AI"):debug(
+		"sending option to controller: %s",
+		libs.json:encode_pretty(task))
 	controller:setOption(task.id, task.params)
 end
 
 function tasks.setTask(controller, task)
+	dct.libs.Logger.getByName("AI"):debug(
+		"sending task to controller: %s",
+		libs.json:encode_pretty(task))
 	controller:setTask(task)
 end
 
 function tasks.pushTask(controller, task)
+	dct.libs.Logger.getByName("AI"):debug(
+		"pushing task to controller: %s",
+		libs.json:encode_pretty(task))
 	controller:pushTask(task)
 end
 
@@ -74,7 +86,7 @@ function tasks.execute(controller, tasklist, taskfunc)
 		if handler ~= nil then
 			handler(controller, task.data)
 		else
-			dct.Logger.getByName("AI"):error(
+			dct.libs.Logger.getByName("AI"):error(
 				"no handler found for task type: "..
 				tostring(task.type))
 		end

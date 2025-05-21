@@ -293,7 +293,7 @@ function Check:__init(section, options, description, order)
 
 	for key, val in pairs(options) do
 		if not val.nodoc and val.description == nil then
-			dct.Logger.getByName("Template"):warn(
+			dct.libs.Logger.getByName("Template"):warn(
 				"%s.%s is missing a description entry. "..
 				"To suppress this add a 'nodoc = true' "..
 				"entry in the definition.",
@@ -351,7 +351,7 @@ end
 function Check:check(data)
 	for key, option in pairs(self.options) do
 		if option.deprecated and data[key] ~= nil then
-			dct.Logger.getByName("Template"):warn(
+			dct.libs.Logger.getByName("Template"):warn(
 				"%s: option '%s' is deprecated; file: %s",
 				tostring(data.name), key,
 				tostring(data.filedct))
