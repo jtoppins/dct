@@ -37,7 +37,7 @@ local function do_request(data)
 	local ok, err = pcall(_request, data)
 
 	if not ok then
-		dctutils.errhandler(err, dct.Logger.getByName("UI"))
+		dctutils.errhandler(err, dct.libs.Logger.getByName("UI"))
 	end
 end
 

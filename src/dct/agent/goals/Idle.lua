@@ -10,7 +10,7 @@ local Idle = class("Idle", WS.Goal)
 function Idle:__init()
 	WS.Goal.__init(self, WS.WorldState({
 			WS.Property(WS.ID.IDLE, true),
-		}), 0.01)
+		}), 0.001)
 end
 
 function Idle.isSuitable()
