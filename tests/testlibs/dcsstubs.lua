@@ -468,6 +468,92 @@ AI.Option = {
 }
 _G.AI = AI
 
+local desctbl = {
+	["FA-18C_hornet"] = {
+		["speedMax0"] = 361.10000610352,
+		["massEmpty"] = 11382,
+		["tankerType"] = 1,
+		["range"] = 1520,
+		["box"] = {
+			["min"] = {
+				["y"] = -2.5071997642517,
+				["x"] = -8.5673599243164,
+				["z"] = -5.9140915870667,
+			}, -- end of ["min"]
+			["max"] = {
+				["y"] = 3.0026812553406,
+				["x"] = 8.5673599243164,
+				["z"] = 5.9140915870667,
+			}, -- end of ["max"]
+		}, -- end of ["box"]
+		["Hmax"] = 18200,
+		["Kmax"] = 0.75,
+		["_origin"] = "F/A-18C AI",
+		["speedMax10K"] = 541.70001220703,
+		["NyMin"] = -3,
+		["fuelMassMax"] = 4900,
+		["speedMax"] = 541.70001220703,
+		["NyMax"] = 7,
+		["massMax"] = 23541,
+		["RCS"] = 5,
+		["displayName"] = "FA-18C_hornet",
+		["life"] = 20,
+		["VyMax"] = 254,
+		["Kab"] = 4,
+		["attributes"] = {
+			["Link4"]                   = true,
+			["Refuelable"]              = true,
+			["ACLS"]                    = true,
+			["Link16"]                  = true,
+			["Multirole fighters"]      = true,
+			["Battle airplanes"]        = true,
+			["NonAndLightArmoredUnits"] = true,
+			["Planes"]                  = true,
+			["Air"]                     = true,
+			["All"]                     = true,
+			["Datalink"]                = true,
+			["NonArmoredUnits"]         = true,
+		}, -- end of ["attributes"]
+		["typeName"] = "FA-18C_hornet",
+		["category"] = 0,
+	},
+	["Tor 9A331"] = {
+		["massEmpty"] = 34000,
+		["riverCrossing"] = true,
+		["maxSlopeAngle"] = 0.27000001072884,
+		["RCS"] = 5,
+		["box"] = {
+			["min"] = {
+				["y"] = 0.039917565882206,
+				["x"] = -4.5607042312622,
+				["z"] = -1.7571629285812,
+			},
+			["max"] = {
+				["y"] = 3.610570192337,
+				["x"] = 4.5179929733276,
+				["z"] = 1.7558742761612,
+			},
+		},
+		["speedMax"] = 18.055599212646,
+		["life"] = 3,
+		["attributes"] = {
+			["SAM TR"] = true,
+			["Vehicles"] = true,
+			["SAM elements"] = true,
+			["NonArmoredUnits"] = true,
+			["SAM SR"] = true,
+			["Air Defence"] = true,
+			["Ground vehicles"] = true,
+			["RADAR_BAND1_FOR_ARM"] = true,
+		},
+		["category"] = 2,
+		["speedMaxOffRoad"] = 18.055599212646,
+		["Kmax"] = 0.050000000745058,
+		["typeName"] = "Tor 9A331",
+		["displayName"] = "SAM SA-15 Tor 9A331",
+	},
+}
+
 local objdefaults = {
 	["name"] = "obj1",
 	["exists"] = false,
@@ -751,13 +837,14 @@ end
 
 function Object:__init(objdata)
 	local data = objdata or {}
+	libs.utils.mergetables(self, data)
 	for k,v in pairs(objdefaults) do
-		self[k] = data[k]
 		if self[k] == nil then
 			self[k] = utils.deepcopy(v)
 		end
 	end
 	objects[self.category][self.name] = self
+	self.printObjects = nil
 end
 Object.Category = objectcat
 function Object:isExist()
@@ -983,8 +1070,8 @@ function Unit.getByName(name)
 	return objects[Object.Category.UNIT][name]
 end
 
-function Unit.getDescByName(--[[typename]])
-	return objdefaults.desc
+function Unit.getDescByName(typename)
+	return desctbl[typename]
 end
 
 function Unit:getLife()
@@ -1009,6 +1096,10 @@ end
 
 function Unit:getCallsign()
 	return "foo"
+end
+
+function Unit:getFuel()
+	return self.fuel or 1
 end
 
 function Unit:getAmmo()

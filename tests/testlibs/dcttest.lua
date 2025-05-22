@@ -149,11 +149,56 @@ function dcttest.createPlayer(playername)
 
 	local unit1 = Unit({
 		["name"] = "pilot1",
+		["inair"] = true,
+		["fuel"] = .8,
 		["exists"] = true,
 		["desc"] = {
+			["speedMax0"] = 361.10000610352,
+			["massEmpty"] = 11382,
+			["tankerType"] = 1,
+			["range"] = 1520,
+			["box"] = {
+				["min"] = {
+					["y"] = -2.5071997642517,
+					["x"] = -8.5673599243164,
+					["z"] = -5.9140915870667,
+				}, -- end of ["min"]
+				["max"] = {
+					["y"] = 3.0026812553406,
+					["x"] = 8.5673599243164,
+					["z"] = 5.9140915870667,
+				}, -- end of ["max"]
+			}, -- end of ["box"]
+			["Hmax"] = 18200,
+			["Kmax"] = 0.75,
+			["_origin"] = "F/A-18C AI",
+			["speedMax10K"] = 541.70001220703,
+			["NyMin"] = -3,
+			["fuelMassMax"] = 4900,
+			["speedMax"] = 541.70001220703,
+			["NyMax"] = 7,
+			["massMax"] = 23541,
+			["RCS"] = 5,
+			["displayName"] = "FA-18C_hornet",
+			["life"] = 20,
+			["VyMax"] = 254,
+			["Kab"] = 4,
+			["attributes"] = {
+				["Link4"]                   = true,
+				["Refuelable"]              = true,
+				["ACLS"]                    = true,
+				["Link16"]                  = true,
+				["Multirole fighters"]      = true,
+				["Battle airplanes"]        = true,
+				["NonAndLightArmoredUnits"] = true,
+				["Planes"]                  = true,
+				["Air"]                     = true,
+				["All"]                     = true,
+				["Datalink"]                = true,
+				["NonArmoredUnits"]         = true,
+			}, -- end of ["attributes"]
 			["typeName"] = "FA-18C_hornet",
-			["displayName"] = "F/A-18C Hornet",
-			["attributes"] = {},
+			["category"] = 0,
 		},
 	}, grp, playername or "bobplayer")
 	return unit1, grp
